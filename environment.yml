@@ -1,0 +1,13 @@
+name: gamevolt.magic-wand.tracking
+channels:
+  - conda-forge
+dependencies:
+  - python==3.13
+  - pip
+  - pip:
+      - black==25.1.0
+      - isort==6.0.0
+      - pytest==8.3.5
+      - bleak
+      - numpy
+      - scipy
