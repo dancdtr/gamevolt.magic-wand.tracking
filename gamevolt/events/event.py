@@ -6,9 +6,8 @@ T = TypeVar("T", bound=Callable[..., None])
 
 
 class Event(Generic[T]):
-    def __init__(self, logger: Logger | None = None):
+    def __init__(self):
         self._subscribers: List[T] = []
-        self._logger = logger
 
     @property
     def subscriber_count(self) -> int:
@@ -16,13 +15,7 @@ class Event(Generic[T]):
 
     def invoke(self, *args, **kwargs) -> None:
         for subscriber in self._subscribers:
-            try:
-                subscriber(*args, **kwargs)
-            except Exception as e:
-                if self._logger:
-                    self._logger.error(f"Error invoking subscriber {subscriber.__name__}: {e}\n{traceback.format_exc()}")
-                else:
-                    pass
+            subscriber(*args, **kwargs)
 
     def subscribe(self, subscriber: T) -> None:
         self._subscribers.append(subscriber)
