@@ -9,6 +9,10 @@ from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
 from arrow_display import ArrowDisplay
+from classification.curve_classifier import CurveClassifier
+from classification.first_quarant_classifier import FirstQuadrantClassifier
+from classification.intercardinal_classifier import IntercardinalClassifier
+from classification.simple_classifier import SimpleClassifier
 from detection.configuration.gesture_detector_settings import GestureDetectorSettings
 from detection.gesture_detector import GestureDetector
 from gamevolt.imu.imu_serial_receiver import IMUSerialReceiver
@@ -43,38 +47,19 @@ flick_queue: Queue[str] = Queue()
 # y is pitch (up and down) (-ve is up, +ve is down)
 # z is yaw (left and right) (-ve is right, +ve is left)
 
+classifier = IntercardinalClassifier()
+classifier2 = FirstQuadrantClassifier()
+classifier3 = SimpleClassifier()
+classifier4 = CurveClassifier()
+
 
 def on_gesture_completed(points: list[Vector2]) -> None:
-    v = Vector2.from_average(points)
-    # print(f"Average vector: {v}")
-
-    abs_x = abs(v.x)
-    abs_y = abs(v.y)
-
-    # 2) Decide intercardinal vs cardinal
-    # If the two components are within, say, ±20%, treat as intercardinal
-    INTERCARDINAL_RATIO = 0.65  # 80% ≤ min/max ≤ 1.25 → roughly “equal”
-    direction: str
-
-    if abs_x > 0 and abs_y > 0 and (min(abs_x, abs_y) / max(abs_x, abs_y) >= INTERCARDINAL_RATIO):
-        # Intercardinal: both axes active and similar magnitude
-        if v.x > 0 and v.y > 0:
-            direction = "down-left"
-        elif v.x > 0 and v.y < 0:
-            direction = "up-left"
-        elif v.x < 0 and v.y < 0:
-            direction = "up-right"
-        else:  # v.x < 0 and v.y > 0
-            direction = "down-right"
-
-    else:
-        # Pure cardinal: pick the dominant axis
-        if abs_x > abs_y:
-            direction = "left" if v.x > 0 else "right"
-        else:
-            direction = "down" if v.y > 0 else "up"
-
+    direction = classifier.classify(points)
     print(f"Detected direction: {direction}")
+    print("---")
+    dir2 = classifier4.classify(points)
+    print(dir2)
+    print("xxx")
 
     loop = asyncio.get_event_loop()
     loop.call_soon_threadsafe(flick_queue.put_nowait, direction)
@@ -116,6 +101,7 @@ gesture_detector = GestureDetector(imu_rx, gesture_settings)
 
 
 async def main() -> None:
+    logger.info("Starting Wand Tracking application...")
     asyncio.create_task(gui_loop())
 
     gesture_detector.motion_ended.subscribe(on_gesture_completed)
@@ -126,9 +112,12 @@ async def main() -> None:
     try:
         while True:
             await asyncio.sleep(0.02)
+    except asyncio.exceptions.CancelledError:
+        logger.info("Stopping Wand Tracking application...")
     finally:
         gesture_detector.stop()
         await imu_rx.stop()
+        logger.info("Stopped Wand Tracking application.")
 
 
 if __name__ == "__main__":
