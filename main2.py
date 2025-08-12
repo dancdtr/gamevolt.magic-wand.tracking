@@ -13,7 +13,10 @@ from classification.gesture_type import GestureType
 from classification.intercardinal_classifier import IntercardinalClassifier
 from classification.simple_classifier import SimpleClassifier
 from detection.configuration.gesture_detector_settings import GestureDetectorSettings
+from detection.configuration.gesture_settings import GestureSettings
 from detection.gesture_detector import GestureDetector
+from detection.gesture_factory import GestureFactory
+from detection.gesture_point import GesturePoint
 from gamevolt.imu.imu_serial_receiver import IMUSerialReceiver
 from gamevolt.imu.sensor_data import SensorData
 from gamevolt.serial.configuration.binary_serial_receiver_settings import BinarySerialReceiverSettings
@@ -49,13 +52,17 @@ classifier3 = SimpleClassifier()
 classifier4 = CurveClassifier()
 
 
-def on_gesture_completed(points: list[Vector2]) -> None:
-    gesture = classifier4.classify(points)
-    print(gesture.name)
+gesture_factory = GestureFactory(settings=GestureSettings())
+
+
+def on_gesture_completed(points: list[GesturePoint]) -> None:
+    gesture = gesture_factory.create(points)
+    gesture_type = classifier4.classify(gesture)
+    print(gesture_type.name)
     print("__________")
 
     loop = asyncio.get_event_loop()
-    loop.call_soon_threadsafe(flick_queue.put_nowait, gesture)
+    loop.call_soon_threadsafe(flick_queue.put_nowait, gesture_type)
 
 
 async def gui_loop() -> None:

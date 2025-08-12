@@ -1,0 +1,174 @@
+import numpy as np
+
+from classification.extremum import Extremum
+from detection.configuration.gesture_settings import GestureSettings
+from detection.gesture import Gesture
+from detection.gesture_point import GesturePoint
+from vector_2 import Vector2
+
+
+class GestureFactory:
+    def __init__(self, settings: GestureSettings) -> None:
+        self._settings = settings
+
+    def create(self, gesture_points: list[GesturePoint]) -> Gesture:
+        if len(gesture_points) < self._settings.min_sample:
+            raise ValueError("not enough samples")
+
+        raw = [g.velocity for g in gesture_points]
+        points = self._apply_axis_inversion(raw)
+
+        duration = gesture_points[-1].timestamp - gesture_points[0].timestamp
+
+        # --- anchors ---
+        onset_k = min(self._settings.start_frames, len(points))
+        onset_vec = Vector2.from_average(points[:onset_k])
+        # normalize safely
+        mag = max(abs(onset_vec.x), abs(onset_vec.y), 1e-9)
+        onset_heading = Vector2(onset_vec.x / mag, onset_vec.y / mag)
+
+        # earliest reliable extremum (edge-aware)
+        first_idx, first_ext = self._first_extremum(points)
+
+        # full extrema sequence (for later analyzers)
+        extrema = self._get_extrema_sequence(points)
+        x_extrema = [e for e in extrema if e in (Extremum.X_MIN, Extremum.X_MAX)]
+        y_extrema = [e for e in extrema if e in (Extremum.Y_MIN, Extremum.Y_MAX)]
+
+        direction = Vector2.from_average(points)
+
+        # You can either extend Gesture to carry these, or stash in a metadata dict
+        return Gesture(
+            points=gesture_points,
+            direction=direction,
+            direction_abs=Vector2(abs(direction.x), abs(direction.y)),
+            duration=duration,
+            extrema=extrema,
+            x_extrema=x_extrema,
+            y_extrema=y_extrema,
+            # optional extras if your class supports them:
+            onset_heading=onset_heading,
+            first_extremum=first_ext,
+            first_extremum_index=first_idx,
+        )
+
+    def _apply_axis_inversion(self, points: list[Vector2]) -> list[Vector2]:
+        sx = -1 if self._settings.invert_x else 1
+        sy = -1 if self._settings.invert_y else 1
+        return [Vector2(p.x * sx, p.y * sy) for p in points]
+
+    def _get_extrema_sequence(self, points: list[Vector2]) -> list[Extremum]:
+        """
+        Slide a window and emit axis-tagged extrema where the CENTER sample
+        is the unique (or first) max/min and clears a threshold.
+        """
+        n = len(points)
+        w = self._settings.extrema_window
+        if n < 2 * w + 1:
+            return []
+
+        x_vals = np.array([p.x for p in points], dtype=float)
+        y_vals = np.array([p.y for p in points], dtype=float)
+
+        x_abs_max = np.max(np.abs(x_vals))
+        y_abs_max = np.max(np.abs(y_vals))
+        if x_abs_max == 0 and y_abs_max == 0:
+            return []
+
+        x_thr = self._settings.extrema_thresh_fraction * x_abs_max if x_abs_max > 0 else float("inf")
+        y_thr = self._settings.extrema_thresh_fraction * y_abs_max if y_abs_max > 0 else float("inf")
+
+        out: list[Extremum] = []
+
+        center = w  # index of the center inside each window
+        for i in range(w, n - w):
+            x_win = x_vals[i - w : i + w + 1]
+            y_win = y_vals[i - w : i + w + 1]
+
+            # X axis: require the center to be the (first) argmax/argmin
+            if np.argmax(x_win) == center and x_vals[i] > x_thr:
+                out.append(Extremum.X_MIN)
+            elif np.argmin(x_win) == center and x_vals[i] < -x_thr:
+                out.append(Extremum.X_MAX)
+
+            # Y axis
+            if np.argmax(y_win) == center and y_vals[i] > y_thr:
+                out.append(Extremum.Y_MIN)
+            elif np.argmin(y_win) == center and y_vals[i] < -y_thr:
+                out.append(Extremum.Y_MAX)
+
+        return self._squish2(out)
+
+    def _squish2(self, extrema: list[Extremum]) -> list[Extremum]:
+        # Drop consecutive duplicates per axis
+        prev_x = Extremum.NONE
+        prev_y = Extremum.NONE
+        squished: list[Extremum] = []
+
+        for e in extrema:
+            if e in (Extremum.X_MIN, Extremum.X_MAX):
+                if e != prev_x:
+                    squished.append(e)
+                    prev_x = e
+            else:  # Y_MIN/Y_MAX
+                if e != prev_y:
+                    squished.append(e)
+                    prev_y = e
+        return squished
+
+    def _squish(self, extrema: list[Extremum]) -> list[Extremum]:
+        if not extrema:
+            return []
+        squished = [extrema[0]]
+        for e in extrema[1:]:
+            if e != squished[-1]:
+                squished.append(e)
+        return squished
+
+    def _first_extremum(self, points: list[Vector2]) -> tuple[int | None, Extremum]:
+        """
+        Find the first local extremum with an edge-aware window.
+        Returns (index, label) in gesture-local indices.
+        """
+        n = len(points)
+        if n < 3:
+            return (None, Extremum.NONE)
+
+        w = self._settings.extrema_window
+        x = np.array([p.x for p in points], float)
+        y = np.array([p.y for p in points], float)
+
+        x_abs = np.max(np.abs(x))
+        y_abs = np.max(np.abs(y))
+        if x_abs == 0 and y_abs == 0:
+            return (None, Extremum.NONE)
+
+        x_thr = self._settings.extrema_thresh_fraction * x_abs if x_abs > 0 else float("inf")
+        y_thr = self._settings.extrema_thresh_fraction * y_abs if y_abs > 0 else float("inf")
+
+        # search early region first so you anchor near the start
+        early_end = min(n, max(3, 3 * w))
+
+        for i in range(1, early_end - 1):
+            # dynamic, edge-aware neighborhood
+            i0 = max(0, i - w)
+            i1 = min(n, i + w + 1)
+
+            x_win = x[i0:i1]
+            y_win = y[i0:i1]
+            cx = i - i0  # center index inside the window
+            cy = cx
+
+            # X axis
+            if np.argmax(x_win) == cx and x[i] > x_thr:
+                return (i, Extremum.X_MAX)
+            if np.argmin(x_win) == cx and x[i] < -x_thr:
+                return (i, Extremum.X_MIN)
+
+            # Y axis
+            if np.argmax(y_win) == cy and y[i] > y_thr:
+                return (i, Extremum.Y_MAX)
+            if np.argmin(y_win) == cy and y[i] < -y_thr:
+                return (i, Extremum.Y_MIN)
+
+        return (None, Extremum.NONE)

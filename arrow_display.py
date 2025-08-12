@@ -30,6 +30,7 @@ class ArrowDisplay:
             "semi": Image.open(os.path.join(self.assets_dir, "semi.png")),
             "none": Image.open(os.path.join(self.assets_dir, "none.png")),
             "unknown": Image.open(os.path.join(self.assets_dir, "unknown.png")),
+            "circle": Image.open(os.path.join(self.assets_dir, "circle.png")),
         }
 
         # Pre-generate transformed images for each gesture
@@ -58,17 +59,39 @@ class ArrowDisplay:
             return base
 
         name = gesture.name.lower()
+        if name.endswith("_circle"):
+            base = self.base_images["circle"]
+            semi_mapping: dict[G, tuple[int, Axis | None]] = {
+                G.UP_START_CW_CIRCLE: (0, None),
+                G.RIGHT_START_CW_CIRCLE: (270, None),
+                G.DOWN_START_CW_CIRCLE: (180, None),
+                G.LEFT_START_CW_CIRCLE: (90, None),
+                G.UP_START_CCW_CIRCLE: (0, Axis.X),
+                G.RIGHT_START_CCW_CIRCLE: (270, Axis.X),
+                G.DOWN_START_CCW_CIRCLE: (180, Axis.X),
+                G.LEFT_START_CCW_CIRCLE: (90, Axis.X),
+            }
+            angle, flip_direction = semi_mapping.get(gesture, (0, None))
+            img = base.rotate(angle, expand=True)
+
+            if flip_direction == Axis.X:
+                img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+            elif flip_direction == Axis.Y:
+                img = img.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+
+            return img
+
         if name.endswith("_semi"):
             base = self.base_images["semi"]
             semi_mapping: dict[G, tuple[int, Axis | None]] = {
-                G.UP_RIGHT_SEMI: (0, Axis.X),
-                G.UP_LEFT_SEMI: (0, None),
-                G.RIGHT_DOWN_SEMI: (270, Axis.Y),
-                G.LEFT_DOWN_SEMI: (90, None),
-                G.RIGHT_UP_SEMI: (270, None),
-                G.LEFT_UP_SEMI: (90, Axis.Y),
-                G.DOWN_RIGHT_SEMI: (180, None),
-                G.DOWN_LEFT_SEMI: (180, Axis.X),
+                G.UP_VIA_RIGHT_SEMI: (0, Axis.X),
+                G.UP_VIA_LEFT_SEMI: (0, None),
+                G.RIGHT_VIA_DOWN_SEMI: (270, Axis.Y),
+                G.LEFT_VIA_DOWN_SEMI: (90, None),
+                G.RIGHT_VIA_UP_SEMI: (270, None),
+                G.LEFT_VIA_UP_SEMI: (90, Axis.Y),
+                G.DOWN_VIA_RIGHT_SEMI: (180, None),
+                G.DOWN_VIA_LEFT_SEMI: (180, Axis.X),
             }
             angle, flip_direction = semi_mapping.get(gesture, (0, None))
             img = base.rotate(angle, expand=True)
