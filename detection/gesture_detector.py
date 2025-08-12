@@ -1,9 +1,11 @@
 from collections.abc import Callable
+from logging import Logger
 
 from detection.configuration.gesture_detector_settings import GestureDetectorSettings
 from gamevolt.events.event import Event
 from gamevolt.imu.sensor_data import SensorData
 from gamevolt.serial.imu_binary_receiver import IMUBinaryReceiver
+from gamevolt.toolkit.timer import Timer
 from vector_2 import Vector2
 
 # --- GYRO ---
@@ -13,7 +15,8 @@ from vector_2 import Vector2
 
 
 class GestureDetector:
-    def __init__(self, receiver: IMUBinaryReceiver, settings: GestureDetectorSettings):
+    def __init__(self, logger: Logger, receiver: IMUBinaryReceiver, settings: GestureDetectorSettings):
+        self._logger = logger
         self._settings = settings
 
         self._receiver = receiver
@@ -25,6 +28,8 @@ class GestureDetector:
 
         self.motion_started = Event[Callable[[], None]]()
         self.motion_ended = Event[Callable[[list[Vector2]], None]]()
+
+        self._timer = Timer(settings.min_duration)
 
     def start(self) -> None:
         self._receiver.data_updated.subscribe(self._on_data_updated)
@@ -58,14 +63,24 @@ class GestureDetector:
                 self._end_count = 0
 
     def _on_motion_started(self) -> None:
-        print("started!")
+        # self._logger.info("started!")
         self._in_motion = True
+        self._timer.start()
         self.motion_started.invoke()
 
     def _on_motion_stopped(self) -> None:
-        print("stopped!")
-        print(len(self._velocities))
+        # self._logger.info("stopped!")
+        # print(len(self._velocities))
         self._in_motion = False
-        self.motion_ended.invoke(self._velocities.copy())
+
+        duration = self._timer.elapsed_time
+
+        if self._timer.is_complete:
+            self._logger.info(f"Gesture duration: {duration:.3f} - accept")
+            self.motion_ended.invoke(self._velocities.copy())
+        else:
+            self._logger.info(f"Gesture duration: {duration:.3f} - reject")
+
+        self._timer.stop()
         self._velocities.clear()
         self._end_count = 0

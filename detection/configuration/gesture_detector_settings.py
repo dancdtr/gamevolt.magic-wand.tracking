@@ -8,3 +8,5 @@ class GestureDetectorSettings:
     start_frames: int = 5
     end_frames: int = 5
     max_samples: int = 100
+
+    min_duration: float = 0.2

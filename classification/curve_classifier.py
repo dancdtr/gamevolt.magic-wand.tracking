@@ -1,153 +1,95 @@
-from enum import Enum
-
 import numpy as np
 
+from classification.axis import Axis
+from classification.extrema import Extrema as E
+from classification.gesture_type import GestureType as G
 from vector_2 import Vector2
 
 
-class Axis(Enum):
-    X = "x"
-    Y = "y"
-
-
-class EXTREMA(Enum):
-    MAX = "max"
-    MIN = "min"
-
-
-class Gesture(Enum):
-    UNKNOWN = "unknown"
-    UP = "up"
-    RIGHT = "right"
-    DOWN = "down"
-    LEFT = "left"
-
-    UP_RIGHT = "up_right"
-    DOWN_RIGHT = "down_right"
-    DOWN_LEFT = "down_left"
-    UP_LEFT = "up_left"
-
-    UP_RIGHT_SEMI = "up_right_semi"
-    UP_LEFT_SEMI = "up_left_semi"
-    DOWN_RIGHT_SEMI = "down_right_semi"
-    DOWN_LEFT_SEMI = "down_left_semi"
-
-    RIGHT_UP_SEMI = "right_up_semi"
-    LEFT_UP_SEMI = "left_up_semi"
-    RIGHT_DOWN_SEMI = "right_down_semi"
-    LEFT_DOWN_SEMI = "left_down_semi"
-
-
-type G = Gesture
-
-
 class CurveClassifier:
-    def __init__(self) -> None:
-        self.INTERCARDINAL_RATIO = 0.65
-        self.MAX_POS_FRACTION = 0.3  # peak must lie within middle 60% of stroke
-        self.BASELINE_TOLERANCE = 0.3  # end y vs start y within 10% of width
-        self.MAX_THRESH_FRACTION = 0.3
+    def __init__(self, intercardinal_ratio=0.8, extrema_thresh_faction=0.65, extrema_window: int = 3) -> None:
+        self._intercardinal_ratio = intercardinal_ratio
+        self._extrema_thresh_fraction = extrema_thresh_faction
+        self._extrema_window = max(1, extrema_window)
 
-    def classify(self, points: list[Vector2]) -> str:
+    def classify(self, points: list[Vector2]) -> G:
         v = Vector2.from_average(points)
         abs_x, abs_y = abs(v.x), abs(v.y)
 
-        if abs_x and abs_y and (min(abs_x, abs_y) / max(abs_x, abs_y) >= self.INTERCARDINAL_RATIO):
+        # 1) Determine base gesture
+        if abs_x and abs_y and (min(abs_x, abs_y) / max(abs_x, abs_y) >= self._intercardinal_ratio):
             if v.x > 0 and v.y > 0:
-                direction = "down-left"
+                gesture = G.DOWN_LEFT
             elif v.x > 0 and v.y < 0:
-                direction = "up-left"
+                gesture = G.UP_LEFT
             elif v.x < 0 and v.y < 0:
-                direction = "up-right"
+                gesture = G.UP_RIGHT
             else:
-                direction = "down-right"
+                gesture = G.DOWN_RIGHT
         else:
             if abs_x > abs_y:
-                direction = "left" if v.x > 0 else "right"
+                gesture = G.LEFT if v.x > 0 else G.RIGHT
             else:
-                direction = "down" if v.y > 0 else "up"
+                gesture = G.DOWN if v.y > 0 else G.UP
 
-        extrema = []
-
-        if direction == "right":
+        # 2) Check for semi-circle via extrema on secondary axis
+        if gesture in (G.RIGHT, G.LEFT):
             extrema = self._squish_extrema(self._extrema_sequence(points, Axis.Y))
-            print(extrema)
-            if extrema == ["max", "min"]:
-                return "right-up-semi"
-            if extrema == ["min", "max"]:
-                return "right-down-semi"
+            self._print_extrema(extrema)
+            if extrema == [E.MAX, E.MIN]:
+                return G.RIGHT_UP_SEMI if gesture == G.RIGHT else G.LEFT_UP_SEMI
+            if extrema == [E.MIN, E.MAX]:
+                return G.RIGHT_DOWN_SEMI if gesture == G.RIGHT else G.LEFT_DOWN_SEMI
 
-        if direction == "left":
-            extrema = self._squish_extrema(self._extrema_sequence(points, Axis.Y))
-            print(extrema)
-            if extrema == ["max", "min"]:
-                return "left-up-semi"
-            if extrema == ["min", "max"]:
-                return "left-down-semi"
-
-        if direction == "up":
+        if gesture in (G.UP, G.DOWN):
             extrema = self._squish_extrema(self._extrema_sequence(points, Axis.X))
-            print(extrema)
-            if extrema == ["max", "min"]:
-                return "up-right-semi"
-            if extrema == ["min", "max"]:
-                return "up-left-semi"
+            self._print_extrema(extrema)
+            if extrema == [E.MAX, E.MIN]:
+                return G.UP_RIGHT_SEMI if gesture == G.UP else G.DOWN_RIGHT_SEMI
+            if extrema == [E.MIN, E.MAX]:
+                return G.UP_LEFT_SEMI if gesture == G.UP else G.DOWN_LEFT_SEMI
 
-        if direction == "down":
-            extrema = self._squish_extrema(self._extrema_sequence(points, Axis.X))
-            print(extrema)
-            if extrema == ["max", "min"]:
-                return "down-right-semi"
-            if extrema == ["min", "max"]:
-                return "down-left-semi"
+        return gesture
 
-        return direction
-
-    def _extrema_sequence(self, points: list[Vector2], axis: Axis) -> list[str]:
+    def _extrema_sequence(self, points: list[Vector2], axis: Axis) -> list[E]:
         """
-        Scan either the x-velocity (if x_axis=True) or y-velocity (else)
-        and return the ordered list of 'max' / 'min' labels of
-        significant local extrema.
-
-        - A 'max' is a sample above both neighbors and > +thr.
-        - A 'min' is a sample below both neighbors and < -thr.
-
-        Args:
-            points:  list of Vector2 (vx, vy) samples
-            x_axis:  if True scan p.x; otherwise scan p.y
-
-        Returns:
-            A list like ['max', 'min', ...] in chronological order.
+        Scan velocities along the given axis and return ordered list of
+        local extrema E.MAX/E.MIN by comparing each sample to a neighborhood.
         """
-        ps = np.array([p.x for p in points], float) if axis == Axis.X else np.array([p.y for p in points], float)
-
-        n = len(ps)
-        if n < 3:
+        n = len(points)
+        if n < 2 * self._extrema_window + 1:
             return []
 
-        # threshold = fraction of the peak magnitude
-        thr = self.MAX_THRESH_FRACTION * np.max(np.abs(ps))
+        # extract velocity array
+        vals = np.array([p.x for p in points], float) if axis == Axis.X else np.array([p.y for p in points], float)
+        thr = self._extrema_thresh_fraction * np.max(np.abs(vals))
 
         extrema = []
-        for i in range(1, n - 1):
-            previous, current, next = ps[i - 1], ps[i], ps[i + 1]
-            if current > previous and current > next and current > thr:
-                extrema.append((i, "min"))
-            elif current < previous and current < next and current < -thr:
-                extrema.append((i, "max"))
+        w = self._extrema_window
+        # slide window, skip edges
+        for i in range(w, n - w):
+            window_vals = vals[i - w : i + w + 1]
+            cur = vals[i]
+            # local maximum in window
+            if cur == window_vals.max() and cur > thr:
+                extrema.append((i, E.MIN))
+            # local minimum in window
+            elif cur == window_vals.min() and cur < -thr:
+                extrema.append((i, E.MAX))
 
-        # sort by index (they're already in order, but just in case)
         extrema.sort(key=lambda x: x[0])
-        # return only the labels
         return [label for _, label in extrema]
 
-    def _squish_extrema(self, extrema: list[str]) -> list[str]:
-        if len(extrema) < 1:
+    def _squish_extrema(self, extrema: list[E]) -> list[E]:
+        """Remove consecutive duplicates in extrema list."""
+        if not extrema:
             return []
-
         squished = [extrema[0]]
-        for ex in extrema[1:]:
-            if squished[-1] != ex:
-                squished.append(ex)
-
+        for e in extrema[1:]:
+            if e != squished[-1]:
+                squished.append(e)
         return squished
+
+    def _print_extrema(self, extrema: list[E]) -> None:
+        names = [e.name for e in extrema]
+        print(f"Extrema: {names}")
