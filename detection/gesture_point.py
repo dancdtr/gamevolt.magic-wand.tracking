@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from vector_2 import Vector2
+from gamevolt.maths.vector_2 import Vector2
 
 
 @dataclass

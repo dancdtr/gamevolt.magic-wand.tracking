@@ -6,9 +6,9 @@ from logging import Logger
 
 from gamevolt.events.event import Event
 from gamevolt.imu.sensor_data import SensorData
+from gamevolt.maths.vector_3 import Vector3
 from gamevolt.serial.binary_serial_receiver import BinarySerialReceiver
 from gamevolt.serial.configuration.binary_serial_receiver_settings import BinarySerialReceiverSettings
-from vector_3 import Vector3
 
 
 class IMUBinaryReceiver:

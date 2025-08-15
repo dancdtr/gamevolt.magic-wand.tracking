@@ -1,36 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum, auto
-from typing import Optional
 
-from classification.axis import Axis
-from classification.azimuth import Azimuth
-
-
-class Shape(Enum):
-    LINE = auto()
-    ARC = auto()
-    CIRCLE = auto()
-    WAVE_SINE = auto()
-    WAVE_COS = auto()
-
-
-class Span(Enum):
-    QUARTER = 90
-    HALF = 180
-    THREE_QUARTER = 270
-    FULL = 360  # rarely used directly; CIRCLE implies FULL
-
-
-class Turn(Enum):
-    CW = "cw"
-    CCW = "ccw"
-
-
-class Dir(Enum):
-    POS = "pos"
-    NEG = "neg"
+from gamevolt.maths.axis import Axis
+from gamevolt.maths.azimuth import Azimuth
+from gamevolt.maths.dir import Dir
+from gamevolt.maths.shape import Shape
+from gamevolt.maths.span import Span
+from gamevolt.maths.turn import Turn
 
 
 @dataclass(frozen=True)

@@ -1,5 +1,5 @@
-from classification.azimuth import Azimuth
-from vector_2 import Vector2
+from gamevolt.maths.azimuth import Azimuth
+from gamevolt.maths.vector_2 import Vector2
 
 
 # =========================================

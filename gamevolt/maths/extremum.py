@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from enum import Enum
 
-from classification.axis import Axis
-from classification.azimuth import Azimuth
+from gamevolt.maths.axis import Axis
+from gamevolt.maths.azimuth import Azimuth
 
 
 class Extremum(Enum):

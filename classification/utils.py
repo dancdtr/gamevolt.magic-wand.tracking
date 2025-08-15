@@ -1,9 +1,9 @@
 from typing import Iterable
 
-from classification.extremum import Extremum
 from detection.gesture import Gesture
 from detection.turn import TurnType
 from gamevolt.iterables.iter_tools import equals
+from gamevolt.maths.extremum import Extremum
 
 
 def matches_x_extrema(g: Gesture, *targets: Extremum) -> bool:

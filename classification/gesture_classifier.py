@@ -7,7 +7,6 @@ from classification.classifiers.gesture_classifier_mask import GestureClassifier
 from classification.classifiers.lines.cardinal_classifier import CardinalClassifier
 from classification.classifiers.lines.intercardinal_classifier import IntercardinalClassifier
 from classification.classifiers.lines.secondary_intercardinal_classifier import SecondaryIntercardinalClassifier
-from classification.extremum import Extremum
 from classification.gesture_type import GestureType
 from classification.lines import (
     is_line_e,
@@ -31,6 +30,7 @@ from detection.gesture import Gesture
 from detection.turn import TurnType
 from detection.turn_point import TurnPoint
 from gamevolt.iterables.iter_tools import equals, equals_single, matches, matches_prefix
+from gamevolt.maths.extremum import Extremum
 
 
 class GestureClassifier:

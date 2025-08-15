@@ -1,12 +1,12 @@
 import numpy as np
 
-from classification.extremum import Extremum
 from detection.configuration.gesture_settings import GestureSettings
 from detection.gesture import Gesture
 from detection.gesture_point import GesturePoint
 from detection.turn import TurnType
 from detection.turn_point import TurnPoint
-from vector_2 import Vector2
+from gamevolt.maths.extremum import Extremum
+from gamevolt.maths.vector_2 import Vector2
 
 
 class GestureFactory:

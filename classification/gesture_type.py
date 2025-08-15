@@ -3,9 +3,13 @@ from __future__ import annotations
 import re
 from enum import StrEnum
 
-from classification.axis import Axis
-from classification.azimuth import Azimuth
-from classification.gesture_components import Dir, GestureParts, Shape, Span, Turn
+from classification.gesture_components import GestureParts
+from gamevolt.maths.axis import Axis
+from gamevolt.maths.azimuth import Azimuth
+from gamevolt.maths.dir import Dir
+from gamevolt.maths.shape import Shape
+from gamevolt.maths.span import Span
+from gamevolt.maths.turn import Turn
 
 # class GestureType(Enum):
 #     NONE = "none"

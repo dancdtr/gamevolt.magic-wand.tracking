@@ -1,4 +1,4 @@
-# main.py
+# main2.py
 
 import asyncio
 from asyncio import Queue
@@ -6,6 +6,14 @@ from asyncio import Queue
 from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
+from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
+from classification.gesture_classifier import GestureClassifier
+from classification.gesture_type import GestureType
+from detection.configuration.gesture_detector_settings import GestureDetectorSettings
+from detection.configuration.gesture_settings import GestureSettings
+from detection.gesture_detector import GestureDetector
+from detection.gesture_factory import GestureFactory
+from detection.gesture_point import GesturePoint
 from display.arrow_display import ArrowDisplay
 from gamevolt.imu.imu_serial_receiver import IMUSerialReceiver
 from gamevolt.imu.sensor_data import SensorData
@@ -13,135 +21,102 @@ from gamevolt.serial.configuration.binary_serial_receiver_settings import Binary
 from gamevolt.serial.configuration.binary_settings import BinarySettings
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from gamevolt.serial.imu_binary_receiver import IMUBinaryReceiver
-from gamevolt.serial.serial_receiver import SerialReceiver
-from spell_checker import SpellChecker
-from spell_display import SpellDisplay
 
 logger = get_logger(LoggingSettings("./Logs", "INFORMATION"))
 
-arrow_display = ArrowDisplay()
-spell_dispay = SpellDisplay("./spells")
-spell_checker = SpellChecker()
-# Flick thresholds
+display = ArrowDisplay()
+
 GYRO_START_THRESH = 1.0
 GYRO_END_THRESH = 0.7
 GYRO_END_FRAMES = 5
-DIAG_EQUAL_THRESH = 0.7
 
 GUI_FPS = 60
 
 
-# State
 in_motion: bool = False
 end_count: int = 0
-last_data: SensorData | None = None
 
 # Queue to hand off flicks to the GUI
-flick_queue: Queue[str] = Queue()
-directions: list[str] = []
+flick_queue: Queue[GestureType] = Queue()
 
 # x is roll (rotation around shaft) (-ve CCW, +ve CW)
 # y is pitch (up and down) (-ve is up, +ve is down)
 # z is yaw (left and right) (-ve is right, +ve is left)
 
+classifier = GestureClassifier()
 
-def on_data(d: SensorData) -> None:
-    global in_motion, end_count, last_data
 
-    gx, gy, gz = d.gyro.x, d.gyro.y, d.gyro.z
-    abs_y, abs_z = abs(gy), abs(gz)
-    mag = max(abs_y, abs_z)
+gesture_factory = GestureFactory(settings=GestureSettings())
 
-    if not in_motion:
-        if mag > GYRO_START_THRESH:
-            in_motion = True
-            end_count = 0
 
-            # Diagonals: both axes over threshold AND magnitudes match
-            # if abs_y > GYRO_START_THRESH and abs_z > GYRO_START_THRESH and abs(abs_y - abs_z) < DIAG_EQUAL_THRESH:
-            if abs(abs_y + abs_z) > GYRO_START_THRESH and abs(abs_y - abs_z) < DIAG_EQUAL_THRESH:
-                # print(f"abs_y: {abs_y:.3f}, abs_z: {abs_z:.3f}, diff: {abs(abs_y - abs_z)}")
+def on_gesture_completed(points: list[GesturePoint]) -> None:
 
-                if gy < 0 and gz < 0:
-                    direction = "up-right"
-                elif gy < 0 and gz > 0:
-                    direction = "up-left"
-                elif gy > 0 and gz < 0:
-                    direction = "down-right"
-                else:
-                    direction = "down-left"
+    # mask = GestureClassifierMask([GestureType.LEFT_VIA_DOWN_SEMI, GestureType.DOWN])
+    # mask = GestureClassifierMask([GestureType.UP_RIGHT, GestureType.DOWN_RIGHT])
+    mask = None
+    gesture = gesture_factory.create(points)
+    gesture_type = classifier.classify(gesture, mask)
 
-            # Otherwise 4-way cardinals
-            elif abs_y > GYRO_START_THRESH or abs_z > GYRO_START_THRESH:
-                if abs_y > abs_z:
-                    direction = "down" if gy > 0 else "up"
-                else:
-                    direction = "left" if gz > 0 else "right"
+    print(gesture_type.name)
+    print("__________")
 
-            print(direction)
-            directions.append(direction)
-
-            asyncio.get_event_loop().call_soon_threadsafe(flick_queue.put_nowait, direction)
-
-    else:
-        # end‐of‐motion logic unchanged
-        if mag < GYRO_END_THRESH:
-            end_count += 1
-            if end_count >= GYRO_END_FRAMES:
-                in_motion = False
-        else:
-            end_count = 0
-
-    last_data = d
+    loop = asyncio.get_event_loop()
+    loop.call_soon_threadsafe(flick_queue.put_nowait, gesture_type)
 
 
 async def gui_loop() -> None:
     """Update the GUI and process flick events."""
-    current_direction: str | None = None
+    current_gesture: GestureType = GestureType.NONE
     while True:
-        # show any queued flicks
         try:
             while True:
-                direction = flick_queue.get_nowait()
-                if direction and direction != current_direction:
-                    current_direction = direction
+                gesture = flick_queue.get_nowait()
+                if gesture and gesture != current_gesture:
+                    current_gesture = gesture
                     # await asyncio.sleep(0.2)
-                    # arrow_display.show(direction)
-                    global directions
-                    spell_name = spell_checker.identify(directions)
-                    if spell_name:
-                        print(spell_name)
-                        directions = []
-                    spell_dispay.show(spell_name)
-
+                    display.show(gesture)
         except asyncio.QueueEmpty:
             pass
 
-        arrow_display.root.update()
+        display.root.update()
         await asyncio.sleep(1 / GUI_FPS)
 
 
+rx_settings = BinarySerialReceiverSettings(
+    SerialReceiverSettings(port="/dev/cu.usbmodem11101", baud=115200, timeout=1, retry_interval=3.0),
+    BinarySettings("<I9f"),
+)
+imu_rx = IMUBinaryReceiver(logger, rx_settings)
+
+gesture_settings = GestureDetectorSettings(
+    start_thresh=1.0,
+    end_thresh=0.7,
+    start_frames=3,
+    end_frames=3,
+    max_samples=100,
+    min_duration=0.2,
+)
+gesture_detector = GestureDetector(logger, imu_rx, gesture_settings)
+
+
 async def main() -> None:
-    # start the GUI task in the same event loop
+    logger.info("Starting Wand Tracking application...")
     asyncio.create_task(gui_loop())
 
-    settings = BinarySerialReceiverSettings(
-        SerialReceiverSettings(port="/dev/cu.usbmodem11101", baud=115200, timeout=1, retry_interval=3.0),
-        BinarySettings("<I9f"),
-    )
-    imu_rx = IMUBinaryReceiver(logger, settings)
-
-    imu_rx.data_updated.subscribe(on_data)
+    gesture_detector.motion_ended.subscribe(on_gesture_completed)
 
     await imu_rx.start()
-
-    spell_dispay.show_white()
+    gesture_detector.start()
 
     try:
         while True:
             await asyncio.sleep(0.02)
+    except asyncio.exceptions.CancelledError:
+        logger.info("Stopping Wand Tracking application...")
     finally:
+        gesture_detector.stop()
         await imu_rx.stop()
+        logger.info("Stopped Wand Tracking application.")
 
 
 if __name__ == "__main__":

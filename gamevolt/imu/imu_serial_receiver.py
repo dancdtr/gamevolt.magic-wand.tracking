@@ -3,8 +3,8 @@ from collections.abc import Callable
 
 from gamevolt.events.event import Event
 from gamevolt.imu.sensor_data import SensorData
+from gamevolt.maths.vector_3 import Vector3
 from gamevolt.serial.serial_receiver import SerialReceiver
-from vector_3 import Vector3
 
 
 class IMUSerialReceiver:
