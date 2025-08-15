@@ -248,12 +248,10 @@ class GestureFactory:
                     z_t = t0 + alpha * (t1 - t0)
                     if (z_t - last_emit_t) >= min_gap_ms:
                         label = (
-                            TurnType.LEFT_TO_RIGHT
+                            TurnType.W2E
                             if (axis == "x" and sign < 0)
                             else (
-                                TurnType.RIGHT_TO_LEFT
-                                if (axis == "x" and sign > 0)
-                                else TurnType.DOWN_TO_UP if (axis == "y" and sign < 0) else TurnType.UP_TO_DOWN
+                                TurnType.E2W if (axis == "x" and sign > 0) else TurnType.S2N if (axis == "y" and sign < 0) else TurnType.N2S
                             )
                         )
                         z_idx = j + alpha * (i - j)
