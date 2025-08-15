@@ -43,13 +43,9 @@ class GestureFactory:
         # You can either extend Gesture to carry these, or stash in a metadata dict
         return Gesture(
             points=gesture_points,
-            direction=direction,
-            direction_abs=Vector2(abs(direction.x), abs(direction.y)),
+            average_direction=direction,
             duration=duration,
             extrema=extrema,
-            onset_heading=onset_heading,
-            first_extremum=first_ext,
-            first_extremum_index=first_idx,
             turn_points=turn_points,
         )
 

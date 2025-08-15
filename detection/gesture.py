@@ -1,3 +1,9 @@
+from __future__ import annotations
+
+from collections.abc import Iterator
+from functools import cached_property
+from typing import Optional
+
 from classification.extremum import Extremum
 from detection.gesture_point import GesturePoint
 from detection.turn import TurnType
@@ -9,43 +15,70 @@ class Gesture:
     def __init__(
         self,
         points: list[GesturePoint],
-        direction: Vector2,
-        direction_abs: Vector2,
+        average_direction: Vector2,
         duration: float,
         extrema: list[Extremum],
-        onset_heading: Vector2,
-        first_extremum: Extremum,
-        first_extremum_index: int | None,
         turn_points: list[TurnPoint],
     ) -> None:
         self.points = points
-        self.direction = direction
-        self.direction_abs = direction_abs
+        self.direction = average_direction
+        self.turn_points = turn_points
         self.duration = duration
-        self.onset_heading = onset_heading
-        self.first_extremum = first_extremum
-        self.first_extremum_index = first_extremum_index
         self.extrema = extrema
 
-        self.min_direction_abs = min(direction_abs.x, direction_abs.y)
-        self.max_direction_abs = max(direction_abs.x, direction_abs.y)
+    def iter_x_extrema(self) -> Iterator[Extremum]:
+        return (e for e in self.extrema if e.is_x())
 
-        self.x_extrema = [e for e in self.extrema if e in (Extremum.X_MIN, Extremum.X_MAX)]
-        self.y_extrema = [e for e in self.extrema if e in (Extremum.Y_MIN, Extremum.Y_MAX)]
+    def iter_y_extrema(self) -> Iterator[Extremum]:
+        return (e for e in self.extrema if e.is_y())
 
-        x_turn_points = [turn for turn in turn_points if turn.type in (TurnType.LEFT_TO_RIGHT, TurnType.RIGHT_TO_LEFT)]
-        y_turn_points = [turn for turn in turn_points if turn.type in (TurnType.UP_TO_DOWN, TurnType.DOWN_TO_UP)]
+    def iter_x_turn_points(self) -> Iterator[TurnPoint]:
+        return (tp for tp in self.turn_points if tp.type.in_x())
 
-        last_turn_point: TurnPoint | None = None if len(turn_points) == 0 else turn_points[-1]
-        last_x_turn_point: TurnPoint | None = None if len(x_turn_points) == 0 else x_turn_points[-1]
-        last_y_turn_point: TurnPoint | None = None if len(y_turn_points) == 0 else y_turn_points[-1]
+    def iter_y_turn_points(self) -> Iterator[TurnPoint]:
+        return (tp for tp in self.turn_points if tp.type.in_y())
 
-        turn_types = [turn_point.type for turn_point in turn_points]
+    def iter_turn_types(self) -> Iterator[TurnType]:
+        return (tp.type for tp in self.turn_points)
 
-        self.turn_points = turn_points
-        self.x_turn_points = x_turn_points
-        self.y_turn_points = y_turn_points
-        self.last_turn_point = last_turn_point
-        self.last_x_turn_point = last_x_turn_point
-        self.last_y_turn_point = last_y_turn_point
-        self.turn_types = turn_types
+    def iter_x_turn_types(self) -> Iterator[TurnType]:
+        return (tp.type for tp in self.turn_points if tp.type.in_x())
+
+    def iter_y_turn_types(self) -> Iterator[TurnType]:
+        return (tp.type for tp in self.turn_points if tp.type.in_y())
+
+    # ---------- Lazy “last *” lookups ----------
+
+    @property
+    def last_turn_point(self) -> TurnPoint | None:
+        return self.turn_points[-1] if self.turn_points else None
+
+    @property
+    def last_x_turn_point(self) -> Optional[TurnPoint]:
+        for tp in reversed(self.turn_points):
+            if tp.type.in_x():
+                return tp
+        return None
+
+    @property
+    def last_y_turn_point(self) -> TurnPoint | None:
+        for tp in reversed(self.turn_points):
+            if tp.type.in_y():
+                return tp
+        return None
+
+    # ---------- Direction helpers ----------
+
+    @cached_property
+    def direction_abs(self) -> Vector2:
+        return Vector2(abs(self.direction.x), abs(self.direction.y))
+
+    @property
+    def min_direction_abs(self) -> float:
+        d = self.direction_abs
+        return d.x if d.x < d.y else d.y
+
+    @property
+    def max_direction_abs(self) -> float:
+        d = self.direction_abs
+        return d.x if d.x > d.y else d.y
