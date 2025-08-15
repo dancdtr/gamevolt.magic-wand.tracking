@@ -4,6 +4,8 @@ from classification.extremum import Extremum
 from detection.configuration.gesture_settings import GestureSettings
 from detection.gesture import Gesture
 from detection.gesture_point import GesturePoint
+from detection.turn import TurnType
+from detection.turn_point import TurnPoint
 from vector_2 import Vector2
 
 
@@ -32,10 +34,11 @@ class GestureFactory:
 
         # full extrema sequence (for later analyzers)
         extrema = self._get_extrema_sequence(points)
-        x_extrema = [e for e in extrema if e in (Extremum.X_MIN, Extremum.X_MAX)]
-        y_extrema = [e for e in extrema if e in (Extremum.Y_MIN, Extremum.Y_MAX)]
 
         direction = Vector2.from_average(points)
+
+        timestamps = [gp.timestamp for gp in gesture_points]
+        turn_points = self._get_velocity_turn_points(points, timestamps)
 
         # You can either extend Gesture to carry these, or stash in a metadata dict
         return Gesture(
@@ -44,12 +47,10 @@ class GestureFactory:
             direction_abs=Vector2(abs(direction.x), abs(direction.y)),
             duration=duration,
             extrema=extrema,
-            x_extrema=x_extrema,
-            y_extrema=y_extrema,
-            # optional extras if your class supports them:
             onset_heading=onset_heading,
             first_extremum=first_ext,
             first_extremum_index=first_idx,
+            turn_points=turn_points,
         )
 
     def _apply_axis_inversion(self, points: list[Vector2]) -> list[Vector2]:
@@ -172,3 +173,104 @@ class GestureFactory:
                 return (i, Extremum.Y_MIN)
 
         return (None, Extremum.NONE)
+
+    def _get_velocity_turn_points(
+        self,
+        points,
+        timestamps_ms,
+        *,
+        zero_frac: float = 0.25,
+        hysteresis_ratio: float = 0.5,
+        min_gap_ms: float = 12.0,
+        dwell_frames: int = 0,
+        adaptive: bool = True,
+        decay: float = 0.995,  # <-- new
+    ):
+        n = len(points)
+        if n < 2 or len(timestamps_ms) != n:
+            return []
+
+        x = np.fromiter((p.x for p in points), float, count=n)
+        y = np.fromiter((p.y for p in points), float, count=n)
+        t = np.asarray(timestamps_ms, dtype=float)
+
+        def detect_axis(v: np.ndarray, axis: str):
+            if np.all(v == 0.0):
+                return []
+
+            # optional light smoothing (helps jitter). comment out if not needed.
+            v = np.convolve(v, np.ones(3) / 3, mode="same")
+
+            vmax = float(np.max(np.abs(v)))
+            peak = max(vmax, 1e-9)  # init peak
+            state = 0  # -1,0,+1
+            last_nz_sign = 0
+            last_nz_i = None
+            last_emit_t = -1e18
+            run_len = 0
+            out: list[TurnPoint] = []
+
+            for i in range(n):
+                # update adaptive amplitude
+                if adaptive:
+                    peak = max(abs(v[i]), peak * decay)
+                else:
+                    peak = vmax
+
+                eps_enter = zero_frac * peak
+                eps_exit = hysteresis_ratio * eps_enter
+
+                # hysteretic sign state
+                val = float(v[i])
+                if state >= 0 and val > +eps_enter:
+                    state = +1
+                elif state <= 0 and val < -eps_enter:
+                    state = -1
+                elif abs(val) < eps_exit:
+                    state = 0
+                # else: hold
+
+                sign = 1 if state > 0 else (-1 if state < 0 else 0)
+
+                # stability run (optional)
+                if sign != 0:
+                    run_len = run_len + 1 if (last_nz_sign == sign) else 1
+                else:
+                    run_len = 0
+
+                # crossing when new non-zero sign != last non-zero sign
+                if sign != 0 and last_nz_sign != 0 and sign != last_nz_sign and last_nz_i is not None:
+                    j = last_nz_i
+                    v0, v1 = float(v[j]), float(v[i])
+                    t0, t1 = float(t[j]), float(t[i])
+                    denom = v1 - v0
+                    alpha = -v0 / denom if abs(denom) > 1e-12 else 0.5
+                    if alpha < 0.0:
+                        alpha = 0.0
+                    elif alpha > 1.0:
+                        alpha = 1.0
+                    z_t = t0 + alpha * (t1 - t0)
+                    if (z_t - last_emit_t) >= min_gap_ms:
+                        label = (
+                            TurnType.LEFT_TO_RIGHT
+                            if (axis == "x" and sign < 0)
+                            else (
+                                TurnType.RIGHT_TO_LEFT
+                                if (axis == "x" and sign > 0)
+                                else TurnType.DOWN_TO_UP if (axis == "y" and sign < 0) else TurnType.UP_TO_DOWN
+                            )
+                        )
+                        z_idx = j + alpha * (i - j)
+                        out.append(TurnPoint(z_idx, z_t, label))
+                        last_emit_t = z_t
+
+                # commit last non-zero anchor (with optional dwell)
+                if sign != 0 and (dwell_frames == 0 or run_len >= dwell_frames):
+                    last_nz_sign = sign
+                    last_nz_i = i
+
+            return out
+
+        turns = detect_axis(x, "x") + detect_axis(y, "y")
+        turns.sort(key=lambda tp: (tp.t_ms, tp.idx))
+        return turns

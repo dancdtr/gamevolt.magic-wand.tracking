@@ -34,3 +34,12 @@ class GestureType(Enum):
     UP_START_CCW_CIRCLE = "up_start_ccw_circle"
     RIGHT_START_CCW_CIRCLE = "right_start_ccw_circle"
     DOWN_START_CCW_CIRCLE = "down_start_ccw_circle"
+
+    NNE = "nne"
+    ENE = "ene"
+    ESE = "ese"
+    SSE = "sse"
+    SSW = "ssw"
+    WSW = "wsw"
+    WNW = "wnw"
+    NNW = "nnw"

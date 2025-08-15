@@ -31,6 +31,7 @@ class ArrowDisplay:
             "none": Image.open(os.path.join(self.assets_dir, "none.png")),
             "unknown": Image.open(os.path.join(self.assets_dir, "unknown.png")),
             "circle": Image.open(os.path.join(self.assets_dir, "circle.png")),
+            "subintercardinal": Image.open(os.path.join(self.assets_dir, "subintercardinal.png")),
         }
 
         # Pre-generate transformed images for each gesture
@@ -67,9 +68,9 @@ class ArrowDisplay:
                 G.DOWN_START_CW_CIRCLE: (180, None),
                 G.LEFT_START_CW_CIRCLE: (90, None),
                 G.UP_START_CCW_CIRCLE: (0, Axis.X),
-                G.RIGHT_START_CCW_CIRCLE: (270, Axis.X),
+                G.RIGHT_START_CCW_CIRCLE: (270, Axis.Y),
                 G.DOWN_START_CCW_CIRCLE: (180, Axis.X),
-                G.LEFT_START_CCW_CIRCLE: (90, Axis.X),
+                G.LEFT_START_CCW_CIRCLE: (90, Axis.Y),
             }
             angle, flip_direction = semi_mapping.get(gesture, (0, None))
             img = base.rotate(angle, expand=True)
@@ -108,8 +109,30 @@ class ArrowDisplay:
             angle_map = {"up": 90, "right": 0, "down": 270, "left": 180}
             angle = angle_map[name]
             return base.rotate(angle, expand=True)
-        else:
+        elif any(name == d for d in ("up_left", "up_right", "down_right", "down_left")):
             base = self.base_images["intercardinal"]
             angle_map = {"up_left": 90, "up_right": 0, "down_right": 270, "down_left": 180}
             angle = angle_map[name]
             return base.rotate(angle, expand=True)
+        else:
+            base = self.base_images["subintercardinal"]
+            subintercardinal_mappings: dict[G, tuple[int, Axis | None]] = {
+                G.NNE: (0, None),
+                G.ENE: (90, Axis.X),
+                G.ESE: (270, None),
+                G.SSE: (0, Axis.Y),
+                G.SSW: (180, None),
+                G.WSW: (270, Axis.X),
+                G.WNW: (90, None),
+                G.NNW: (180, Axis.Y),
+            }
+
+            angle, flip_direction = subintercardinal_mappings.get(gesture, (0, None))
+            img = base.rotate(angle, expand=True)
+
+            if flip_direction == Axis.X:
+                img = img.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+            elif flip_direction == Axis.Y:
+                img = img.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+
+            return img

@@ -7,11 +7,9 @@ from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
 from arrow_display import ArrowDisplay
-from classification.curve_classifier import CurveClassifier
-from classification.first_quarant_classifier import FirstQuadrantClassifier
+from classification.gesture_classifier import GestureClassifier
+from classification.gesture_classifier_mask import GestureClassifierMask
 from classification.gesture_type import GestureType
-from classification.intercardinal_classifier import IntercardinalClassifier
-from classification.simple_classifier import SimpleClassifier
 from detection.configuration.gesture_detector_settings import GestureDetectorSettings
 from detection.configuration.gesture_settings import GestureSettings
 from detection.gesture_detector import GestureDetector
@@ -46,18 +44,20 @@ flick_queue: Queue[GestureType] = Queue()
 # y is pitch (up and down) (-ve is up, +ve is down)
 # z is yaw (left and right) (-ve is right, +ve is left)
 
-classifier = IntercardinalClassifier()
-classifier2 = FirstQuadrantClassifier()
-classifier3 = SimpleClassifier()
-classifier4 = CurveClassifier()
+classifier = GestureClassifier()
 
 
 gesture_factory = GestureFactory(settings=GestureSettings())
 
 
 def on_gesture_completed(points: list[GesturePoint]) -> None:
+
+    # mask = GestureClassifierMask([GestureType.LEFT_VIA_DOWN_SEMI, GestureType.DOWN])
+    # mask = GestureClassifierMask([GestureType.UP_RIGHT, GestureType.DOWN_RIGHT])
+    mask = None
     gesture = gesture_factory.create(points)
-    gesture_type = classifier4.classify(gesture)
+    gesture_type = classifier.classify(gesture, mask)
+
     print(gesture_type.name)
     print("__________")
 

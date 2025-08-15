@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 from typing import Self
 
@@ -7,6 +8,12 @@ class Vector2:
     x: float
     y: float
 
+    @classmethod
+    def from_average(cls, points: list[Self]) -> Self:
+        x = sum([p.x for p in points]) / len(points)
+        y = sum([p.y for p in points]) / len(points)
+        return cls(x, y)
+
     def __repr__(self) -> str:
         return f"({self.x}, {self.y})"
 
@@ -14,8 +21,9 @@ class Vector2:
         signed_spec = "+" + spec
         return f"({format(self.x, signed_spec)}, " f"{format(self.y, signed_spec)})"
 
-    @classmethod
-    def from_average(cls, points: list[Self]) -> Self:
-        x = sum([p.x for p in points]) / len(points)
-        y = sum([p.y for p in points]) / len(points)
-        return cls(x, y)
+    def get_bearing(self) -> float:
+        x, y = self.x, self.y
+        if x == 0 and y == 0:
+            raise ValueError("Zero vector has no bearing.")
+        a = (math.degrees(math.atan2(-y, x)) + 270) % 360.0
+        return 0.0 if abs(a) < 1e-12 else a
