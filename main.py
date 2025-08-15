@@ -6,7 +6,7 @@ from asyncio import Queue
 from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
-from arrow_display import ArrowDisplay
+from display.arrow_display import ArrowDisplay
 from gamevolt.imu.imu_serial_receiver import IMUSerialReceiver
 from gamevolt.imu.sensor_data import SensorData
 from gamevolt.serial.configuration.binary_serial_receiver_settings import BinarySerialReceiverSettings

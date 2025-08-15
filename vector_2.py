@@ -1,4 +1,5 @@
 import math
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Self
 
@@ -13,6 +14,10 @@ class Vector2:
         x = sum([p.x for p in points]) / len(points)
         y = sum([p.y for p in points]) / len(points)
         return cls(x, y)
+
+    def __iter__(self) -> Iterator[float]:
+        yield self.x
+        yield self.y
 
     def __repr__(self) -> str:
         return f"({self.x}, {self.y})"

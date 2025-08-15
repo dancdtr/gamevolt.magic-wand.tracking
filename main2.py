@@ -6,15 +6,15 @@ from asyncio import Queue
 from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
-from arrow_display import ArrowDisplay
+from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
 from classification.gesture_classifier import GestureClassifier
-from classification.gesture_classifier_mask import GestureClassifierMask
 from classification.gesture_type import GestureType
 from detection.configuration.gesture_detector_settings import GestureDetectorSettings
 from detection.configuration.gesture_settings import GestureSettings
 from detection.gesture_detector import GestureDetector
 from detection.gesture_factory import GestureFactory
 from detection.gesture_point import GesturePoint
+from display.arrow_display import ArrowDisplay
 from gamevolt.imu.imu_serial_receiver import IMUSerialReceiver
 from gamevolt.imu.sensor_data import SensorData
 from gamevolt.serial.configuration.binary_serial_receiver_settings import BinarySerialReceiverSettings

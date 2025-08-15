@@ -1,39 +1,21 @@
+from __future__ import annotations
+
 from collections import deque
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from itertools import islice, zip_longest
-from typing import Iterable, Sequence, TypeVar
+from typing import TypeVar
 
 T = TypeVar("T")
 _SENTINEL = object()
 
-# ---------- Primitive comparisons ----------
-
-
-def matches(iterable: Iterable[T], *values: T) -> bool:
-    return iter_is(iterable, values)
-
-
-def iter_equal(a: Iterable[T], b: Iterable[T]) -> bool:
-    return all(x == y for x, y in zip_longest(a, b, fillvalue=_SENTINEL))
-
-
-def iter_is(a: Iterable[T], b: Iterable[T]) -> bool:
-    for x, y in zip_longest(a, b, fillvalue=_SENTINEL):
-        if x is not y:
-            return False
-    return True
-
-
-# ---------- Lazy cropping helpers ----------
+# --------- Cropping (lazy) ---------
 
 
 def drop_first(it: Iterable[T], n: int) -> Iterator[T]:
-    """Yield all but the first n items (lazy, no extra memory)."""
     return islice(it, n, None)
 
 
 def drop_last(it: Iterable[T], n: int) -> Iterator[T]:
-    """Yield all but the last n items (lazy, O(n) buffer)."""
     if n <= 0:
         yield from it
         return
@@ -44,95 +26,130 @@ def drop_last(it: Iterable[T], n: int) -> Iterator[T]:
         q.append(x)
 
 
-# ---------- Prefix match with controlled tail slack ----------
+def crop(it: Iterable[T], *, head: int = 0, tail: int = 0) -> Iterator[T]:
+    return drop_last(drop_first(it, head), tail)
 
 
-def matches_prefix(
-    it: Iterable[T],
-    prefix: Sequence[T],  # pattern is small; materialize ok
-    *,
-    skip_head: int = 0,  # drop N leading items first
-    max_tail_extra: int | None = 0,  # None = unlimited, 0 = exact, N = allow up to N extras
-) -> bool:
+# --------- Exact equality (same length, same elements) ---------
+
+
+def equals(it: Iterable[T], seq: Sequence[T]) -> bool:
+    _S = object()
+    for a, b in zip_longest(it, seq, fillvalue=_S):
+        if a != b:
+            return False
+    return True
+
+
+def equals_single(it: Iterable[T], value: T) -> bool:
     it = iter(it)
-    if skip_head:
-        it = islice(it, skip_head, None)
+    first = next(it, _SENTINEL)
+    if first is _SENTINEL or first != value:
+        return False
+    return next(it, _SENTINEL) is _SENTINEL
 
-    # compare against prefix
+
+def matches(it: Iterable[T], *values: T) -> bool:
+    """True iff iterable yields exactly the given values (== compare)."""
+    return equals(it, values)
+
+
+# --------- Bounded prefix matching (your strict tool) ---------
+# - allow_tail_missing: permit the source to be up to N items SHORTER than pattern
+# - allow_tail_extra:   permit the source to have up to N EXTRA items after a full match
+#   (use None for unlimited extras)
+# Defaults (0, 0) => EXACT match behavior.
+
+
+def matches_prefix(it: Iterable[T], prefix: Sequence[T], *, allow_tail_missing: int = 0, allow_tail_extra: int | None = 0) -> bool:
+    it = iter(it)
+    i = 0
     for want in prefix:
         got = next(it, _SENTINEL)
-        if got is _SENTINEL or got is not want:
+        if got is _SENTINEL:
+            # source ended early → accept only if remaining fits the missing allowance
+            return (len(prefix) - i) <= allow_tail_missing
+        if got != want:
             return False
+        i += 1
 
-    # enforce tail allowance
-    if max_tail_extra is None:
-        return True  # unlimited extras allowed
-    if max_tail_extra <= 0:
-        return next(it, _SENTINEL) is _SENTINEL  # must end here
-
-    # allow up to N extras, but not more
-    for _ in range(max_tail_extra):
+    # full prefix matched; enforce extras
+    if allow_tail_extra is None:
+        return True
+    if allow_tail_extra <= 0:
+        return next(it, _SENTINEL) is _SENTINEL
+    for _ in range(allow_tail_extra):
         if next(it, _SENTINEL) is _SENTINEL:
-            return True  # ended within allowance
-    return next(it, _SENTINEL) is _SENTINEL  # no (N+1)th extra
+            return True
+    return next(it, _SENTINEL) is _SENTINEL
+
+
+# --------- Suffix (exact) ---------
+
+
+def ends_with(it: Iterable[T], suffix: Sequence[T]) -> bool:
+    m = len(suffix)
+    if m == 0:
+        return True
+    dq: deque[T] = deque(maxlen=m)
+    for x in it:
+        dq.append(x)
+    if len(dq) < m:
+        return False
+    for got, want in zip(dq, suffix):
+        if got != want:
+            return False
+    return True
 
 
 def matches_suffix(
     it: Iterable[T],
     suffix: Sequence[T],
     *,
-    skip_head: int = 0,  # drop first K items
-    drop_tail: int = 0,  # ignore last K items
-    max_head_extra: int | None = 0,  # None = unlimited extras before suffix
+    allow_head_missing: int = 0,
+    allow_head_extra: int | None = 0,
 ) -> bool:
-    """
-    True iff, after skipping 'skip_head' items and dropping 'drop_tail' items
-    from the end, the iterable ends with 'suffix'. Uses identity ('is') semantics
-    if T are enums; change to '==' if you want equality.
-    """
-    # Fast path for empty suffix
     m = len(suffix)
     if m == 0:
-        # After cropping, anything ends with empty suffix. Enforce head-extra limit if provided.
-        if max_head_extra is None:
-            return True
-        # Need the cropped length to check extras; count lazily:
-        cnt = 0
-        for _ in islice(it, skip_head, None):
-            cnt += 1
-        cnt = max(0, cnt - drop_tail)
-        return cnt <= max_head_extra
-
-    # Skip the head lazily
-    it = islice(it, skip_head, None)
-
-    # Maintain a bounded deque of the last (m + drop_tail) items
-    deq = deque(maxlen=m + max(drop_tail, 0))
-    cnt = 0
+        return True
+    dq: deque[T] = deque(maxlen=m)
+    count = 0
     for x in it:
-        deq.append(x)
-        cnt += 1
+        dq.append(x)
+        count += 1
 
-    # Drop the tail items (if any)
-    for _ in range(min(drop_tail, len(deq))):
-        deq.pop()
-
-    # Now deq holds the effective tail to check
-    if len(deq) < m:
-        return False
-
-    # Check head-extras allowance
-    effective_len = min(cnt, cnt - drop_tail)  # total after drop_tail (bounded at 0)
-    extras_before_suffix = effective_len - m
-    if extras_before_suffix < 0:
-        return False
-    if max_head_extra is not None and extras_before_suffix > max_head_extra:
-        return False
-
-    # Compare the last m items to the suffix (identity check for enums)
-    # islice over deque avoids materializing a list
-    start = len(deq) - m
-    for got, want in zip(islice(deq, start, None), suffix):
-        if got is not want:  # use '!=' if you want equality semantics
+    if count < m:
+        # allow shortfall up to allow_head_missing
+        if (m - count) > allow_head_missing:
             return False
-    return True
+        return all(g == w for g, w in zip(dq, suffix[-count:]))
+
+    # enforce head extras allowance
+    if allow_head_extra is not None and (count - m) > allow_head_extra:
+        return False
+
+    return all(g == w for g, w in zip(dq, suffix))
+
+
+# --- Convenience: varargs wrapper around equals ---
+
+
+# --- Starts-with (allow source to be longer) ---
+def starts_with(it: Iterable[T], prefix: Sequence[T]) -> bool:
+    it = iter(it)
+    for want in prefix:
+        got = next(it, _SENTINEL)
+        if got is _SENTINEL or got != want:
+            return False
+    return True  # extras allowed
+
+
+# Varargs sugar
+def starts_with_values(it: Iterable[T], *values: T) -> bool:
+    return starts_with(it, values)
+
+
+# --- “Source is suffix of pattern” (mirror helper) ---
+def is_suffix_of(it: Iterable[T], pattern: Sequence[T]) -> bool:
+    suffix = tuple(it)  # buffer source once
+    return ends_with(pattern, suffix)
