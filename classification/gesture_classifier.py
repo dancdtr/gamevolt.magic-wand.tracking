@@ -15,8 +15,8 @@ class GestureClassifier:
         self._classifiers: list[Classifier] = [
             # Arc360Classifier(),
             # Arc270Classifier(),
-            # Arc180Classifier(),
-            SubIntercardinalClassifier(),
+            Arc180Classifier(),
+            # SubIntercardinalClassifier(),
             # IntercardinalClassifier(),
             # CardinalClassifier(),
         ]

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from functools import cached_property
-from typing import Optional
 
 from detection.gesture_point import GesturePoint
 from detection.turn import TurnType
