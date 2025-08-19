@@ -17,13 +17,17 @@ class GestureDetector:
         self._settings = settings
         self._receiver = receiver
 
-        # Buffer only the current "run" of above-threshold frames
+        # For clean START: collect only a run of above-start-threshold frames
         self._run = deque(maxlen=self._settings.start_frames)
+
+        # For clean END: buffer sub-threshold tail; only keep if motion resumes
+        self._tail = deque(maxlen=self._settings.end_frames)
 
         self._gesture_points: list[GesturePoint] = []
         self._in_motion = False
         self._end_count = 0
         self._start_ts_ms: int | None = None
+        self._last_kept_ts_ms: int | None = None  # last sample actually committed to gesture
 
         self.motion_started = Event[Callable[[], None]]()
         self.motion_ended = Event[Callable[[list[GesturePoint]], None]]()
@@ -43,47 +47,70 @@ class GestureDetector:
         # L2 magnitude across pitch/yaw; ignore roll
         return (gy * gy + gz * gz) ** 0.5
 
+    def _commit_point(self, gp: GesturePoint) -> None:
+        """Append a kept point to the gesture, maintaining max_samples and last-kept ts."""
+        self._gesture_points.append(gp)
+        self._last_kept_ts_ms = gp.timestamp
+        if len(self._gesture_points) > self._settings.max_samples:
+            self._gesture_points.pop(0)
+
+    def _flush_tail_into_gesture(self) -> None:
+        """We dipped below end_thresh but didn't end; keep that small dip."""
+        while self._tail:
+            self._commit_point(self._tail.popleft())
+
     def _on_data_updated(self, data: SensorData) -> None:
         gy, gz = data.gyro.y, data.gyro.z
         mag = self._mag(gy, gz)
         ts = data.timestamp_ms
-        gp = GesturePoint(Vector2(gz, gy), ts)
+        gp = GesturePoint(Vector2(gz, gy), ts)  # (x=gz, y=gy) as per your convention
 
         if not self._in_motion:
-            # Only collect frames that are *currently* above start threshold
+            # Start detection: need a clean run of start_frames above start_thresh
             if mag > self._settings.start_thresh:
                 self._run.append(gp)
                 if len(self._run) == self._settings.start_frames:
-                    # Start! Seed gesture with exactly these frames
                     self._gesture_points = list(self._run)
                     self._run.clear()
                     self._on_motion_started(self._gesture_points[0].timestamp)
+                    # we have already committed these points
+                    self._last_kept_ts_ms = self._gesture_points[-1].timestamp
             else:
-                # Any drop resets the run
                 self._run.clear()
+            return
 
-        else:
-            # Record all samples while in motion
-            self._gesture_points.append(gp)
-            if len(self._gesture_points) > self._settings.max_samples:
-                self._gesture_points.pop(0)
-
-            # End logic with consecutive frames below end_thresh
-            if mag < self._settings.end_thresh:
-                self._end_count += 1
-                if self._end_count >= self._settings.end_frames:
-                    self._on_motion_stopped(ts)
-            else:
+        # In motion -----------------------------------------------------------
+        if mag >= self._settings.end_thresh:
+            # We're above end threshold again: the previous dip (if any) is not a real end.
+            if self._end_count:
+                # Keep the small dip frames we buffered
+                self._flush_tail_into_gesture()
                 self._end_count = 0
+            self._tail.clear()  # nothing pending
+            self._commit_point(gp)
+            return
+
+        # Below end threshold: buffer into tail and count consecutive sub-threshold frames
+        self._tail.append(gp)
+        self._end_count += 1
+
+        if self._end_count >= self._settings.end_frames:
+            # True end: DO NOT keep the tail. Stop at the last kept sample.
+            stop_ts_ms = self._last_kept_ts_ms if self._last_kept_ts_ms is not None else ts
+            self._on_motion_stopped(stop_ts_ms)
+            # Cleanup for next gesture
+            self._tail.clear()
+            self._end_count = 0
 
     def _on_motion_started(self, start_ts_ms: int) -> None:
         self._in_motion = True
         self._start_ts_ms = start_ts_ms
         self._end_count = 0
+        self._tail.clear()
         self._timer.start()
         self.motion_started.invoke()
 
-    def _on_motion_stopped(self, stop_ts_ms: float) -> None:
+    def _on_motion_stopped(self, stop_ts_ms: int) -> None:
         self._in_motion = False
 
         duration_ms = max(0, stop_ts_ms - (self._start_ts_ms or stop_ts_ms))
@@ -98,5 +125,7 @@ class GestureDetector:
         self._timer.stop()
         self._gesture_points.clear()
         self._run.clear()
+        self._tail.clear()
         self._end_count = 0
         self._start_ts_ms = None
+        self._last_kept_ts_ms = None
