@@ -1,44 +1,24 @@
-from collections.abc import Callable
-from enum import Enum, auto
-from typing import Iterable
-
+from classification.classifiers.arcs.arc_180_classifier import Arc180Classifier
+from classification.classifiers.arcs.arc_270_classifier import Arc270Classifier
+from classification.classifiers.arcs.arc_360_classifier import Arc360Classifier
 from classification.classifiers.classifier import Classifier
 from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
 from classification.classifiers.lines.cardinal_classifier import CardinalClassifier
 from classification.classifiers.lines.intercardinal_classifier import IntercardinalClassifier
 from classification.classifiers.lines.secondary_intercardinal_classifier import SecondaryIntercardinalClassifier
 from classification.gesture_type import GestureType
-from classification.lines import (
-    is_line_e,
-    is_line_ene,
-    is_line_ese,
-    is_line_n,
-    is_line_ne,
-    is_line_nne,
-    is_line_nnw,
-    is_line_nw,
-    is_line_s,
-    is_line_se,
-    is_line_sse,
-    is_line_ssw,
-    is_line_sw,
-    is_line_w,
-    is_line_wnw,
-    is_line_wsw,
-)
 from detection.gesture import Gesture
-from detection.turn import TurnType
-from detection.turn_point import TurnPoint
-from gamevolt.iterables.iter_tools import equals, equals_single, matches, matches_prefix
-from gamevolt.maths.extremum import Extremum
 
 
 class GestureClassifier:
     def __init__(self) -> None:
         self._classifiers: list[Classifier] = [
-            CardinalClassifier(),
-            IntercardinalClassifier(),
-            SecondaryIntercardinalClassifier(),
+            Arc360Classifier(),
+            Arc270Classifier(),
+            Arc180Classifier(),
+            # SecondaryIntercardinalClassifier(),
+            # IntercardinalClassifier(),
+            # CardinalClassifier(),
         ]
 
     def classify(self, gesture: Gesture, mask: GestureClassifierMask | None = None) -> GestureType:
@@ -53,129 +33,3 @@ class GestureClassifier:
                 return gesture_type
 
         return GestureType.UNKNOWN
-
-        # check circles
-        # if is_up_start_cw_circle(gesture):
-        #     return GestureType.UP_START_CW_CIRCLE
-        # if is_right_start_cw_circle(gesture):
-        #     return GestureType.RIGHT_START_CW_CIRCLE
-        # if is_down_start_cw_circle(gesture):
-        #     return GestureType.DOWN_START_CW_CIRCLE
-        # if is_left_start_cw_circle(gesture):
-        #     return GestureType.LEFT_START_CW_CIRCLE
-        # if is_up_start_ccw_circle(gesture):
-        #     return GestureType.UP_START_CCW_CIRCLE
-        # if is_right_start_ccw_circle(gesture):
-        #     return GestureType.RIGHT_START_CCW_CIRCLE
-        # if is_down_start_ccw_circle(gesture):
-        #     return GestureType.DOWN_START_CCW_CIRCLE
-        # if is_left_start_ccw_circle(gesture):
-        #     return GestureType.LEFT_START_CCW_CIRCLE
-
-        # check semi circles
-        # if is_up_via_left_semi(gesture):
-        #     return GestureType.UP_VIA_LEFT_SEMI
-        # if is_up_via_right_semi(gesture):
-        #     return GestureType.UP_VIA_RIGHT_SEMI
-        # if is_right_via_up_semi(gesture):
-        #     return GestureType.RIGHT_VIA_UP_SEMI
-        # if is_right_via_down_semi(gesture):
-        #     return GestureType.RIGHT_VIA_DOWN_SEMI
-        # if is_down_via_right_semi(gesture):
-        #     return GestureType.DOWN_VIA_RIGHT_SEMI
-        # if is_down_via_left_semi(gesture):
-        #     return GestureType.DOWN_VIA_LEFT_SEMI
-        # if is_left_via_up_semi(gesture):
-        #     return GestureType.LEFT_VIA_UP_SEMI
-        # if is_left_via_down_semi(gesture):
-        #     return GestureType.LEFT_VIA_DOWN_SEMI
-
-        return gesture_type
-
-
-def is_arc_half_cw_start_s(g: Gesture) -> bool:
-    return is_line_n(g) and is_left_right_curve(g)
-
-
-def is_curve_relaxed(g: Gesture, *pattern: TurnType) -> bool:
-    return matches_prefix(g.iter_turn_types(), pattern, allow_tail_missing=1, allow_tail_extra=0)
-
-
-def is_up_start_cw_circle(g: Gesture) -> bool:
-    return is_curve_relaxed(g, TurnType.E2W, TurnType.S2N, TurnType.W2E, TurnType.N2S)
-
-
-def is_up_start_cw_3_quarter_circle(g: Gesture) -> bool:
-    return is_curve_relaxed(g, TurnType.E2W, TurnType.S2N, TurnType.W2E)
-
-
-def is_right_start_cw_circle(g: Gesture) -> bool:
-    return is_curve_relaxed(g, TurnType.S2N, TurnType.W2E, TurnType.N2S, TurnType.E2W)
-
-
-def is_down_start_cw_circle(g: Gesture) -> bool:
-    return is_curve_relaxed(g, TurnType.W2E, TurnType.N2S, TurnType.E2W, TurnType.S2N)
-
-
-def is_left_start_cw_circle(g: Gesture) -> bool:
-    return is_curve_relaxed(g, TurnType.N2S, TurnType.E2W, TurnType.S2N, TurnType.W2E)
-
-
-def is_up_start_ccw_circle(g: Gesture) -> bool:
-    return is_curve_relaxed(g, TurnType.W2E, TurnType.S2N, TurnType.E2W, TurnType.N2S)
-
-
-def is_right_start_ccw_circle(g: Gesture) -> bool:
-    return is_curve_relaxed(g, TurnType.N2S, TurnType.W2E, TurnType.S2N, TurnType.E2W)
-
-
-def is_down_start_ccw_circle(g: Gesture) -> bool:
-    return is_curve_relaxed(g, TurnType.E2W, TurnType.N2S, TurnType.W2E, TurnType.S2N)
-
-
-def is_left_start_ccw_circle(g: Gesture) -> bool:
-    return is_curve_relaxed(g, TurnType.S2N, TurnType.E2W, TurnType.N2S, TurnType.W2E)
-
-
-def is_up_via_right_semi(g: Gesture) -> bool:
-    return is_line_n(g) and is_right_left_curve(g)
-
-
-# def is_arc_half_cw_start_e(g: Gesture) -> bool:
-#     return is_line_e(g) and is_up_down_curve(g)
-
-
-def is_right_via_down_semi(g: Gesture) -> bool:
-    return is_line_e(g) and is_down_up_curve(g)
-
-
-def is_arc_half_cw_start_n(g: Gesture) -> bool:
-    return is_line_s(g) and is_right_left_curve(g)
-
-
-def is_down_via_left_semi(g: Gesture) -> bool:
-    return is_line_s(g) and is_left_right_curve(g)
-
-
-def is_left_via_up_semi(g: Gesture) -> bool:
-    return is_line_w(g) and is_up_down_curve(g)
-
-
-def is_up_down_curve(g: Gesture) -> bool:
-    return is_turn_point_type(g.last_y_turn_point, TurnType.N2S) and matches(g.iter_y_extrema(), Extremum.Y_MAX, Extremum.Y_MIN)
-
-
-def is_down_up_curve(g: Gesture) -> bool:
-    return is_turn_point_type(g.last_y_turn_point, TurnType.S2N) and matches(g.iter_y_extrema(), Extremum.Y_MIN, Extremum.Y_MAX)
-
-
-def is_left_right_curve(g: Gesture) -> bool:
-    return is_turn_point_type(g.last_x_turn_point, TurnType.W2E) and matches(g.iter_x_extrema(), Extremum.X_MIN, Extremum.X_MAX)
-
-
-def is_right_left_curve(g: Gesture) -> bool:
-    return is_turn_point_type(g.last_x_turn_point, TurnType.E2W) and matches(g.iter_x_extrema(), Extremum.X_MAX, Extremum.X_MIN)
-
-
-def is_turn_point_type(turn_point: TurnPoint | None, turn_type: TurnType) -> bool:
-    return turn_point is not None and turn_point.type == turn_type

@@ -21,7 +21,7 @@ class Gesture:
         turn_points: list[TurnPoint],
     ) -> None:
         self.points = points
-        self.direction = average_direction
+        self.azimuth = average_direction
         self.turn_points = turn_points
         self.duration = duration
         self.extrema = extrema
@@ -89,7 +89,7 @@ class Gesture:
 
     @cached_property
     def direction_abs(self) -> Vector2:
-        return Vector2(abs(self.direction.x), abs(self.direction.y))
+        return Vector2(abs(self.azimuth.x), abs(self.azimuth.y))
 
     @property
     def min_direction_abs(self) -> float:

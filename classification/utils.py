@@ -3,7 +3,7 @@ from typing import Iterable
 from detection.gesture import Gesture
 from detection.turn import TurnType
 from detection.turn_point import TurnPoint
-from gamevolt.iterables.iter_tools import equals
+from gamevolt.iterables.iter_tools import equals, matches_prefix
 from gamevolt.maths.extremum import Extremum
 
 
@@ -33,3 +33,7 @@ def matches_turn_types(turn_types: Iterable[TurnType], *targets: TurnType) -> bo
 
 def is_turn_point_type(turn_point: TurnPoint | None, turn_type: TurnType) -> bool:
     return turn_point is not None and turn_point.type == turn_type
+
+
+def matches_curve(g: Gesture, *pattern: TurnType) -> bool:
+    return matches_prefix(g.iter_turn_types(), pattern, allow_tail_missing=1, allow_tail_extra=0)

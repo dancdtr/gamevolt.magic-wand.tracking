@@ -7,74 +7,74 @@ from gamevolt.maths.extremum import Extremum
 # =========================================
 # Cardinal velocities
 # =========================================
-def is_velocity_n(g: Gesture) -> bool:
+def has_velocity_n(g: Gesture) -> bool:
     return _has_sufficient_velocity(g, Azimuth.N)
 
 
-def is_velocity_e(g: Gesture) -> bool:
+def has_velocity_e(g: Gesture) -> bool:
     return _has_sufficient_velocity(g, Azimuth.E)
 
 
-def is_velocity_s(g: Gesture) -> bool:
+def has_velocity_s(g: Gesture) -> bool:
     return _has_sufficient_velocity(g, Azimuth.S)
 
 
-def is_velocity_w(g: Gesture) -> bool:
+def has_velocity_w(g: Gesture) -> bool:
     return _has_sufficient_velocity(g, Azimuth.W)
 
 
 # =========================================
 # Intercardinal velocities
 # =========================================
-def is_velocity_ne(g: Gesture) -> bool:
-    return is_velocity_n(g) and is_velocity_e(g)
+def has_velocity_ne(g: Gesture) -> bool:
+    return has_velocity_n(g) and has_velocity_e(g)
 
 
-def is_velocity_se(g: Gesture) -> bool:
-    return is_velocity_s(g) and is_velocity_e(g)
+def has_velocity_se(g: Gesture) -> bool:
+    return has_velocity_s(g) and has_velocity_e(g)
 
 
-def is_velocity_sw(g: Gesture) -> bool:
-    return is_velocity_s(g) and is_velocity_w(g)
+def has_velocity_sw(g: Gesture) -> bool:
+    return has_velocity_s(g) and has_velocity_w(g)
 
 
-def is_velocity_nw(g: Gesture) -> bool:
-    return is_velocity_n(g) and is_velocity_w(g)
+def has_velocity_nw(g: Gesture) -> bool:
+    return has_velocity_n(g) and has_velocity_w(g)
 
 
 # =========================================
 # Secondary Intercardinal velocities
 # =========================================
 def is_velocity_nne(g: Gesture) -> bool:
-    return is_velocity_ne(g) or is_velocity_n(g)
+    return has_velocity_ne(g) or has_velocity_n(g)
 
 
 def is_velocity_ene(g: Gesture) -> bool:
-    return is_velocity_ne(g) or is_velocity_e(g)
+    return has_velocity_ne(g) or has_velocity_e(g)
 
 
 def is_velocity_ese(g: Gesture) -> bool:
-    return is_velocity_se(g) and is_velocity_e(g)
+    return has_velocity_se(g) and has_velocity_e(g)
 
 
 def is_velocity_sse(g: Gesture) -> bool:
-    return is_velocity_se(g) and is_velocity_s(g)
+    return has_velocity_se(g) and has_velocity_s(g)
 
 
 def is_velocity_ssw(g: Gesture) -> bool:
-    return is_velocity_sw(g) and is_velocity_s(g)
+    return has_velocity_sw(g) and has_velocity_s(g)
 
 
 def is_velocity_wsw(g: Gesture) -> bool:
-    return is_velocity_sw(g) and is_velocity_w(g)
+    return has_velocity_sw(g) and has_velocity_w(g)
 
 
 def is_velocity_wnw(g: Gesture) -> bool:
-    return is_velocity_nw(g) or is_velocity_w(g)
+    return has_velocity_nw(g) or has_velocity_w(g)
 
 
 def is_velocity_nnw(g: Gesture) -> bool:
-    return is_velocity_nw(g) or is_velocity_n(g)
+    return has_velocity_nw(g) or has_velocity_n(g)
 
 
 # =========================================

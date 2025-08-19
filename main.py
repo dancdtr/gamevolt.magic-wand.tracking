@@ -22,7 +22,7 @@ from gamevolt.serial.configuration.binary_settings import BinarySettings
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from gamevolt.serial.imu_binary_receiver import IMUBinaryReceiver
 
-logger = get_logger(LoggingSettings("./Logs", "INFORMATION"))
+logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
 
 display = ArrowDisplay()
 
@@ -51,8 +51,6 @@ gesture_factory = GestureFactory(settings=GestureSettings())
 
 def on_gesture_completed(points: list[GesturePoint]) -> None:
 
-    # mask = GestureClassifierMask([GestureType.LEFT_VIA_DOWN_SEMI, GestureType.DOWN])
-    # mask = GestureClassifierMask([GestureType.UP_RIGHT, GestureType.DOWN_RIGHT])
     mask = None
     gesture = gesture_factory.create(points)
     gesture_type = classifier.classify(gesture, mask)
