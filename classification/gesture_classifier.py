@@ -5,7 +5,7 @@ from classification.classifiers.classifier import Classifier
 from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
 from classification.classifiers.lines.cardinal_classifier import CardinalClassifier
 from classification.classifiers.lines.intercardinal_classifier import IntercardinalClassifier
-from classification.classifiers.lines.secondary_intercardinal_classifier import SecondaryIntercardinalClassifier
+from classification.classifiers.lines.sub_intercardinal_classifier import SubIntercardinalClassifier
 from classification.gesture_type import GestureType
 from detection.gesture import Gesture
 
@@ -13,10 +13,10 @@ from detection.gesture import Gesture
 class GestureClassifier:
     def __init__(self) -> None:
         self._classifiers: list[Classifier] = [
-            Arc360Classifier(),
-            Arc270Classifier(),
-            Arc180Classifier(),
-            # SecondaryIntercardinalClassifier(),
+            # Arc360Classifier(),
+            # Arc270Classifier(),
+            # Arc180Classifier(),
+            SubIntercardinalClassifier(),
             # IntercardinalClassifier(),
             # CardinalClassifier(),
         ]

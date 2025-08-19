@@ -43,7 +43,7 @@ def has_velocity_nw(g: Gesture) -> bool:
 
 
 # =========================================
-# Secondary Intercardinal velocities
+# Sub Intercardinal velocities
 # =========================================
 def is_velocity_nne(g: Gesture) -> bool:
     return has_velocity_ne(g) or has_velocity_n(g)

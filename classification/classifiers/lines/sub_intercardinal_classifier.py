@@ -6,7 +6,7 @@ from classification.lines import is_line_ene, is_line_ese, is_line_nne, is_line_
 from detection.gesture import Gesture
 
 
-class SecondaryIntercardinalClassifier(Classifier):
+class SubIntercardinalClassifier(Classifier):
     def __init__(self) -> None:
         self._classifier_funcs: dict[GestureType, Callable[[Gesture], bool]] = {
             GestureType.LINE_NNE: is_line_nne,

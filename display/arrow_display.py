@@ -11,7 +11,7 @@ from display.image_providers.cardinal_line_image_provider import CardinalLineIma
 from display.image_providers.debug_image_provider import DebugImageProvider
 from display.image_providers.image_provider import ImageProvider
 from display.image_providers.intercardinal_line_image_provider import IntercardinalLineImageProvider
-from display.image_providers.secondary_intercardinal_line_image_provider import SecondaryIntercardinalLineImageProvider
+from display.image_providers.sub_intercardinal_line_image_provider import SubIntercardinalLineImageProvider
 
 
 class ArrowDisplay:
@@ -36,7 +36,7 @@ class ArrowDisplay:
             DebugImageProvider(build_path("unknown.png"), build_path("none.png"), image_size),
             CardinalLineImageProvider(build_path("cardinal_line.png"), image_size),
             IntercardinalLineImageProvider(build_path("intercardinal_line.png"), image_size),
-            SecondaryIntercardinalLineImageProvider(build_path("secondary_intercardinal_line.png"), image_size),
+            SubIntercardinalLineImageProvider(build_path("sub_intercardinal_line.png"), image_size),
             Arc180ImageProvider(build_path("arc_180.png"), image_size),
             Arc270ImageProvider(build_path("arc_270.png"), image_size),
             Arc360ImageProvider(build_path("arc_360.png"), image_size),

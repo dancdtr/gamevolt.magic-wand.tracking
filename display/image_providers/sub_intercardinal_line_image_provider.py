@@ -4,7 +4,7 @@ from classification.gesture_type import GestureType as GestureType
 from display.image_providers.image_provider import ImageProvider
 
 
-class SecondaryIntercardinalLineImageProvider(ImageProvider):
+class SubIntercardinalLineImageProvider(ImageProvider):
     def __init__(self, base_png: str, image_size: int) -> None:
         super().__init__()
 

@@ -42,7 +42,7 @@ def has_azimuth_nw(direction: Vector2) -> bool:
 
 
 # =========================================
-# Secondary Intercardinal Directions
+# Sub Intercardinal Directions
 # =========================================
 def is_direction_nne(direction: Vector2) -> bool:
     return _has_azimuth(direction, Azimuth.NNE)

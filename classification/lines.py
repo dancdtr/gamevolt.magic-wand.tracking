@@ -76,7 +76,7 @@ def is_line_nw(g: Gesture) -> bool:
 
 
 # =========================================
-# Secondary Intercardinal lines
+# Sub Intercardinal lines
 # =========================================
 def is_line_nne(g: Gesture) -> bool:
     return is_velocity_nne(g) and is_direction_nne(g.azimuth)

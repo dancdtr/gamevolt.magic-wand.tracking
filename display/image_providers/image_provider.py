@@ -1,5 +1,3 @@
-import os
-import tkinter as tk
 from abc import ABC, abstractmethod
 
 from PIL import Image
@@ -25,13 +23,15 @@ class ImageProvider(ABC):
         return Image.open(img_path)
 
     def create(self, img: ImageFile, size: int, rotation_angle: float = 0, flip_x: bool = False, flip_y: bool = False) -> PhotoImage:
-        image = img.rotate(angle=rotation_angle, expand=True)
+        image = img.rotate(angle=0, expand=True)
 
         if flip_x:
             image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+
+        image = image.rotate(angle=rotation_angle, expand=True)
+        image = image.resize((size, size), Image.Resampling.LANCZOS)
+
         if flip_y:
             image = image.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
-
-        image = image.resize((size, size), Image.Resampling.LANCZOS)
 
         return PhotoImage(image)
