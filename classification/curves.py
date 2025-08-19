@@ -8,6 +8,7 @@ from classification.classifiers.inflections import (
     ends_with_y_turn_type_n2s,
     ends_with_y_turn_type_s2n,
 )
+from classification.directions import has_azimuth_e, has_azimuth_n, has_azimuth_s, has_azimuth_w, is_direction_ese
 from detection.gesture import Gesture
 from detection.turn import TurnType
 from detection.turn_direction import TurnDirection
@@ -47,21 +48,29 @@ _CCW_CARDINAL_OFFSET = {
 # Curves 180 CW
 # =========================================
 def is_curve_180_cw_start_n(g: Gesture) -> bool:
+    return ends_with_x_turn_type_e2w(g) and has_azimuth_s(g.azimuth)
+    return _is_curve_180_cw(g, start=Azimuth.N) and has_azimuth_s(g.azimuth)
     return _is_curve_180_cw(g, start=Azimuth.N) and has_bounce_e2w(g)
     return ends_with_x_turn_type_e2w(g) and has_bounce_e2w(g)
 
 
 def is_curve_180_cw_start_e(g: Gesture) -> bool:
+    return ends_with_y_turn_type_s2n(g) and has_azimuth_w(g.azimuth)
+    return _is_curve_180_cw(g, start=Azimuth.E) and has_azimuth_w(g.azimuth)
     return _is_curve_180_cw(g, start=Azimuth.E) and has_bounce_s2n(g)
     return ends_with_y_turn_type_s2n(g) and has_bounce_s2n(g)
 
 
 def is_curve_180_cw_start_s(g: Gesture) -> bool:
+    return ends_with_x_turn_type_w2e(g) and has_azimuth_n(g.azimuth)
+    return _is_curve_180_cw(g, start=Azimuth.S) and has_azimuth_n(g.azimuth)
     return _is_curve_180_cw(g, start=Azimuth.S) and has_bounce_w2e(g)
     return ends_with_x_turn_type_w2e(g) and has_bounce_w2e(g)
 
 
 def is_curve_180_cw_start_w(g: Gesture) -> bool:
+    return ends_with_y_turn_type_n2s(g) and has_azimuth_e(g.azimuth)
+    return _is_curve_180_cw(g, start=Azimuth.W) and has_azimuth_e(g.azimuth)
     return _is_curve_180_cw(g, start=Azimuth.W) and has_bounce_n2s(g)
     return ends_with_y_turn_type_n2s(g) and has_bounce_n2s(g)
 
@@ -70,21 +79,29 @@ def is_curve_180_cw_start_w(g: Gesture) -> bool:
 # Curves 180 CCW
 # =========================================
 def is_curve_180_ccw_start_n(g: Gesture) -> bool:
+    return ends_with_x_turn_type_w2e(g) and has_azimuth_s(g.azimuth)
+    return _is_curve_180_ccw(g, start=Azimuth.N) and has_azimuth_s(g.azimuth)
     return _is_curve_180_ccw(g, start=Azimuth.N) and has_bounce_w2e(g)
     return ends_with_x_turn_type_w2e(g) and has_bounce_w2e(g)
 
 
 def is_curve_180_ccw_start_e(g: Gesture) -> bool:
+    return ends_with_y_turn_type_n2s(g) and has_azimuth_w(g.azimuth)
+    return _is_curve_180_ccw(g, start=Azimuth.E) and has_azimuth_w(g.azimuth)
     return _is_curve_180_ccw(g, start=Azimuth.E) and has_bounce_n2s(g)
     return ends_with_y_turn_type_n2s(g) and has_bounce_n2s(g)
 
 
 def is_curve_180_ccw_start_s(g: Gesture) -> bool:
+    return ends_with_x_turn_type_e2w(g) and has_azimuth_n(g.azimuth)
+    return _is_curve_180_ccw(g, start=Azimuth.S) and has_azimuth_n(g.azimuth)
     return _is_curve_180_ccw(g, start=Azimuth.S) and has_bounce_e2w(g)
     return ends_with_x_turn_type_e2w(g) and has_bounce_e2w(g)
 
 
 def is_curve_180_ccw_start_w(g: Gesture) -> bool:
+    return ends_with_y_turn_type_s2n(g) and has_azimuth_e(g.azimuth)
+    return _is_curve_180_ccw(g, start=Azimuth.W) and has_azimuth_e(g.azimuth)
     return _is_curve_180_ccw(g, start=Azimuth.W) and has_bounce_s2n(g)
     return ends_with_y_turn_type_s2n(g) and has_bounce_s2n(g)
 

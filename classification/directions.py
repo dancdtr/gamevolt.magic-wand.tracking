@@ -81,5 +81,4 @@ def is_direction_nnw(direction: Vector2) -> bool:
 # =========================================
 def _has_azimuth(direction: Vector2, azimuth: Azimuth, variance_deg: float = 22.5) -> bool:
     bearing = direction.get_bearing()
-    print(f"bearing: {bearing} | variance: +- {variance_deg}")
     return (azimuth.deg - variance_deg) <= bearing <= (azimuth.deg + variance_deg)

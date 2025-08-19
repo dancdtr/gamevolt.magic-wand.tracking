@@ -1,6 +1,6 @@
 from detection.gesture import Gesture
 from detection.turn import TurnType
-from detection.turn_point import TurnPoint
+from detection.turn_event import TurnEvent
 
 
 # =========================================
@@ -100,5 +100,5 @@ def _ends_with_y_turn_point(g: Gesture, type: TurnType) -> bool:
     return is_turn_type(g.last_y_turn_point, type)
 
 
-def is_turn_type(turn: TurnPoint | None, type: TurnType) -> bool:
+def is_turn_type(turn: TurnEvent | None, type: TurnType) -> bool:
     return turn is not None and turn.type is type

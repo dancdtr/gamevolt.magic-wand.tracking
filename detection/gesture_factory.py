@@ -1,10 +1,11 @@
 import numpy as np
 
 from detection.configuration.gesture_settings import GestureSettings
+from detection.extremum_event import ExtremumEvent
 from detection.gesture import Gesture
 from detection.gesture_point import GesturePoint
 from detection.turn import TurnType
-from detection.turn_point import TurnPoint
+from detection.turn_event import TurnEvent
 from gamevolt.maths.extremum import Extremum
 from gamevolt.maths.vector_2 import Vector2
 
@@ -17,8 +18,7 @@ class GestureFactory:
         if len(gesture_points) < self._settings.min_sample:
             raise ValueError("not enough samples")
 
-        raw = [g.velocity for g in gesture_points]
-        points = self._apply_axis_inversion(raw)
+        points = [g.velocity for g in gesture_points]
 
         duration = gesture_points[-1].timestamp - gesture_points[0].timestamp
 
@@ -33,7 +33,7 @@ class GestureFactory:
         first_idx, first_ext = self._first_extremum(points)
 
         # full extrema sequence (for later analyzers)
-        extrema = self._get_extrema_sequence(points)
+        extrema = self._get_extrema_sequence(gesture_points)
 
         direction = Vector2.from_average(points)
 
@@ -43,18 +43,12 @@ class GestureFactory:
         # You can either extend Gesture to carry these, or stash in a metadata dict
         return Gesture(
             points=gesture_points,
-            average_direction=direction,
             duration=duration,
-            extrema=extrema,
-            turn_points=turn_points,
+            extrema_events=extrema,
+            turn_events=turn_points,
         )
 
-    def _apply_axis_inversion(self, points: list[Vector2]) -> list[Vector2]:
-        sx = -1 if self._settings.invert_x else 1
-        sy = -1 if self._settings.invert_y else 1
-        return [Vector2(p.x * sx, p.y * sy) for p in points]
-
-    def _get_extrema_sequence(self, points: list[Vector2]) -> list[Extremum]:
+    def _get_extrema_sequence(self, points: list[GesturePoint]) -> list[ExtremumEvent]:
         """
         Slide a window and emit axis-tagged extrema where the CENTER sample
         is the unique (or first) max/min and clears a threshold.
@@ -64,8 +58,9 @@ class GestureFactory:
         if n < 2 * w + 1:
             return []
 
-        x_vals = np.array([p.x for p in points], dtype=float)
-        y_vals = np.array([p.y for p in points], dtype=float)
+        x_vals = np.array([p.velocity.x for p in points], dtype=float)
+        y_vals = np.array([p.velocity.y for p in points], dtype=float)
+        t_s = np.array([p.timestamp for p in points], dtype=float)
 
         x_abs_max = np.max(np.abs(x_vals))
         y_abs_max = np.max(np.abs(y_vals))
@@ -75,7 +70,7 @@ class GestureFactory:
         x_thr = self._settings.extrema_thresh_fraction * x_abs_max if x_abs_max > 0 else float("inf")
         y_thr = self._settings.extrema_thresh_fraction * y_abs_max if y_abs_max > 0 else float("inf")
 
-        out: list[Extremum] = []
+        events: list[ExtremumEvent] = []
 
         center = w  # index of the center inside each window
         for i in range(w, n - w):
@@ -84,42 +79,33 @@ class GestureFactory:
 
             # X axis: require the center to be the (first) argmax/argmin
             if np.argmax(x_win) == center and x_vals[i] > x_thr:
-                out.append(Extremum.X_MIN)
+                events.append(ExtremumEvent(t_s[i], Extremum.X_MIN, x_vals[i]))
             elif np.argmin(x_win) == center and x_vals[i] < -x_thr:
-                out.append(Extremum.X_MAX)
+                events.append(ExtremumEvent(t_s[i], Extremum.X_MAX, x_vals[i]))
 
             # Y axis
             if np.argmax(y_win) == center and y_vals[i] > y_thr:
-                out.append(Extremum.Y_MIN)
+                events.append(ExtremumEvent(t_s[i], Extremum.Y_MIN, y_vals[i]))
             elif np.argmin(y_win) == center and y_vals[i] < -y_thr:
-                out.append(Extremum.Y_MAX)
+                events.append(ExtremumEvent(t_s[i], Extremum.Y_MAX, y_vals[i]))
 
-        return self._squish2(out)
+        return self._squish(events)
 
-    def _squish2(self, extrema: list[Extremum]) -> list[Extremum]:
+    def _squish(self, extrema_events: list[ExtremumEvent]) -> list[ExtremumEvent]:
         # Drop consecutive duplicates per axis
         prev_x = Extremum.NONE
         prev_y = Extremum.NONE
-        squished: list[Extremum] = []
+        squished: list[ExtremumEvent] = []
 
-        for e in extrema:
-            if e in (Extremum.X_MIN, Extremum.X_MAX):
-                if e != prev_x:
+        for e in extrema_events:
+            if e.type in (Extremum.X_MIN, Extremum.X_MAX):
+                if e.type != prev_x:
                     squished.append(e)
-                    prev_x = e
+                    prev_x = e.type
             else:  # Y_MIN/Y_MAX
-                if e != prev_y:
+                if e.type != prev_y:
                     squished.append(e)
-                    prev_y = e
-        return squished
-
-    def _squish(self, extrema: list[Extremum]) -> list[Extremum]:
-        if not extrema:
-            return []
-        squished = [extrema[0]]
-        for e in extrema[1:]:
-            if e != squished[-1]:
-                squished.append(e)
+                    prev_y = e.type
         return squished
 
     def _first_extremum(self, points: list[Vector2]) -> tuple[int | None, Extremum]:
@@ -204,7 +190,7 @@ class GestureFactory:
             last_nz_i = None
             last_emit_t = -1e18
             run_len = 0
-            out: list[TurnPoint] = []
+            out: list[TurnEvent] = []
 
             for i in range(n):
                 # update adaptive amplitude
@@ -239,6 +225,7 @@ class GestureFactory:
                     j = last_nz_i
                     v0, v1 = float(v[j]), float(v[i])
                     t0, t1 = float(t[j]), float(t[i])
+                    t0, t1 = float(t[j]), float(t[i])
                     denom = v1 - v0
                     alpha = -v0 / denom if abs(denom) > 1e-12 else 0.5
                     if alpha < 0.0:
@@ -255,7 +242,8 @@ class GestureFactory:
                             )
                         )
                         z_idx = j + alpha * (i - j)
-                        out.append(TurnPoint(z_idx, z_t, label))
+                        # out.append(TurnEvent(z_idx, z_t, label))
+                        out.append(TurnEvent(t_ms=t[j], type=label))
                         last_emit_t = z_t
 
                 # commit last non-zero anchor (with optional dwell)
@@ -266,5 +254,6 @@ class GestureFactory:
             return out
 
         turns = detect_axis(x, "x") + detect_axis(y, "y")
-        turns.sort(key=lambda tp: (tp.t_ms, tp.idx))
+        # turns.sort(key=lambda tp: (tp.t_ms, tp.idx))
+        turns.sort(key=lambda tp: (tp.t_ms))
         return turns

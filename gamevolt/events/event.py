@@ -1,4 +1,3 @@
-import traceback
 from logging import Logger
 from typing import Callable, Generic, List, TypeVar
 
