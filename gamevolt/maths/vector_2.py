@@ -26,7 +26,7 @@ class Vector2:
         signed_spec = "+" + spec
         return f"({format(self.x, signed_spec)}, " f"{format(self.y, signed_spec)})"
 
-    def get_bearing(self) -> float:
+    def get_azimuth(self) -> float:
         x, y = self.x, self.y
         if x == 0 and y == 0:
             raise ValueError("Zero vector has no bearing.")

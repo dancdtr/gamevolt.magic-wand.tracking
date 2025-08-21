@@ -14,11 +14,11 @@ from detection.gesture import Gesture
 class GestureClassifier:
     def __init__(self) -> None:
         self._classifiers: list[Classifier] = [
-            # Arc360Classifier(),
+            Arc360Classifier(),
             # Arc270Classifier(),
-            Arc180Classifier(),
+            # Arc180Classifier(),
             # SubIntercardinalClassifier(),
-            IntercardinalClassifier(),
+            # IntercardinalClassifier(),
             # CardinalClassifier(),
         ]
 

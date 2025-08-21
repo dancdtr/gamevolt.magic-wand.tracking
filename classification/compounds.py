@@ -10,6 +10,6 @@ def is_p(g: Gesture) -> bool:
     part2a = is_curve_270_cw_start_w(g2)
     part2b = is_curve_180_cw_start_n(g2)
 
-    print(f"R analysis| part 1: {part1}, part 2a: {part2a}, part 2b: {part2b}")
+    # print(f"R analysis| part 1: {part1}, part 2a: {part2a}, part 2b: {part2b}")
 
     return part1 and (part2a or part2b)

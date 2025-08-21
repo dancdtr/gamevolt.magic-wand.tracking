@@ -51,36 +51,36 @@ class Gesture:
     # ---------- Lazy “last *” lookups ----------
 
     @property
-    def first_turn_point(self) -> TurnEvent | None:
+    def first_turn_event(self) -> TurnEvent | None:
         return self.turn_events[0] if self.turn_events else None
 
     @property
-    def first_x_turn_point(self) -> TurnEvent | None:
+    def first_x_turn_event(self) -> TurnEvent | None:
         for tp in self.turn_events:
             if tp.type.in_x():
                 return tp
         return None
 
     @property
-    def first_y_turn_point(self) -> TurnEvent | None:
+    def first_y_turn_event(self) -> TurnEvent | None:
         for tp in self.turn_events:
             if tp.type.in_y():
                 return tp
         return None
 
     @property
-    def last_turn_point(self) -> TurnEvent | None:
+    def last_turn_event(self) -> TurnEvent | None:
         return self.turn_events[-1] if self.turn_events else None
 
     @property
-    def last_x_turn_point(self) -> TurnEvent | None:
+    def last_x_turn_event(self) -> TurnEvent | None:
         for tp in reversed(self.turn_events):
             if tp.type.in_x():
                 return tp
         return None
 
     @property
-    def last_y_turn_point(self) -> TurnEvent | None:
+    def last_y_turn_event(self) -> TurnEvent | None:
         for tp in reversed(self.turn_events):
             if tp.type.in_y():
                 return tp

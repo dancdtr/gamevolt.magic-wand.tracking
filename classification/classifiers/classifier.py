@@ -16,8 +16,12 @@ class Classifier(ABC):
             return self._classify_any(gesture)
 
         for target in mask.target_gesture_types:
-            classifier = self._get_classifier(target)
-            if classifier(gesture):
+            classifier_func = self._get_classifier_func(target)
+
+            if classifier_func is None:
+                return GestureType.UNKNOWN
+
+            if classifier_func(gesture):
                 return target
 
         return GestureType.UNKNOWN
@@ -29,8 +33,5 @@ class Classifier(ABC):
 
         return GestureType.UNKNOWN
 
-    def _get_classifier(self, type: GestureType):
-        classifier = self.get_classifier_funcs[type]
-        if not classifier:
-            raise Exception(f"No classifier set for {GestureType.name}!")
-        return classifier
+    def _get_classifier_func(self, type: GestureType) -> Callable[[Gesture], bool] | None:
+        return self.get_classifier_funcs.get(type, None)

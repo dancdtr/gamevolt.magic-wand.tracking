@@ -20,7 +20,7 @@ class ArrowDisplay:
     transforming them (rotate/mirror) for all Gesture enum values.
     """
 
-    def __init__(self, image_size: int = 300, assets_dir: str = "./display/images/primitives"):
+    def __init__(self, image_size: int, assets_dir: str):
         self.size = image_size
         self.assets_dir = assets_dir
         self.root = tk.Tk()

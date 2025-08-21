@@ -24,7 +24,7 @@ from gamevolt.serial.imu_binary_receiver import IMUBinaryReceiver
 
 logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
 
-display = ArrowDisplay()
+display = ArrowDisplay(image_size=400, assets_dir="./display/images/primitives")
 
 GYRO_START_THRESH = 1.0
 GYRO_END_THRESH = 0.7
@@ -92,7 +92,7 @@ gesture_settings = GestureDetectorSettings(
     start_frames=3,
     end_frames=3,
     max_samples=100,
-    min_duration=0.2,
+    min_duration=0.14,
 )
 gesture_detector = GestureDetector(logger, imu_rx, gesture_settings)
 

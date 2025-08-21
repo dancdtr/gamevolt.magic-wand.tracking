@@ -41,18 +41,22 @@ from detection.gesture import Gesture
 # Cardinal lines
 # =========================================
 def is_line_n(g: Gesture) -> bool:
+    return has_azimuth_n(g.azimuth)
     return has_velocity_n(g) and has_azimuth_n(g.azimuth)
 
 
 def is_line_e(g: Gesture) -> bool:
+    return has_azimuth_e(g.azimuth)
     return has_velocity_e(g) and has_azimuth_e(g.azimuth)
 
 
 def is_line_s(g: Gesture) -> bool:
+    return has_azimuth_s(g.azimuth)
     return has_velocity_s(g) and has_azimuth_s(g.azimuth)
 
 
 def is_line_w(g: Gesture) -> bool:
+    return has_azimuth_w(g.azimuth)
     return has_velocity_w(g) and has_azimuth_w(g.azimuth)
 
 
