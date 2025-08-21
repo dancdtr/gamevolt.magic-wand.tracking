@@ -14,25 +14,30 @@ from detection.gesture import Gesture
 class GestureClassifier:
     def __init__(self) -> None:
         self._classifiers: list[Classifier] = [
-            Arc360Classifier(),
+            # Arc360Classifier(),
             # Arc270Classifier(),
-            # Arc180Classifier(),
+            Arc180Classifier(),
             # SubIntercardinalClassifier(),
             # IntercardinalClassifier(),
             # CardinalClassifier(),
         ]
 
-    def classify(self, gesture: Gesture, mask: GestureClassifierMask | None = None) -> GestureType:
-        # print(f"Extrema: {[e.type.name for e in gesture.extrema_events]}")
-        # print(f"X extrema: {[e.name for e in gesture.iter_x_extrema()]}")
-        # print(f"Y extrema: {[e.name for e in gesture.iter_y_extrema()]}")
-        # print(f"Turn points: {[tp.type.name for tp in gesture.turn_events]}")
+    def classify(self, gesture: Gesture, mask: GestureClassifierMask | None = None) -> list[GestureType]:
+        print(f"Extrema: {[e.type.name for e in gesture.extrema_events]}")
+        print(f"X extrema: {[e.name for e in gesture.iter_x_extrema()]}")
+        print(f"Y extrema: {[e.name for e in gesture.iter_y_extrema()]}")
+        print(f"Turn points: {[tp.type.name for tp in gesture.turn_events]}")
 
-        print(is_p(gesture))
+        # print(is_p(gesture))
+
+        gesture_types = []
 
         for classifier in self._classifiers:
             gesture_type = classifier.classify(gesture, mask)
             if gesture_type is not GestureType.UNKNOWN:
-                return gesture_type
+                gesture_types.append(gesture_type)
 
-        return GestureType.UNKNOWN
+        if len(gesture_types) == 0:
+            gesture_types.append(GestureType.UNKNOWN)
+
+        return gesture_types

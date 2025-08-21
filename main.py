@@ -15,12 +15,13 @@ from detection.gesture_detector import GestureDetector
 from detection.gesture_factory import GestureFactory
 from detection.gesture_point import GesturePoint
 from display.arrow_display import ArrowDisplay
+from gamevolt.imu.configuration.imu_settings import ImuSettings
+from gamevolt.imu.imu_binary_receiver import IMUBinaryReceiver
 from gamevolt.imu.imu_serial_receiver import IMUSerialReceiver
 from gamevolt.imu.sensor_data import SensorData
 from gamevolt.serial.configuration.binary_serial_receiver_settings import BinarySerialReceiverSettings
 from gamevolt.serial.configuration.binary_settings import BinarySettings
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
-from gamevolt.serial.imu_binary_receiver import IMUBinaryReceiver
 
 logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
 
@@ -50,12 +51,13 @@ gesture_factory = GestureFactory(settings=GestureSettings())
 
 
 def on_gesture_completed(points: list[GesturePoint]) -> None:
-
-    mask = None
     gesture = gesture_factory.create(points)
-    gesture_type = classifier.classify(gesture, mask)
+    gesture_types = classifier.classify(gesture)
 
-    print(gesture_type.name)
+    matches = [g.name for g in gesture_types]
+    print(f"Matched gestures: {matches}")
+    gesture_type = gesture_types[0]
+    print(f"Using gesture: {gesture_type.name}")
     print("__________")
 
     loop = asyncio.get_event_loop()
@@ -84,7 +86,10 @@ rx_settings = BinarySerialReceiverSettings(
     SerialReceiverSettings(port="/dev/cu.usbmodem11101", baud=115200, timeout=1, retry_interval=3.0),
     BinarySettings("<I9f"),
 )
-imu_rx = IMUBinaryReceiver(logger, rx_settings)
+
+# imu_settings = ImuSettings(flip_x=True, flip_y=True, flip_z=True)
+imu_settings = ImuSettings(flip_x=False, flip_y=False, flip_z=False)
+imu_rx = IMUBinaryReceiver(logger, rx_settings, imu_settings)
 
 gesture_settings = GestureDetectorSettings(
     start_thresh=1.0,
