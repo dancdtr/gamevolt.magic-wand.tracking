@@ -1,12 +1,13 @@
-from classification.classifiers.arcs.arc_180_classifier import Arc180Classifier
-from classification.classifiers.arcs.arc_270_classifier import Arc270Classifier
-from classification.classifiers.arcs.arc_360_classifier import Arc360Classifier
 from classification.classifiers.classifier import Classifier
+from classification.classifiers.debugging.arc_180_classifier import Arc180Classifier
+from classification.classifiers.debugging.arc_270_classifier import Arc270Classifier
+from classification.classifiers.debugging.arc_360_classifier import Arc360Classifier
+from classification.classifiers.debugging.cardinal_classifier import CardinalClassifier
+from classification.classifiers.debugging.crook_classifier import CrookClassifier
+from classification.classifiers.debugging.intercardinal_classifier import IntercardinalClassifier
+from classification.classifiers.debugging.sub_intercardinal_classifier import SubIntercardinalClassifier
 from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
-from classification.classifiers.lines.cardinal_classifier import CardinalClassifier
-from classification.classifiers.lines.intercardinal_classifier import IntercardinalClassifier
-from classification.classifiers.lines.sub_intercardinal_classifier import SubIntercardinalClassifier
-from classification.compounds import is_p
+from classification.classifiers.spells.revelio_classifier import RevelioClassifier
 from classification.gesture_type import GestureType
 from detection.gesture import Gesture
 
@@ -16,7 +17,9 @@ class GestureClassifier:
         self._classifiers: list[Classifier] = [
             # Arc360Classifier(),
             # Arc270Classifier(),
-            Arc180Classifier(),
+            # Arc180Classifier(),
+            RevelioClassifier()
+            # CrookClassifier()
             # SubIntercardinalClassifier(),
             # IntercardinalClassifier(),
             # CardinalClassifier(),

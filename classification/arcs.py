@@ -48,9 +48,6 @@ _CCW_CARDINAL_OFFSET = {
 # Arcs 180 CW
 # =========================================
 def is_arc_180_cw_start_n(g: Gesture) -> bool:
-    ex = g.last_extremum_event
-    if ex:
-        print(f"last extremum: {ex.type} | {ex.value:.3f}")
     return ends_with_x_turn_type_e2w(g) and has_bounce_e2w(g) and has_azimuth_s(g)
 
 
@@ -205,6 +202,8 @@ def _matches_curve(
     start: Azimuth,
     degrees: int,
     direction: TurnDirection,
+    allow_head_missing: int = 0,
+    allow_head_extra: int = 0,
     allow_tail_missing: int = 0,
     allow_tail_extra: int = 0,
 ) -> bool:
@@ -213,6 +212,8 @@ def _matches_curve(
     return matches_prefix(
         src,
         pattern,
+        allow_head_missing=allow_head_missing,
+        allow_head_extra=allow_head_extra,
         allow_tail_missing=allow_tail_missing,
         allow_tail_extra=allow_tail_extra,
     )

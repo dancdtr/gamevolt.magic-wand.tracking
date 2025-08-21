@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from enum import StrEnum
 
 
@@ -77,6 +76,21 @@ class GestureType(StrEnum):
     WAVE_SINE_Y_POS = "WAVE_SINE_Y_POS"
     WAVE_SINE_Y_NEG = "WAVE_SINE_Y_NEG"
 
+    # =========================================
+    # Crooks
+    # =========================================
+    CROOK_N_CW = "CROOK_N_CW"
+    CROOK_E_CW = "CROOK_E_CW"
+    CROOK_S_CW = "CROOK_S_CW"
+    CROOK_W_CW = "CROOK_W_CW"
+    CROOK_N_CCW = "CROOK_N_CCW"
+    CROOK_E_CCW = "CROOK_E_CCW"
+    CROOK_S_CCW = "CROOK_S_CCW"
+    CROOK_W_CCW = "CROOK_W_CCW"
+
+    # =========================================
+    # Utils
+    # =========================================
     def is_arc(self) -> bool:
         return self.value.startswith("ARC_")
 

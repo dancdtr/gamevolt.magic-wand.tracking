@@ -8,6 +8,7 @@ from display.image_providers.arc_180_image_provider import Arc180ImageProvider
 from display.image_providers.arc_270_image_provider import Arc270ImageProvider
 from display.image_providers.arc_360_image_provider import Arc360ImageProvider
 from display.image_providers.cardinal_line_image_provider import CardinalLineImageProvider
+from display.image_providers.crook_image_provider import CrookImageProvider
 from display.image_providers.debug_image_provider import DebugImageProvider
 from display.image_providers.image_provider import ImageProvider
 from display.image_providers.intercardinal_line_image_provider import IntercardinalLineImageProvider
@@ -35,6 +36,7 @@ class ArrowDisplay:
         self.image_providers: list[ImageProvider] = [
             DebugImageProvider(build_path("unknown.png"), build_path("none.png"), image_size),
             CardinalLineImageProvider(build_path("cardinal_line.png"), image_size),
+            CrookImageProvider(build_path("crook.png"), image_size),
             IntercardinalLineImageProvider(build_path("intercardinal_line.png"), image_size),
             SubIntercardinalLineImageProvider(build_path("sub_intercardinal_line.png"), image_size),
             Arc180ImageProvider(build_path("arc_180.png"), image_size),
