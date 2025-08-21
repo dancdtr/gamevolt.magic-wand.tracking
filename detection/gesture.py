@@ -21,11 +21,11 @@ class Gesture:
         turn_events: list[TurnEvent],
     ) -> None:
         self.points = points
-        self.turn_events = turn_events
         self.duration = duration
+        self.turn_events = turn_events
         self.extrema_events = extrema_events
 
-        self.azimuth = Vector2.from_average([p.velocity for p in points])
+        self.direction = Vector2.from_average([p.velocity for p in points])
 
     def iter_x_extrema(self) -> Iterator[Extremum]:
         return (e.type for e in self.extrema_events if e.type.is_x())
@@ -86,11 +86,20 @@ class Gesture:
                 return tp
         return None
 
+    @property
+    def last_extremum_event(self) -> ExtremumEvent | None:
+        # self.extrema_events[-1] if self.extrema_events else None
+        if self.extrema_events:
+            return self.extrema_events[-1]
+        else:
+            print("no extrema events")
+            return None
+
     # ---------- Direction helpers ----------
 
     @cached_property
     def direction_abs(self) -> Vector2:
-        return Vector2(abs(self.azimuth.x), abs(self.azimuth.y))
+        return Vector2(abs(self.direction.x), abs(self.direction.y))
 
     @property
     def min_direction_abs(self) -> float:

@@ -41,74 +41,74 @@ from detection.gesture import Gesture
 # Cardinal lines
 # =========================================
 def is_line_n(g: Gesture) -> bool:
-    return has_azimuth_n(g.azimuth)
-    return has_velocity_n(g) and has_azimuth_n(g.azimuth)
+    # return has_azimuth_n(g.azimuth)
+    return has_velocity_n(g) and has_azimuth_n(g.direction)
 
 
 def is_line_e(g: Gesture) -> bool:
-    return has_azimuth_e(g.azimuth)
-    return has_velocity_e(g) and has_azimuth_e(g.azimuth)
+    # return has_azimuth_e(g.azimuth)
+    return has_velocity_e(g) and has_azimuth_e(g.direction)
 
 
 def is_line_s(g: Gesture) -> bool:
-    return has_azimuth_s(g.azimuth)
-    return has_velocity_s(g) and has_azimuth_s(g.azimuth)
+    # return has_azimuth_s(g.azimuth)
+    return has_velocity_s(g) and has_azimuth_s(g.direction)
 
 
 def is_line_w(g: Gesture) -> bool:
-    return has_azimuth_w(g.azimuth)
-    return has_velocity_w(g) and has_azimuth_w(g.azimuth)
+    # return has_azimuth_w(g.azimuth)
+    return has_velocity_w(g) and has_azimuth_w(g.direction)
 
 
 # =========================================
 # Intercardinal lines
 # =========================================
 def is_line_ne(g: Gesture) -> bool:
-    return has_velocity_ne(g) and has_azimuth_ne(g.azimuth)
+    return has_velocity_ne(g) and has_azimuth_ne(g.direction)
 
 
 def is_line_se(g: Gesture) -> bool:
-    return has_velocity_se(g) and has_azimuth_se(g.azimuth)
+    return has_velocity_se(g) and has_azimuth_se(g.direction)
 
 
 def is_line_sw(g: Gesture) -> bool:
-    return has_velocity_sw(g) and has_azimuth_sw(g.azimuth)
+    return has_velocity_sw(g) and has_azimuth_sw(g.direction)
 
 
 def is_line_nw(g: Gesture) -> bool:
-    return has_velocity_nw(g) and has_azimuth_nw(g.azimuth)
+    return has_velocity_nw(g) and has_azimuth_nw(g.direction)
 
 
 # =========================================
 # Sub Intercardinal lines
 # =========================================
 def is_line_nne(g: Gesture) -> bool:
-    return is_velocity_nne(g) and is_direction_nne(g.azimuth)
+    return is_velocity_nne(g) and is_direction_nne(g.direction)
 
 
 def is_line_ene(g: Gesture) -> bool:
-    return is_velocity_ene(g) and is_direction_ene(g.azimuth)
+    return is_velocity_ene(g) and is_direction_ene(g.direction)
 
 
 def is_line_ese(g: Gesture) -> bool:
-    return is_velocity_ese(g) and is_direction_ese(g.azimuth)
+    return is_velocity_ese(g) and is_direction_ese(g.direction)
 
 
 def is_line_sse(g: Gesture) -> bool:
-    return is_velocity_sse(g) and is_direction_sse(g.azimuth)
+    return is_velocity_sse(g) and is_direction_sse(g.direction)
 
 
 def is_line_ssw(g: Gesture) -> bool:
-    return is_velocity_ssw(g) and is_direction_ssw(g.azimuth)
+    return is_velocity_ssw(g) and is_direction_ssw(g.direction)
 
 
 def is_line_wsw(g: Gesture) -> bool:
-    return is_velocity_wsw(g) and is_direction_wsw(g.azimuth)
+    return is_velocity_wsw(g) and is_direction_wsw(g.direction)
 
 
 def is_line_wnw(g: Gesture) -> bool:
-    return is_velocity_wnw(g) and is_direction_wnw(g.azimuth)
+    return is_velocity_wnw(g) and is_direction_wnw(g.direction)
 
 
 def is_line_nnw(g: Gesture) -> bool:
-    return is_velocity_nnw(g) and is_direction_nnw(g.azimuth)
+    return is_velocity_nnw(g) and is_direction_nnw(g.direction)

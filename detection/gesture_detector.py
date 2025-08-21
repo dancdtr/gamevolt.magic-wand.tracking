@@ -5,9 +5,9 @@ from logging import Logger
 from detection.configuration.gesture_detector_settings import GestureDetectorSettings
 from detection.gesture_point import GesturePoint
 from gamevolt.events.event import Event
+from gamevolt.imu.imu_binary_receiver import IMUBinaryReceiver
 from gamevolt.imu.sensor_data import SensorData
 from gamevolt.maths.vector_2 import Vector2
-from gamevolt.serial.imu_binary_receiver import IMUBinaryReceiver
 from gamevolt.toolkit.timer import Timer
 
 

@@ -8,19 +8,19 @@ from gamevolt.maths.extremum import Extremum
 # Cardinal velocities
 # =========================================
 def has_velocity_n(g: Gesture) -> bool:
-    return _has_sufficient_velocity(g, Azimuth.N)
+    return _has_velocity_in_direction(g, Azimuth.N)
 
 
 def has_velocity_e(g: Gesture) -> bool:
-    return _has_sufficient_velocity(g, Azimuth.E)
+    return _has_velocity_in_direction(g, Azimuth.E)
 
 
 def has_velocity_s(g: Gesture) -> bool:
-    return _has_sufficient_velocity(g, Azimuth.S)
+    return _has_velocity_in_direction(g, Azimuth.S)
 
 
 def has_velocity_w(g: Gesture) -> bool:
-    return _has_sufficient_velocity(g, Azimuth.W)
+    return _has_velocity_in_direction(g, Azimuth.W)
 
 
 # =========================================
@@ -80,7 +80,7 @@ def is_velocity_nnw(g: Gesture) -> bool:
 # =========================================
 # Utils
 # =========================================
-def _has_sufficient_velocity(g: Gesture, azimuth: Azimuth) -> bool:
+def _has_velocity_in_direction(g: Gesture, azimuth: Azimuth) -> bool:
     extremum = Extremum.from_azimuth(azimuth)
     iter = g.iter_x_extrema if extremum.is_x() else g.iter_y_extrema
     return equals_single(iter(), extremum)
