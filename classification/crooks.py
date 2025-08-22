@@ -12,8 +12,10 @@ _LINE_FUNCS = {
 }
 
 _SPLIT_POSITION = 0.25  # normalised time position of the gesture
-
-
+_MIN_LINE_DURATION = 0.15
+_MAX_LINE_DURATION = 0.6
+_MIN_ARC_DURATION = 0.25
+_MAX_ARC_DURATION = 1
 # A crook is a straight line that transitions into a 270 deg arc (des)
 # An inverse crook is a 270 deg arc that transitions into a straight line
 
@@ -122,12 +124,20 @@ def _is_inverse_crook(g: Gesture, line_start: Azimuth, arc_start: Azimuth, direc
 
 
 def _is_line_and_arc_270_compound(g: Gesture, line_start: Azimuth, arc_start: Azimuth, direction: TurnDirection, arc_first: bool) -> bool:
-    g1, g2 = g.split(_SPLIT_POSITION)
+    g_line, g_arc = g.split(_SPLIT_POSITION)
     if arc_first:
-        g1, g2 = g2, g1
+        g_line, g_arc = g_arc, g_line
 
-    return _LINE_FUNCS[line_start](g1) and _matches_curve(
-        g=g2,
+    if _MIN_LINE_DURATION > g_line.duration or g_line.duration > _MAX_LINE_DURATION:
+        print(f"Failed line: {g_line.duration}")
+        return False
+
+    if _MIN_ARC_DURATION > g_arc.duration or g_arc.duration > _MAX_ARC_DURATION:
+        print(f"Failed arc: {g_arc.duration}")
+        return False
+
+    return _LINE_FUNCS[line_start](g_line) and _matches_curve(
+        g=g_arc,
         start=arc_start,
         degrees=270,
         direction=direction,
