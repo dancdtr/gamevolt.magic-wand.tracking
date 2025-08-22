@@ -207,8 +207,9 @@ def _matches_curve(
     allow_tail_missing: int = 0,
     allow_tail_extra: int = 0,
 ) -> bool:
-    pattern = _get_curve_turn_sequence(start, degrees, direction)
-    src = g.iter_turn_types()
+    pattern = list(_get_curve_turn_sequence(start, degrees, direction))
+    src = list(g.iter_turn_types())
+
     return matches_prefix(
         src,
         pattern,

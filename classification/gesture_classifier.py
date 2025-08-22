@@ -5,6 +5,7 @@ from classification.classifiers.debugging.arc_360_classifier import Arc360Classi
 from classification.classifiers.debugging.cardinal_classifier import CardinalClassifier
 from classification.classifiers.debugging.crook_classifier import CrookClassifier
 from classification.classifiers.debugging.intercardinal_classifier import IntercardinalClassifier
+from classification.classifiers.debugging.inverse_crook_classifier import InverseCrookClassifier
 from classification.classifiers.debugging.sub_intercardinal_classifier import SubIntercardinalClassifier
 from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
 from classification.classifiers.spells.revelio_classifier import RevelioClassifier
@@ -18,7 +19,8 @@ class GestureClassifier:
             # Arc360Classifier(),
             # Arc270Classifier(),
             # Arc180Classifier(),
-            RevelioClassifier()
+            # RevelioClassifier()
+            InverseCrookClassifier()
             # CrookClassifier()
             # SubIntercardinalClassifier(),
             # IntercardinalClassifier(),

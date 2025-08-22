@@ -88,6 +88,15 @@ class GestureType(StrEnum):
     CROOK_S_CCW = "CROOK_S_CCW"
     CROOK_W_CCW = "CROOK_W_CCW"
 
+    INVERSE_CROOK_N_CW = "INVERSE_CROOK_N_CW"
+    INVERSE_CROOK_E_CW = "INVERSE_CROOK_E_CW"
+    INVERSE_CROOK_S_CW = "INVERSE_CROOK_S_CW"
+    INVERSE_CROOK_W_CW = "INVERSE_CROOK_W_CW"
+    INVERSE_CROOK_N_CCW = "INVERSE_CROOK_N_CCW"
+    INVERSE_CROOK_E_CCW = "INVERSE_CROOK_E_CCW"
+    INVERSE_CROOK_S_CCW = "INVERSE_CROOK_S_CCW"
+    INVERSE_CROOK_W_CCW = "INVERSE_CROOK_W_CCW"
+
     # =========================================
     # Utils
     # =========================================
@@ -99,3 +108,9 @@ class GestureType(StrEnum):
 
     def is_wave(self) -> bool:
         return self.value.startswith("WAVE_")
+
+    def is_crook(self) -> bool:
+        return self.value.startswith("CROOK_")
+
+    def is_inverse_crook(self) -> bool:
+        return self.value.startswith("INVERSE_CROOK_")

@@ -11,7 +11,7 @@ _LINE_FUNCS = {
     Azimuth.W: has_azimuth_w,
 }
 
-_SPLIT_POSITION = 0.25  # normalised time position of the gesture
+_SPLIT_TIME = 0.25  # normalised time position of the gesture
 _MIN_LINE_DURATION = 0.15
 _MAX_LINE_DURATION = 0.6
 _MIN_ARC_DURATION = 0.25
@@ -47,7 +47,7 @@ def is_crook_n_ccw(g: Gesture) -> bool:
 
 
 def is_crook_e_ccw(g: Gesture) -> bool:
-    return _is_crook_ccw(g, line_start=Azimuth.E, arc_start=Azimuth.N)
+    return _is_crook_ccw(g, line_start=Azimuth.E, arc_start=Azimuth.S)
 
 
 def is_crook_s_ccw(g: Gesture) -> bool:
@@ -55,45 +55,45 @@ def is_crook_s_ccw(g: Gesture) -> bool:
 
 
 def is_crook_w_ccw(g: Gesture) -> bool:
-    return _is_crook_ccw(g, line_start=Azimuth.W, arc_start=Azimuth.S)
+    return _is_crook_ccw(g, line_start=Azimuth.W, arc_start=Azimuth.N)
 
 
 # =========================================
 # Inverse Crooks 270 CW
 # =========================================
-def is_inverse_crook_n_cw(g: Gesture) -> bool:
-    return _is_inverse_crook_cw(g, line_start=Azimuth.N, arc_start=Azimuth.W)
+def is_inverse_crook_cw_s(g: Gesture) -> bool:
+    return _is_inverse_crook_cw(g, arc_start=Azimuth.S, line_start=Azimuth.S)
 
 
-def is_inverse_crook_e_cw(g: Gesture) -> bool:
-    return _is_inverse_crook_cw(g, line_start=Azimuth.E, arc_start=Azimuth.N)
+def is_inverse_crook_cw_w(g: Gesture) -> bool:
+    return _is_inverse_crook_cw(g, arc_start=Azimuth.W, line_start=Azimuth.W)
 
 
-def is_inverse_crook_s_cw(g: Gesture) -> bool:
-    return _is_inverse_crook_cw(g, line_start=Azimuth.S, arc_start=Azimuth.E)
+def is_inverse_crook_cw_n(g: Gesture) -> bool:
+    return _is_inverse_crook_cw(g, arc_start=Azimuth.N, line_start=Azimuth.N)
 
 
-def is_inverse_crook_w_cw(g: Gesture) -> bool:
-    return _is_inverse_crook_cw(g, line_start=Azimuth.W, arc_start=Azimuth.S)
+def is_inverse_crook_cw_e(g: Gesture) -> bool:
+    return _is_inverse_crook_cw(g, arc_start=Azimuth.E, line_start=Azimuth.E)
 
 
 # =========================================
 # Inverse Crooks 270 CCW
 # =========================================
-def is_inverse_crook_n_ccw(g: Gesture) -> bool:
-    return _is_inverse_crook_ccw(g, line_start=Azimuth.N, arc_start=Azimuth.E)
+def is_inverse_crook_ccw_s(g: Gesture) -> bool:
+    return _is_inverse_crook_ccw(g, arc_start=Azimuth.S, line_start=Azimuth.S)
 
 
-def is_inverse_crook_e_ccw(g: Gesture) -> bool:
-    return _is_inverse_crook_ccw(g, line_start=Azimuth.E, arc_start=Azimuth.N)
+def is_inverse_crook_ccw_w(g: Gesture) -> bool:
+    return _is_inverse_crook_ccw(g, arc_start=Azimuth.W, line_start=Azimuth.W)
 
 
-def is_inverse_crook_s_ccw(g: Gesture) -> bool:
-    return _is_inverse_crook_ccw(g, line_start=Azimuth.S, arc_start=Azimuth.W)
+def is_inverse_crook_ccw_n(g: Gesture) -> bool:
+    return _is_inverse_crook_ccw(g, arc_start=Azimuth.N, line_start=Azimuth.N)
 
 
-def is_inverse_crook_w_ccw(g: Gesture) -> bool:
-    return _is_inverse_crook_ccw(g, line_start=Azimuth.W, arc_start=Azimuth.S)
+def is_inverse_crook_ccw_e(g: Gesture) -> bool:
+    return _is_inverse_crook_ccw(g, arc_start=Azimuth.E, line_start=Azimuth.E)
 
 
 # =========================================
@@ -111,7 +111,7 @@ def _is_crook(g: Gesture, line_start: Azimuth, arc_start: Azimuth, direction: Tu
     return _is_line_and_arc_270_compound(g, line_start, arc_start, direction, arc_first=False)
 
 
-def _is_inverse_crook_cw(g: Gesture, line_start: Azimuth, arc_start: Azimuth) -> bool:
+def _is_inverse_crook_cw(g: Gesture, arc_start: Azimuth, line_start: Azimuth) -> bool:
     return _is_inverse_crook(g, line_start, arc_start, TurnDirection.CW)
 
 
@@ -119,12 +119,14 @@ def _is_inverse_crook_ccw(g: Gesture, line_start: Azimuth, arc_start: Azimuth) -
     return _is_inverse_crook(g, line_start, arc_start, TurnDirection.CCW)
 
 
-def _is_inverse_crook(g: Gesture, line_start: Azimuth, arc_start: Azimuth, direction: TurnDirection) -> bool:
-    return _is_line_and_arc_270_compound(g, line_start, arc_start, direction, arc_first=True)
+def _is_inverse_crook(g: Gesture, arc_start: Azimuth, line_start: Azimuth, direction: TurnDirection) -> bool:
+    return _is_line_and_arc_270_compound(g=g, line_start=line_start, arc_start=arc_start, direction=direction, arc_first=True)
 
 
 def _is_line_and_arc_270_compound(g: Gesture, line_start: Azimuth, arc_start: Azimuth, direction: TurnDirection, arc_first: bool) -> bool:
-    g_line, g_arc = g.split(_SPLIT_POSITION)
+    split_time = 1 - _SPLIT_TIME if arc_first else _SPLIT_TIME
+
+    g_line, g_arc = g.split(split_time)
     if arc_first:
         g_line, g_arc = g_arc, g_line
 
