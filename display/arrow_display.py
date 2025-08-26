@@ -10,9 +10,11 @@ from display.image_providers.arc_360_image_provider import Arc360ImageProvider
 from display.image_providers.cardinal_line_image_provider import CardinalLineImageProvider
 from display.image_providers.crook_image_provider import CrookImageProvider
 from display.image_providers.debug_image_provider import DebugImageProvider
+from display.image_providers.hook_image_provider import HookImageProvider
 from display.image_providers.image_provider import ImageProvider
 from display.image_providers.intercardinal_line_image_provider import IntercardinalLineImageProvider
 from display.image_providers.inverse_crook_image_provider import InverseCrookImageProvider
+from display.image_providers.inverse_hook_image_provider import InverseHookImageProvider
 from display.image_providers.sub_intercardinal_line_image_provider import SubIntercardinalLineImageProvider
 
 
@@ -38,6 +40,8 @@ class ArrowDisplay:
             DebugImageProvider(build_path("unknown.png"), build_path("none.png"), image_size),
             CardinalLineImageProvider(build_path("cardinal_line.png"), image_size),
             CrookImageProvider(build_path("crook.png"), image_size),
+            HookImageProvider(build_path("hook.png"), image_size),
+            InverseHookImageProvider(build_path("inverse_hook.png"), image_size),
             InverseCrookImageProvider(build_path("inverse_crook.png"), image_size),
             IntercardinalLineImageProvider(build_path("intercardinal_line.png"), image_size),
             SubIntercardinalLineImageProvider(build_path("sub_intercardinal_line.png"), image_size),

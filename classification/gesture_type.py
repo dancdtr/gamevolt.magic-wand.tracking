@@ -98,6 +98,27 @@ class GestureType(StrEnum):
     INVERSE_CROOK_W_CCW = "INVERSE_CROOK_W_CCW"
 
     # =========================================
+    # Crooks
+    # =========================================
+    HOOK_N_CW = "HOOK_N_CW"
+    HOOK_E_CW = "HOOK_E_CW"
+    HOOK_S_CW = "HOOK_S_CW"
+    HOOK_W_CW = "HOOK_W_CW"
+    HOOK_N_CCW = "HOOK_N_CCW"
+    HOOK_E_CCW = "HOOK_E_CCW"
+    HOOK_S_CCW = "HOOK_S_CCW"
+    HOOK_W_CCW = "HOOK_W_CCW"
+
+    INVERSE_HOOK_N_CW = "INVERSE_HOOK_N_CW"
+    INVERSE_HOOK_E_CW = "INVERSE_HOOK_E_CW"
+    INVERSE_HOOK_S_CW = "INVERSE_HOOK_S_CW"
+    INVERSE_HOOK_W_CW = "INVERSE_HOOK_W_CW"
+    INVERSE_HOOK_N_CCW = "INVERSE_HOOK_N_CCW"
+    INVERSE_HOOK_E_CCW = "INVERSE_HOOK_E_CCW"
+    INVERSE_HOOK_S_CCW = "INVERSE_HOOK_S_CCW"
+    INVERSE_HOOK_W_CCW = "INVERSE_HOOK_W_CCW"
+
+    # =========================================
     # Utils
     # =========================================
     def is_arc(self) -> bool:

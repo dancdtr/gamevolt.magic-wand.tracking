@@ -83,7 +83,7 @@ async def gui_loop() -> None:
 
 
 rx_settings = BinarySerialReceiverSettings(
-    SerialReceiverSettings(port="/dev/cu.usbmodem11101", baud=115200, timeout=1, retry_interval=3.0),
+    SerialReceiverSettings(port="/dev/cu.usbmodem111101", baud=115200, timeout=1, retry_interval=3.0),
     BinarySettings("<I9f"),
 )
 
