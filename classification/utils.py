@@ -151,11 +151,11 @@ def is_line_and_arc_compound(
         g_line, g_arc = g_arc, g_line
 
     if _MIN_LINE_DURATION > g_line.duration or g_line.duration > _MAX_LINE_DURATION:
-        print(f"Failed line: {g_line.duration}")
+        # print(f"Failed line: {g_line.duration}")
         return False
 
     if _MIN_ARC_DURATION > g_arc.duration or g_arc.duration > _MAX_ARC_DURATION:
-        print(f"Failed arc: {g_arc.duration}")
+        # print(f"Failed arc: {g_arc.duration}")
         return False
 
     return _LINE_FUNCS[line_start](g_line) and _matches_curve(

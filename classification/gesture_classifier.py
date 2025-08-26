@@ -1,3 +1,5 @@
+from logging import Logger
+
 from classification.classifiers.classifier import Classifier
 from classification.classifiers.debugging.arc_180_classifier import Arc180Classifier
 from classification.classifiers.debugging.arc_270_classifier import Arc270Classifier
@@ -10,13 +12,17 @@ from classification.classifiers.debugging.inverse_crook_classifier import Invers
 from classification.classifiers.debugging.inverse_hook_classifier import InverseHookClassifier
 from classification.classifiers.debugging.sub_intercardinal_classifier import SubIntercardinalClassifier
 from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
+from classification.classifiers.spells.arresto_momentum_classifier import ArrestoMomentumClassifier
+from classification.classifiers.spells.locomotor_classifier import LocomotorClassifier
 from classification.classifiers.spells.revelio_classifier import RevelioClassifier
+from classification.classifiers.spells.silencio_classifier import SilencioClassifier
 from classification.gesture_type import GestureType
 from detection.gesture import Gesture
 
 
 class GestureClassifier:
-    def __init__(self) -> None:
+    def __init__(self, logger: Logger) -> None:
+        self._logger = logger
         self._classifiers: list[Classifier] = [
             # Arc360Classifier(),
             # Arc270Classifier(),
@@ -25,17 +31,20 @@ class GestureClassifier:
             # IntercardinalClassifier(),
             # CardinalClassifier(),
             # InverseCrookClassifier(),
-            CrookClassifier(),
+            # CrookClassifier(),
             # HookClassifier(),
             # InverseHookClassifier(),
-            # RevelioClassifier()
+            # RevelioClassifier(),
+            # SilencioClassifier(),
+            LocomotorClassifier(),
+            ArrestoMomentumClassifier(),
         ]
 
     def classify(self, gesture: Gesture, mask: GestureClassifierMask | None = None) -> list[GestureType]:
-        print(f"Extrema: {[e.type.name for e in gesture.extrema_events]}")
-        print(f"X extrema: {[e.name for e in gesture.iter_x_extrema()]}")
-        print(f"Y extrema: {[e.name for e in gesture.iter_y_extrema()]}")
-        print(f"Turn points: {[tp.type.name for tp in gesture.turn_events]}")
+        self._logger.debug(f"Extrema: {[e.type.name for e in gesture.extrema_events]}")
+        self._logger.debug(f"X extrema: {[e.name for e in gesture.iter_x_extrema()]}")
+        self._logger.debug(f"Y extrema: {[e.name for e in gesture.iter_y_extrema()]}")
+        self._logger.debug(f"Turn points: {[tp.type.name for tp in gesture.turn_events]}")
 
         # print(is_p(gesture))
 

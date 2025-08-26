@@ -1,84 +1,61 @@
+from logging import Logger
+
+from classification.gesture_type import GestureType
+from spell_type import SpellType
+
+
 class SpellChecker:
-    def __init__(self) -> None:
-        self.index = 0
+    def __init__(self, logger: Logger) -> None:
+        self._logger = logger
 
-    def identify(self, directions: list[str]) -> str | None:
-        spell = self.index % 3
+        self._gesture_types: list[GestureType] = []
+        self._max_length = 10
 
-        if spell == 0 and self.check_silencio(directions):
-            self.index += 1
-            return "silencio"
+    def update_gestures(self, gesture_type: GestureType) -> None:
+        if len(self._gesture_types) >= self._max_length - 1:
+            self._gesture_types.pop(0)
 
-        if spell == 1 and self.check_incendio(directions):
-            self.index += 1
-            return "incendio"
+        self._gesture_types.append(gesture_type)
 
-        # if spell == 2 and self.check_slugulus_erecto:
-        #     self.index += 1
-        #     return "slugulus_erecto"
+    def purge_gestures(self) -> None:
+        self._gesture_types.clear()
 
-        if spell == 2 and self.check_locomotor(directions):
-            self.index += 1
-            return "locomotor"
+    def check_spells(self) -> SpellType:
+        if self.check_silencio():
+            return SpellType.SILENCIO
 
-        if len(directions) > 5:
-            directions = directions[-5:]
+        return SpellType.NONE
 
-    def check_silencio(self, directions: list[str]) -> bool:
-        if len(directions) < 2:
-            return False
+    def check_silencio(self) -> bool:
+        actual = self._gesture_types[-2:]
+        expected = [GestureType.ARC_180_CW_START_E, GestureType.LINE_S]
 
-        d1 = directions[-2]
-        d2 = directions[-1]
+        return self._check_spell(expected, actual)
 
-        e1 = self._is_expected(d1, ["down", "down-left", "down"])
-        e2 = self._is_expected(d2, ["down", "down-left", "down-right"])
+    def check_revelio(self) -> bool:
+        actual = self._gesture_types[-2:]
+        expected = [GestureType.CROOK_N_CW, GestureType.LINE_SE]
 
-        return e1 and e2
+        return self._check_spell(expected, actual)
 
-    def check_incendio(self, directions: list[str]) -> bool:
-        if len(directions) < 3:
-            return False
+    def check_locomotor(self) -> bool:
+        actual = self._gesture_types[-3:]
+        expected = [GestureType.LINE_N, GestureType.LINE_SW, GestureType.LINE_E]
 
-        d1 = directions[-3]
-        d2 = directions[-2]
-        d3 = directions[-1]
+        return self._check_spell(expected, actual)
 
-        e1 = self._is_expected(d1, ["up", "right", "up-right"])
-        e2 = self._is_expected(d2, ["down", "right", "down-right"])
-        e3 = self._is_expected(d3, ["left", "up", "up-left"])
+    def check_arresto_momentum(self) -> bool:
+        actual = self._gesture_types[-4:]
+        expected = [GestureType.LINE_NNE, GestureType.LINE_SSE, GestureType.LINE_NNE, GestureType.LINE_SSE]
 
-        return e1 and e2 and e3
+        return self._check_spell(expected, actual)
 
-    def check_locomotor(self, directions: list[str]) -> bool:
-        if len(directions) < 3:
-            return False
+    def _check_spell(self, expected: list[GestureType], actual: list[GestureType]) -> bool:
 
-        d1 = directions[-3]
-        d2 = directions[-2]
-        d3 = directions[-1]
+        self._logger.debug(f"A: {[gt.name for gt in actual]}")
+        self._logger.debug(f"E: {[gt.name for gt in expected]}")
 
-        e1 = self._is_expected(d1, ["up", "up-left", "up-right"])
-        e2 = self._is_expected(d2, ["down", "left", "down-left"])
-        e3 = self._is_expected(d3, ["right", "up-right", "down-right"])
+        match = actual == expected
+        self._logger.debug(f"Match: {'✅' if match else '❌'} ")
 
-        return e1 and e2 and e3
-
-    def check_slugulus_erecto(self, directions: list[str]) -> bool:
-        if len(directions) < 4:
-            return False
-
-        d1 = directions[-4]
-        d2 = directions[-3]
-        d3 = directions[-2]
-        d4 = directions[-1]
-
-        e1 = self._is_expected(d1, ["down", "down-left"])
-        e2 = self._is_expected(d2, ["down-left", "left"])
-        e3 = self._is_expected(d3, ["up", "up-right"])
-        e4 = self._is_expected(d4, ["up-right", "right"])
-
-        return e1 and e2 and e3 and e4
-
-    def _is_expected(self, actual: str, expected: list[str]) -> bool:
-        return actual in expected
+        return match

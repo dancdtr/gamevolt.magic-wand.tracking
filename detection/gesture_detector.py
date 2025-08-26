@@ -117,10 +117,10 @@ class GestureDetector:
         min_dur_ms = int(self._settings.min_duration * 1000.0)
 
         if duration_ms >= min_dur_ms:
-            self._logger.info(f"Gesture duration: {duration_ms/1000.0:.3f}s - accept")
+            self._logger.debug(f"Gesture duration: {duration_ms/1000.0:.3f}s - accept")
             self.motion_ended.invoke(self._gesture_points.copy())
         else:
-            self._logger.info(f"Gesture duration: {duration_ms/1000.0:.3f}s - reject")
+            self._logger.debug(f"Gesture duration: {duration_ms/1000.0:.3f}s - reject")
 
         self._timer.stop()
         self._gesture_points.clear()

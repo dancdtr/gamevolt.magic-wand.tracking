@@ -1,4 +1,4 @@
-# main2.py
+# main.py
 
 import asyncio
 from asyncio import Queue
@@ -22,15 +22,15 @@ from gamevolt.imu.sensor_data import SensorData
 from gamevolt.serial.configuration.binary_serial_receiver_settings import BinarySerialReceiverSettings
 from gamevolt.serial.configuration.binary_settings import BinarySettings
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
+from spell_checker import SpellChecker
 
 logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
 
-display = ArrowDisplay(image_size=400, assets_dir="./display/images/primitives")
+display = ArrowDisplay(image_size=1200, assets_dir="./display/images/primitives")
 
 GYRO_START_THRESH = 1.0
 GYRO_END_THRESH = 0.7
 GYRO_END_FRAMES = 5
-
 GUI_FPS = 60
 
 
@@ -44,10 +44,11 @@ flick_queue: Queue[GestureType] = Queue()
 # y is pitch (up and down) (-ve is up, +ve is down)
 # z is yaw (left and right) (-ve is right, +ve is left)
 
-classifier = GestureClassifier()
+classifier = GestureClassifier(logger)
 
 
 gesture_factory = GestureFactory(settings=GestureSettings())
+spell_checker = SpellChecker(logger)
 
 
 def on_gesture_completed(points: list[GesturePoint]) -> None:
@@ -55,10 +56,26 @@ def on_gesture_completed(points: list[GesturePoint]) -> None:
     gesture_types = classifier.classify(gesture)
 
     matches = [g.name for g in gesture_types]
-    print(f"Matched gestures: {matches}")
+    logger.debug(f"Matched gestures: {matches}")
     gesture_type = gesture_types[0]
-    print(f"Using gesture: {gesture_type.name}")
-    print("__________")
+    logger.debug(f"Using gesture: {gesture_type.name}")
+    # print("____________________________________________________________")
+
+    # spell checker:
+    if gesture_type not in (GestureType.NONE, GestureType.UNKNOWN):
+        spell_checker.update_gestures(gesture_type)
+        # if spell_checker.check_silencio():
+        #     logger.info("✨✨✨ SILENCIO!!! ✨✨✨")
+        #     spell_checker.purge_gestures()
+        # elif spell_checker.check_revelio():
+        #     logger.info("✨✨✨ REVELIO!!! ✨✨✨")
+        #     spell_checker.purge_gestures()
+        if spell_checker.check_locomotor():
+            logger.info("✨✨✨ LOCOMOTOR!!! 🟢 ✨✨✨")
+            spell_checker.purge_gestures()
+        elif spell_checker.check_arresto_momentum():
+            logger.info("✨✨✨ ARRESTO MOMENTUM!!! 🔴 ✨✨✨")
+            spell_checker.purge_gestures()
 
     loop = asyncio.get_event_loop()
     loop.call_soon_threadsafe(flick_queue.put_nowait, gesture_type)
@@ -83,7 +100,7 @@ async def gui_loop() -> None:
 
 
 rx_settings = BinarySerialReceiverSettings(
-    SerialReceiverSettings(port="/dev/cu.usbmodem111101", baud=115200, timeout=1, retry_interval=3.0),
+    SerialReceiverSettings(port="/dev/cu.usbmodem11101", baud=115200, timeout=1, retry_interval=3.0),
     BinarySettings("<I9f"),
 )
 

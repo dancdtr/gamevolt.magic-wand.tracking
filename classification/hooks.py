@@ -145,11 +145,11 @@ def _is_hook(g: Gesture, line_direction: Azimuth, curve_start: Azimuth, directio
     g_line, g_curve = g.split(_HOOK_SPLIT_TIME)
 
     if _MIN_LINE_DURATION > g_line.duration or g_line.duration > _MAX_LINE_DURATION:
-        print(f"Failed line: {g_line.duration}")
+        # print(f"Failed line: {g_line.duration}")
         return False
 
     if _MIN_ARC_DURATION > g_curve.duration or g_curve.duration > _MAX_ARC_DURATION:
-        print(f"Failed arc: {g_curve.duration}")
+        # print(f"Failed arc: {g_curve.duration}")
         return False
 
     line_func = _LINE_FUNCS[line_direction]
@@ -159,7 +159,7 @@ def _is_hook(g: Gesture, line_direction: Azimuth, curve_start: Azimuth, directio
     a = line_func(g_line)
     b = curve_func(g_curve)
 
-    print(a, b)
+    # print(a, b)
     return a and b
 
 

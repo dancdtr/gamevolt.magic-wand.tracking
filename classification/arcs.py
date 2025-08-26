@@ -28,12 +28,7 @@ def has_curve_180_cw_start_s(g: Gesture) -> bool:
 
 
 def has_curve_180_cw_start_w(g: Gesture) -> bool:
-    a = ends_with_y_turn_type_n2s(g)
-    b = has_azimuth_e(g)
-
-    print(f"curve: {a} | {b}")
-
-    return a and b
+    return ends_with_y_turn_type_n2s(g) and has_azimuth_e(g)
 
 
 # =========================================
