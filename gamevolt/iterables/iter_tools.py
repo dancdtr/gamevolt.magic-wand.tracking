@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import deque
 from collections.abc import Iterable, Iterator, Sequence
-from itertools import islice, zip_longest
+from itertools import cycle, islice, zip_longest
 from typing import TypeVar
 
 T = TypeVar("T")
@@ -183,3 +183,9 @@ def starts_with_values(it: Iterable[T], *values: T) -> bool:
 def is_suffix_of(it: Iterable[T], pattern: Sequence[T]) -> bool:
     suffix = tuple(it)  # buffer source once
     return ends_with(pattern, suffix)
+
+
+def take_infinite(n: int, items: Iterable[T]) -> Iterator[T]:
+    if n < 0:
+        raise ValueError("n must be >= 0")
+    return islice(cycle(items), n)

@@ -45,11 +45,20 @@ class IMUBinaryReceiver:
         ts = int(unpacked[0])
 
         ax, ay, az, gx, gy, gz, mx, my, mz = unpacked[1:]
-        accel = Vector3(ax * self._x_sign, ay * self._y_sign, az * self._z_sign)
-        gyro = Vector3(gx * self._x_sign, gy * self._y_sign, gz * self._z_sign)
+        # accel = Vector3(ax * self._x_sign, ay * self._y_sign, az * self._z_sign)
+        # gyro = Vector3(gx * self._x_sign, gy * self._y_sign, gz * self._z_sign)
+        # mag = Vector3(mx * self._x_sign, my * self._y_sign, mz * self._z_sign)
+
+        def r(f: float) -> float:
+            return round(f, 2)
+
+        accel = Vector3(r(ax * self._x_sign), r(ay * self._y_sign), r(az * self._z_sign))
+        gyro = Vector3(r(gx * self._x_sign), r(gy * self._y_sign), r(gz * self._z_sign))
         mag = Vector3(mx * self._x_sign, my * self._y_sign, mz * self._z_sign)
 
         data = SensorData(timestamp_ms=ts, accel=accel, gyro=gyro, mag=mag)
 
-        self._logger.debug(data)
+        # self._logger.debug(data)
+        print(f" A: ({data.accel.x}, {data.accel.y}, {data.accel.z})")
+        print(f" G: ({data.gyro.x}, {data.gyro.y}, {data.gyro.z})")
         self.data_updated.invoke(data)

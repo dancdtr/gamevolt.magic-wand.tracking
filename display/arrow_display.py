@@ -15,6 +15,8 @@ from display.image_providers.image_provider import ImageProvider
 from display.image_providers.intercardinal_line_image_provider import IntercardinalLineImageProvider
 from display.image_providers.inverse_crook_image_provider import InverseCrookImageProvider
 from display.image_providers.inverse_hook_image_provider import InverseHookImageProvider
+from display.image_providers.sine_360_image_provider import Sine360ImageProvider
+from display.image_providers.sine_540_image_provider import Sine540ImageProvider
 from display.image_providers.sub_intercardinal_line_image_provider import SubIntercardinalLineImageProvider
 
 
@@ -48,6 +50,8 @@ class ArrowDisplay:
             Arc180ImageProvider(build_path("arc_180.png"), image_size),
             Arc270ImageProvider(build_path("arc_270.png"), image_size),
             Arc360ImageProvider(build_path("arc_360.png"), image_size),
+            Sine360ImageProvider(build_path("sine_360.png"), image_size),
+            Sine540ImageProvider(build_path("sine_540.png"), image_size),
         ]
 
     def show(self, type: GestureType) -> None:

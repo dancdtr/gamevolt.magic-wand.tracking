@@ -69,12 +69,28 @@ class GestureType(StrEnum):
     ARC_360_CCW_START_W = "ARC_360_CCW_START_W"
 
     # =========================================
-    # Sine waves
+    # Sine 360 waves
     # =========================================
-    WAVE_SINE_X_POS = "WAVE_SINE_X_POS"
-    WAVE_SINE_X_NEG = "WAVE_SINE_X_NEG"
-    WAVE_SINE_Y_POS = "WAVE_SINE_Y_POS"
-    WAVE_SINE_Y_NEG = "WAVE_SINE_Y_NEG"
+    WAVE_SINE_360_N = "WAVE_SINE_360_N"
+    WAVE_SINE_360_E = "WAVE_SINE_360_E"
+    WAVE_SINE_360_S = "WAVE_SINE_360_S"
+    WAVE_SINE_360_W = "WAVE_SINE_360_W"
+    WAVE_NEGATIVE_SINE_360_N = "WAVE_NEGATIVE_SINE_360_N"
+    WAVE_NEGATIVE_SINE_360_E = "WAVE_NEGATIVE_SINE_360_E"
+    WAVE_NEGATIVE_SINE_360_S = "WAVE_NEGATIVE_SINE_360_S"
+    WAVE_NEGATIVE_SINE_360_W = "WAVE_NEGATIVE_SINE_360_W"
+
+    # =========================================
+    # Sine 540 waves
+    # =========================================
+    WAVE_SINE_540_N = "WAVE_SINE_540_N"
+    WAVE_SINE_540_E = "WAVE_SINE_540_E"
+    WAVE_SINE_540_S = "WAVE_SINE_540_S"
+    WAVE_SINE_540_W = "WAVE_SINE_540_W"
+    WAVE_NEGATIVE_SINE_540_N = "WAVE_NEGATIVE_SINE_540_N"
+    WAVE_NEGATIVE_SINE_540_E = "WAVE_NEGATIVE_SINE_540_E"
+    WAVE_NEGATIVE_SINE_540_S = "WAVE_NEGATIVE_SINE_540_S"
+    WAVE_NEGATIVE_SINE_540_W = "WAVE_NEGATIVE_SINE_540_W"
 
     # =========================================
     # Crooks

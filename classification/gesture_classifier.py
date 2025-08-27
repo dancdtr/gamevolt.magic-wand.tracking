@@ -11,6 +11,8 @@ from classification.classifiers.debugging.intercardinal_classifier import Interc
 from classification.classifiers.debugging.inverse_crook_classifier import InverseCrookClassifier
 from classification.classifiers.debugging.inverse_hook_classifier import InverseHookClassifier
 from classification.classifiers.debugging.sub_intercardinal_classifier import SubIntercardinalClassifier
+from classification.classifiers.debugging.wave_sine_360_classifier import WaveSine360Classifier
+from classification.classifiers.debugging.wave_sine_540_classifier import WaveSine540Classifier
 from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
 from classification.classifiers.spells.arresto_momentum_classifier import ArrestoMomentumClassifier
 from classification.classifiers.spells.locomotor_classifier import LocomotorClassifier
@@ -36,8 +38,10 @@ class GestureClassifier:
             # InverseHookClassifier(),
             # RevelioClassifier(),
             # SilencioClassifier(),
-            LocomotorClassifier(),
-            ArrestoMomentumClassifier(),
+            # LocomotorClassifier(),
+            # ArrestoMomentumClassifier(),
+            WaveSine360Classifier(),
+            # WaveSine540Classifier()
         ]
 
     def classify(self, gesture: Gesture, mask: GestureClassifierMask | None = None) -> list[GestureType]:
