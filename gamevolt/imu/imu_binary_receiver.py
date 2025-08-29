@@ -59,6 +59,4 @@ class IMUBinaryReceiver:
         data = SensorData(timestamp_ms=ts, accel=accel, gyro=gyro, mag=mag)
 
         # self._logger.debug(data)
-        print(f" A: ({data.accel.x}, {data.accel.y}, {data.accel.z})")
-        print(f" G: ({data.gyro.x}, {data.gyro.y}, {data.gyro.z})")
         self.data_updated.invoke(data)

@@ -1,114 +1,139 @@
-from classification.directions import (
-    has_azimuth_e,
-    has_azimuth_n,
-    has_azimuth_ne,
-    has_azimuth_nw,
-    has_azimuth_s,
-    has_azimuth_se,
-    has_azimuth_sw,
-    has_azimuth_w,
-    is_direction_ene,
-    is_direction_ese,
-    is_direction_nne,
-    is_direction_nnw,
-    is_direction_sse,
-    is_direction_ssw,
-    is_direction_wnw,
-    is_direction_wsw,
-)
-from classification.velocities import (
-    has_velocity_e,
-    has_velocity_n,
-    has_velocity_ne,
-    has_velocity_nw,
-    has_velocity_s,
-    has_velocity_se,
-    has_velocity_sw,
-    has_velocity_w,
-    is_velocity_ene,
-    is_velocity_ese,
-    is_velocity_nne,
-    is_velocity_nnw,
-    is_velocity_sse,
-    is_velocity_ssw,
-    is_velocity_wnw,
-    is_velocity_wsw,
-)
+from classification.utils import has_azimuth_in_range
 from detection.gesture import Gesture
+from gamevolt.iterables.iter_tools import equals_single
+from gamevolt.maths.azimuth import Azimuth
+from gamevolt.maths.extremum import Extremum
+
+_CARDINAL_ANGLE_VARIANCE = 22.5
+_INTERCARDINAL_ANGLE_VARIANCE = 22.5
+_SUBINTERCARDINAL_ANGLE_VARIANCE = 22.5
+
+_MIN_VELOCITY = 60
+
+_SPLIT_SUBCARDINALS = {
+    Azimuth.NE: (Azimuth.N, Azimuth.E),
+    Azimuth.SE: (Azimuth.S, Azimuth.E),
+    Azimuth.SW: (Azimuth.S, Azimuth.W),
+    Azimuth.NW: (Azimuth.N, Azimuth.W),
+}
+
+_SPLIT_SUBINTERCARDINALS = {
+    Azimuth.NNE: (Azimuth.N, Azimuth.NE),
+    Azimuth.ENE: (Azimuth.E, Azimuth.NE),
+    Azimuth.ESE: (Azimuth.E, Azimuth.SE),
+    Azimuth.SSE: (Azimuth.S, Azimuth.SE),
+    Azimuth.SSW: (Azimuth.S, Azimuth.SW),
+    Azimuth.WSW: (Azimuth.W, Azimuth.SW),
+    Azimuth.WNW: (Azimuth.W, Azimuth.NW),
+    Azimuth.NNW: (Azimuth.N, Azimuth.NW),
+}
 
 
 # =========================================
 # Cardinal lines
 # =========================================
 def is_line_n(g: Gesture) -> bool:
-    # return has_azimuth_n(g.azimuth)
-    return has_velocity_n(g) and has_azimuth_n(g)
+    return _is_line_cardinal(g, Azimuth.N)
 
 
 def is_line_e(g: Gesture) -> bool:
-    # return has_azimuth_e(g.azimuth)
-    return has_velocity_e(g) and has_azimuth_e(g)
+    return _is_line_cardinal(g, Azimuth.E)
 
 
 def is_line_s(g: Gesture) -> bool:
-    # return has_azimuth_s(g.azimuth)
-    return has_velocity_s(g) and has_azimuth_s(g)
+    return _is_line_cardinal(g, Azimuth.S)
 
 
 def is_line_w(g: Gesture) -> bool:
-    # return has_azimuth_w(g.azimuth)
-    return has_velocity_w(g) and has_azimuth_w(g)
+    return _is_line_cardinal(g, Azimuth.W)
 
 
 # =========================================
 # Intercardinal lines
 # =========================================
 def is_line_ne(g: Gesture) -> bool:
-    return has_velocity_ne(g) and has_azimuth_ne(g)
+    return _is_line_intercardinal(g, Azimuth.NE)
 
 
 def is_line_se(g: Gesture) -> bool:
-    return has_velocity_se(g) and has_azimuth_se(g)
+    return _is_line_intercardinal(g, Azimuth.SE)
 
 
 def is_line_sw(g: Gesture) -> bool:
-    return has_velocity_sw(g) and has_azimuth_sw(g)
+    return _is_line_intercardinal(g, Azimuth.SW)
 
 
 def is_line_nw(g: Gesture) -> bool:
-    return has_velocity_nw(g) and has_azimuth_nw(g)
+    return _is_line_intercardinal(g, Azimuth.NW)
 
 
 # =========================================
 # Sub Intercardinal lines
 # =========================================
 def is_line_nne(g: Gesture) -> bool:
-    return is_velocity_nne(g) and is_direction_nne(g)
+    return _is_line_subintercardinal(g, Azimuth.NNE)
 
 
 def is_line_ene(g: Gesture) -> bool:
-    return is_velocity_ene(g) and is_direction_ene(g)
+    return _is_line_subintercardinal(g, Azimuth.ENE)
 
 
 def is_line_ese(g: Gesture) -> bool:
-    return is_velocity_ese(g) and is_direction_ese(g)
+    return _is_line_subintercardinal(g, Azimuth.ESE)
 
 
 def is_line_sse(g: Gesture) -> bool:
-    return is_velocity_sse(g) and is_direction_sse(g)
+    return _is_line_subintercardinal(g, Azimuth.SSE)
 
 
 def is_line_ssw(g: Gesture) -> bool:
-    return is_velocity_ssw(g) and is_direction_ssw(g)
+    return _is_line_subintercardinal(g, Azimuth.SSW)
 
 
 def is_line_wsw(g: Gesture) -> bool:
-    return is_velocity_wsw(g) and is_direction_wsw(g)
+    return _is_line_subintercardinal(g, Azimuth.WSW)
 
 
 def is_line_wnw(g: Gesture) -> bool:
-    return is_velocity_wnw(g) and is_direction_wnw(g)
+    return _is_line_subintercardinal(g, Azimuth.WNW)
 
 
 def is_line_nnw(g: Gesture) -> bool:
-    return is_velocity_nnw(g) and is_direction_nnw(g)
+    return _is_line_subintercardinal(g, Azimuth.NNW)
+
+
+def _is_line_cardinal(g: Gesture, primary: Azimuth, variance_deg=_CARDINAL_ANGLE_VARIANCE) -> bool:
+    has_velocity = _has_velocity_in_direction(g, primary)
+
+    return _is_line(g, primary=primary, variance_deg=variance_deg, has_velocity=has_velocity)
+
+
+def _is_line_intercardinal(g: Gesture, primary: Azimuth, variance_deg=_INTERCARDINAL_ANGLE_VARIANCE) -> bool:
+    a1, a2 = _SPLIT_SUBCARDINALS[primary]
+    has_velocity = _has_velocity_in_direction(g, a1) or _has_velocity_in_direction(g, a2)
+
+    return _is_line(g, primary=primary, variance_deg=variance_deg, has_velocity=has_velocity)
+
+
+def _is_line_subintercardinal(g: Gesture, target: Azimuth, variance_deg=_SUBINTERCARDINAL_ANGLE_VARIANCE) -> bool:
+    a1, a2 = _SPLIT_SUBINTERCARDINALS[target]
+
+    return _is_line_cardinal(g, a1, variance_deg) or _is_line_intercardinal(g, a2, variance_deg)
+
+
+def _is_line(g: Gesture, primary: Azimuth, variance_deg: float, has_velocity: bool) -> bool:
+    has_azimuth = has_azimuth_in_range(g, target=primary, variance_deg=variance_deg)
+
+    # print(f"Gesture ({g.id}) {primary.name} line: velocity={has_velocity}, azimuth={has_azimuth}")
+    return has_velocity and has_azimuth
+
+
+# =========================================
+# Utils
+# =========================================
+def _has_velocity_in_direction(g: Gesture, azimuth: Azimuth) -> bool:
+    extremum = Extremum.from_azimuth(azimuth)
+    iter = g.iter_x_extrema if extremum.is_x() else g.iter_y_extrema
+    return equals_single(iter(), extremum)
+
+    # if g._MIN_VELOCITY

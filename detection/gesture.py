@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import random
+import string
 from bisect import bisect_left
 from collections.abc import Iterator
 from functools import cached_property
@@ -26,6 +28,38 @@ class Gesture:
         self.extrema_events = extrema_events
 
         self.direction = Vector2.from_average([p.velocity for p in points])
+
+        self.id: int = random.randint(100000, 999999)
+
+        self.total_pos_x: float = 0
+        self.total_neg_x: float = 0
+        self.total_pos_y: float = 0
+        self.total_neg_y: float = 0
+
+        for p in points:
+            x, y = p.velocity
+            if x >= 0:
+                self.total_pos_x += x
+            else:
+                self.total_neg_x += x
+
+            if y >= 0:
+                self.total_pos_y += y
+            else:
+                self.total_neg_y += y
+
+        def f(f: float) -> str:
+            abs_f = abs(f)
+            if abs_f < 10:
+                pad = "00"
+            elif abs_f < 100:
+                pad = "0"
+            else:
+                pad = ""
+
+            return f"{pad}{f:.2f}"
+
+        print(f"({self.id}) V: +x: {f(self.total_pos_x)} -x: {f(self.total_neg_x)} +y: {f(self.total_pos_y)} -y: {f(self.total_neg_y)}")
 
     def iter_x_extrema(self) -> Iterator[Extremum]:
         return (e.type for e in self.extrema_events if e.type.is_x())

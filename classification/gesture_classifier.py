@@ -29,7 +29,7 @@ class GestureClassifier:
             # Arc360Classifier(),
             # Arc270Classifier(),
             # Arc180Classifier(),
-            # SubIntercardinalClassifier(),
+            SubIntercardinalClassifier(),
             # IntercardinalClassifier(),
             # CardinalClassifier(),
             # InverseCrookClassifier(),
@@ -40,7 +40,7 @@ class GestureClassifier:
             # SilencioClassifier(),
             # LocomotorClassifier(),
             # ArrestoMomentumClassifier(),
-            WaveSine360Classifier(),
+            # WaveSine360Classifier(),
             # WaveSine540Classifier()
         ]
 

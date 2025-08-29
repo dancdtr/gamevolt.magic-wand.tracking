@@ -51,6 +51,12 @@ _LINE_FUNCS = {
 }
 
 
+def has_azimuth_in_range(g: Gesture, target: Azimuth, variance_deg: float = 22.5) -> bool:
+    angle = g.direction.get_azimuth()
+    delta = ((angle - target.deg + 180.0) % 360.0) - 180.0
+    return abs(delta) <= variance_deg + 1e-9
+
+
 def matches_x_extrema(g: Gesture, *targets: Extremum) -> bool:
     return matches_extrema(g.iter_x_extrema(), *targets)
 

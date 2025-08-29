@@ -24,9 +24,9 @@ from gamevolt.serial.configuration.binary_settings import BinarySettings
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from spell_checker import SpellChecker
 
-logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "DEBUG"))
+logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
 
-display = ArrowDisplay(image_size=1200, assets_dir="./display/images/primitives")
+display = ArrowDisplay(image_size=300, assets_dir="./display/images/primitives")
 
 GYRO_START_THRESH = 1.0
 GYRO_END_THRESH = 0.7
@@ -100,7 +100,7 @@ async def gui_loop() -> None:
 
 
 rx_settings = BinarySerialReceiverSettings(
-    SerialReceiverSettings(port="/dev/cu.usbmodem2101", baud=115200, timeout=1, retry_interval=3.0),
+    SerialReceiverSettings(port="/dev/cu.usbmodem11101", baud=115200, timeout=1, retry_interval=3.0),
     BinarySettings("<I9f"),
 )
 
