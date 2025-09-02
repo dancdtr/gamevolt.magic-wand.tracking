@@ -26,7 +26,7 @@ from spell_checker import SpellChecker
 
 logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
 
-display = ArrowDisplay(image_size=300, assets_dir="./display/images/primitives", title="Wand Gesture Display")
+display = ArrowDisplay(logger, image_size=300, assets_dir="./display/images/primitives", title="Wand Gesture Display")
 
 GYRO_START_THRESH = 1.0
 GYRO_END_THRESH = 0.7
@@ -127,6 +127,7 @@ async def main() -> None:
 
     await imu_rx.start()
     gesture_detector.start()
+    display.start()
 
     try:
         while True:
