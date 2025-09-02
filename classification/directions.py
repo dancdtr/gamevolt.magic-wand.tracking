@@ -1,4 +1,4 @@
-from classification.utils import has_azimuth_in_range
+from classification.lines import has_azimuth_in_range
 from detection.gesture import Gesture
 from gamevolt.maths.azimuth import Azimuth
 

@@ -1,4 +1,3 @@
-from classification.utils import has_azimuth_in_range
 from detection.gesture import Gesture
 from gamevolt.iterables.iter_tools import equals_single
 from gamevolt.maths.azimuth import Azimuth
@@ -137,3 +136,9 @@ def _has_velocity_in_direction(g: Gesture, azimuth: Azimuth) -> bool:
     return equals_single(iter(), extremum)
 
     # if g._MIN_VELOCITY
+
+
+def has_azimuth_in_range(g: Gesture, target: Azimuth, variance_deg: float = 22.5) -> bool:
+    angle = g.direction.get_azimuth()
+    delta = ((angle - target.deg + 180.0) % 360.0) - 180.0
+    return abs(delta) <= variance_deg + 1e-9

@@ -26,7 +26,7 @@ from spell_checker import SpellChecker
 
 logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
 
-display = ArrowDisplay(image_size=300, assets_dir="./display/images/primitives")
+display = ArrowDisplay(image_size=300, assets_dir="./display/images/primitives", title="Wand Gesture Display")
 
 GYRO_START_THRESH = 1.0
 GYRO_END_THRESH = 0.7
