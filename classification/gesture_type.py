@@ -20,14 +20,14 @@ class GestureType(StrEnum):
     LINE_SW = "LINE_SW"
     LINE_NW = "LINE_NW"
 
-    LINE_NNE = "NNE"
-    LINE_ENE = "ENE"
-    LINE_ESE = "ESE"
-    LINE_SSE = "SSE"
-    LINE_SSW = "SSW"
-    LINE_WSW = "WSW"
-    LINE_WNW = "WNW"
-    LINE_NNW = "NNW"
+    LINE_NNE = "LINE_NNE"
+    LINE_ENE = "LINE_ENE"
+    LINE_ESE = "LINE_ESE"
+    LINE_SSE = "LINE_SSE"
+    LINE_SSW = "LINE_SSW"
+    LINE_WSW = "LINE_WSW"
+    LINE_WNW = "LINE_WNW"
+    LINE_NNW = "LINE_NNW"
 
     # =========================================
     # Arcs 180
