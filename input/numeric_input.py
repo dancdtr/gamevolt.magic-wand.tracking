@@ -21,21 +21,19 @@ class NumericInput(KeyInput):
 
         self.updated: Event[Callable[[int], None]] = Event()
 
+        self._timer.start()
+
     @property
     def input_str(self) -> str:
         return self._input_str
 
     def get_input_int(self) -> int | None:
-        x = int(self._input_str)
-        return x
+        return int(self._input_str)
 
     def _on_alpha_key_pressed(self, key: str) -> None:
         if self._timer.is_complete or len(self._input_str) >= _MAX_LENGTH:
-            self._input_str = ""
-            self._timer.stop()
-
             self._input_str = key
-            self._timer.start()
+            self._timer.restart()
         else:
             self._input_str += key
 

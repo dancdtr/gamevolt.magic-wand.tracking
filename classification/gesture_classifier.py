@@ -1,6 +1,7 @@
 from logging import Logger
 
 from classification.classifiers.classifier import Classifier
+from classification.classifiers.classifier_2 import Classifier2
 from classification.classifiers.debugging.arc_180_classifier import Arc180Classifier
 from classification.classifiers.debugging.arc_270_classifier import Arc270Classifier
 from classification.classifiers.debugging.arc_360_classifier import Arc360Classifier
@@ -14,35 +15,46 @@ from classification.classifiers.debugging.sub_intercardinal_classifier import Su
 from classification.classifiers.debugging.wave_sine_360_classifier import WaveSine360Classifier
 from classification.classifiers.debugging.wave_sine_540_classifier import WaveSine540Classifier
 from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
-from classification.classifiers.spells.arresto_momentum_classifier import ArrestoMomentumClassifier
-from classification.classifiers.spells.locomotor_classifier import LocomotorClassifier
-from classification.classifiers.spells.revelio_classifier import RevelioClassifier
-from classification.classifiers.spells.silencio_classifier import SilencioClassifier
+from classification.classifiers.spells.spell import Spell
+from classification.classifiers.spells.spell_book import SpellBook
 from classification.gesture_type import GestureType
 from detection.gesture import Gesture
+from detection.gesture_func_provider import GestureFuncProvider
+from spell_type import SpellType
 
 
 class GestureClassifier:
-    def __init__(self, logger: Logger) -> None:
+    def __init__(self, logger: Logger, spell_book: SpellBook, func_provider: GestureFuncProvider) -> None:
         self._logger = logger
+
+        self._spell_book = spell_book
+        self._func_provider = func_provider
+
         self._classifiers: list[Classifier] = [
             # Arc360Classifier(),
             # Arc270Classifier(),
             # Arc180Classifier(),
-            SubIntercardinalClassifier(),
+            # SubIntercardinalClassifier(),
             # IntercardinalClassifier(),
             # CardinalClassifier(),
             # InverseCrookClassifier(),
             # CrookClassifier(),
             # HookClassifier(),
             # InverseHookClassifier(),
-            # RevelioClassifier(),
             # SilencioClassifier(),
             # LocomotorClassifier(),
             # ArrestoMomentumClassifier(),
             # WaveSine360Classifier(),
             # WaveSine540Classifier()
         ]
+
+        self.current_spell = Spell(SpellType.NONE, [])
+
+    def update_classifier(self, spell_type: SpellType) -> None:
+        spell = self._spell_book.get(spell_type)
+        self.current_spell = spell
+        classifier = Classifier2(self._func_provider, spell.get_gestures)
+        self._classifiers = [classifier]
 
     def classify(self, gesture: Gesture, mask: GestureClassifierMask | None = None) -> list[GestureType]:
         self._logger.debug(f"Extrema: {[e.type.name for e in gesture.extrema_events]}")

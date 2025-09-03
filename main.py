@@ -7,12 +7,14 @@ from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
 from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
+from classification.classifiers.spells.spell_book import SpellBook
 from classification.gesture_classifier import GestureClassifier
 from classification.gesture_type import GestureType
 from detection.configuration.gesture_detector_settings import GestureDetectorSettings
 from detection.configuration.gesture_settings import GestureSettings
 from detection.gesture_detector import GestureDetector
 from detection.gesture_factory import GestureFactory
+from detection.gesture_func_provider import GestureFuncProvider
 from detection.gesture_point import GesturePoint
 from display.arrow_display import ArrowDisplay
 from gamevolt.imu.configuration.imu_settings import ImuSettings
@@ -23,6 +25,7 @@ from gamevolt.serial.configuration.binary_serial_receiver_settings import Binary
 from gamevolt.serial.configuration.binary_settings import BinarySettings
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from spell_checker import SpellChecker
+from spell_type import SpellType
 
 logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
 
@@ -44,11 +47,17 @@ flick_queue: Queue[GestureType] = Queue()
 # y is pitch (up and down) (-ve is up, +ve is down)
 # z is yaw (left and right) (-ve is right, +ve is left)
 
-classifier = GestureClassifier(logger)
+spell_book = SpellBook()
+func_provider = GestureFuncProvider(logger)
+classifier = GestureClassifier(logger, spell_book, func_provider)
 
 
 gesture_factory = GestureFactory(settings=GestureSettings())
 spell_checker = SpellChecker(logger)
+
+
+def on_target_spell_updated(spell: SpellType) -> None:
+    classifier.update_classifier(spell)
 
 
 def on_gesture_completed(points: list[GesturePoint]) -> None:
@@ -64,18 +73,10 @@ def on_gesture_completed(points: list[GesturePoint]) -> None:
     # spell checker:
     if gesture_type not in (GestureType.NONE, GestureType.UNKNOWN):
         spell_checker.update_gestures(gesture_type)
-        # if spell_checker.check_silencio():
-        #     logger.info("✨✨✨ SILENCIO!!! ✨✨✨")
-        #     spell_checker.purge_gestures()
-        # elif spell_checker.check_revelio():
-        #     logger.info("✨✨✨ REVELIO!!! ✨✨✨")
-        #     spell_checker.purge_gestures()
-        if spell_checker.check_locomotor():
-            logger.info("✨✨✨ LOCOMOTOR!!! 🟢 ✨✨✨")
-            spell_checker.purge_gestures()
-        elif spell_checker.check_arresto_momentum():
-            logger.info("✨✨✨ ARRESTO MOMENTUM!!! 🔴 ✨✨✨")
-            spell_checker.purge_gestures()
+        target_spell = classifier.current_spell
+        if spell_checker.check(target_spell):
+            logger.info(f"✨✨✨ {target_spell.name}!!! ✨✨✨")
+            spell_checker.clear_gestures()
 
     loop = asyncio.get_event_loop()
     loop.call_soon_threadsafe(flick_queue.put_nowait, gesture_type)
@@ -124,6 +125,8 @@ async def main() -> None:
     asyncio.create_task(gui_loop())
 
     gesture_detector.motion_ended.subscribe(on_gesture_completed)
+
+    display.target_spell_updated.subscribe(on_target_spell_updated)
 
     await imu_rx.start()
     gesture_detector.start()

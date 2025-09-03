@@ -13,7 +13,7 @@ _SPELL_TYPE_MAPPINGS = {
     1: SpellType.REVELIO,
     2: SpellType.LOCOMOTOR,
     3: SpellType.ARRESTO_MOMENTUM,
-    4: SpellType.WINGARDIIUM_LEVIOSA,
+    4: SpellType.WINGARDIUM_LEVIOSA,
     5: SpellType.METEOLOJINX,
     6: SpellType.COLOVARIA,
     7: SpellType.SLUGULUS_ERECTO,

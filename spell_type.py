@@ -6,7 +6,7 @@ class SpellType(Enum):
     REVELIO = auto()
     LOCOMOTOR = auto()
     ARRESTO_MOMENTUM = auto()
-    WINGARDIIUM_LEVIOSA = auto()
+    WINGARDIUM_LEVIOSA = auto()
     METEOLOJINX = auto()
     COLOVARIA = auto()
     SLUGULUS_ERECTO = auto()
