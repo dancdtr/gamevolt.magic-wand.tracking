@@ -6,9 +6,10 @@ import queue
 import sys
 import threading
 import tkinter as tk
+from collections.abc import Callable
 from typing import Optional
 
-from PIL import ImageTk
+from PIL import Image, ImageTk
 from PIL.Image import Image as PILImage
 from PIL.ImageTk import PhotoImage
 
@@ -27,14 +28,10 @@ class ImageVisualiser:
 
         self._settings = settings
 
-        # Root/Toplevel
+        # Root/Toplevel — reuse default interpreter if it already exists
         existing = getattr(tk, "_default_root", None)
         if master is None:
-            if existing is not None:
-                # Reuse the existing interpreter; create our window as a Toplevel
-                self.root = tk.Toplevel(existing)
-            else:
-                self.root = tk.Tk()
+            self.root = tk.Toplevel(existing) if existing is not None else tk.Tk()
         else:
             self.root = tk.Toplevel(master)
 
@@ -42,35 +39,38 @@ class ImageVisualiser:
         self.root.geometry(f"{settings.width}x{settings.height}")
         self.root.protocol("WM_DELETE_WINDOW", self.stop)
 
-        # --- Toolbar at the top (for dropdowns, buttons, etc.) ---
+        # --- Layout: toolbar (top), history (bottom), content (middle) ---
         self.toolbar = tk.Frame(self.root)
         self.toolbar.pack(side="top", fill="x")
 
-        # --- Content area fills the rest ---
+        self.history_bar = tk.Frame(self.root, height=80)
+        self.history_bar.pack(side="bottom", fill="x")
+        self.history_bar.pack_propagate(False)  # keep 80px even when empty
+
         self.content = tk.Frame(self.root)
         self.content.pack(side="top", fill="both", expand=True)
+        self.content.pack_propagate(False)  # child widgets can't force resize
 
-        # Image label goes inside content area
-        self._label = tk.Label(self.content)
-        self._label.pack(expand=True, fill="both")
+        # Big image label in content
+        self._label = tk.Label(self.content, anchor="center")
+        self._label.pack(side="top", fill="both", expand=True)
 
         # Internal state
         self._loop: asyncio.AbstractEventLoop | None = None
         self._task: asyncio.Task | None = None
         self._running = False
 
-        # Thread-safe inbox for posted images (coalescing queue)
+        # Thread-safe inboxes
         self._inbox: queue.Queue[PhotoImage | PILImage | None] = queue.Queue(maxsize=1)
+        self._ui_jobs: queue.Queue[Callable[[], None]] = queue.Queue()
 
-        self._current_img: Optional[PhotoImage] = None  # keep reference to avoid GC
-        self._tk_thread_id: Optional[int] = threading.get_ident()  # for debugging
+        self._current_img: Optional[PhotoImage] = None
 
     # ------------------------------------------------------------------ #
     # Lifecycle
     # ------------------------------------------------------------------ #
 
     def start(self) -> None:
-        """Start the internal GUI loop task. Must be called inside an asyncio loop."""
         if self._task is not None:
             return
         try:
@@ -82,12 +82,10 @@ class ImageVisualiser:
         self._task = self._loop.create_task(self._gui_loop(), name="ImageVisualiser.GUI")
 
     def stop(self) -> None:
-        """Stop the GUI loop and destroy the window."""
         self._running = False
         if self._task and not self._task.done():
             self._task.cancel()
         self._task = None
-
         try:
             if self.root.winfo_exists():
                 self.root.destroy()
@@ -97,21 +95,23 @@ class ImageVisualiser:
     # ------------------------------------------------------------------ #
     # Public API
     # ------------------------------------------------------------------ #
-
     def post_image(self, image: PhotoImage | PILImage | None) -> None:
-        """
-        Thread/loop-safe: queue an image update. Pass None to clear.
-        Accepts PhotoImage (preferred) or a PIL.Image (auto-converted in the GUI thread).
-        """
+        """Thread/loop-safe: queue an image update. Pass None to clear."""
         self._queue_image(image)
 
     def clear_image(self) -> None:
         self._queue_image(None)
 
+    def post_ui(self, fn: Callable[[], None]) -> None:
+        """Thread-safe: schedule a callable to run on the Tk/GUI thread."""
+        try:
+            self._ui_jobs.put_nowait(fn)
+        except queue.Full:
+            pass
+
     # ------------------------------------------------------------------ #
     # Internal
     # ------------------------------------------------------------------ #
-
     def _queue_image(self, img: PhotoImage | PILImage | None) -> None:
         # Coalesce: if full, drop the older item
         try:
@@ -127,20 +127,31 @@ class ImageVisualiser:
                 pass
 
     async def _gui_loop(self) -> None:
-        delay = 1 / self._settings.fps
+        delay = 1 / max(1, int(self._settings.fps))
         try:
             while self._running and self.root.winfo_exists():
+                # 1) run any queued UI jobs on the Tk thread
+                try:
+                    while True:
+                        job = self._ui_jobs.get_nowait()
+                        try:
+                            job()
+                        except Exception:
+                            pass
+                except queue.Empty:
+                    pass
+
+                # 2) drain image inbox (keep only the last)
                 last: PhotoImage | PILImage | None = None
                 try:
                     while True:
                         last = self._inbox.get_nowait()
                 except queue.Empty:
                     pass
-
-                # ✅ Only update when we actually got a new item
                 if last is not None:
                     self._apply(last)
 
+                # 3) pump Tk
                 try:
                     self.root.update_idletasks()
                     self.root.update()
@@ -164,7 +175,15 @@ class ImageVisualiser:
             return
 
         if isinstance(img, PILImage):
-            # Bind to this Tk root to avoid master-mismatch issues
+            # Fit to content area (no upscaling)
+            self.content.update_idletasks()
+            cw = max(1, self.content.winfo_width())
+            ch = max(1, self.content.winfo_height())
+            iw, ih = img.size
+            scale = min(cw / iw, ch / ih, 1.0)
+            if scale < 1.0:
+                new_size = (max(1, int(iw * scale)), max(1, int(ih * scale)))
+                img = img.resize(new_size, Image.LANCZOS)
             img = ImageTk.PhotoImage(img, master=self.root)
 
         self._current_img = img

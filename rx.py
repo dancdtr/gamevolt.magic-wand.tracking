@@ -1,10 +1,13 @@
 # rx.py
 import asyncio
+import itertools
 import time
 
 from gamevolt_logging import get_logger
 
+from classification.gesture_type import GestureType
 from detection.detected_gesture import DetectedGesture
+from detection.gesture_history import GestureHistory
 from display.arrow_display import ArrowDisplay
 from display.gesture_display import GestureDisplay
 from display.gesture_image_library import GestureImageLibrary, ImageLibrarySettings
@@ -35,13 +38,16 @@ async def main() -> None:
     message_handler = MessageHandler(logger, message_receiver)
     wand_client = WandClient(logger, message_handler)
 
-    def on_gesture_detected(g: DetectedGesture) -> None:
-        print(f"Show pic for: {g.type}")
-        display.post(g.type)
+    def on_gesture_detected(detected_gesture: DetectedGesture) -> None:
+        history.append(detected_gesture)
+        display.post(detected_gesture.type)
 
     visualiser = ImageVisualiser(settings=ImageVisualiserSettings(300, 300, "Gestures", 60))
-    image_library = GestureImageLibrary(settings=ImageLibrarySettings(assets_dir="./display/images/primitives", image_size=300))
-    display = GestureDisplay(logger, image_library, visualiser)
+    big_image_library = GestureImageLibrary(settings=ImageLibrarySettings(assets_dir="./display/images/primitives", image_size=300))
+    small_image_library = GestureImageLibrary(settings=ImageLibrarySettings(assets_dir="./display/images/primitives", image_size=30))
+
+    history = GestureHistory(10)
+    display = GestureDisplay(logger, big_image_library, small_image_library, visualiser, history)
     wand_client.gesture_detected.subscribe(on_gesture_detected)
 
     logger.info("Starting gesture visualiser...")
@@ -51,7 +57,7 @@ async def main() -> None:
 
     try:
         while True:
-            await asyncio.sleep(0.25)
+            await asyncio.sleep(0.5)
     except KeyboardInterrupt:
         pass
     finally:

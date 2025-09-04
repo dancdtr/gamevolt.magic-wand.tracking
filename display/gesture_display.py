@@ -4,7 +4,6 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from logging import Logger
-from typing import Optional
 
 from PIL import ImageTk
 from PIL.Image import Image as PILImage
@@ -12,6 +11,8 @@ from PIL.ImageTk import PhotoImage
 from PIL.ImageTk import PhotoImage as _PhotoImage
 
 from classification.gesture_type import GestureType
+from detection.gesture_history import GestureHistory
+from display.gesture_history_view import GestureHistoryView
 from display.gesture_image_library import GestureImageLibrary
 from gamevolt.display.image_visualiser import ImageVisualiser
 from gamevolt.events.event import Event
@@ -30,14 +31,27 @@ class GestureDisplay:
     def __init__(
         self,
         logger: Logger,
-        image_library: GestureImageLibrary,
+        big_image_library: GestureImageLibrary,
+        small_image_library: GestureImageLibrary,
         visualiser: ImageVisualiser,
+        gesture_history: GestureHistory,
     ):
         self._logger = logger
         self.visualiser = visualiser
-        self._lib = image_library
+        self._big_lib = big_image_library
+        self._small_lib = small_image_library
+        self._gesture_history = gesture_history
 
         self._spell_selector = SpellSelector(logger=logger, root=self.visualiser.toolbar)
+
+        # history UI
+        self._history_view = GestureHistoryView(
+            visualiser=self.visualiser,
+            parent=self.visualiser.history_bar,
+            icon_provider=self._small_lib,
+            max_visible=8,
+            icon_pad=2,
+        )
 
         self.target_spell_updated: Event[Callable[[SpellType], None]] = Event()
         self.escaped: Event[Callable[[], None]] = Event()
@@ -62,13 +76,16 @@ class GestureDisplay:
         # pass the Tk master so PhotoImages bind to this window's interpreter.
         try:
             # preferred API (add this param in your library if you can)
-            self._lib.load(tk_master=self.visualiser.root)  # type: ignore[arg-type]
+            self._big_lib.load(tk_master=self.visualiser.root)  # type: ignore[arg-type]
+            self._small_lib.load(tk_master=self.visualiser.root)  # type: ignore[arg-type]
         except TypeError:
             # fallback to legacy load()
-            self._lib.load()
+            self._big_lib.load()
+            self._small_lib.load()  # type: ignore[arg-type]
 
         self._spell_selector.start()
         self._spell_selector.target_updated.subscribe(self._on_spell_updated)
+        self._history_view.bind_model(self._gesture_history)
 
         # Make sure the window is actually shown (in case it was withdrawn)
         try:
@@ -98,7 +115,7 @@ class GestureDisplay:
         self._running = False
 
     def post(self, gesture: GestureType) -> None:
-        img = self._lib.get_image(gesture)
+        img = self._big_lib.get_image(gesture)
         self._logger.debug(f"Show pic for: {gesture.name}")
 
         if img is None:
