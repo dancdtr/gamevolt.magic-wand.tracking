@@ -5,7 +5,7 @@ from gamevolt.messaging.message import Message
 
 
 @dataclass
-class DetectedGestureMessage(Message):
-    ts: int
-    name: str
-    id: int = 0  # id of the gesture
+class DetectedGesturesMessage(Message):
+    duration: float
+    names: list[str]
+    # id: int = 0  # id of the gesture

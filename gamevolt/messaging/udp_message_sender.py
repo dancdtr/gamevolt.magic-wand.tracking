@@ -6,9 +6,9 @@ from gamevolt.messaging.udp.udp_tx import UdpTx
 
 
 class UdpMessageSender(MessageSenderProtocol):
-    def __init__(self, logger: Logger, udp_tx: UdpTx) -> None:
+    def __init__(self, logger: Logger, tx: UdpTx) -> None:
         self._logger = logger
-        self._udp_tx = udp_tx
+        self._udp_tx = tx
 
     def start(self) -> None:
         pass

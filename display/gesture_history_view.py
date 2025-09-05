@@ -9,7 +9,9 @@ from PIL.Image import Image as PILImage
 from PIL.ImageTk import PhotoImage
 
 from classification.gesture_type import GestureType
-from detection.detected_gesture import DetectedGesture
+
+# from detection.detected_gesture import DetectedGesture
+from detection.detected_gestures import DetectedGestures
 from detection.gesture_history import GestureHistory
 from display.gesture_image_library import GestureImageLibrary
 from gamevolt.display.image_visualiser import ImageVisualiser
@@ -80,7 +82,7 @@ class GestureHistoryView:
             child.destroy()
         self._icon_refs.clear()
 
-        records: list[DetectedGesture] = self._model.items() if self._model else []
+        records: list[DetectedGestures] = self._model.items() if self._model else []
 
         if not records:
             return
@@ -89,7 +91,7 @@ class GestureHistoryView:
         subset = records[-self._max_visible :]
 
         for rec in subset:
-            icon = self._icon_provider.get_image(rec.type)
+            icon = self._icon_provider.get_image(rec.main_gesture)  # TODO show all gestures
             if icon is None:
                 continue
 

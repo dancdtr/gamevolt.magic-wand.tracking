@@ -2,7 +2,6 @@ from enum import Enum, auto
 
 
 class SpellType(Enum):
-    NONE = auto()
     REVELIO = auto()
     LOCOMOTOR = auto()
     ARRESTO_MOMENTUM = auto()

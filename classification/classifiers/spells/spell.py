@@ -9,7 +9,6 @@ class Spell:
     type: SpellType
     definition: list[GestureType]
 
-    @property
     def get_gestures(self) -> list[GestureType]:
         return list(set(self.definition))
 

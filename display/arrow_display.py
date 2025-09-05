@@ -8,7 +8,7 @@ from PIL.ImageTk import PhotoImage
 from classification.gesture_type import GestureType
 from display.gesture_image_library import GestureImageLibrary, ImageLibrarySettings
 from gamevolt.events.event import Event
-from input.spell_selector import SpellSelector
+from input.spell_provider import SpellProvider
 from spell_type import SpellType
 
 
@@ -39,7 +39,7 @@ class ArrowDisplay:
         self.label.pack(expand=True, fill="both")
 
         self._image_library = GestureImageLibrary(ImageLibrarySettings(assets_dir=assets_dir, image_size=image_size))
-        self._spell_selector = SpellSelector(logger=logger, root=self.root)
+        self._spell_selector = SpellProvider(logger=logger, root=self.root)
 
         self._current_img: PhotoImage | None = None
 
@@ -50,10 +50,10 @@ class ArrowDisplay:
         self._image_library.load()
         self._spell_selector.start()
 
-        self._spell_selector.target_updated.subscribe(self._on_spell_updated)
+        self._spell_selector._target_types_updated.subscribe(self._on_spell_updated)
 
     def stop(self) -> None:
-        self._spell_selector.target_updated.unsubscribe(self._on_spell_updated)
+        self._spell_selector._target_types_updated.unsubscribe(self._on_spell_updated)
 
         self._spell_selector.stop()
 

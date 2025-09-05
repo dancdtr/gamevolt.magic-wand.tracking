@@ -1,15 +1,17 @@
 import tkinter as tk
+from abc import ABC
 from collections.abc import Callable
 from dataclasses import dataclass
 from logging import Logger
 
+from classification.classifiers.spells.spell import Spell
+from classification.classifiers.spells.spell_factory import SpellFactory
 from gamevolt.events.event import Event
 from input.dropdown import Dropdown
 from input.numeric_input import NumericInput
 from spell_type import SpellType
 
 _SPELL_TYPE_MAPPINGS = {
-    0: SpellType.NONE,
     1: SpellType.REVELIO,
     2: SpellType.LOCOMOTOR,
     3: SpellType.ARRESTO_MOMENTUM,
@@ -52,9 +54,26 @@ class SpellEntry:
     dropdown_name: str  # eg "12 - alohomora"
 
 
-class SpellSelector:
-    def __init__(self, logger: Logger, root: tk.Misc) -> None:
+class SpellProviderBase(ABC):
+    def __init__(self, logger: Logger) -> None:
+        super().__init__()
         self._logger = logger
+
+    @property
+    def target_spells(self) -> list[Spell]: ...
+
+    def start(self) -> None: ...
+
+    def stop(self) -> None: ...
+
+    @property
+    def target_spells_updated(self) -> Event[Callable[[], None]]: ...
+
+
+class SpellProvider(SpellProviderBase):
+    def __init__(self, logger: Logger, spell_factory: SpellFactory, root: tk.Misc) -> None:
+        super().__init__(logger)
+        self._spell_factory = spell_factory
 
         self._spell_entries: list[SpellEntry] = [
             SpellEntry(
@@ -72,7 +91,17 @@ class SpellSelector:
         self._dropdown = Dropdown(root, [e.dropdown_name for e in self._spell_entries])
         self._key_input = NumericInput(root)
 
-        self.target_updated: Event[Callable[[SpellType], None]] = Event()
+        self._target_spells: list[Spell] = []
+
+        self._target_spells_updated: Event[Callable[[], None]] = Event()
+
+    @property
+    def target_spells_updated(self) -> Event[Callable[[], None]]:
+        return self._target_spells_updated
+
+    @property
+    def target_spells(self) -> list[Spell]:
+        return self._target_spells
 
     def start(self) -> None:
         self._key_input.updated.subscribe(self._on_key_input_updated)
@@ -82,22 +111,27 @@ class SpellSelector:
         self._key_input.updated.unsubscribe(self._on_key_input_updated)
         self._dropdown.updated.unsubscribe(self._on_dropdown_updated)
 
-    def _on_target_updated(self, target: SpellType) -> None:
-        entry = self._by_type.get(target)
-        if entry is not None:
-            self._dropdown.show_value(entry.dropdown_name)
-        self.target_updated.invoke(target)
-
     def _on_key_input_updated(self, spell_id: int) -> None:
         entry = self._by_id.get(spell_id)
         if entry is not None:
-            self._on_target_updated(entry.type)
+            self._on_targets_updated(entry.type)
         else:
             self._logger.warning("Unknown spell id: %s", spell_id)
 
     def _on_dropdown_updated(self, value: str) -> None:
         entry = self._by_dropdown.get(value.casefold())
         if entry is not None:
-            self._on_target_updated(entry.type)
+            self._on_targets_updated(entry.type)
         else:
             self._logger.warning(f"Unknown dropdown value: {value}")
+
+    def _on_targets_updated(self, target: SpellType) -> None:
+        self._logger.info(f"Setting spell target to: {target.name}")
+
+        entry = self._by_type.get(target)
+        if entry is not None:
+            self._dropdown.show_value(entry.dropdown_name)
+
+        targets = [target]  # TODO temp until support added for multiple simultaneous spell targets
+        self._target_spells = [self._spell_factory.create(t) for t in targets]
+        self._target_spells_updated.invoke()

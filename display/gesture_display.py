@@ -16,7 +16,7 @@ from display.gesture_history_view import GestureHistoryView
 from display.gesture_image_library import GestureImageLibrary
 from gamevolt.display.image_visualiser import ImageVisualiser
 from gamevolt.events.event import Event
-from input.spell_selector import SpellSelector
+from input.spell_provider import SpellProvider
 from spell_type import SpellType
 
 
@@ -35,6 +35,7 @@ class GestureDisplay:
         small_image_library: GestureImageLibrary,
         visualiser: ImageVisualiser,
         gesture_history: GestureHistory,
+        spell_selector: SpellProvider,
     ):
         self._logger = logger
         self.visualiser = visualiser
@@ -42,14 +43,15 @@ class GestureDisplay:
         self._small_lib = small_image_library
         self._gesture_history = gesture_history
 
-        self._spell_selector = SpellSelector(logger=logger, root=self.visualiser.toolbar)
+        # self._spell_selector = SpellSelector(logger=logger, root=self.visualiser.toolbar)
+        self._spell_provider = spell_selector
 
         # history UI
         self._history_view = GestureHistoryView(
             visualiser=self.visualiser,
             parent=self.visualiser.history_bar,
             icon_provider=self._small_lib,
-            max_visible=8,
+            max_visible=15,
             icon_pad=2,
         )
 
@@ -83,11 +85,8 @@ class GestureDisplay:
             self._big_lib.load()
             self._small_lib.load()  # type: ignore[arg-type]
 
-        self._spell_selector.start()
-        self._spell_selector.target_updated.subscribe(self._on_spell_updated)
         self._history_view.bind_model(self._gesture_history)
 
-        # Make sure the window is actually shown (in case it was withdrawn)
         try:
             self.visualiser.root.deiconify()
         except Exception:
@@ -101,15 +100,6 @@ class GestureDisplay:
                 self.visualiser.stop()
             finally:
                 return
-
-        try:
-            self._spell_selector.target_updated.unsubscribe(self._on_spell_updated)
-        except Exception:
-            pass
-        try:
-            self._spell_selector.stop()
-        except Exception:
-            pass
 
         self.visualiser.stop()
         self._running = False
@@ -134,10 +124,6 @@ class GestureDisplay:
 
         # Only post once here
         self.visualiser.post_image(img)
-
-    def _on_spell_updated(self, t: SpellType) -> None:
-        self._logger.info(f"Target updated: {t.name}")
-        self.target_spell_updated.invoke(t)
 
     def _on_escape(self) -> None:
         self._logger.debug("Escape key pressed...")

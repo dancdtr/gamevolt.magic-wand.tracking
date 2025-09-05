@@ -1,14 +1,11 @@
 # main.py
 
 import asyncio
-from asyncio import Queue
 
 from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
-from classification.classifiers.gesture_classifier_mask import GestureClassifierMask
-from classification.classifiers.spells.spell_book import SpellBook
-from classification.gesture_classifier import GestureClassifier
+from classification.classifiers.spells.gesture_identifier import GestureIdentifierController
 from classification.gesture_type import GestureType
 from detection.configuration.gesture_detector_settings import GestureDetectorSettings
 from detection.configuration.gesture_settings import GestureSettings
@@ -16,88 +13,23 @@ from detection.gesture_detector import GestureDetector
 from detection.gesture_factory import GestureFactory
 from detection.gesture_func_provider import GestureFuncProvider
 from detection.gesture_point import GesturePoint
-from display.arrow_display import ArrowDisplay
 from gamevolt.imu.configuration.imu_settings import ImuSettings
 from gamevolt.imu.imu_binary_receiver import IMUBinaryReceiver
-from gamevolt.imu.imu_serial_receiver import IMUSerialReceiver
-from gamevolt.imu.sensor_data import SensorData
+from gamevolt.messaging.events.message_handler import MessageHandler
+from gamevolt.messaging.udp.configuration.udp_peer_settings import UdpPeerSettings
+from gamevolt.messaging.udp.configuration.udp_rx_settings import UdpRxSettings
+from gamevolt.messaging.udp.configuration.udp_tx_settings import UdpTxSettings
+from gamevolt.messaging.udp_peer import UdpPeer
 from gamevolt.serial.configuration.binary_serial_receiver_settings import BinarySerialReceiverSettings
 from gamevolt.serial.configuration.binary_settings import BinarySettings
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
-from spell_checker import SpellChecker
-from spell_type import SpellType
+from messaging.detected_gesture_message import DetectedGesturesMessage
 
-logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
-
-display = ArrowDisplay(logger, image_size=300, assets_dir="./display/images/primitives", title="Wand Gesture Display")
+logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "DEBUG"))
 
 GYRO_START_THRESH = 1.0
 GYRO_END_THRESH = 0.7
 GYRO_END_FRAMES = 5
-GUI_FPS = 60
-
-
-in_motion: bool = False
-end_count: int = 0
-
-# Queue to hand off flicks to the GUI
-flick_queue: Queue[GestureType] = Queue()
-
-# x is roll (rotation around shaft) (-ve CCW, +ve CW)
-# y is pitch (up and down) (-ve is up, +ve is down)
-# z is yaw (left and right) (-ve is right, +ve is left)
-
-spell_book = SpellBook()
-func_provider = GestureFuncProvider(logger)
-classifier = GestureClassifier(logger, spell_book, func_provider)
-
-
-gesture_factory = GestureFactory(settings=GestureSettings())
-spell_checker = SpellChecker(logger)
-
-
-def on_target_spell_updated(spell: SpellType) -> None:
-    classifier.update_classifier(spell)
-
-
-def on_gesture_completed(points: list[GesturePoint]) -> None:
-    gesture = gesture_factory.create(points)
-    gesture_types = classifier.classify(gesture)
-
-    matches = [g.name for g in gesture_types]
-    logger.debug(f"Matched gestures: {matches}")
-    gesture_type = gesture_types[0]
-    logger.debug(f"Using gesture: {gesture_type.name}")
-    # print("____________________________________________________________")
-
-    # spell checker:
-    if gesture_type not in (GestureType.NONE, GestureType.UNKNOWN):
-        spell_checker.update_gestures(gesture_type)
-        target_spell = classifier.current_spell
-        if spell_checker.check(target_spell):
-            logger.info(f"✨✨✨ {target_spell.name}!!! ✨✨✨")
-            spell_checker.clear_gestures()
-
-    loop = asyncio.get_event_loop()
-    loop.call_soon_threadsafe(flick_queue.put_nowait, gesture_type)
-
-
-async def gui_loop() -> None:
-    """Update the GUI and process flick events."""
-    current_gesture: GestureType = GestureType.NONE
-    while True:
-        try:
-            while True:
-                gesture = flick_queue.get_nowait()
-                if gesture and gesture != current_gesture:
-                    current_gesture = gesture
-                    # await asyncio.sleep(0.2)
-                    display.show(gesture)
-        except asyncio.QueueEmpty:
-            pass
-
-        display.root.update()
-        await asyncio.sleep(1 / GUI_FPS)
 
 
 rx_settings = BinarySerialReceiverSettings(
@@ -108,6 +40,21 @@ rx_settings = BinarySerialReceiverSettings(
 # imu_settings = ImuSettings(flip_x=True, flip_y=True, flip_z=True)
 imu_settings = ImuSettings(flip_x=False, flip_y=False, flip_z=False)
 imu_rx = IMUBinaryReceiver(logger, rx_settings, imu_settings)
+udp_peer = UdpPeer(
+    logger,
+    settings=UdpPeerSettings(
+        udp_tx=UdpTxSettings(
+            host="127.0.0.1",
+            port=9998,
+        ),
+        udp_rx=UdpRxSettings(
+            host="127.0.0.1",
+            port=9999,
+            max_size=65536,
+            recv_timeout_s=0.25,
+        ),
+    ),
+)
 
 gesture_settings = GestureDetectorSettings(
     start_thresh=1.0,
@@ -119,18 +66,32 @@ gesture_settings = GestureDetectorSettings(
 )
 gesture_detector = GestureDetector(logger, imu_rx, gesture_settings)
 
+message_handler = MessageHandler(logger, udp_peer)
+
+func_provider = GestureFuncProvider(logger)
+gesture_identifier = GestureIdentifierController(logger, func_provider, message_handler)
+gesture_factory = GestureFactory(settings=GestureSettings())
+
+
+def on_gesture_completed(points: list[GesturePoint]) -> None:
+    gesture = gesture_factory.create(points)
+    gesture_types = gesture_identifier.identify(gesture)
+
+    gesture_names = [g.name for g in gesture_types]
+    logger.debug(f"Identified gestures: {gesture_names}")
+
+    udp_peer.send(DetectedGesturesMessage(duration=gesture.duration, names=gesture_names))
+
 
 async def main() -> None:
     logger.info("Starting Wand Tracking application...")
-    asyncio.create_task(gui_loop())
-
     gesture_detector.motion_ended.subscribe(on_gesture_completed)
 
-    display.target_spell_updated.subscribe(on_target_spell_updated)
-
     await imu_rx.start()
+    udp_peer.start()
     gesture_detector.start()
-    display.start()
+    gesture_identifier.start()
+    message_handler.start()
 
     try:
         while True:
