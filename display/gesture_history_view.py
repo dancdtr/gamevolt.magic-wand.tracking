@@ -13,7 +13,7 @@ from classification.gesture_type import GestureType
 # from detection.detected_gesture import DetectedGesture
 from detection.detected_gestures import DetectedGestures
 from detection.gesture_history import GestureHistory
-from display.gesture_image_library import GestureImageLibrary
+from display.images.libraries.gesture_image_library import GestureImageLibrary
 from gamevolt.display.image_visualiser import ImageVisualiser
 
 # A function that returns a small icon for a gesture.

@@ -1,10 +1,10 @@
 from PIL.ImageTk import PhotoImage
 
 from classification.gesture_type import GestureType as GestureType
-from display.image_providers.image_provider import ImageProvider
+from display.image_providers.image_provider import GestureImageProvider
 
 
-class SubIntercardinalLineImageProvider(ImageProvider):
+class SubIntercardinalLineImageProvider(GestureImageProvider):
     def __init__(self, base_png: str, image_size: int) -> None:
         super().__init__()
 
@@ -21,5 +21,5 @@ class SubIntercardinalLineImageProvider(ImageProvider):
             GestureType.LINE_NNW: self.create(base_image, image_size, rotation_angle=0, flip_x=True),
         }
 
-    def get_image_library(self) -> dict[GestureType, PhotoImage]:
+    def image_library(self) -> dict[GestureType, PhotoImage]:
         return self._image_library

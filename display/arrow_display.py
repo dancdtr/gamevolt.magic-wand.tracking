@@ -6,7 +6,8 @@ from logging import Logger
 from PIL.ImageTk import PhotoImage
 
 from classification.gesture_type import GestureType
-from display.gesture_image_library import GestureImageLibrary, ImageLibrarySettings
+from display.images.libraries.configuration.image_library_settings import ImageLibrarySettings
+from display.images.libraries.gesture_image_library import GestureImageLibrary
 from gamevolt.events.event import Event
 from input.spell_provider import SpellProvider
 from spell_type import SpellType

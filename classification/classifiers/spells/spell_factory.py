@@ -4,6 +4,10 @@ from spell_type import SpellType
 
 _SPELLS = [
     Spell(
+        type=SpellType.NONE,  # 0
+        definition=[],
+    ),
+    Spell(
         type=SpellType.REVELIO,  # 1
         definition=[GestureType.CROOK_N_CW, GestureType.LINE_SE],
     ),

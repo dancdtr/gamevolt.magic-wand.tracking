@@ -2,12 +2,16 @@
 import asyncio
 
 from gamevolt_logging import get_logger
+from gamevolt_logging.configuration import LoggingSettings
 
+from classification.classifiers.spells.spell import Spell
 from classification.classifiers.spells.spell_factory import SpellFactory
 from detection.detected_gestures import DetectedGestures
 from detection.gesture_history import GestureHistory
-from display.gesture_display import GestureDisplay
-from display.gesture_image_library import GestureImageLibrary, ImageLibrarySettings
+from display.images.libraries.configuration.image_library_settings import ImageLibrarySettings
+from display.images.libraries.gesture_image_library import GestureImageLibrary
+from display.images.libraries.spell_image_library import SpellImageLibrary
+from display.spellcasting_visualiser import SpellcastingVisualiser
 from gamevolt.display.configuration.image_visualiser_settings import ImageVisualiserSettings
 from gamevolt.display.image_visualiser import ImageVisualiser
 from gamevolt.messaging.events.message_handler import MessageHandler
@@ -23,7 +27,7 @@ from wand_client import WandClient
 
 
 async def main() -> None:
-    logger = get_logger()
+    logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "DEBUG"))
     udp_peer = UdpPeer(
         logger,
         settings=UdpPeerSettings(
@@ -45,12 +49,11 @@ async def main() -> None:
 
     def on_gestures_detected(detected_gestures: DetectedGestures) -> None:
         gesture_history.append(detected_gestures)
-        display.post(detected_gestures.main_gesture)
 
     def on_spell(type: SpellType) -> None:
         print(f"You cast ✨✨✨ {type.name} ✨✨✨!!!")
 
-    def on_spell_targets_updated() -> None:
+    def on_spell_targets_updated(spells: list[Spell]) -> None:
         gesture_names = []
 
         for spell in spell_provider.target_spells:
@@ -59,14 +62,15 @@ async def main() -> None:
         udp_peer.send(TargetGesturesMessage(GestureNames=gesture_names))
 
     visualiser = ImageVisualiser(settings=ImageVisualiserSettings(500, 500, "Gestures", 60))
-    big_image_library = GestureImageLibrary(settings=ImageLibrarySettings(assets_dir="./display/images/primitives", image_size=300))
-    small_image_library = GestureImageLibrary(settings=ImageLibrarySettings(assets_dir="./display/images/primitives", image_size=30))
+    spell_image_library = SpellImageLibrary(settings=ImageLibrarySettings(assets_dir="./display/images/spells", image_size=300))
+    small_image_library = GestureImageLibrary(settings=ImageLibrarySettings(assets_dir="./display/images/primitives", image_size=60))
 
     gesture_history = GestureHistory(10)
     spell_factory = SpellFactory()
-
     spell_provider = SpellProvider(logger=logger, spell_factory=spell_factory, root=visualiser.toolbar)
-    display = GestureDisplay(logger, big_image_library, small_image_library, visualiser, gesture_history, spell_provider)
+    spellcasting_visualiser = SpellcastingVisualiser(
+        logger, spell_image_library, small_image_library, visualiser, gesture_history, spell_provider
+    )
 
     spell_checker = SpellChecker(logger, spell_provider, gesture_history)
 
@@ -75,7 +79,7 @@ async def main() -> None:
     spell_provider.target_spells_updated.subscribe(on_spell_targets_updated)
 
     logger.info("Starting gesture visualiser...")
-    display.start()
+    spellcasting_visualiser.start()
     message_handler.start()
     wand_client.start()
     spell_provider.start()
@@ -89,7 +93,7 @@ async def main() -> None:
     finally:
         logger.info("Stopping gesture visualiser...")
         message_handler.stop()
-        display.stop()
+        spellcasting_visualiser.stop()
         logger.info("Stopped gesture visualiser.")
 
 

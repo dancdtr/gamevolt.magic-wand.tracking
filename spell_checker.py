@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from logging import Logger
 
+from classification.classifiers.spells.spell import Spell
 from detection.gesture_history import GestureHistory
 from gamevolt.events.event import Event
 from input.spell_provider import SpellProviderBase
@@ -18,12 +19,11 @@ class SpellChecker:
 
     def start(self) -> None:
         self._gesture_history.updated.subscribe(self._on_gestures_updated)
+        self._spell_provider.target_spells_updated.subscribe(self._on_spells_updated)
 
     def stop(self) -> None:
         self._gesture_history.updated.unsubscribe(self._on_gestures_updated)
-
-    def clear_gestures(self) -> None:
-        self._gesture_history.clear()
+        self._spell_provider.target_spells_updated.subscribe(self._on_spells_updated)
 
     def _on_gestures_updated(self) -> None:
         for spell in self._spell_provider.target_spells:
@@ -33,22 +33,26 @@ class SpellChecker:
             if len(expected_types) != len(actual_detections):
                 return
 
-            is_match = False
+            is_match = True
 
             for expected, detections in zip(expected_types, actual_detections):
                 if expected not in detections.types:
+                    is_match = False
                     break
-                is_match = True
 
             self._logger.debug(
-                f"----------------------------------------"
-                f"Checking spell '{spell.name}':"
-                f"Expected: {[gt.name for gt in expected_types]}"
-                f"Actual: {[detection.types for detection in actual_detections]}"
-                f"Is match: {'✅' if is_match else '❌'}"
+                f"----------------------------------------\n"
+                f"Checking spell: '{spell.name}':\n"
+                f"Expected: {[gt.name for gt in expected_types]}\n"
+                f"Actual: {[t.name for detection in actual_detections for t in detection.types]}\n"
+                f"Is match: {'✅' if is_match else '❌'}\n"
                 f"----------------------------------------"
             )
 
-            self.spell_detected.invoke(spell.type)
-            self.clear_gestures()
-            return
+            if is_match:
+                self.spell_detected.invoke(spell.type)
+                self._gesture_history.set_complete()
+                return
+
+    def _on_spells_updated(self, spells: list[Spell]) -> None:
+        self._gesture_history.clear()

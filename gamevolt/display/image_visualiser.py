@@ -14,6 +14,7 @@ from PIL.Image import Image as PILImage
 from PIL.ImageTk import PhotoImage
 
 from gamevolt.display.configuration.image_visualiser_settings import ImageVisualiserSettings
+from gamevolt.events.event import Event
 
 
 class ImageVisualiser:
@@ -65,6 +66,10 @@ class ImageVisualiser:
         self._ui_jobs: queue.Queue[Callable[[], None]] = queue.Queue()
 
         self._current_img: Optional[PhotoImage] = None
+
+        self.root.bind("<Escape>", lambda _e: self._on_escaped())
+
+        self.escaped: Event[Callable[[], None]] = Event()
 
     # ------------------------------------------------------------------ #
     # Lifecycle
@@ -188,3 +193,6 @@ class ImageVisualiser:
 
         self._current_img = img
         self._label.config(image=img)
+
+    def _on_escaped(self) -> None:
+        self.escaped.invoke()

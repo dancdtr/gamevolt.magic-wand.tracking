@@ -12,6 +12,7 @@ from input.numeric_input import NumericInput
 from spell_type import SpellType
 
 _SPELL_TYPE_MAPPINGS = {
+    0: SpellType.NONE,
     1: SpellType.REVELIO,
     2: SpellType.LOCOMOTOR,
     3: SpellType.ARRESTO_MOMENTUM,
@@ -67,7 +68,7 @@ class SpellProviderBase(ABC):
     def stop(self) -> None: ...
 
     @property
-    def target_spells_updated(self) -> Event[Callable[[], None]]: ...
+    def target_spells_updated(self) -> Event[Callable[[list[Spell]], None]]: ...
 
 
 class SpellProvider(SpellProviderBase):
@@ -93,10 +94,10 @@ class SpellProvider(SpellProviderBase):
 
         self._target_spells: list[Spell] = []
 
-        self._target_spells_updated: Event[Callable[[], None]] = Event()
+        self._target_spells_updated: Event[Callable[[list[Spell]], None]] = Event()
 
     @property
-    def target_spells_updated(self) -> Event[Callable[[], None]]:
+    def target_spells_updated(self) -> Event[Callable[[list[Spell]], None]]:
         return self._target_spells_updated
 
     @property
@@ -106,6 +107,8 @@ class SpellProvider(SpellProviderBase):
     def start(self) -> None:
         self._key_input.updated.subscribe(self._on_key_input_updated)
         self._dropdown.updated.subscribe(self._on_dropdown_updated)
+
+        self._on_targets_updated(SpellType.NONE)  # set a default spell to start
 
     def stop(self) -> None:
         self._key_input.updated.unsubscribe(self._on_key_input_updated)
@@ -134,4 +137,4 @@ class SpellProvider(SpellProviderBase):
 
         targets = [target]  # TODO temp until support added for multiple simultaneous spell targets
         self._target_spells = [self._spell_factory.create(t) for t in targets]
-        self._target_spells_updated.invoke()
+        self._target_spells_updated.invoke(self._target_spells)
