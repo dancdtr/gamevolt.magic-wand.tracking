@@ -2,7 +2,8 @@ import os
 import time
 import tkinter as tk
 
-from PIL import Image, ImageTk
+from PIL import Image
+from PIL.ImageTk import PhotoImage
 
 
 class SpellDisplay:
@@ -35,11 +36,11 @@ class SpellDisplay:
                 img = Image.open(path)
                 img = img.resize((size_x, size_y))
                 # Bind image to this root explicitly
-                self.images[name] = ImageTk.PhotoImage(img, master=self.root)
+                self.images[name] = PhotoImage(img, master=self.root)
 
         # Prepare a blank white image for clearing the display
         blank = Image.new("RGB", (size_x, size_y), (255, 255, 255))
-        self.blank_image = ImageTk.PhotoImage(blank, master=self.root)
+        self.blank_image = PhotoImage(blank, master=self.root)
 
     def show(self, spell_name: str | None) -> None:
         """

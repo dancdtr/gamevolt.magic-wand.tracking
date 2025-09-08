@@ -6,7 +6,6 @@ from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
 from classification.classifiers.spells.gesture_identifier import GestureIdentifierController
-from classification.gesture_type import GestureType
 from detection.configuration.gesture_detector_settings import GestureDetectorSettings
 from detection.configuration.gesture_settings import GestureSettings
 from detection.gesture_detector import GestureDetector
@@ -33,7 +32,7 @@ GYRO_END_FRAMES = 5
 
 
 rx_settings = BinarySerialReceiverSettings(
-    SerialReceiverSettings(port="/dev/cu.usbmodem11101", baud=115200, timeout=1, retry_interval=3.0),
+    SerialReceiverSettings(port="/dev/cu.usbmodem11201", baud=115200, timeout=1, retry_interval=3.0),
     BinarySettings("<I9f"),
 )
 

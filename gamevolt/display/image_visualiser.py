@@ -7,10 +7,7 @@ import sys
 import threading
 import tkinter as tk
 from collections.abc import Callable
-from typing import Optional
 
-from PIL import Image, ImageTk
-from PIL.Image import Image as PILImage
 from PIL.ImageTk import PhotoImage
 
 from gamevolt.display.configuration.image_visualiser_settings import ImageVisualiserSettings
@@ -62,10 +59,10 @@ class ImageVisualiser:
         self._running = False
 
         # Thread-safe inboxes
-        self._inbox: queue.Queue[PhotoImage | PILImage | None] = queue.Queue(maxsize=1)
+        self._inbox: queue.Queue[PhotoImage | None] = queue.Queue(maxsize=1)
         self._ui_jobs: queue.Queue[Callable[[], None]] = queue.Queue()
 
-        self._current_img: Optional[PhotoImage] = None
+        self._current_img: PhotoImage | None = None
 
         self.root.bind("<Escape>", lambda _e: self._on_escaped())
 
@@ -100,7 +97,7 @@ class ImageVisualiser:
     # ------------------------------------------------------------------ #
     # Public API
     # ------------------------------------------------------------------ #
-    def post_image(self, image: PhotoImage | PILImage | None) -> None:
+    def post_image(self, image: PhotoImage | None) -> None:
         """Thread/loop-safe: queue an image update. Pass None to clear."""
         self._queue_image(image)
 
@@ -117,7 +114,7 @@ class ImageVisualiser:
     # ------------------------------------------------------------------ #
     # Internal
     # ------------------------------------------------------------------ #
-    def _queue_image(self, img: PhotoImage | PILImage | None) -> None:
+    def _queue_image(self, img: PhotoImage | None) -> None:
         # Coalesce: if full, drop the older item
         try:
             self._inbox.put_nowait(img)
@@ -147,7 +144,7 @@ class ImageVisualiser:
                     pass
 
                 # 2) drain image inbox (keep only the last)
-                last: PhotoImage | PILImage | None = None
+                last: PhotoImage | None = None
                 try:
                     while True:
                         last = self._inbox.get_nowait()
@@ -173,23 +170,11 @@ class ImageVisualiser:
             except tk.TclError:
                 pass
 
-    def _apply(self, img: PhotoImage | PILImage | None) -> None:
+    def _apply(self, img: PhotoImage | None) -> None:
         if img is None:
             self._current_img = None
             self._label.config(image="")
             return
-
-        if isinstance(img, PILImage):
-            # Fit to content area (no upscaling)
-            self.content.update_idletasks()
-            cw = max(1, self.content.winfo_width())
-            ch = max(1, self.content.winfo_height())
-            iw, ih = img.size
-            scale = min(cw / iw, ch / ih, 1.0)
-            if scale < 1.0:
-                new_size = (max(1, int(iw * scale)), max(1, int(ih * scale)))
-                img = img.resize(new_size, Image.LANCZOS)
-            img = ImageTk.PhotoImage(img, master=self.root)
 
         self._current_img = img
         self._label.config(image=img)

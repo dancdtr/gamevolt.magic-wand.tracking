@@ -1,5 +1,6 @@
 # rx.py
 import asyncio
+from time import sleep
 
 from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
@@ -8,7 +9,9 @@ from classification.classifiers.spells.spell import Spell
 from classification.classifiers.spells.spell_factory import SpellFactory
 from detection.detected_gestures import DetectedGestures
 from detection.gesture_history import GestureHistory
+from display.image_providers.configuration.image_provider_settings import ImageProviderSettings
 from display.images.libraries.configuration.image_library_settings import ImageLibrarySettings
+from display.images.libraries.configuration.spell_image_library_settings import SpellImageLibrarySettings
 from display.images.libraries.gesture_image_library import GestureImageLibrary
 from display.images.libraries.spell_image_library import SpellImageLibrary
 from display.spellcasting_visualiser import SpellcastingVisualiser
@@ -43,26 +46,26 @@ async def main() -> None:
             ),
         ),
     )
+    visualiser = ImageVisualiser(settings=ImageVisualiserSettings(500, 500, "Gestures", 60))
 
     message_handler = MessageHandler(logger, udp_peer)
     wand_client = WandClient(logger, message_handler)
 
-    def on_gestures_detected(detected_gestures: DetectedGestures) -> None:
-        gesture_history.append(detected_gestures)
-
-    def on_spell(type: SpellType) -> None:
-        logger.info(f"DAN cast ✨✨✨ {type.name} ✨✨✨!!!")
-
-    def on_spell_targets_updated(spells: list[Spell]) -> None:
-        gesture_names = []
-
-        for spell in spell_provider.target_spells:
-            gesture_names.extend([g.name for g in spell.get_gestures()])
-
-        udp_peer.send(TargetGesturesMessage(GestureNames=gesture_names))
-
-    visualiser = ImageVisualiser(settings=ImageVisualiserSettings(500, 500, "Gestures", 60))
-    spell_image_library = SpellImageLibrary(settings=ImageLibrarySettings(assets_dir="./display/images/spells", image_size=300))
+    spell_image_library_settings = SpellImageLibrarySettings(
+        instruction=ImageProviderSettings(
+            assets_dir="./display/images/spells",
+            image_size=300,
+            bg_colour=(255, 255, 255),
+            icon_colour=(0, 0, 0),
+        ),
+        success=ImageProviderSettings(
+            assets_dir="./display/images/spells",
+            image_size=300,
+            bg_colour=(0, 255, 0),
+            icon_colour=(0, 0, 0),
+        ),
+    )
+    spell_image_library = SpellImageLibrary(settings=spell_image_library_settings)
     small_image_library = GestureImageLibrary(settings=ImageLibrarySettings(assets_dir="./display/images/primitives", image_size=60))
 
     gesture_history = GestureHistory(10)
@@ -73,6 +76,23 @@ async def main() -> None:
     )
 
     spell_checker = SpellChecker(logger, spell_provider, gesture_history)
+
+    def on_gestures_detected(detected_gestures: DetectedGestures) -> None:
+        gesture_history.append(detected_gestures)
+
+    def on_spell(type: SpellType) -> None:
+        logger.info(f"DAN cast ✨✨✨ {type.name} ✨✨✨!!!")
+        spellcasting_visualiser.show_spell_cast(type)
+        sleep(0.25)
+        spellcasting_visualiser.show_spell_instruction(type)
+
+    def on_spell_targets_updated(spells: list[Spell]) -> None:
+        gesture_names = []
+
+        for spell in spell_provider.target_spells:
+            gesture_names.extend([g.name for g in spell.get_gestures()])
+
+        udp_peer.send(TargetGesturesMessage(GestureNames=gesture_names))
 
     wand_client.gesture_detected.subscribe(on_gestures_detected)
     spell_checker.spell_detected.subscribe(on_spell)
@@ -87,7 +107,7 @@ async def main() -> None:
 
     try:
         while True:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.02)
     except KeyboardInterrupt:
         pass
     finally:

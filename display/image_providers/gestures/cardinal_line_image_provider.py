@@ -1,21 +1,29 @@
-from PIL.ImageTk import PhotoImage
+from typing import Iterable
+
+from PIL.Image import Image as PILImage
 
 from classification.gesture_type import GestureType as GestureType
-from display.image_providers.image_provider import GestureImageProvider
+from display.image_providers.gestures.gesture_image_provider import GestureImageProvider
+from gamevolt.display.pil_image_provider import load_image
 
 
 class CardinalLineImageProvider(GestureImageProvider):
     def __init__(self, base_png: str, image_size: int) -> None:
         super().__init__()
+        self._base_image = base_png
+        self._image_size = image_size
 
-        base_image = self.load(base_png)
+        self._image_library: dict[GestureType, PILImage] = {}
 
-        self._image_library: dict[GestureType, PhotoImage] = {
-            GestureType.LINE_N: self.create(base_image, image_size, rotation_angle=0),
-            GestureType.LINE_E: self.create(base_image, image_size, rotation_angle=270),
-            GestureType.LINE_S: self.create(base_image, image_size, rotation_angle=180),
-            GestureType.LINE_W: self.create(base_image, image_size, rotation_angle=90),
+    def items(self) -> Iterable[tuple[GestureType, PILImage]]:
+        return self._image_library.items()
+
+    def load(self) -> None:
+        base_image = load_image(self._base_image)
+
+        self._image_library: dict[GestureType, PILImage] = {
+            GestureType.LINE_N: self.create_variant(base_image, self._image_size, rotation_angle=0),
+            GestureType.LINE_E: self.create_variant(base_image, self._image_size, rotation_angle=270),
+            GestureType.LINE_S: self.create_variant(base_image, self._image_size, rotation_angle=180),
+            GestureType.LINE_W: self.create_variant(base_image, self._image_size, rotation_angle=90),
         }
-
-    def image_library(self) -> dict[GestureType, PhotoImage]:
-        return self._image_library

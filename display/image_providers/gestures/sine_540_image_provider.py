@@ -1,25 +1,33 @@
-from PIL.ImageTk import PhotoImage
+from typing import Iterable
+
+from PIL.Image import Image as PILImage
 
 from classification.gesture_type import GestureType as GestureType
-from display.image_providers.image_provider import GestureImageProvider
+from display.image_providers.gestures.gesture_image_provider import GestureImageProvider
+from gamevolt.display.pil_image_provider import load_image
 
 
 class Sine540ImageProvider(GestureImageProvider):
     def __init__(self, base_png: str, image_size: int) -> None:
         super().__init__()
+        self._base_image = base_png
+        self._image_size = image_size
 
-        base_image = self.load(base_png)
+        self._image_library: dict[GestureType, PILImage] = {}
 
-        self._image_library: dict[GestureType, PhotoImage] = {
-            GestureType.WAVE_SINE_540_N: self.create(base_image, image_size, rotation_angle=0),
-            GestureType.WAVE_SINE_540_E: self.create(base_image, image_size, rotation_angle=270),
-            GestureType.WAVE_SINE_540_S: self.create(base_image, image_size, rotation_angle=180),
-            GestureType.WAVE_SINE_540_W: self.create(base_image, image_size, rotation_angle=90),
-            GestureType.WAVE_NEGATIVE_SINE_540_N: self.create(base_image, image_size, rotation_angle=0, flip_x=True),
-            GestureType.WAVE_NEGATIVE_SINE_540_E: self.create(base_image, image_size, rotation_angle=270, flip_y=True),
-            GestureType.WAVE_NEGATIVE_SINE_540_S: self.create(base_image, image_size, rotation_angle=180, flip_x=True),
-            GestureType.WAVE_NEGATIVE_SINE_540_W: self.create(base_image, image_size, rotation_angle=90, flip_y=True),
+    def items(self) -> Iterable[tuple[GestureType, PILImage]]:
+        return self._image_library.items()
+
+    def load(self) -> None:
+        base_image = load_image(self._base_image)
+
+        self._image_library: dict[GestureType, PILImage] = {
+            GestureType.WAVE_SINE_540_N: self.create_variant(base_image, self._image_size, rotation_angle=0),
+            GestureType.WAVE_SINE_540_E: self.create_variant(base_image, self._image_size, rotation_angle=270),
+            GestureType.WAVE_SINE_540_S: self.create_variant(base_image, self._image_size, rotation_angle=180),
+            GestureType.WAVE_SINE_540_W: self.create_variant(base_image, self._image_size, rotation_angle=90),
+            GestureType.WAVE_NEGATIVE_SINE_540_N: self.create_variant(base_image, self._image_size, rotation_angle=0, flip_x=True),
+            GestureType.WAVE_NEGATIVE_SINE_540_E: self.create_variant(base_image, self._image_size, rotation_angle=270, flip_y=True),
+            GestureType.WAVE_NEGATIVE_SINE_540_S: self.create_variant(base_image, self._image_size, rotation_angle=180, flip_x=True),
+            GestureType.WAVE_NEGATIVE_SINE_540_W: self.create_variant(base_image, self._image_size, rotation_angle=90, flip_y=True),
         }
-
-    def image_library(self) -> dict[GestureType, PhotoImage]:
-        return self._image_library

@@ -2,23 +2,14 @@
 from __future__ import annotations
 
 import tkinter as tk
-from typing import Callable, Optional
 
-from PIL import ImageTk
 from PIL.Image import Image as PILImage
 from PIL.ImageTk import PhotoImage
 
-from classification.gesture_type import GestureType
-
-# from detection.detected_gesture import DetectedGesture
 from detection.detected_gestures import DetectedGestures
 from detection.gesture_history import GestureHistory
 from display.images.libraries.gesture_image_library import GestureImageLibrary
 from gamevolt.display.image_visualiser import ImageVisualiser
-
-# A function that returns a small icon for a gesture.
-# It may return a PIL.Image (preferred) or a PhotoImage; we’ll bind to our Tk root.
-IconProvider = Callable[[GestureType], Optional[PILImage | PhotoImage]]
 
 
 class GestureHistoryView:
@@ -96,7 +87,7 @@ class GestureHistoryView:
                 continue
 
             if isinstance(icon, PILImage):
-                icon = ImageTk.PhotoImage(icon, master=self._vis.root)
+                icon = PhotoImage(icon, master=self._vis.root)
 
             lbl = tk.Label(self._frame, image=icon)
             lbl.pack(side="left", padx=self._pad, pady=4)

@@ -108,7 +108,7 @@ class SpellProvider(SpellProviderBase):
         self._key_input.updated.subscribe(self._on_key_input_updated)
         self._dropdown.updated.subscribe(self._on_dropdown_updated)
 
-        self._on_targets_updated(SpellType.NONE)  # set a default spell to start
+        # self._on_targets_updated(SpellType.NONE)  # set a default spell to start
 
     def stop(self) -> None:
         self._key_input.updated.unsubscribe(self._on_key_input_updated)

@@ -5,11 +5,9 @@ import asyncio
 from collections.abc import Callable
 from logging import Logger
 
-from PIL import ImageTk
-from PIL.ImageTk import PhotoImage as _PhotoImage
+from PIL.ImageTk import PhotoImage
 
 from classification.classifiers.spells.spell import Spell
-from classification.gesture_type import GestureType
 from detection.gesture_history import GestureHistory
 from display.gesture_history_view import GestureHistoryView
 from display.images.libraries.gesture_image_library import GestureImageLibrary
@@ -64,16 +62,8 @@ class SpellcastingVisualiser:
         # IMPORTANT: start the visualiser first so Tk root exists
         self._visualiser.start()
 
-        # Load the library AFTER the root exists; if your library supports it,
-        # pass the Tk master so PhotoImages bind to this window's interpreter.
-        try:
-            # preferred API (add this param in your library if you can)
-            self._spell_image_library.load(tk_master=self._visualiser.root)  # type: ignore[arg-type]
-            self._gesture_image_library.load(tk_master=self._visualiser.root)  # type: ignore[arg-type]
-        except TypeError:
-            # fallback to legacy load()
-            self._spell_image_library.load()
-            self._gesture_image_library.load()  # type: ignore[arg-type]
+        self._spell_image_library.load(tk_master=self._visualiser.root)
+        self._gesture_image_library.load(tk_master=self._visualiser.root)
 
         self._history_view.bind_model(self._gesture_history)
 
@@ -99,25 +89,24 @@ class SpellcastingVisualiser:
         self._visualiser.stop()
         self._running = False
 
-    def show_spell(self, type: SpellType) -> None:
-        img = self._spell_image_library.get_image(type)
+    def show_spell_instruction(self, type: SpellType) -> None:
+        image = self._spell_image_library.get_spell_instruction_image(type)  # TODO temp
         self._logger.debug(f"Show pic for: {type.name}")
 
-        if img is None:
+        self._show_image(image)
+
+    def show_spell_cast(self, type: SpellType) -> None:
+        image = self._spell_image_library.get_spell_cast_image(type)  # TODO temp
+        self._logger.debug(f"Show pic for: {type.name}")
+
+        self._show_image(image)
+
+    def _show_image(self, image: PhotoImage | None) -> None:
+        if image is None:
             self._visualiser.clear_image()
             return
 
-        # If it's a PhotoImage from a different Tk interpreter, rebind via PIL:
-        if isinstance(img, _PhotoImage) and getattr(img, "tk", None) is not self._visualiser.root.tk:
-            try:
-                pil = ImageTk.getimage(img).copy()
-                self._visualiser.post_image(pil)  # visualiser will bind master=self.root
-                return
-            except Exception as e:
-                self._logger.warning(f"Rebind failed: {e}")
-                # fall through to best-effort post
-
-        self._visualiser.post_image(img)
+        self._visualiser.post_image(image)
 
     def _on_escaped(self) -> None:
         self._logger.info("Escape key pressed...")
@@ -127,4 +116,4 @@ class SpellcastingVisualiser:
         # TODO temp display only 1 spell
         if spells:
             type = spells[0].type
-            self._visualiser.post_image(self._spell_image_library.get_image(type))
+            self.show_spell_instruction(type)
