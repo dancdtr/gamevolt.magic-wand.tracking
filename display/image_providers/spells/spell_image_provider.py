@@ -24,7 +24,14 @@ class SpellImageProvider(ImageProvider):
     def _generate(self) -> dict[SpellType, PhotoImage]:
         dict = {}
         # for type in SpellType: #TODO: implement all spells
-        for type in [SpellType.NONE, SpellType.REVELIO]:
+        for type in [
+            SpellType.NONE,
+            SpellType.REVELIO,
+            SpellType.ARRESTO_MOMENTUM,
+            SpellType.LOCOMOTOR,
+            SpellType.WINGARDIUM_LEVIOSA,
+            SpellType.METEOLOJINX,
+        ]:
             png = f"{type.name.lower()}.png"
             path = os.path.join(self.assets_dir, png)
             image = self.load(path)

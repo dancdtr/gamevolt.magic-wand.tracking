@@ -35,7 +35,13 @@ _SPELLS = [
             GestureType.LINE_S,
         ],
     ),
-    Spell(type=SpellType.METEOLOJINX, definition=[]),
+    Spell(
+        type=SpellType.METEOLOJINX,  # 5
+        definition=[
+            GestureType.ARC_180_CCW_START_E,
+            GestureType.ARC_180_CW_START_W,
+        ],
+    ),
     Spell(type=SpellType.COLOVARIA, definition=[]),
     Spell(type=SpellType.SLUGULUS_ERECTO, definition=[]),
     Spell(type=SpellType.VENTUS, definition=[]),

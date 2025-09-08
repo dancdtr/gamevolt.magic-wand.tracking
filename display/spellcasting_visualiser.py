@@ -43,7 +43,7 @@ class SpellcastingVisualiser:
             visualiser=self._visualiser,
             parent=self._visualiser.history_bar,
             icon_provider=self._gesture_image_library,
-            max_visible=15,
+            max_visible=8,
             icon_pad=0,
         )
 

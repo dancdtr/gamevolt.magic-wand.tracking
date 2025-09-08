@@ -25,7 +25,7 @@ from gamevolt.serial.configuration.binary_settings import BinarySettings
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from messaging.detected_gesture_message import DetectedGesturesMessage
 
-logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "DEBUG"))
+logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
 
 GYRO_START_THRESH = 1.0
 GYRO_END_THRESH = 0.7

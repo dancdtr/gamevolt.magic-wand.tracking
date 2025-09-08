@@ -27,7 +27,7 @@ from wand_client import WandClient
 
 
 async def main() -> None:
-    logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "DEBUG"))
+    logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
     udp_peer = UdpPeer(
         logger,
         settings=UdpPeerSettings(
@@ -51,7 +51,7 @@ async def main() -> None:
         gesture_history.append(detected_gestures)
 
     def on_spell(type: SpellType) -> None:
-        print(f"You cast ✨✨✨ {type.name} ✨✨✨!!!")
+        logger.info(f"DAN cast ✨✨✨ {type.name} ✨✨✨!!!")
 
     def on_spell_targets_updated(spells: list[Spell]) -> None:
         gesture_names = []
