@@ -32,7 +32,7 @@ GYRO_END_FRAMES = 5
 
 
 rx_settings = BinarySerialReceiverSettings(
-    SerialReceiverSettings(port="/dev/cu.usbmodem11201", baud=115200, timeout=1, retry_interval=3.0),
+    SerialReceiverSettings(port="/dev/cu.usbmodem11101", baud=115200, timeout=1, retry_interval=3.0),
     BinarySettings("<I9f"),
 )
 

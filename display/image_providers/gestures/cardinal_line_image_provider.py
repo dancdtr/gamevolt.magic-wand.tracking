@@ -1,5 +1,3 @@
-from typing import Iterable
-
 from PIL.Image import Image as PILImage
 
 from classification.gesture_type import GestureType as GestureType
@@ -8,22 +6,20 @@ from gamevolt.display.pil_image_provider import load_image
 
 
 class CardinalLineImageProvider(GestureImageProvider):
-    def __init__(self, base_png: str, image_size: int) -> None:
-        super().__init__()
-        self._base_image = base_png
-        self._image_size = image_size
-
-        self._image_library: dict[GestureType, PILImage] = {}
-
-    def items(self) -> Iterable[tuple[GestureType, PILImage]]:
-        return self._image_library.items()
+    def __init__(self, image_path: str, image_size: int) -> None:
+        super().__init__(image_path, image_size)
 
     def load(self) -> None:
-        base_image = load_image(self._base_image)
+        base_image = load_image(self.image_path)
 
-        self._image_library: dict[GestureType, PILImage] = {
-            GestureType.LINE_N: self.create_variant(base_image, self._image_size, rotation_angle=0),
-            GestureType.LINE_E: self.create_variant(base_image, self._image_size, rotation_angle=270),
-            GestureType.LINE_S: self.create_variant(base_image, self._image_size, rotation_angle=180),
-            GestureType.LINE_W: self.create_variant(base_image, self._image_size, rotation_angle=90),
+        if base_image:
+            print(f"found base image: '{base_image}' at '{self.image_path}'")
+        else:
+            print(f"failed to find base image: '{base_image}'  at '{self.image_path}'")
+
+        self.image_library: dict[GestureType, PILImage] = {
+            GestureType.LINE_N: self.create_variant(base_image, self.image_size, rotation_angle=0),
+            GestureType.LINE_E: self.create_variant(base_image, self.image_size, rotation_angle=270),
+            GestureType.LINE_S: self.create_variant(base_image, self.image_size, rotation_angle=180),
+            GestureType.LINE_W: self.create_variant(base_image, self.image_size, rotation_angle=90),
         }

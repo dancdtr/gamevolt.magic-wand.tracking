@@ -17,4 +17,4 @@ class DetectedGestures:
     # TODO temp helper until can display multiple gestures at the same time
     @property
     def main_gesture(self) -> GestureType:
-        return self.types[0] if self.types else GestureType.NONE
+        return self.types[0] if self.types else GestureType.UNKNOWN

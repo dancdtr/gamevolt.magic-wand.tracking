@@ -9,15 +9,16 @@ from display.image_providers.gestures.arc_270_image_provider import Arc270ImageP
 from display.image_providers.gestures.arc_360_image_provider import Arc360ImageProvider
 from display.image_providers.gestures.cardinal_line_image_provider import CardinalLineImageProvider
 from display.image_providers.gestures.crook_image_provider import CrookImageProvider
-from display.image_providers.gestures.debug_image_provider import DebugImageProvider
 from display.image_providers.gestures.gesture_image_provider import GestureImageProvider
 from display.image_providers.gestures.hook_image_provider import HookImageProvider
 from display.image_providers.gestures.intercardinal_line_image_provider import IntercardinalLineImageProvider
 from display.image_providers.gestures.inverse_crook_image_provider import InverseCrookImageProvider
 from display.image_providers.gestures.inverse_hook_image_provider import InverseHookImageProvider
+from display.image_providers.gestures.none_image_provider import NoneImageProvider
 from display.image_providers.gestures.sine_360_image_provider import Sine360ImageProvider
 from display.image_providers.gestures.sine_540_image_provider import Sine540ImageProvider
 from display.image_providers.gestures.sub_intercardinal_line_image_provider import SubIntercardinalLineImageProvider
+from display.image_providers.gestures.unknown_image_provider import UnknownImageProvider
 from display.images.libraries.configuration.image_library_settings import ImageLibrarySettings
 
 
@@ -31,11 +32,12 @@ class GestureImageLibrary:
 
         image_size = self._settings.image_size
 
-        image_providers: list[GestureImageProvider] = [
-            DebugImageProvider(build_path("unknown.png"), build_path("none.png"), image_size),
+        gesture_image_providers: list[GestureImageProvider] = [
+            HookImageProvider(build_path("hook.png"), image_size),
+            NoneImageProvider(build_path("none.png"), image_size),
+            UnknownImageProvider(build_path("unknown.png"), image_size),
             CardinalLineImageProvider(build_path("cardinal_line.png"), image_size),
             CrookImageProvider(build_path("crook.png"), image_size),
-            HookImageProvider(build_path("hook.png"), image_size),
             InverseHookImageProvider(build_path("inverse_hook.png"), image_size),
             InverseCrookImageProvider(build_path("inverse_crook.png"), image_size),
             IntercardinalLineImageProvider(build_path("intercardinal_line.png"), image_size),
@@ -49,7 +51,7 @@ class GestureImageLibrary:
 
         self._images: dict[GestureType, PhotoImage] = {}
 
-        for provider in image_providers:
+        for provider in gesture_image_providers:
             provider.load()
 
             for type, image in provider.items():

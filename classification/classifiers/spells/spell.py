@@ -6,7 +6,9 @@ from spell_type import SpellType
 
 @dataclass(frozen=True)
 class Spell:
+    id: str
     type: SpellType
+    is_implemented: bool
     definition: list[GestureType]
 
     def get_gestures(self) -> list[GestureType]:

@@ -28,17 +28,9 @@ class SpellImageProvider(PILImageProvider[SpellType]):
 
     def load(self) -> None:
         # for type in SpellType: #TODO: implement all spells
-        for type in [
-            SpellType.NONE,
-            SpellType.REVELIO,
-            SpellType.ARRESTO_MOMENTUM,
-            SpellType.LOCOMOTOR,
-            SpellType.WINGARDIUM_LEVIOSA,
-            SpellType.METEOLOJINX,
-        ]:
+        for type in SpellType:
             file = f"{type.name.lower()}.png"
 
-            print(f"target file: {file} ")
             path = os.path.join(self._settings.assets_dir, file)
 
             base_image = load_image(path)

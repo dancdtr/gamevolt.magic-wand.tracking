@@ -1,7 +1,5 @@
 import tkinter as tk
-from abc import ABC
 from collections.abc import Callable
-from dataclasses import dataclass
 from logging import Logger
 
 from classification.classifiers.spells.spell import Spell
@@ -9,6 +7,8 @@ from classification.classifiers.spells.spell_factory import SpellFactory
 from gamevolt.events.event import Event
 from input.dropdown import Dropdown
 from input.numeric_input import NumericInput
+from input.spell_entry import SpellEntry
+from input.spell_provider_base import SpellProviderBase
 from spell_type import SpellType
 
 _SPELL_TYPE_MAPPINGS = {
@@ -21,7 +21,7 @@ _SPELL_TYPE_MAPPINGS = {
     6: SpellType.COLOVARIA,
     7: SpellType.SLUGULUS_ERECTO,
     8: SpellType.VENTUS,
-    9: SpellType.RICTUSEMPRA,
+    9: SpellType.RICTUMSEMPRA,
     10: SpellType.REPARO,
     11: SpellType.PIERTOTUM_LOCOMOTOR,
     12: SpellType.ALOHOMORA,
@@ -32,7 +32,7 @@ _SPELL_TYPE_MAPPINGS = {
     17: SpellType.IMMOBULUS,
     18: SpellType.APARECIUM,
     19: SpellType.ENGORGIO,
-    20: SpellType.SQITCHING,
+    20: SpellType.SWITCHING,
     21: SpellType.CANTIS,
     22: SpellType.PEPPER_BREATH,
     23: SpellType.VERA_VERTO,
@@ -46,29 +46,6 @@ _SPELL_TYPE_MAPPINGS = {
 }
 
 _DIVIDER = " - "
-
-
-@dataclass(frozen=True)
-class SpellEntry:
-    id: int
-    type: SpellType
-    dropdown_name: str  # eg "12 - alohomora"
-
-
-class SpellProviderBase(ABC):
-    def __init__(self, logger: Logger) -> None:
-        super().__init__()
-        self._logger = logger
-
-    @property
-    def target_spells(self) -> list[Spell]: ...
-
-    def start(self) -> None: ...
-
-    def stop(self) -> None: ...
-
-    @property
-    def target_spells_updated(self) -> Event[Callable[[list[Spell]], None]]: ...
 
 
 class SpellProvider(SpellProviderBase):
@@ -137,4 +114,9 @@ class SpellProvider(SpellProviderBase):
 
         targets = [target]  # TODO temp until support added for multiple simultaneous spell targets
         self._target_spells = [self._spell_factory.create(t) for t in targets]
+
+        for spell in self._target_spells:
+            if not spell.is_implemented:
+                self._logger.warning(f"Spell '{spell.name}' is not yet implemented! You will be unable to cast. 💀")
+
         self._target_spells_updated.invoke(self._target_spells)

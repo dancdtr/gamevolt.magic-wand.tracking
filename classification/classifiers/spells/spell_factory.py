@@ -1,72 +1,39 @@
 from classification.classifiers.spells.spell import Spell
-from classification.gesture_type import GestureType
+from classification.gesture_type import GestureType as G
 from spell_type import SpellType
 
 _SPELLS = [
-    Spell(
-        type=SpellType.NONE,  # 0
-        definition=[],
-    ),
-    Spell(
-        type=SpellType.REVELIO,  # 1
-        definition=[GestureType.CROOK_N_CW, GestureType.LINE_SE],
-    ),
-    Spell(
-        type=SpellType.LOCOMOTOR,  # 2
-        definition=[
-            GestureType.LINE_N,
-            GestureType.LINE_SW,
-            GestureType.LINE_E,
-        ],
-    ),
-    Spell(
-        type=SpellType.ARRESTO_MOMENTUM,  # 3
-        definition=[
-            GestureType.LINE_NNE,
-            GestureType.LINE_SSE,
-            GestureType.LINE_NNE,
-            GestureType.LINE_SSE,
-        ],
-    ),
-    Spell(
-        type=SpellType.WINGARDIUM_LEVIOSA,  # 4
-        definition=[
-            GestureType.ARC_180_CCW_START_W,
-            GestureType.LINE_S,
-        ],
-    ),
-    Spell(
-        type=SpellType.METEOLOJINX,  # 5
-        definition=[
-            GestureType.ARC_180_CCW_START_E,
-            GestureType.ARC_180_CW_START_W,
-        ],
-    ),
-    Spell(type=SpellType.COLOVARIA, definition=[]),
-    Spell(type=SpellType.SLUGULUS_ERECTO, definition=[]),
-    Spell(type=SpellType.VENTUS, definition=[]),
-    Spell(type=SpellType.RICTUSEMPRA, definition=[]),
-    Spell(type=SpellType.REPARO, definition=[]),
-    Spell(type=SpellType.PIERTOTUM_LOCOMOTOR, definition=[]),
-    Spell(type=SpellType.ALOHOMORA, definition=[]),
-    Spell(type=SpellType.COLLOPORTUS, definition=[]),
-    Spell(type=SpellType.SILENCIO, definition=[]),
-    Spell(type=SpellType.INCENDIO, definition=[]),
-    Spell(type=SpellType.INFLATUS, definition=[]),
-    Spell(type=SpellType.IMMOBULUS, definition=[]),
-    Spell(type=SpellType.APARECIUM, definition=[]),
-    Spell(type=SpellType.ENGORGIO, definition=[]),
-    Spell(type=SpellType.SQITCHING, definition=[]),
-    Spell(type=SpellType.CANTIS, definition=[]),
-    Spell(type=SpellType.PEPPER_BREATH, definition=[]),
-    Spell(type=SpellType.VERA_VERTO, definition=[]),
-    Spell(type=SpellType.DENSAUGEO, definition=[]),
-    Spell(type=SpellType.HORN_TONGUE, definition=[]),
-    Spell(type=SpellType.FLIPENDO, definition=[]),
-    Spell(type=SpellType.EXPECTO_PATRONUM, definition=[]),
-    Spell(type=SpellType.LUMOS_MAXIMA, definition=[]),
-    Spell(type=SpellType.HERBIVICIUS, definition=[]),
-    Spell(type=SpellType.NEBULUS, definition=[]),
+    Spell(is_implemented=True, id="SP00", type=SpellType.NONE, definition=[G.NONE]),
+    Spell(is_implemented=True, id="SP01", type=SpellType.REVELIO, definition=[G.CROOK_N_CW, G.LINE_SE]),
+    Spell(is_implemented=True, id="SP02", type=SpellType.LOCOMOTOR, definition=[G.LINE_N, G.LINE_SW, G.LINE_E]),
+    Spell(is_implemented=True, id="SP03", type=SpellType.ARRESTO_MOMENTUM, definition=[G.LINE_NNE, G.LINE_SSE, G.LINE_NNE, G.LINE_SSE]),
+    Spell(is_implemented=True, id="SP04", type=SpellType.WINGARDIUM_LEVIOSA, definition=[G.ARC_180_CCW_START_W, G.LINE_S]),
+    Spell(is_implemented=True, id="SP05", type=SpellType.METEOLOJINX, definition=[G.ARC_180_CCW_START_E, G.ARC_180_CW_START_W]),
+    Spell(is_implemented=False, id="SP06", type=SpellType.COLOVARIA, definition=[G.NONE]),
+    Spell(is_implemented=True, id="SP07", type=SpellType.SLUGULUS_ERECTO, definition=[G.LINE_S, G.LINE_WSW, G.LINE_N, G.LINE_ENE]),
+    Spell(is_implemented=True, id="SP08", type=SpellType.VENTUS, definition=[G.LINE_SSE, G.LINE_NNE]),
+    Spell(is_implemented=False, id="SP09", type=SpellType.RICTUMSEMPRA, definition=[G.NONE]),
+    Spell(is_implemented=False, id="SP10", type=SpellType.REPARO, definition=[G.NONE]),
+    Spell(is_implemented=True, id="SP11", type=SpellType.PIERTOTUM_LOCOMOTOR, definition=[G.LINE_SW, G.LINE_E, G.LINE_N]),
+    Spell(is_implemented=True, id="SP12", type=SpellType.ALOHOMORA, definition=[G.ARC_360_CW_START_N, G.LINE_S]),
+    Spell(is_implemented=True, id="SP13", type=SpellType.COLLOPORTUS, definition=[G.LINE_E, G.LINE_S, G.LINE_W, G.LINE_S]),
+    Spell(is_implemented=True, id="SP14", type=SpellType.SILENCIO, definition=[G.ARC_180_CCW_START_E, G.LINE_S]),
+    Spell(is_implemented=True, id="SP15", type=SpellType.INCENDIO, definition=[G.LINE_NNE, G.LINE_SSE, G.LINE_E]),
+    Spell(is_implemented=True, id="SP16", type=SpellType.INFLATUS, definition=[G.ARC_180_CW_START_W]),
+    Spell(is_implemented=True, id="SP17", type=SpellType.IMMOBULUS, definition=[G.LINE_NW, G.LINE_E, G.LINE_SW]),
+    Spell(is_implemented=False, id="SP18", type=SpellType.APARECIUM, definition=[G.NONE]),
+    Spell(is_implemented=True, id="SP19", type=SpellType.ENGORGIO, definition=[G.LINE_ESE, G.LINE_WSW]),
+    Spell(is_implemented=True, id="SP20", type=SpellType.SWITCHING, definition=[G.LINE_SSE, G.LINE_E]),
+    Spell(is_implemented=False, id="SP21", type=SpellType.CANTIS, definition=[G.NONE]),
+    Spell(is_implemented=False, id="SP22", type=SpellType.PEPPER_BREATH, definition=[G.NONE]),
+    Spell(is_implemented=False, id="SP23", type=SpellType.VERA_VERTO, definition=[G.NONE]),
+    Spell(is_implemented=True, id="SP24", type=SpellType.DENSAUGEO, definition=[G.LINE_S, G.LINE_SW, G.LINE_S]),
+    Spell(is_implemented=False, id="SP25", type=SpellType.HORN_TONGUE, definition=[G.NONE]),
+    Spell(is_implemented=False, id="SP26", type=SpellType.FLIPENDO, definition=[G.NONE]),
+    Spell(is_implemented=False, id="SP27", type=SpellType.EXPECTO_PATRONUM, definition=[G.NONE]),
+    Spell(is_implemented=True, id="SP28", type=SpellType.LUMOS_MAXIMA, definition=[G.LINE_NNE, G.LINE_SSE]),
+    Spell(is_implemented=True, id="SP29", type=SpellType.HERBIVICIUS, definition=[G.LINE_S, G.ARC_180_CW_START_W]),
+    Spell(is_implemented=False, id="SP30", type=SpellType.NEBULUS, definition=[G.NONE]),
 ]
 
 

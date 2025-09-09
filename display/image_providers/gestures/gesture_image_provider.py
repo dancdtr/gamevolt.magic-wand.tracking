@@ -1,5 +1,6 @@
 # display/image_providers/gestures/gesture_image_provider.py
 from abc import ABC, abstractmethod
+from typing import Iterable
 
 from PIL import Image
 from PIL.Image import Image as PILImage
@@ -9,20 +10,23 @@ from gamevolt.display.pil_image_provider import PILImageProvider
 
 
 class GestureImageProvider(PILImageProvider[GestureType], ABC):
-    def __init__(self) -> None:
+    def __init__(self, image_path: str, image_size: int) -> None:
         super().__init__()
+
+        self.image_path = image_path
+        self.image_size = image_size
+
+        self.image_library: dict[GestureType, PILImage] = {}
 
     @abstractmethod
     def load(self) -> None: ...
 
+    def items(self) -> Iterable[tuple[GestureType, PILImage]]:
+        return self.image_library.items()
+
     # util
     def create_variant(
-        self,
-        image_file: PILImage,
-        size: int,
-        rotation_angle: float = 0,
-        flip_x: bool = False,
-        flip_y: bool = False,
+        self, image_file: PILImage, size: int, rotation_angle: float = 0, flip_x: bool = False, flip_y: bool = False
     ) -> PILImage:
         image = image_file.rotate(angle=0, expand=True)
 
