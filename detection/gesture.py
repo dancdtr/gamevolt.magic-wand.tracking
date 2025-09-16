@@ -41,18 +41,17 @@ class Gesture:
             if x >= 0:
                 self.total_pos_x += x
             else:
-                self.total_neg_x += x
+                self.total_neg_x += abs(x)
 
             if y >= 0:
                 self.total_pos_y += y
             else:
-                self.total_neg_y += y
+                self.total_neg_y += abs(y)
 
         def f(f: float) -> str:
-            abs_f = abs(f)
-            if abs_f < 10:
+            if f < 10:
                 pad = "00"
-            elif abs_f < 100:
+            elif f < 100:
                 pad = "0"
             else:
                 pad = ""

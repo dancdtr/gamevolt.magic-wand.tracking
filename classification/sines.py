@@ -1,14 +1,9 @@
 from enum import Enum, auto
-from typing import Sequence
 
-from classification.directions import has_azimuth_e, has_azimuth_n, has_azimuth_s, has_azimuth_w
-from classification.gesture_type import GestureType
+from classification.directions import Direction, is_moving_e, is_moving_n, is_moving_s, is_moving_w
 from detection.gesture import Gesture
 from detection.turn import TurnType
-from detection.turn_direction import TurnDirection
-from detection.turn_event import TurnEvent
 from gamevolt.iterables.iter_tools import matches_prefix, take_infinite
-from gamevolt.maths.azimuth import Azimuth
 
 
 class SineType(Enum):
@@ -30,10 +25,10 @@ class Period(Enum):
 
 
 _DIRECTIONS = {
-    Azimuth.N: has_azimuth_n,
-    Azimuth.E: has_azimuth_e,
-    Azimuth.S: has_azimuth_s,
-    Azimuth.W: has_azimuth_w,
+    Direction.NORTHWARD: is_moving_n,
+    Direction.EASTWARD: is_moving_e,
+    Direction.SOUTHWARD: is_moving_s,
+    Direction.WESTWARD: is_moving_w,
 }
 
 _TURN_POINTS = {
@@ -59,91 +54,91 @@ _PERIOD_COUNT = {
 # Sines 360
 # =========================================
 def is_wave_sine_n_360(g: Gesture) -> bool:
-    return _is_wave_sine_360(g, Azimuth.N, SineType.N)
+    return _is_wave_sine_360(g, Direction.NORTHWARD, SineType.N)
 
 
 def is_wave_sine_e_360(g: Gesture) -> bool:
-    return _is_wave_sine_360(g, Azimuth.E, SineType.E)
+    return _is_wave_sine_360(g, Direction.EASTWARD, SineType.E)
 
 
 def is_wave_sine_s_360(g: Gesture) -> bool:
-    return _is_wave_sine_360(g, Azimuth.S, SineType.S)
+    return _is_wave_sine_360(g, Direction.SOUTHWARD, SineType.S)
 
 
 def is_wave_sine_w_360(g: Gesture) -> bool:
-    return _is_wave_sine_360(g, Azimuth.W, SineType.W)
+    return _is_wave_sine_360(g, Direction.WESTWARD, SineType.W)
 
 
 # =========================================
 # Negative Sines 360
 # =========================================
 def is_wave_negative_sine_n_360(g: Gesture) -> bool:
-    return _is_wave_sine_360(g, Azimuth.N, SineType.NEG_N)
+    return _is_wave_sine_360(g, Direction.NORTHWARD, SineType.NEG_N)
 
 
 def is_wave_negative_sine_e_360(g: Gesture) -> bool:
-    return _is_wave_sine_360(g, Azimuth.E, SineType.NEG_E)
+    return _is_wave_sine_360(g, Direction.EASTWARD, SineType.NEG_E)
 
 
 def is_wave_negative_sine_s_360(g: Gesture) -> bool:
-    return _is_wave_sine_360(g, Azimuth.S, SineType.NEG_S)
+    return _is_wave_sine_360(g, Direction.SOUTHWARD, SineType.NEG_S)
 
 
 def is_wave_negative_sine_w_360(g: Gesture) -> bool:
-    return _is_wave_sine_360(g, Azimuth.W, SineType.NEG_W)
+    return _is_wave_sine_360(g, Direction.WESTWARD, SineType.NEG_W)
 
 
 # =========================================
 # Sines 540
 # =========================================
 def is_wave_sine_n_540(g: Gesture) -> bool:
-    return _is_wave_sine_540(g, Azimuth.N, SineType.N)
+    return _is_wave_sine_540(g, Direction.NORTHWARD, SineType.N)
 
 
 def is_wave_sine_e_540(g: Gesture) -> bool:
-    return _is_wave_sine_540(g, Azimuth.E, SineType.E)
+    return _is_wave_sine_540(g, Direction.EASTWARD, SineType.E)
 
 
 def is_wave_sine_s_540(g: Gesture) -> bool:
-    return _is_wave_sine_540(g, Azimuth.S, SineType.S)
+    return _is_wave_sine_540(g, Direction.SOUTHWARD, SineType.S)
 
 
 def is_wave_sine_w_540(g: Gesture) -> bool:
-    return _is_wave_sine_540(g, Azimuth.W, SineType.W)
+    return _is_wave_sine_540(g, Direction.WESTWARD, SineType.W)
 
 
 # =========================================
 # Negative Sines 540
 # =========================================
 def is_wave_negative_sine_n_540(g: Gesture) -> bool:
-    return _is_wave_sine_540(g, Azimuth.N, SineType.NEG_N)
+    return _is_wave_sine_540(g, Direction.NORTHWARD, SineType.NEG_N)
 
 
 def is_wave_negative_sine_e_540(g: Gesture) -> bool:
-    return _is_wave_sine_540(g, Azimuth.E, SineType.NEG_E)
+    return _is_wave_sine_540(g, Direction.EASTWARD, SineType.NEG_E)
 
 
 def is_wave_negative_sine_s_540(g: Gesture) -> bool:
-    return _is_wave_sine_540(g, Azimuth.S, SineType.NEG_S)
+    return _is_wave_sine_540(g, Direction.SOUTHWARD, SineType.NEG_S)
 
 
 def is_wave_negative_sine_w_540(g: Gesture) -> bool:
-    return _is_wave_sine_540(g, Azimuth.W, SineType.NEG_W)
+    return _is_wave_sine_540(g, Direction.WESTWARD, SineType.NEG_W)
 
 
 # =========================================
 # Utils
 # =========================================
-def _is_wave_sine_540(g: Gesture, direction: Azimuth, sine_type: SineType) -> bool:
-    return _is_wave_sign(g, direction, sine_type, Period.SINE_540)
+def _is_wave_sine_540(g: Gesture, direction: Direction, sine_type: SineType) -> bool:
+    return _is_wave_sine(g, direction, sine_type, Period.SINE_540)
 
 
-def _is_wave_sine_360(g: Gesture, direction: Azimuth, sine_type: SineType) -> bool:
-    return _is_wave_sign(g, direction, sine_type, Period.SINE_360)
+def _is_wave_sine_360(g: Gesture, direction: Direction, sine_type: SineType) -> bool:
+    return _is_wave_sine(g, direction, sine_type, Period.SINE_360)
 
 
-def _is_wave_sign(g: Gesture, direction: Azimuth, sine_type: SineType, period: Period) -> bool:
-    iter_turn_points = g.iter_x_turn_points() if direction in [Azimuth.N, Azimuth.S] else g.iter_y_turn_points()
+def _is_wave_sine(g: Gesture, direction: Direction, sine_type: SineType, period: Period) -> bool:
+    iter_turn_points = g.iter_x_turn_points() if direction in [Direction.NORTHWARD, Direction.SOUTHWARD] else g.iter_y_turn_points()
 
     period_count = _PERIOD_COUNT[period]
     targets = list(take_infinite(period_count, _TURN_POINTS[sine_type]))

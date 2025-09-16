@@ -23,7 +23,7 @@ class SpellChecker:
 
     def stop(self) -> None:
         self._gesture_history.updated.unsubscribe(self._on_gestures_updated)
-        self._spell_provider.target_spells_updated.subscribe(self._on_spells_updated)
+        self._spell_provider.target_spells_updated.unsubscribe(self._on_spells_updated)
 
     def _on_gestures_updated(self) -> None:
         for spell in self._spell_provider.target_spells:

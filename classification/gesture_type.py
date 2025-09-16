@@ -69,6 +69,19 @@ class GestureType(StrEnum):
     ARC_360_CCW_START_W = "ARC_360_CCW_START_W"
 
     # =========================================
+    # Arcs 450
+    # =========================================
+    ARC_450_CW_START_N = "ARC_450_CW_START_N"
+    ARC_450_CW_START_E = "ARC_450_CW_START_E"
+    ARC_450_CW_START_S = "ARC_450_CW_START_S"
+    ARC_450_CW_START_W = "ARC_450_CW_START_W"
+
+    ARC_450_CCW_START_N = "ARC_450_CCW_START_N"
+    ARC_450_CCW_START_E = "ARC_450_CCW_START_E"
+    ARC_450_CCW_START_S = "ARC_450_CCW_START_S"
+    ARC_450_CCW_START_W = "ARC_450_CCW_START_W"
+
+    # =========================================
     # Sine 360 waves
     # =========================================
     WAVE_SINE_360_N = "WAVE_SINE_360_N"
