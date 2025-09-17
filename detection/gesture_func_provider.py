@@ -35,6 +35,16 @@ from classification.arcs import (
     is_arc_450_cw_start_s,
     is_arc_450_cw_start_w,
 )
+from classification.classifiers.flicks import (
+    is_flick_ccw_ne,
+    is_flick_ccw_nw,
+    is_flick_ccw_se,
+    is_flick_ccw_sw,
+    is_flick_cw_ne,
+    is_flick_cw_nw,
+    is_flick_cw_se,
+    is_flick_cw_sw,
+)
 from classification.crooks import (
     is_crook_e_ccw,
     is_crook_e_cw,
@@ -133,6 +143,14 @@ class GestureFuncProvider:
             GestureType.LINE_WSW: is_line_wsw,
             GestureType.LINE_WNW: is_line_wnw,
             GestureType.LINE_NNW: is_line_nnw,
+            GestureType.FLICK_CW_NE: is_flick_cw_ne,
+            GestureType.FLICK_CW_SE: is_flick_cw_se,
+            GestureType.FLICK_CW_SW: is_flick_cw_sw,
+            GestureType.FLICK_CW_NW: is_flick_cw_nw,
+            GestureType.FLICK_CCW_NE: is_flick_ccw_ne,
+            GestureType.FLICK_CCW_SE: is_flick_ccw_se,
+            GestureType.FLICK_CCW_SW: is_flick_ccw_sw,
+            GestureType.FLICK_CCW_NW: is_flick_ccw_nw,
             GestureType.ARC_360_CW_START_N: is_arc_360_cw_start_n,
             GestureType.ARC_360_CW_START_E: is_arc_360_cw_start_e,
             GestureType.ARC_360_CW_START_S: is_arc_360_cw_start_s,

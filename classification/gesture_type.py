@@ -30,6 +30,19 @@ class GestureType(StrEnum):
     LINE_NNW = "LINE_NNW"
 
     # =========================================
+    # Arcs 90 (Flicks)
+    # =========================================
+    FLICK_CW_NE = "FLICK_CW_NE"
+    FLICK_CW_SE = "FLICK_CW_SE"
+    FLICK_CW_SW = "FLICK_CW_SW"
+    FLICK_CW_NW = "FLICK_CW_NW"
+
+    FLICK_CCW_NE = "FLICK_CCW_NE"
+    FLICK_CCW_SE = "FLICK_CCW_SE"
+    FLICK_CCW_SW = "FLICK_CCW_SW"
+    FLICK_CCW_NW = "FLICK_CCW_NW"
+
+    # =========================================
     # Arcs 180
     # =========================================
     ARC_180_CW_START_N = "ARC_180_CW_START_N"

@@ -7,10 +7,10 @@ from gamevolt.maths.azimuth import Azimuth
 
 class Direction(Enum):
     NONE = auto()
-    NORTHWARD = auto()
-    EASTWARD = auto()
-    SOUTHWARD = auto()
-    WESTWARD = auto()
+    N = auto()
+    E = auto()
+    S = auto()
+    W = auto()
 
 
 _CARDINAL_ANGLE_VARIANCE = 22.5
@@ -45,35 +45,51 @@ def has_azimuth_w(g: Gesture) -> bool:
 
 def get_horizontal_direction(g: Gesture) -> Direction:
     if is_moving_e(g):
-        return Direction.EASTWARD
+        return Direction.E
     elif is_moving_w(g):
-        return Direction.WESTWARD
+        return Direction.W
     return Direction.NONE
 
 
 def get_vertical_dir(g: Gesture) -> Direction:
     if is_moving_n(g):
-        return Direction.NORTHWARD
+        return Direction.N
     elif is_moving_s(g):
-        return Direction.SOUTHWARD
+        return Direction.S
 
     return Direction.NONE
 
 
+def is_moving_ne(g: Gesture) -> bool:
+    return is_moving_n(g) and is_moving_e(g)
+
+
+def is_moving_se(g: Gesture) -> bool:
+    return is_moving_s(g) and is_moving_e(g)
+
+
+def is_moving_sw(g: Gesture) -> bool:
+    return is_moving_s(g) and is_moving_w(g)
+
+
+def is_moving_nw(g: Gesture) -> bool:
+    return is_moving_n(g) and is_moving_w(g)
+
+
 def is_moving_n(g: Gesture) -> bool:
-    return g.total_neg_y > g.total_pos_y * _MOVING_RATIO
+    return g.total_velocity_n > g.total_velocity_s * _MOVING_RATIO
 
 
 def is_moving_e(g: Gesture) -> bool:
-    return g.total_neg_x > g.total_pos_x * _MOVING_RATIO
+    return g.total_velocity_e > g.total_velocity_w * _MOVING_RATIO
 
 
 def is_moving_s(g: Gesture) -> bool:
-    return g.total_pos_y > g.total_neg_y * _MOVING_RATIO
+    return g.total_velocity_s > g.total_velocity_n * _MOVING_RATIO
 
 
 def is_moving_w(g: Gesture) -> bool:
-    return g.total_pos_x > g.total_neg_x * _MOVING_RATIO
+    return g.total_velocity_w > g.total_velocity_e * _MOVING_RATIO
 
 
 def is_moving_e2w(g: Gesture) -> bool:

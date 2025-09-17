@@ -10,6 +10,7 @@ from display.image_providers.gestures.arc_360_image_provider import Arc360ImageP
 from display.image_providers.gestures.arc_450_image_provider import Arc450ImageProvider
 from display.image_providers.gestures.cardinal_line_image_provider import CardinalLineImageProvider
 from display.image_providers.gestures.crook_image_provider import CrookImageProvider
+from display.image_providers.gestures.flick_image_provider import FlickImageProvider
 from display.image_providers.gestures.gesture_image_provider import GestureImageProvider
 from display.image_providers.gestures.hook_image_provider import HookImageProvider
 from display.image_providers.gestures.intercardinal_line_image_provider import IntercardinalLineImageProvider
@@ -34,10 +35,11 @@ class GestureImageLibrary:
         image_size = self._settings.image_size
 
         gesture_image_providers: list[GestureImageProvider] = [
-            HookImageProvider(build_path("hook.png"), image_size),
             NoneImageProvider(build_path("none.png"), image_size),
             UnknownImageProvider(build_path("unknown.png"), image_size),
             CardinalLineImageProvider(build_path("cardinal_line.png"), image_size),
+            FlickImageProvider(build_path("flick.png"), image_size),
+            HookImageProvider(build_path("hook.png"), image_size),
             CrookImageProvider(build_path("crook.png"), image_size),
             InverseHookImageProvider(build_path("inverse_hook.png"), image_size),
             InverseCrookImageProvider(build_path("inverse_crook.png"), image_size),

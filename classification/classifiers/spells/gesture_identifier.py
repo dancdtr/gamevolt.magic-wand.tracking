@@ -1,5 +1,15 @@
 from logging import Logger
 
+from classification.classifiers.flicks import (
+    is_flick_ccw_ne,
+    is_flick_ccw_nw,
+    is_flick_ccw_se,
+    is_flick_ccw_sw,
+    is_flick_cw_ne,
+    is_flick_cw_nw,
+    is_flick_cw_se,
+    is_flick_cw_sw,
+)
 from classification.gesture_type import GestureType
 from detection.gesture import Gesture
 from detection.gesture_func_provider import GestureFuncProvider, GestureIdentifier
@@ -17,6 +27,7 @@ class GestureIdentifierController:
         self._active_funcs: dict[GestureType, GestureIdentifier] = {}
 
     def start(self) -> None:
+        print("STARTED!!")
         self._message_handler.subscribe(TargetGesturesMessage, self._on_target_gestures_message)
 
     def stop(self) -> None:
@@ -24,6 +35,22 @@ class GestureIdentifierController:
 
     def identify(self, gesture: Gesture) -> list[GestureType]:
         types: list[GestureType] = []
+
+        # print(f"General V dir: {get_vertical_dir(gesture)}")
+        # print(f"General H dir: {get_horizontal_direction(gesture)}")
+
+        # print(f"EN: {is_flick_e_then_n(gesture)}")
+        print(f"NE: {is_flick_ccw_ne(gesture)}")
+        print(f"SE: {is_flick_ccw_se(gesture)}")
+        print(f"SW: {is_flick_ccw_sw(gesture)}")
+        print(f"NW: {is_flick_ccw_nw(gesture)}")
+        # print(f"NE: {is_flick_cw_ne(gesture)}")
+        # print(f"SE: {is_flick_cw_se(gesture)}")
+        # print(f"SW: {is_flick_cw_sw(gesture)}")
+        # print(f"NW: {is_flick_cw_nw(gesture)}")
+        # print(f"SE: {is_flick_s_then_e(gesture)}")
+        # print(f"WS: {is_flick_w_then_s(gesture)}")
+        # print(f"NW: {is_flick_n_then_w(gesture)}")
 
         for type, func in self._active_funcs.items():
             if func(gesture):
@@ -34,6 +61,8 @@ class GestureIdentifierController:
     def _on_target_gestures_message(self, message: Message) -> None:
         if not isinstance(message, TargetGesturesMessage):
             return
+
+        print(message.Timestamp)
 
         self._active_funcs.clear()
         for name in message.GestureNames:

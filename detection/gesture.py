@@ -31,22 +31,22 @@ class Gesture:
 
         self.id: int = random.randint(100000, 999999)
 
-        self.total_pos_x: float = 0
-        self.total_neg_x: float = 0
-        self.total_pos_y: float = 0
-        self.total_neg_y: float = 0
+        self.total_velocity_n: float = 0
+        self.total_velocity_e: float = 0
+        self.total_velocity_s: float = 0
+        self.total_velocity_w: float = 0
 
         for p in points:
             x, y = p.velocity
             if x >= 0:
-                self.total_pos_x += x
+                self.total_velocity_w += x
             else:
-                self.total_neg_x += abs(x)
+                self.total_velocity_e += abs(x)
 
             if y >= 0:
-                self.total_pos_y += y
+                self.total_velocity_s += y
             else:
-                self.total_neg_y += abs(y)
+                self.total_velocity_n += abs(y)
 
         def f(f: float) -> str:
             if f < 10:
@@ -58,7 +58,9 @@ class Gesture:
 
             return f"{pad}{f:.2f}"
 
-        print(f"({self.id}) V: +x: {f(self.total_pos_x)} -x: {f(self.total_neg_x)} +y: {f(self.total_pos_y)} -y: {f(self.total_neg_y)}")
+        print(
+            f"({self.id})  N: {f(self.total_velocity_n)}  E: {f(self.total_velocity_e)} S: {f(self.total_velocity_s)} W: {f(self.total_velocity_w)}"
+        )
 
     def iter_x_extrema(self) -> Iterator[Extremum]:
         return (e.type for e in self.extrema_events if e.type.is_x())
