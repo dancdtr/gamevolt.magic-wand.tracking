@@ -21,7 +21,7 @@ _SPELLS = [
     Spell(is_implemented=True, id="SP15", type=SpellType.INCENDIO, definition=[G.LINE_NNE, G.LINE_SSE, G.LINE_W]),
     Spell(is_implemented=True, id="SP16", type=SpellType.INFLATUS, definition=[G.ARC_180_CW_START_W]),
     Spell(is_implemented=True, id="SP17", type=SpellType.IMMOBULUS, definition=[G.LINE_NW, G.LINE_E, G.LINE_SW]),
-    Spell(is_implemented=False, id="SP18", type=SpellType.APARECIUM, definition=[G.NONE]),
+    Spell(is_implemented=False, id="SP18", type=SpellType.APARECIUM, definition=[G.LINE_W, G.WAVE_SINE_720_E]),
     Spell(is_implemented=True, id="SP19", type=SpellType.ENGORGIO, definition=[G.LINE_ESE, G.LINE_WSW]),
     Spell(is_implemented=True, id="SP20", type=SpellType.SWITCHING, definition=[G.LINE_SSE, G.LINE_E]),
     Spell(is_implemented=False, id="SP21", type=SpellType.CANTIS, definition=[G.NONE]),

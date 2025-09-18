@@ -119,6 +119,18 @@ class GestureType(StrEnum):
     WAVE_NEGATIVE_SINE_540_W = "WAVE_NEGATIVE_SINE_540_W"
 
     # =========================================
+    # Sine 720 waves
+    # =========================================
+    WAVE_SINE_720_N = "WAVE_SINE_720_N"
+    WAVE_SINE_720_E = "WAVE_SINE_720_E"
+    WAVE_SINE_720_S = "WAVE_SINE_720_S"
+    WAVE_SINE_720_W = "WAVE_SINE_720_W"
+    WAVE_NEGATIVE_SINE_720_N = "WAVE_NEGATIVE_SINE_720_N"
+    WAVE_NEGATIVE_SINE_720_E = "WAVE_NEGATIVE_SINE_720_E"
+    WAVE_NEGATIVE_SINE_720_S = "WAVE_NEGATIVE_SINE_720_S"
+    WAVE_NEGATIVE_SINE_720_W = "WAVE_NEGATIVE_SINE_720_W"
+
+    # =========================================
     # Crooks
     # =========================================
     CROOK_N_CW = "CROOK_N_CW"

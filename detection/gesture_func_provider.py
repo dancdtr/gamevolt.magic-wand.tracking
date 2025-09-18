@@ -103,20 +103,28 @@ from classification.lines import (
 from classification.sines import (
     is_wave_negative_sine_e_360,
     is_wave_negative_sine_e_540,
+    is_wave_negative_sine_e_720,
     is_wave_negative_sine_n_360,
     is_wave_negative_sine_n_540,
+    is_wave_negative_sine_n_720,
     is_wave_negative_sine_s_360,
     is_wave_negative_sine_s_540,
+    is_wave_negative_sine_s_720,
     is_wave_negative_sine_w_360,
     is_wave_negative_sine_w_540,
+    is_wave_negative_sine_w_720,
     is_wave_sine_e_360,
     is_wave_sine_e_540,
+    is_wave_sine_e_720,
     is_wave_sine_n_360,
     is_wave_sine_n_540,
+    is_wave_sine_n_720,
     is_wave_sine_s_360,
     is_wave_sine_s_540,
+    is_wave_sine_s_720,
     is_wave_sine_w_360,
     is_wave_sine_w_540,
+    is_wave_sine_w_720,
 )
 from detection.gesture import Gesture
 
@@ -231,6 +239,14 @@ class GestureFuncProvider:
             GestureType.WAVE_NEGATIVE_SINE_540_E: is_wave_negative_sine_e_540,
             GestureType.WAVE_NEGATIVE_SINE_540_S: is_wave_negative_sine_s_540,
             GestureType.WAVE_NEGATIVE_SINE_540_W: is_wave_negative_sine_w_540,
+            GestureType.WAVE_SINE_720_N: is_wave_sine_n_720,
+            GestureType.WAVE_SINE_720_E: is_wave_sine_e_720,
+            GestureType.WAVE_SINE_720_S: is_wave_sine_s_720,
+            GestureType.WAVE_SINE_720_W: is_wave_sine_w_720,
+            GestureType.WAVE_NEGATIVE_SINE_720_N: is_wave_negative_sine_n_720,
+            GestureType.WAVE_NEGATIVE_SINE_720_E: is_wave_negative_sine_e_720,
+            GestureType.WAVE_NEGATIVE_SINE_720_S: is_wave_negative_sine_s_720,
+            GestureType.WAVE_NEGATIVE_SINE_720_W: is_wave_negative_sine_w_720,
         }
 
     def get(self, type: GestureType) -> GestureIdentifier:
