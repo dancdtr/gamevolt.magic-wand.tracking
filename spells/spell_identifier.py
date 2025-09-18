@@ -1,14 +1,14 @@
 from collections.abc import Callable
 from logging import Logger
 
-from classification.classifiers.spells.spell import Spell
 from detection.gesture_history import GestureHistory
 from gamevolt.events.event import Event
-from input.spell_provider_base import SpellProviderBase
-from spell_type import SpellType
+from spells.spell import Spell
+from spells.spell_provider_base import SpellProviderBase
+from spells.spell_type import SpellType
 
 
-class SpellChecker:
+class SpellIdentifier:
     def __init__(self, logger: Logger, spell_provider: SpellProviderBase, gesture_history: GestureHistory) -> None:
         self._logger = logger
 

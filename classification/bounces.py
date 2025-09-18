@@ -1,7 +1,7 @@
 from classification.utils import matches_x_extrema, matches_y_extrema
-from detection.gesture import Gesture
 from gamevolt.maths.azimuth import Azimuth
 from gamevolt.maths.extremum import Extremum
+from gestures.gesture import Gesture
 
 
 # =========================================

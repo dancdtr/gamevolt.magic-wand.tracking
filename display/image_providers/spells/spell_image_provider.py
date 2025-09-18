@@ -6,7 +6,7 @@ from PIL.Image import Image as PILImage
 
 from display.image_providers.configuration.image_provider_settings import ImageProviderSettings
 from gamevolt.display.pil_image_provider import PILImageProvider, load_image, recolour_bg
-from spell_type import SpellType
+from spells.spell_type import SpellType
 
 
 class SpellImageProvider(PILImageProvider[SpellType]):

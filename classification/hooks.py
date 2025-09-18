@@ -9,10 +9,10 @@ from classification.arcs import (
     has_curve_180_cw_start_w,
 )
 from classification.lines import is_line_e, is_line_n, is_line_s, is_line_w
-from classification.utils import is_line_and_arc_compound
-from detection.gesture import Gesture
-from detection.turn_direction import TurnDirection
+from classification.utils import is_line_and_arc_180_compound
 from gamevolt.maths.azimuth import Azimuth
+from gestures.gesture import Gesture
+from gestures.turn_direction import TurnDirection
 
 _HOOK_SPLIT_TIME = 0.65  # normalised time position of the gesture
 _INVERSE_HOOK_SPLIT_TIME = 1 - _HOOK_SPLIT_TIME
@@ -164,7 +164,7 @@ def _is_hook(g: Gesture, line_direction: Azimuth, curve_start: Azimuth, directio
 
 
 def _is_inverse_hook(g: Gesture, curve_start: Azimuth, line_direction: Azimuth, direction: TurnDirection) -> bool:
-    return _is_line_and_arc_180_compound(
+    return is_line_and_arc_180_compound(
         g=g,
         line_start=line_direction,
         arc_start=curve_start,

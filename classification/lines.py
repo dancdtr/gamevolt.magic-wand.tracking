@@ -1,7 +1,7 @@
-from detection.gesture import Gesture
 from gamevolt.iterables.iter_tools import equals_single
 from gamevolt.maths.azimuth import Azimuth
 from gamevolt.maths.extremum import Extremum
+from gestures.gesture import Gesture
 
 _CARDINAL_ANGLE_VARIANCE = 22.5
 _INTERCARDINAL_ANGLE_VARIANCE = 22.5

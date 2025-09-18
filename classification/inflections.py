@@ -1,6 +1,6 @@
-from detection.gesture import Gesture
-from detection.turn import TurnType
-from detection.turn_event import TurnEvent
+from gestures.gesture import Gesture
+from gestures.turn_event import TurnEvent
+from gestures.turn_type import TurnType
 
 
 # =========================================

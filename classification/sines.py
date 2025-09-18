@@ -1,9 +1,9 @@
 from enum import Enum, auto
 
 from classification.directions import Direction, is_moving_e, is_moving_n, is_moving_s, is_moving_w
-from detection.gesture import Gesture
-from detection.turn import TurnType
 from gamevolt.iterables.iter_tools import matches_prefix, take_infinite
+from gestures.gesture import Gesture
+from gestures.turn_type import TurnType
 
 
 class SineType(Enum):

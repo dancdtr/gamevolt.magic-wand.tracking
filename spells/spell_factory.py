@@ -1,6 +1,6 @@
-from classification.classifiers.spells.spell import Spell
 from classification.gesture_type import GestureType as G
-from spell_type import SpellType
+from spells.spell import Spell
+from spells.spell_type import SpellType
 
 _SPELLS = [
     Spell(is_implemented=True, id="SP00", type=SpellType.NONE, definition=[G.NONE]),

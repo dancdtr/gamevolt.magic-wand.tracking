@@ -4,6 +4,7 @@ from tkinter import Tk, Toplevel
 from PIL.ImageTk import PhotoImage
 
 from classification.gesture_type import GestureType
+from display.image_libraries.configuration.image_library_settings import ImageLibrarySettings
 from display.image_providers.gestures.arc_180_image_provider import Arc180ImageProvider
 from display.image_providers.gestures.arc_270_image_provider import Arc270ImageProvider
 from display.image_providers.gestures.arc_360_image_provider import Arc360ImageProvider
@@ -21,7 +22,6 @@ from display.image_providers.gestures.sine_360_image_provider import Sine360Imag
 from display.image_providers.gestures.sine_540_image_provider import Sine540ImageProvider
 from display.image_providers.gestures.sub_intercardinal_line_image_provider import SubIntercardinalLineImageProvider
 from display.image_providers.gestures.unknown_image_provider import UnknownImageProvider
-from display.images.libraries.configuration.image_library_settings import ImageLibrarySettings
 
 
 class GestureImageLibrary:

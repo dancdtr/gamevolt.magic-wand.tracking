@@ -2,13 +2,13 @@ from itertools import cycle, islice
 from typing import Iterable, Sequence
 
 from classification.lines import is_line_e, is_line_n, is_line_s, is_line_w
-from detection.gesture import Gesture
-from detection.turn import TurnType
-from detection.turn_direction import TurnDirection
-from detection.turn_event import TurnEvent
 from gamevolt.iterables.iter_tools import equals, matches_prefix
 from gamevolt.maths.azimuth import Azimuth
 from gamevolt.maths.extremum import Extremum
+from gestures.gesture import Gesture
+from gestures.turn_direction import TurnDirection
+from gestures.turn_event import TurnEvent
+from gestures.turn_type import TurnType
 
 _CW_BASE: tuple[TurnType, ...] = (
     TurnType.E2W,
@@ -135,6 +135,17 @@ def is_line_and_arc_270_compound(
     split_time: float,
 ) -> bool:
     return is_line_and_arc_compound(g, line_start, arc_start, 270, direction, arc_first, split_time)
+
+
+def is_line_and_arc_180_compound(
+    g: Gesture,
+    line_start: Azimuth,
+    arc_start: Azimuth,
+    direction: TurnDirection,
+    arc_first: bool,
+    split_time: float,
+) -> bool:
+    return is_line_and_arc_compound(g, line_start, arc_start, 180, direction, arc_first, split_time)
 
 
 def is_line_and_arc_compound(

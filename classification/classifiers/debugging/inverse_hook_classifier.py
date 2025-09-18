@@ -12,7 +12,7 @@ from classification.hooks import (
     is_inverse_hook_w_ccw,
     is_inverse_hook_w_cw,
 )
-from detection.gesture import Gesture
+from gestures.gesture import Gesture
 
 
 class InverseHookClassifier(Classifier):

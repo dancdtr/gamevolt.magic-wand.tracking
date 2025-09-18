@@ -12,7 +12,7 @@ from classification.sines import (
     is_wave_sine_s_360,
     is_wave_sine_w_360,
 )
-from detection.gesture import Gesture
+from gestures.gesture import Gesture
 
 
 class WaveSine360Classifier(Classifier):

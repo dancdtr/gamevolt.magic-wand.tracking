@@ -2,8 +2,6 @@ from dataclasses import dataclass
 
 from classification.gesture_type import GestureType
 
-# from detection.detected_gesture import DetectedGesture
-
 
 @dataclass(frozen=True)
 class DetectedGestures:

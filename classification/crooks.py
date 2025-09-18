@@ -1,7 +1,7 @@
 from classification.utils import is_line_and_arc_270_compound
-from detection.gesture import Gesture
-from detection.turn_direction import TurnDirection
 from gamevolt.maths.azimuth import Azimuth
+from gestures.gesture import Gesture
+from gestures.turn_direction import TurnDirection
 
 _CROOK_SPLIT_TIME = 0.25  # normalised time position of the gesture
 _INVERSE_CROOK_SPLIT_TIME = 1 - _CROOK_SPLIT_TIME

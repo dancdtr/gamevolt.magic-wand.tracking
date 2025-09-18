@@ -3,7 +3,7 @@ from typing import Callable
 from classification.classifiers.classifier import Classifier
 from classification.gesture_type import GestureType
 from classification.lines import is_line_e, is_line_n, is_line_s, is_line_w
-from detection.gesture import Gesture
+from gestures.gesture import Gesture
 
 
 class CardinalClassifier(Classifier):

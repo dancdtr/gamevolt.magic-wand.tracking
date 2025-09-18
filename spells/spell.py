@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from classification.gesture_type import GestureType
-from spell_type import SpellType
+from spells.spell_type import SpellType
 
 
 @dataclass(frozen=True)

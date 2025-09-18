@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from detection.turn import TurnType
+from gestures.turn_type import TurnType
 
 
 @dataclass(frozen=True, slots=True)

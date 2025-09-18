@@ -12,7 +12,7 @@ from classification.crooks import (
     is_crook_w_cw,
 )
 from classification.gesture_type import GestureType
-from detection.gesture import Gesture
+from gestures.gesture import Gesture
 
 
 class CrookClassifier(Classifier):

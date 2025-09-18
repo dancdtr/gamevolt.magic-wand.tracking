@@ -7,15 +7,15 @@ from logging import Logger
 
 from PIL.ImageTk import PhotoImage
 
-from classification.classifiers.spells.spell import Spell
 from detection.gesture_history import GestureHistory
 from display.gesture_history_view import GestureHistoryView
-from display.images.libraries.gesture_image_library import GestureImageLibrary
-from display.images.libraries.spell_image_library import SpellImageLibrary
+from display.image_libraries.gesture_image_library import GestureImageLibrary
+from display.image_libraries.spell_image_library import SpellImageLibrary
 from gamevolt.display.image_visualiser import ImageVisualiser
 from gamevolt.events.event import Event
-from input.spell_provider import SpellProvider
-from spell_type import SpellType
+from input.display_spell_provider import DisplaySpellProvider
+from spells.spell import Spell
+from spells.spell_type import SpellType
 
 
 class SpellcastingVisualiser:
@@ -26,7 +26,7 @@ class SpellcastingVisualiser:
         gesture_image_library: GestureImageLibrary,
         visualiser: ImageVisualiser,
         gesture_history: GestureHistory,
-        spell_selector: SpellProvider,
+        spell_selector: DisplaySpellProvider,
     ):
         self._logger = logger
 

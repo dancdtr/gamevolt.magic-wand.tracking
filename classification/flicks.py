@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
 from classification.directions import Direction, is_moving_ne, is_moving_nw, is_moving_se, is_moving_sw
-from detection.gesture import Gesture
+from gestures.gesture import Gesture
 
 _FLICK_RATIO = 1.2
 _SPLIT_POSITION = 0.5

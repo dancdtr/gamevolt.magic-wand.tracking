@@ -12,7 +12,7 @@ from classification.hooks import (
     is_hook_w_ccw,
     is_hook_w_cw,
 )
-from detection.gesture import Gesture
+from gestures.gesture import Gesture
 
 
 class HookClassifier(Classifier):

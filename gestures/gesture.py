@@ -7,11 +7,11 @@ from collections.abc import Iterator
 from functools import cached_property
 
 from detection.extremum_event import ExtremumEvent
-from detection.gesture_point import GesturePoint
-from detection.turn import TurnType
-from detection.turn_event import TurnEvent
 from gamevolt.maths.extremum import Extremum
 from gamevolt.maths.vector_2 import Vector2
+from gestures.gesture_point import GesturePoint
+from gestures.turn_event import TurnEvent
+from gestures.turn_type import TurnType
 
 
 class Gesture:

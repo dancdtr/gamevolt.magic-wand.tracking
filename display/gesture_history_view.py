@@ -8,7 +8,7 @@ from PIL.ImageTk import PhotoImage
 
 from detection.detected_gestures import DetectedGestures
 from detection.gesture_history import GestureHistory
-from display.images.libraries.gesture_image_library import GestureImageLibrary
+from display.image_libraries.gesture_image_library import GestureImageLibrary
 from gamevolt.display.image_visualiser import ImageVisualiser
 
 

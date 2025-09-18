@@ -12,7 +12,7 @@ from classification.arcs import (
 )
 from classification.classifiers.classifier import Classifier
 from classification.gesture_type import GestureType
-from detection.gesture import Gesture
+from gestures.gesture import Gesture
 
 
 class Arc270Classifier(Classifier):

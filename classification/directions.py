@@ -1,8 +1,8 @@
 from enum import Enum, auto
 
 from classification.lines import has_azimuth_in_range
-from detection.gesture import Gesture
 from gamevolt.maths.azimuth import Azimuth
+from gestures.gesture import Gesture
 
 
 class Direction(Enum):

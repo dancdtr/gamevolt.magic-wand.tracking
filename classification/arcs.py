@@ -1,15 +1,15 @@
 from classification.bounces import has_bounce_e2w, has_bounce_n2s, has_bounce_s2n, has_bounce_w2e
-from classification.classifiers.inflections import (
+from classification.directions import is_moving_e, is_moving_n, is_moving_s, is_moving_w
+from classification.inflections import (
     ends_with_x_turn_type_e2w,
     ends_with_x_turn_type_w2e,
     ends_with_y_turn_type_n2s,
     ends_with_y_turn_type_s2n,
 )
-from classification.directions import is_moving_e, is_moving_n, is_moving_s, is_moving_w
 from classification.utils import _matches_curve
-from detection.gesture import Gesture
-from detection.turn_direction import TurnDirection
 from gamevolt.maths.azimuth import Azimuth
+from gestures.gesture import Gesture
+from gestures.turn_direction import TurnDirection
 
 
 # =========================================

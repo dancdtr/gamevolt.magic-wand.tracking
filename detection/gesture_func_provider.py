@@ -35,16 +35,6 @@ from classification.arcs import (
     is_arc_450_cw_start_s,
     is_arc_450_cw_start_w,
 )
-from classification.classifiers.flicks import (
-    is_flick_ccw_ne,
-    is_flick_ccw_nw,
-    is_flick_ccw_se,
-    is_flick_ccw_sw,
-    is_flick_cw_ne,
-    is_flick_cw_nw,
-    is_flick_cw_se,
-    is_flick_cw_sw,
-)
 from classification.crooks import (
     is_crook_e_ccw,
     is_crook_e_cw,
@@ -62,6 +52,16 @@ from classification.crooks import (
     is_inverse_crook_s_cw,
     is_inverse_crook_w_ccw,
     is_inverse_crook_w_cw,
+)
+from classification.flicks import (
+    is_flick_ccw_ne,
+    is_flick_ccw_nw,
+    is_flick_ccw_se,
+    is_flick_ccw_sw,
+    is_flick_cw_ne,
+    is_flick_cw_nw,
+    is_flick_cw_se,
+    is_flick_cw_sw,
 )
 from classification.gesture_type import GestureType
 from classification.hooks import (
@@ -126,7 +126,7 @@ from classification.sines import (
     is_wave_sine_w_540,
     is_wave_sine_w_720,
 )
-from detection.gesture import Gesture
+from gestures.gesture import Gesture
 
 type GestureIdentifier = Callable[[Gesture], bool]
 

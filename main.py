@@ -5,13 +5,12 @@ import asyncio
 from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
-from classification.classifiers.spells.gesture_identifier import GestureIdentifierController
+from classification.gesture_classifier_controller import GestureClassifierController
 from detection.configuration.gesture_detector_settings import GestureDetectorSettings
 from detection.configuration.gesture_settings import GestureSettings
 from detection.gesture_detector import GestureDetector
 from detection.gesture_factory import GestureFactory
 from detection.gesture_func_provider import GestureFuncProvider
-from detection.gesture_point import GesturePoint
 from gamevolt.imu.configuration.imu_settings import ImuSettings
 from gamevolt.imu.imu_binary_receiver import IMUBinaryReceiver
 from gamevolt.messaging.events.message_handler import MessageHandler
@@ -22,6 +21,7 @@ from gamevolt.messaging.udp_peer import UdpPeer
 from gamevolt.serial.configuration.binary_serial_receiver_settings import BinarySerialReceiverSettings
 from gamevolt.serial.configuration.binary_settings import BinarySettings
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
+from gestures.gesture_point import GesturePoint
 from messaging.detected_gesture_message import DetectedGesturesMessage
 
 logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
@@ -68,7 +68,7 @@ gesture_detector = GestureDetector(logger, imu_rx, gesture_settings)
 message_handler = MessageHandler(logger, udp_peer)
 
 func_provider = GestureFuncProvider(logger)
-gesture_identifier = GestureIdentifierController(logger, func_provider, message_handler)
+gesture_identifier = GestureClassifierController(logger, func_provider, message_handler)
 gesture_factory = GestureFactory(settings=GestureSettings())
 
 

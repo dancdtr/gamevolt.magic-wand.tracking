@@ -3,7 +3,7 @@ from typing import Callable
 from classification.classifiers.classifier import Classifier
 from classification.gesture_type import GestureType
 from classification.lines import is_line_ne, is_line_nw, is_line_se, is_line_sw
-from detection.gesture import Gesture
+from gestures.gesture import Gesture
 
 
 class IntercardinalClassifier(Classifier):

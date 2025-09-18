@@ -2,8 +2,8 @@ from abc import ABC
 from collections.abc import Callable
 from logging import Logger
 
-from classification.classifiers.spells.spell import Spell
 from gamevolt.events.event import Event
+from spells.spell import Spell
 
 
 class SpellProviderBase(ABC):
