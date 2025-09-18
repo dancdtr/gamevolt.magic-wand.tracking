@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-import string
 from bisect import bisect_left
 from collections.abc import Iterator
 from functools import cached_property
@@ -48,20 +47,6 @@ class Gesture:
             else:
                 self.total_velocity_n += abs(y)
 
-        def f(f: float) -> str:
-            if f < 10:
-                pad = "00"
-            elif f < 100:
-                pad = "0"
-            else:
-                pad = ""
-
-            return f"{pad}{f:.2f}"
-
-        print(
-            f"({self.id})  N: {f(self.total_velocity_n)}  E: {f(self.total_velocity_e)} S: {f(self.total_velocity_s)} W: {f(self.total_velocity_w)}"
-        )
-
     def iter_x_extrema(self) -> Iterator[Extremum]:
         return (e.type for e in self.extrema_events if e.type.is_x())
 
@@ -69,19 +54,19 @@ class Gesture:
         return (e.type for e in self.extrema_events if e.type.is_y())
 
     def iter_x_turn_points(self) -> Iterator[TurnType]:
-        return (te.type for te in self.turn_events if te.type.in_x())
+        return (te.turn_type for te in self.turn_events if te.turn_type.in_x())
 
     def iter_y_turn_points(self) -> Iterator[TurnType]:
-        return (te.type for te in self.turn_events if te.type.in_y())
+        return (te.turn_type for te in self.turn_events if te.turn_type.in_y())
 
     def iter_turn_types(self) -> Iterator[TurnType]:
-        return (tp.type for tp in self.turn_events)
+        return (tp.turn_type for tp in self.turn_events)
 
     def iter_x_turn_types(self) -> Iterator[TurnType]:
-        return (tp.type for tp in self.turn_events if tp.type.in_x())
+        return (tp.turn_type for tp in self.turn_events if tp.turn_type.in_x())
 
     def iter_y_turn_types(self) -> Iterator[TurnType]:
-        return (tp.type for tp in self.turn_events if tp.type.in_y())
+        return (tp.turn_type for tp in self.turn_events if tp.turn_type.in_y())
 
     # ---------- Lazy “last *” lookups ----------
 
@@ -99,7 +84,7 @@ class Gesture:
     @property
     def first_y_turn_event(self) -> TurnEvent | None:
         for tp in self.turn_events:
-            if tp.type.in_y():
+            if tp.turn_type.in_y():
                 return tp
         return None
 
@@ -110,14 +95,14 @@ class Gesture:
     @property
     def last_x_turn_event(self) -> TurnEvent | None:
         for tp in reversed(self.turn_events):
-            if tp.type.in_x():
+            if tp.turn_type.in_x():
                 return tp
         return None
 
     @property
     def last_y_turn_event(self) -> TurnEvent | None:
         for tp in reversed(self.turn_events):
-            if tp.type.in_y():
+            if tp.turn_type.in_y():
                 return tp
         return None
 
@@ -209,7 +194,7 @@ class Gesture:
         # recompute features per half
         def make(points: list[GesturePoint], extrema: list[ExtremumEvent], turns: list[TurnEvent]) -> Gesture:
             # avg = _avg_dir(points)
-            avg = Vector2.from_average([p.velocity for p in points])
+            # avg = Vector2.from_average([p.velocity for p in points])
             dur = max(0.0, (points[-1].timestamp - points[0].timestamp) / 1000.0) if len(points) >= 2 else 0.0
             return Gesture(points, dur, extrema, turns)
 

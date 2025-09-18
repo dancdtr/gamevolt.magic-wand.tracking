@@ -5,7 +5,7 @@ from collections.abc import Callable
 from gamevolt.events.event import Event
 
 
-class Dropdown:
+class DropDown:
     def __init__(self, root: tk.Misc, values: list[str]):
         self._root = root
         self._root.focus_set()
@@ -25,7 +25,7 @@ class Dropdown:
     def show_value(self, value: str) -> None:
         self._combo.set(value)
 
-    def _on_dropdown_updated(self, event) -> None:
+    def _on_dropdown_updated(self, _) -> None:
         combo_name = self._choice.get()
 
         if combo_name:

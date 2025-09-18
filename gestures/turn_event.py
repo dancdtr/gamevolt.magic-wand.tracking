@@ -8,4 +8,4 @@ from gestures.turn_type import TurnType
 @dataclass(frozen=True, slots=True)
 class TurnEvent:
     t_ms: int  # exact timestamp (ms)
-    type: TurnType
+    turn_type: TurnType

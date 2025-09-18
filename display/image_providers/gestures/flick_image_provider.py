@@ -6,9 +6,6 @@ from gamevolt.display.pil_image_provider import load_image
 
 
 class FlickImageProvider(GestureImageProvider):
-    def __init__(self, image_path: str, image_size: int) -> None:
-        super().__init__(image_path, image_size)
-
     def load(self) -> None:
         base_image = load_image(self.image_path)
 

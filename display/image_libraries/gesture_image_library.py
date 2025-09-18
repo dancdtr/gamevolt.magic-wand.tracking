@@ -28,6 +28,8 @@ class GestureImageLibrary:
     def __init__(self, settings: ImageLibrarySettings) -> None:
         self._settings = settings
 
+        self._images: dict[GestureType, PhotoImage] = {}
+
     def load(self, tk_master: Toplevel | Tk) -> None:
         def build_path(png: str) -> str:
             return os.path.join(self._settings.assets_dir, png)
@@ -53,13 +55,11 @@ class GestureImageLibrary:
             Sine540ImageProvider(build_path("sine_540.png"), image_size),
         ]
 
-        self._images: dict[GestureType, PhotoImage] = {}
-
         for provider in gesture_image_providers:
             provider.load()
 
-            for type, image in provider.items():
-                self._images[type] = PhotoImage(image, master=tk_master)
+            for gesture_type, image in provider.items():
+                self._images[gesture_type] = PhotoImage(image, master=tk_master)
 
     def get_image(self, gesture_type: GestureType) -> PhotoImage:
         image = self._images.get(gesture_type)

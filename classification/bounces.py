@@ -20,10 +20,14 @@ def has_bounce_w2e(g: Gesture) -> bool:
     return has_bounce(g, Azimuth.W, Azimuth.E)
 
 def has_bounce(g: Gesture, towards: Azimuth, backwards: Azimuth) -> bool:
-        match towards, backwards:
-            case Azimuth.N, Azimuth.S: return matches_y_extrema(g, Extremum.Y_MAX, Extremum.Y_MIN)
-            case Azimuth.E, Azimuth.W: return matches_x_extrema(g, Extremum.X_MAX, Extremum.X_MIN)
-            case Azimuth.S, Azimuth.N: return matches_y_extrema(g, Extremum.Y_MIN, Extremum.Y_MAX)
-            case Azimuth.W, Azimuth.E: return matches_x_extrema(g, Extremum.X_MIN, Extremum.X_MAX)
-            case _: raise ValueError(f"No bounce defined for {towards.name} / {backwards.name}.")
-
+    match (towards, backwards):
+        case (Azimuth.N, Azimuth.S):
+            return matches_y_extrema(g, Extremum.Y_MAX, Extremum.Y_MIN)
+        case (Azimuth.E, Azimuth.W):
+            return matches_x_extrema(g, Extremum.X_MAX, Extremum.X_MIN)
+        case (Azimuth.S, Azimuth.N):
+            return matches_y_extrema(g, Extremum.Y_MIN, Extremum.Y_MAX)
+        case (Azimuth.W, Azimuth.E):
+            return matches_x_extrema(g, Extremum.X_MIN, Extremum.X_MAX)
+        case _:
+            raise ValueError(f"No bounce defined for {towards.name} / {backwards.name}.")   

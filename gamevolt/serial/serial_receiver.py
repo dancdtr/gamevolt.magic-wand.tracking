@@ -48,8 +48,8 @@ class SerialReceiver:
         except asyncio.CancelledError:
             pass
 
-        except Exception as exc:
-            self._logger.error(f"Error in read loop: {exc}")
+        # except Exception as exc:
+        #     self._logger.error(f"Error in read loop: {exc}")
 
         finally:
             self._logger.debug("Exiting SerialReceiver read loop...")

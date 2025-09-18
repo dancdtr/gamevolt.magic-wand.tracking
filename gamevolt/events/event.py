@@ -1,4 +1,3 @@
-from logging import Logger
 from typing import Callable, Generic, List, TypeVar
 
 T = TypeVar("T", bound=Callable[..., None])

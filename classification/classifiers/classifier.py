@@ -20,5 +20,5 @@ class Classifier(ABC):
 
         return GestureType.UNKNOWN
 
-    def _get_classifier_func(self, type: GestureType) -> Callable[[Gesture], bool] | None:
-        return self.get_classifier_funcs.get(type, None)
+    def _get_classifier_func(self, gesture_type: GestureType) -> Callable[[Gesture], bool] | None:
+        return self.get_classifier_funcs.get(gesture_type, None)

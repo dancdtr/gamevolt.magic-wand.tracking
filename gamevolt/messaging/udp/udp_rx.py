@@ -78,7 +78,7 @@ class UdpRx:
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(self, _1, _2, _3) -> None:
         self.stop()
 
     def _run_loop(self) -> None:
@@ -92,7 +92,5 @@ class UdpRx:
 
             text = data.decode("utf-8", errors="replace")
 
-            try:
-                self.message_received.invoke(text)
-            except Exception as e:
-                self._logger.exception(f"Exception in UdpRx: {e}")
+            self._logger.debug("Data received from %s: %s", _addr, data)
+            self.message_received.invoke(text)

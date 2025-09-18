@@ -22,30 +22,30 @@ class SpellImageLibrary:
         self._spell_success_provider = SpellImageProvider(settings.success)
         # self._spell_failure_provider = SpellImageProvider(settings.success)
 
+        self._instruction_images: dict[SpellType, PhotoImage] = {}
+        self._success_images: dict[SpellType, PhotoImage] = {}
+
     def load(self, tk_master: Toplevel | Tk) -> None:
         self._spell_instruction_provider.load()
         self._spell_success_provider.load()
         # self._spell_failure_provider.load()
 
-        self._instruction_images: dict[SpellType, PhotoImage] = {}
-        self._success_images: dict[SpellType, PhotoImage] = {}
+        for spell_type, image in self._spell_instruction_provider.items():
+            self._instruction_images[spell_type] = PhotoImage(image, master=tk_master)
 
-        for type, image in self._spell_instruction_provider.items():
-            self._instruction_images[type] = PhotoImage(image, master=tk_master)
+        for spell_type, image in self._spell_success_provider.items():
+            self._success_images[spell_type] = PhotoImage(image, master=tk_master)
 
-        for type, image in self._spell_success_provider.items():
-            self._success_images[type] = PhotoImage(image, master=tk_master)
-
-    def get_spell_instruction_image(self, type: SpellType) -> PhotoImage:
-        image = self._instruction_images.get(type)
+    def get_spell_instruction_image(self, spell_type: SpellType) -> PhotoImage:
+        image = self._instruction_images.get(spell_type)
         if image is not None:
             return image
 
-        raise RuntimeError(f"No image to display for spell instruction: '{type}'!")
+        raise RuntimeError(f"No image to display for spell instruction: '{spell_type}'!")
 
-    def get_spell_cast_image(self, type: SpellType) -> PhotoImage:
-        image = self._success_images.get(type)
+    def get_spell_cast_image(self, spell_type: SpellType) -> PhotoImage:
+        image = self._success_images.get(spell_type)
         if image is not None:
             return image
 
-        raise RuntimeError(f"No image to display for spellcast: '{type}'!")
+        raise RuntimeError(f"No image to display for spellcast: '{spell_type}'!")

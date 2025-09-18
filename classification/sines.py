@@ -187,12 +187,12 @@ def _is_wave_sine(g: Gesture, direction: Direction, sine_type: SineType, period:
     period_count = _PERIOD_COUNT[period]
     targets = list(take_infinite(period_count, _TURN_POINTS[sine_type]))
 
-    print(f"Actual: {[t.name for t in iter_turn_points]}")
-    print(f"Expected: {[t.name for t in targets]}")
+    # print(f"Actual: {[t.name for t in iter_turn_points]}")
+    # print(f"Expected: {[t.name for t in targets]}")
 
     a = matches_prefix(iter_turn_points, targets, allow_head_extra=2)
     b = _DIRECTIONS[direction](g)
 
-    print(f"Matches curve: {a} | has direction: {b}")
+    # print(f"Matches curve: {a} | has direction: {b}")
 
     return a and b

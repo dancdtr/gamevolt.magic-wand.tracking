@@ -82,5 +82,5 @@ def is_velocity_nnw(g: Gesture) -> bool:
 # =========================================
 def _has_velocity_in_direction(g: Gesture, azimuth: Azimuth) -> bool:
     extremum = Extremum.from_azimuth(azimuth)
-    iter = g.iter_x_extrema if extremum.is_x() else g.iter_y_extrema
-    return equals_single(iter(), extremum)
+    i = g.iter_x_extrema if extremum.is_x() else g.iter_y_extrema
+    return equals_single(i(), extremum)

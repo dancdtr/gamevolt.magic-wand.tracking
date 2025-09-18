@@ -23,13 +23,12 @@ class SpellImageProvider(PILImageProvider[SpellType]):
     def items(self) -> Iterable[tuple[SpellType, PILImage]]:
         return self._image_library.items()
 
-    def get_image(self, type: SpellType) -> PILImage | None:
-        return self.image_library.get(type)
+    def get_image(self, spell_type: SpellType) -> PILImage | None:
+        return self.image_library.get(spell_type)
 
     def load(self) -> None:
-        # for type in SpellType: #TODO: implement all spells
-        for type in SpellType:
-            file = f"{type.name.lower()}.png"
+        for spell_type in SpellType:
+            file = f"{spell_type.name.lower()}.png"
 
             path = os.path.join(self._settings.assets_dir, file)
 
@@ -40,4 +39,4 @@ class SpellImageProvider(PILImageProvider[SpellType]):
             base_image = recolour_bg(base_image, self._settings.bg_colour)
             # base_image = recolour_icon(base_image, self._settings.icon_colour)
 
-            self._image_library[type] = base_image
+            self._image_library[spell_type] = base_image

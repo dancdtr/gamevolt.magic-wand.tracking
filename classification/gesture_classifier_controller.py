@@ -23,13 +23,13 @@ class GestureClassifierController:
         self._message_handler.unsubscribe(TargetGesturesMessage, self._on_target_gestures_message)
 
     def identify(self, gesture: Gesture) -> list[GestureType]:
-        types: list[GestureType] = []
+        gesture_types: list[GestureType] = []
 
-        for type, func in self._active_funcs.items():
+        for gesture_type, func in self._active_funcs.items():
             if func(gesture):
-                types.append(type)
+                gesture_types.append(gesture_type)
 
-        return types
+        return gesture_types
 
     def _on_target_gestures_message(self, message: Message) -> None:
         if not isinstance(message, TargetGesturesMessage):

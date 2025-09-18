@@ -12,6 +12,7 @@ from display.image_libraries.configuration.spell_image_library_settings import S
 from display.image_libraries.gesture_image_library import GestureImageLibrary
 from display.image_libraries.spell_image_library import SpellImageLibrary
 from display.image_providers.configuration.image_provider_settings import ImageProviderSettings
+from display.input.display_spell_provider import DisplaySpellProvider
 from display.spellcasting_visualiser import SpellcastingVisualiser
 from gamevolt.display.configuration.image_visualiser_settings import ImageVisualiserSettings
 from gamevolt.display.image_visualiser import ImageVisualiser
@@ -20,7 +21,6 @@ from gamevolt.messaging.udp.configuration.udp_peer_settings import UdpPeerSettin
 from gamevolt.messaging.udp.configuration.udp_rx_settings import UdpRxSettings
 from gamevolt.messaging.udp.configuration.udp_tx_settings import UdpTxSettings
 from gamevolt.messaging.udp_peer import UdpPeer
-from input.display_spell_provider import DisplaySpellProvider
 from messaging.target_gestures_message import TargetGesturesMessage
 from spells.spell import Spell
 from spells.spell_factory import SpellFactory
@@ -80,13 +80,13 @@ async def main() -> None:
     def on_gestures_detected(detected_gestures: DetectedGestures) -> None:
         gesture_history.append(detected_gestures)
 
-    def on_spell(type: SpellType) -> None:
-        logger.info(f"DAN cast ✨✨✨ {type.name} ✨✨✨!!!")
-        spellcasting_visualiser.show_spell_cast(type)
+    def on_spell(spell_type: SpellType) -> None:
+        logger.info(f"DAN cast ✨✨✨ {spell_type.name} ✨✨✨!!!")
+        spellcasting_visualiser.show_spell_cast(spell_type)
         sleep(0.25)
-        spellcasting_visualiser.show_spell_instruction(type)
+        spellcasting_visualiser.show_spell_instruction(spell_type)
 
-    def on_spell_targets_updated(spells: list[Spell]) -> None:
+    def on_spell_targets_updated(_: list[Spell]) -> None:
         gesture_names = []
 
         for spell in spell_provider.target_spells:

@@ -81,8 +81,8 @@ class GestureHistoryView:
         # Show only the last N
         subset = records[-self._max_visible :]
 
-        for rec in subset:
-            icon = self._icon_provider.get_image(rec.main_gesture)  # TODO show all gestures
+        for record in subset:
+            icon = self._icon_provider.get_image(record.main_gesture)  # TODO show all gestures, not just main
             if icon is None:
                 continue
 

@@ -30,10 +30,10 @@ class IMUBinaryReceiver:
         self._z_sign = -1 if imu_settings.flip_z else 1
 
     async def start(self) -> None:
-        self._logger.info(f"IMU Binary Receiver starting...")
+        self._logger.info("IMU Binary Receiver starting...")
         self._binary_rx.data_received.subscribe(self._on_frame)
         await self._binary_rx.start()
-        self._logger.info(f"IMU Binary Receiver started.")
+        self._logger.info("IMU Binary Receiver started.")
 
     async def stop(self) -> None:
         await self._binary_rx.stop()

@@ -36,8 +36,13 @@ class Extremum(Enum):
     @staticmethod
     def from_azimuth(az: Azimuth) -> Extremum:
         match az:
-            case Azimuth.N: return Extremum.Y_MAX
-            case Azimuth.E: return Extremum.X_MAX
-            case Azimuth.S: return Extremum.Y_MIN
-            case Azimuth.W: return Extremum.X_MIN
-            case _: raise ValueError(f"No Extremum defined for {az.name}.")
+            case Azimuth.N:
+                return Extremum.Y_MAX
+            case Azimuth.E:
+                return Extremum.X_MAX
+            case Azimuth.S:
+                return Extremum.Y_MIN
+            case Azimuth.W:
+                return Extremum.X_MIN
+            case _:
+                raise ValueError(f"No Extremum defined for {az.name}.")

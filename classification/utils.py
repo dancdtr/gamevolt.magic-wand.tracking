@@ -76,7 +76,7 @@ def matches_turn_types(turn_types: Iterable[TurnType], *targets: TurnType) -> bo
 
 
 def is_turn_type(turn_point: TurnEvent | None, turn_type: TurnType) -> bool:
-    return turn_point is not None and turn_point.type == turn_type
+    return turn_point is not None and turn_point.turn_type == turn_type
 
 
 def matches_curve(g: Gesture, *pattern: TurnType) -> bool:

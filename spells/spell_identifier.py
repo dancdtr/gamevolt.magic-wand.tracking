@@ -54,5 +54,5 @@ class SpellIdentifier:
                 self._gesture_history.set_complete()
                 return
 
-    def _on_spells_updated(self, spells: list[Spell]) -> None:
+    def _on_spells_updated(self, _: list[Spell]) -> None:
         self._gesture_history.clear()

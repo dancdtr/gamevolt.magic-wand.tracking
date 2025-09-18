@@ -249,10 +249,10 @@ class GestureFuncProvider:
             GestureType.WAVE_NEGATIVE_SINE_720_W: is_wave_negative_sine_w_720,
         }
 
-    def get(self, type: GestureType) -> GestureIdentifier:
-        func = self._mappings.get(type)
+    def get(self, gesture_type: GestureType) -> GestureIdentifier:
+        func = self._mappings.get(gesture_type)
         
         if func is None:
-            raise KeyError(f"Non GestureIdentifier func defined for {type.name}!")
+            raise KeyError(f"Non GestureIdentifier func defined for {gesture_type.name}!")
         else:
             return func

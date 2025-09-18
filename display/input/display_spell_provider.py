@@ -2,11 +2,10 @@ import tkinter as tk
 from collections.abc import Callable
 from logging import Logger
 
-# from classification.classifiers.spells.spell import Spell
+from display.input.display_spell_entry import DisplaySpellEntry
+from display.input.drop_down import DropDown
+from display.input.numeric_input import NumericInput
 from gamevolt.events.event import Event
-from input.display_spell_entry import DisplaySpellEntry
-from input.dropdown import Dropdown
-from input.numeric_input import NumericInput
 from spells.spell import Spell
 from spells.spell_factory import SpellFactory
 from spells.spell_provider_base import SpellProviderBase
@@ -67,7 +66,7 @@ class DisplaySpellProvider(SpellProviderBase):
         self._by_type: dict[SpellType, DisplaySpellEntry] = {e.type: e for e in self._spell_entries}
         self._by_dropdown: dict[str, DisplaySpellEntry] = {e.dropdown_name.casefold(): e for e in self._spell_entries}
 
-        self._dropdown = Dropdown(root, [e.dropdown_name for e in self._spell_entries])
+        self._dropdown = DropDown(root, [e.dropdown_name for e in self._spell_entries])
         self._key_input = NumericInput(root)
 
         self._target_spells: list[Spell] = []

@@ -2,7 +2,6 @@ from collections.abc import Callable
 from logging import Logger
 
 from gamevolt.events.event import Event
-from gamevolt.messaging.message import Message
 from gamevolt.messaging.message_receiver_protocol import MessageReceiverProtocol
 from gamevolt.messaging.udp.udp_rx import UdpRx
 

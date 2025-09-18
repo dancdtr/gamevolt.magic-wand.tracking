@@ -74,14 +74,14 @@ def _is_flick(g: Gesture, d1: Direction, d2: Direction) -> bool:
     return a and b
 
 
-def _get_cardinal_velocites(g: Gesture, dir: Direction) -> float:
-    if dir is Direction.N:
+def _get_cardinal_velocites(g: Gesture, direction: Direction) -> float:
+    if direction is Direction.N:
         return g.total_velocity_n
-    elif dir is Direction.E:
+    elif direction is Direction.E:
         return g.total_velocity_e
-    elif dir is Direction.S:
+    elif direction is Direction.S:
         return g.total_velocity_s
-    elif dir is Direction.W:
+    elif direction is Direction.W:
         return g.total_velocity_w
 
-    raise ValueError(f"Flick not implemented for '{dir.name}'.")
+    raise ValueError(f"Flick not implemented for '{direction.name}'.")

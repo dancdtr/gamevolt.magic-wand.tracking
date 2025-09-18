@@ -16,11 +16,11 @@ class Message(ABC):
         self.MessageType = self.__class__.__name__
 
     @classmethod
-    def from_dict(cls: type[T], dict: dict[str, Any]) -> T:
+    def from_dict(cls: type[T], d: dict[str, Any]) -> T:
         instance = cls.__new__(cls)
         super(cls, instance).__init__()
 
-        for k, v in dict.items():
+        for k, v in d.items():
             setattr(instance, k, v)
 
         instance.__post_init__()

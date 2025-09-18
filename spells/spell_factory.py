@@ -41,9 +41,9 @@ class SpellFactory:
     def __init__(self) -> None:
         self._spells: dict[SpellType, Spell] = {spell.type: spell for spell in _SPELLS}
 
-    def create(self, type: SpellType) -> Spell:
-        spell = self._spells.get(type)
+    def create(self, spell_type: SpellType) -> Spell:
+        spell = self._spells.get(spell_type)
         if spell is None:
-            raise KeyError(f"No spell defined for type: {type}!")
+            raise KeyError(f"No spell defined for type: {spell_type}!")
 
         return spell

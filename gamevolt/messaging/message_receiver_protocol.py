@@ -2,7 +2,6 @@ from collections.abc import Callable
 from typing import Protocol
 
 from gamevolt.events.event import Event
-from gamevolt.messaging.message import Message
 
 
 class MessageReceiverProtocol(Protocol):

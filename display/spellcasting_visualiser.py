@@ -11,9 +11,9 @@ from detection.gesture_history import GestureHistory
 from display.gesture_history_view import GestureHistoryView
 from display.image_libraries.gesture_image_library import GestureImageLibrary
 from display.image_libraries.spell_image_library import SpellImageLibrary
+from display.input.display_spell_provider import DisplaySpellProvider
 from gamevolt.display.image_visualiser import ImageVisualiser
 from gamevolt.events.event import Event
-from input.display_spell_provider import DisplaySpellProvider
 from spells.spell import Spell
 from spells.spell_type import SpellType
 
@@ -67,10 +67,7 @@ class SpellcastingVisualiser:
 
         self._history_view.bind_model(self._gesture_history)
 
-        try:
-            self._visualiser.root.deiconify()
-        except Exception:
-            pass
+        self._visualiser.root.deiconify()
 
         self._visualiser.escaped.subscribe(self._on_escaped)
         self._spell_provider.target_spells_updated.subscribe(self._on_spells_updated)
@@ -78,26 +75,23 @@ class SpellcastingVisualiser:
         self._running = True
 
     def stop(self) -> None:
-        if not self._running:
-            try:
-                self._visualiser.stop()
-            finally:
-                return
+        if self._running:
+            self._visualiser.stop()
 
         self._spell_provider.target_spells_updated.unsubscribe(self._on_spells_updated)
         self.escaped.unsubscribe(self._on_escaped)
         self._visualiser.stop()
         self._running = False
 
-    def show_spell_instruction(self, type: SpellType) -> None:
-        image = self._spell_image_library.get_spell_instruction_image(type)  # TODO temp
-        self._logger.debug(f"Show pic for: {type.name}")
+    def show_spell_instruction(self, spell_type: SpellType) -> None:
+        image = self._spell_image_library.get_spell_instruction_image(spell_type)  # TODO temp, allow multiple spell targets
+        self._logger.debug(f"Show pic for: {spell_type.name}")
 
         self._show_image(image)
 
-    def show_spell_cast(self, type: SpellType) -> None:
-        image = self._spell_image_library.get_spell_cast_image(type)  # TODO temp
-        self._logger.debug(f"Show pic for: {type.name}")
+    def show_spell_cast(self, spell_type: SpellType) -> None:
+        image = self._spell_image_library.get_spell_cast_image(spell_type)  # TODO temp,  handle multiple spell targets
+        self._logger.debug(f"Show pic for: {spell_type.name}")
 
         self._show_image(image)
 
@@ -115,5 +109,5 @@ class SpellcastingVisualiser:
     def _on_spells_updated(self, spells: list[Spell]) -> None:
         # TODO temp display only 1 spell
         if spells:
-            type = spells[0].type
-            self.show_spell_instruction(type)
+            spell_type = spells[0].type
+            self.show_spell_instruction(spell_type)

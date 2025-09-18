@@ -1,9 +1,9 @@
 import tkinter as tk
 from collections.abc import Callable
 
+from display.input.key_input import KeyInput
 from gamevolt.events.event import Event
 from gamevolt.toolkit.timer import Timer
-from input.key_input import KeyInput
 
 _INPUT_DURATION = 0.25
 _MAX_LENGTH = 2

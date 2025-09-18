@@ -22,20 +22,19 @@ class GestureFactory:
 
         duration = gesture_points[-1].timestamp - gesture_points[0].timestamp
 
-        # --- anchors ---
-        onset_k = min(self._settings.start_frames, len(points))
-        onset_vec = Vector2.from_average(points[:onset_k])
+        # onset_k = min(self._settings.start_frames, len(points))
+        # onset_vec = Vector2.from_average(points[:onset_k])
         # normalize safely
-        mag = max(abs(onset_vec.x), abs(onset_vec.y), 1e-9)
-        onset_heading = Vector2(onset_vec.x / mag, onset_vec.y / mag)
+        # mag = max(abs(onset_vec.x), abs(onset_vec.y), 1e-9)
+        # onset_heading = Vector2(onset_vec.x / mag, onset_vec.y / mag)
 
         # earliest reliable extremum (edge-aware)
-        first_idx, first_ext = self._first_extremum(points)
+        # first_idx, first_ext = self._first_extremum(points)
 
         # full extrema sequence (for later analyzers)
         extrema = self._get_extrema_sequence(gesture_points)
 
-        direction = Vector2.from_average(points)
+        # direction = Vector2.from_average(points)
 
         timestamps = [gp.timestamp for gp in gesture_points]
         turn_points = self._get_velocity_turn_points(points, timestamps)
@@ -241,9 +240,9 @@ class GestureFactory:
                                 TurnType.E2W if (axis == "x" and sign > 0) else TurnType.S2N if (axis == "y" and sign < 0) else TurnType.N2S
                             )
                         )
-                        z_idx = j + alpha * (i - j)
+                        # z_idx = j + alpha * (i - j)
                         # out.append(TurnEvent(z_idx, z_t, label))
-                        out.append(TurnEvent(t_ms=t[j], type=label))
+                        out.append(TurnEvent(t_ms=t[j], turn_type=label))
                         last_emit_t = z_t
 
                 # commit last non-zero anchor (with optional dwell)

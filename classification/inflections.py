@@ -76,29 +76,29 @@ def ends_with_y_turn_type_s2n(g: Gesture) -> bool:
 # =========================================
 # Utils
 # =========================================
-def _starts_with_turn_point(g: Gesture, type: TurnType) -> bool:
-    return is_turn_type(g.first_turn_event, type)
+def _starts_with_turn_point(g: Gesture, turn_type: TurnType) -> bool:
+    return is_turn_type(g.first_turn_event, turn_type)
 
 
-def _starts_with_x_turn_point(g: Gesture, type: TurnType) -> bool:
-    return is_turn_type(g.first_x_turn_event, type)
+def _starts_with_x_turn_point(g: Gesture, turn_type: TurnType) -> bool:
+    return is_turn_type(g.first_x_turn_event, turn_type)
 
 
-def _starts_with_y_turn_point(g: Gesture, type: TurnType) -> bool:
-    return is_turn_type(g.first_y_turn_event, type)
+def _starts_with_y_turn_point(g: Gesture, turn_type: TurnType) -> bool:
+    return is_turn_type(g.first_y_turn_event, turn_type)
 
 
-def _ends_with_turn_point(g: Gesture, type: TurnType) -> bool:
-    return is_turn_type(g.last_turn_event, type)
+def _ends_with_turn_point(g: Gesture, turn_type: TurnType) -> bool:
+    return is_turn_type(g.last_turn_event, turn_type)
 
 
-def _ends_with_x_turn_point(g: Gesture, type: TurnType) -> bool:
-    return is_turn_type(g.last_x_turn_event, type)
+def _ends_with_x_turn_point(g: Gesture, turn_type: TurnType) -> bool:
+    return is_turn_type(g.last_x_turn_event, turn_type)
 
 
-def _ends_with_y_turn_point(g: Gesture, type: TurnType) -> bool:
-    return is_turn_type(g.last_y_turn_event, type)
+def _ends_with_y_turn_point(g: Gesture, turn_type: TurnType) -> bool:
+    return is_turn_type(g.last_y_turn_event, turn_type)
 
 
-def is_turn_type(turn: TurnEvent | None, type: TurnType) -> bool:
-    return turn is not None and turn.type is type
+def is_turn_type(turn: TurnEvent | None, turn_type: TurnType) -> bool:
+    return turn is not None and turn.turn_type is turn_type
