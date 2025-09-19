@@ -9,6 +9,7 @@ from display.image_providers.gestures.arc_180_image_provider import Arc180ImageP
 from display.image_providers.gestures.arc_270_image_provider import Arc270ImageProvider
 from display.image_providers.gestures.arc_360_image_provider import Arc360ImageProvider
 from display.image_providers.gestures.arc_450_image_provider import Arc450ImageProvider
+from display.image_providers.gestures.arc_540_image_provider import Arc540ImageProvider
 from display.image_providers.gestures.cardinal_line_image_provider import CardinalLineImageProvider
 from display.image_providers.gestures.crook_image_provider import CrookImageProvider
 from display.image_providers.gestures.flick_image_provider import FlickImageProvider
@@ -51,6 +52,7 @@ class GestureImageLibrary:
             Arc270ImageProvider(build_path("arc_270.png"), image_size),
             Arc360ImageProvider(build_path("arc_360.png"), image_size),
             Arc450ImageProvider(build_path("arc_450.png"), image_size),
+            Arc540ImageProvider(build_path("arc_540.png"), image_size),
             Sine360ImageProvider(build_path("sine_360.png"), image_size),
             Sine540ImageProvider(build_path("sine_540.png"), image_size),
         ]

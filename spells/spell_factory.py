@@ -13,7 +13,7 @@ _SPELLS = [
     Spell(is_implemented=True, id="SP07", type=SpellType.SLUGULUS_ERECTO, definition=[G.LINE_S, G.LINE_WSW, G.LINE_N, G.LINE_ENE]),
     Spell(is_implemented=True, id="SP08", type=SpellType.VENTUS, definition=[G.LINE_SSE, G.LINE_NNE]),
     Spell(is_implemented=False, id="SP09", type=SpellType.RICTUMSEMPRA, definition=[G.NONE]),
-    Spell(is_implemented=True, id="SP10", type=SpellType.REPARO, definition=[G.ARC_450_CW_START_W]),
+    Spell(is_implemented=True, id="SP10", type=SpellType.REPARO, definition=[G.ARC_540_CW_START_S]),
     Spell(is_implemented=True, id="SP11", type=SpellType.PIERTOTUM_LOCOMOTOR, definition=[G.LINE_SW, G.LINE_E, G.LINE_N]),
     Spell(is_implemented=True, id="SP12", type=SpellType.ALOHOMORA, definition=[G.ARC_360_CW_START_N, G.LINE_S]),
     Spell(is_implemented=True, id="SP13", type=SpellType.COLLOPORTUS, definition=[G.LINE_E, G.LINE_S, G.LINE_W, G.LINE_S]),

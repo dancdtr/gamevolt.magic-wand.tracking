@@ -132,7 +132,10 @@ class ImageVisualiser:
                 try:
                     while True:
                         job = self._ui_jobs.get_nowait()
-                        job()
+                        try:
+                            job()
+                        except Exception:
+                            pass
                 except queue.Empty:
                     pass
 

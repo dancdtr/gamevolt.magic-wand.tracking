@@ -203,6 +203,44 @@ def is_arc_450_ccw_start_w(g: Gesture) -> bool:
 
 
 # =========================================
+# Arcs 450 CW
+# =========================================
+def is_arc_540_cw_start_n(g: Gesture) -> bool:
+    return _is_arc_540_cw(g, start=Azimuth.N)
+
+
+def is_arc_540_cw_start_e(g: Gesture) -> bool:
+    return _is_arc_540_cw(g, start=Azimuth.E)
+
+
+def is_arc_540_cw_start_s(g: Gesture) -> bool:
+    return _is_arc_540_cw(g, start=Azimuth.S)
+
+
+def is_arc_540_cw_start_w(g: Gesture) -> bool:
+    return _is_arc_540_cw(g, start=Azimuth.W)
+
+
+# =========================================
+# Arcs 540 CCW
+# =========================================
+def is_arc_540_ccw_start_n(g: Gesture) -> bool:
+    return _is_arc_540_ccw(g, start=Azimuth.N)
+
+
+def is_arc_540_ccw_start_e(g: Gesture) -> bool:
+    return _is_arc_540_ccw(g, start=Azimuth.E)
+
+
+def is_arc_540_ccw_start_s(g: Gesture) -> bool:
+    return _is_arc_540_ccw(g, start=Azimuth.S)
+
+
+def is_arc_540_ccw_start_w(g: Gesture) -> bool:
+    return _is_arc_540_ccw(g, start=Azimuth.W)
+
+
+# =========================================
 # Utils
 # =========================================
 
@@ -239,6 +277,14 @@ def _is_arc_450_ccw(g: Gesture, start: Azimuth) -> bool:
     return _is_arc_450(g, start, direction=TurnDirection.CCW)
 
 
+def _is_arc_540_cw(g: Gesture, start: Azimuth) -> bool:
+    return _is_arc_540(g, start, direction=TurnDirection.CW)
+
+
+def _is_arc_540_ccw(g: Gesture, start: Azimuth) -> bool:
+    return _is_arc_540(g, start, direction=TurnDirection.CCW)
+
+
 def _is_arc_180(g: Gesture, start: Azimuth, direction: TurnDirection) -> bool:
     return _matches_curve(g=g, start=start, degrees=180, direction=direction, allow_tail_missing=1)
 
@@ -253,3 +299,7 @@ def _is_arc_360(g: Gesture, start: Azimuth, direction: TurnDirection) -> bool:
 
 def _is_arc_450(g: Gesture, start: Azimuth, direction: TurnDirection) -> bool:
     return _matches_curve(g=g, start=start, degrees=450, direction=direction, allow_tail_missing=1)
+
+
+def _is_arc_540(g: Gesture, start: Azimuth, direction: TurnDirection) -> bool:
+    return _matches_curve(g=g, start=start, degrees=540, direction=direction, allow_tail_missing=1)
