@@ -15,11 +15,9 @@ class MessageHandler(EventHandler[type[Message], Callable[[Message], None]]):
 
     def start(self) -> None:
         self._receiver.message_received.subscribe(self._on_data_received)
-        self._receiver.start()
 
     def stop(self) -> None:
         self._receiver.message_received.unsubscribe(self._on_data_received)
-        self._receiver.stop()
 
     def _key_name(self, key: Message) -> str:
         if isinstance(key, Message):

@@ -11,7 +11,6 @@ class DropDown:
         self._root.focus_set()
 
         top = tk.Frame(self._root)
-        print(top.winfo_width())
         top.pack(fill="x", padx=150, pady=6)
 
         self._choice = tk.StringVar()

@@ -114,7 +114,8 @@ async def main() -> None:
     spell_provider.target_spells_updated.subscribe(on_spell_targets_updated)
     spellcasting_visualiser.quit.subscribe(on_quit)
 
-    logger.info("Starting gesture visualiser...")
+    logger.info("Starting visualiser...")
+    udp_peer.start()
     spellcasting_visualiser.start()
     message_handler.start()
     wand_client.start()

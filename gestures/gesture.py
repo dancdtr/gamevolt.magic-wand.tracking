@@ -77,7 +77,7 @@ class Gesture:
     @property
     def first_x_turn_event(self) -> TurnEvent | None:
         for tp in self.turn_events:
-            if tp.type.in_x():
+            if tp.turn_type.in_x():
                 return tp
         return None
 
