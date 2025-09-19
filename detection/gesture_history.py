@@ -3,14 +3,16 @@ from __future__ import annotations
 
 from collections import deque
 from collections.abc import Callable
+from logging import Logger
 
 from detection.detected_gestures import DetectedGestures
 from gamevolt.events.event import Event
 
 
 class GestureHistory:
-    def __init__(self, capacity: int):
+    def __init__(self, logger: Logger, capacity: int):
         self._detections: deque[DetectedGestures] = deque(maxlen=capacity)
+        self._logger = logger
 
         self._is_complete = False
 
@@ -26,12 +28,15 @@ class GestureHistory:
 
     def clear(self) -> None:
         self._detections.clear()
+        self._logger.info(f"Gesture history cleared.")
         self.updated.invoke()
 
     def clear_but_keep_last(self) -> None:
         if len(self._detections):
+            self._logger.info(f"Spell casting attempt timed out. Clearing gesture history...")
             keep = self._detections.pop()
             self._detections.clear()
+            self._logger.info(f"Gesture history cleared.")
             self._detections.append(keep)
             self.updated.invoke()
 

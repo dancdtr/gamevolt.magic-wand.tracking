@@ -24,5 +24,9 @@ class WandClient:
 
     def _on_gesture_message(self, message: Message) -> None:
         if isinstance(message, DetectedGesturesMessage):
-            detection = DetectedGestures(duration=message.duration, types=[GestureType(name) for name in message.names])
+            detection = DetectedGestures(
+                gesture_id=message.id,
+                duration=message.duration,
+                types=[GestureType(name) for name in message.names],
+            )
             self.gesture_detected.invoke(detection)

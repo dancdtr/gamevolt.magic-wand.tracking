@@ -27,7 +27,7 @@ _SPELLS = [
     Spell(is_implemented=False, id="SP21", type=SpellType.CANTIS, definition=[G.NONE]),
     Spell(is_implemented=True, id="SP22", type=SpellType.PEPPER_BREATH, definition=[G.FLICK_CCW_NE, G.FLICK_CCW_SE]),
     Spell(is_implemented=False, id="SP23", type=SpellType.VERA_VERTO, definition=[G.NONE]),
-    Spell(is_implemented=True, id="SP24", type=SpellType.DENSAUGEO, definition=[G.LINE_S, G.LINE_SW, G.LINE_S]),
+    Spell(is_implemented=False, id="SP24", type=SpellType.DENSAUGEO, definition=[G.LINE_SSW, G.LINE_S]),
     Spell(is_implemented=True, id="SP25", type=SpellType.HORN_TONGUE, definition=[G.FLICK_CW_SE, G.LINE_NE, G.LINE_SSW]),
     Spell(is_implemented=True, id="SP26", type=SpellType.FLIPENDO, definition=[G.LINE_SE, G.WAVE_SINE_360_E]),
     Spell(is_implemented=True, id="SP27", type=SpellType.EXPECTO_PATRONUM, definition=[G.ARC_450_CW_START_E]),

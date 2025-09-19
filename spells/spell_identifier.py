@@ -63,6 +63,10 @@ class SpellIdentifier:
             )
 
             if is_match:
+                duration = f"{sum([g.duration for g in actual_detections]) / 1000:.3f}ms"
+                self._logger.info(
+                    f"Matched spell ({spell.id}) '{spell.name}' with gestures: {[detection.gesture_id for detection in actual_detections]}. Total duration={duration}."
+                )
                 self.spell_detected.invoke(spell)
                 self._gesture_history.set_complete()
                 return

@@ -5,11 +5,11 @@ from classification.gesture_type import GestureType
 
 @dataclass(frozen=True)
 class DetectedGestures:
+    gesture_id: str
     duration: float
     types: list[GestureType]
     # wand_id: str
     # duration_ms: int or start/end ts
-    # gesture_id: int
     # confidence: float
 
     # TODO temp helper until can display multiple gestures at the same time
