@@ -11,7 +11,8 @@ class DropDown:
         self._root.focus_set()
 
         top = tk.Frame(self._root)
-        top.pack(fill="x", padx=8, pady=6)
+        print(top.winfo_width())
+        top.pack(fill="x", padx=150, pady=6)
 
         self._choice = tk.StringVar()
         self._combo = ttk.Combobox(top, textvariable=self._choice, values=values, state="readonly")

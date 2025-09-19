@@ -4,6 +4,7 @@ from logging import Logger
 
 from display.input.display_spell_entry import DisplaySpellEntry
 from display.input.drop_down import DropDown
+from display.input.key_input import KeyInput
 from display.input.numeric_input import NumericInput
 from gamevolt.events.event import Event
 from spells.spell import Spell
@@ -67,31 +68,50 @@ class DisplaySpellProvider(SpellProviderBase):
         self._by_dropdown: dict[str, DisplaySpellEntry] = {e.dropdown_name.casefold(): e for e in self._spell_entries}
 
         self._dropdown = DropDown(root, [e.dropdown_name for e in self._spell_entries])
-        self._key_input = NumericInput(root)
+
+        self._key_input = KeyInput(root)
+        self._numeric_input = NumericInput(root)
 
         self._target_spells: list[Spell] = []
+        self._current_spell_entry_index = 0
 
         self._target_spells_updated: Event[Callable[[list[Spell]], None]] = Event()
+        self._toggle_history: Event[Callable[[], None]] = Event()
+        self._quit: Event[Callable[[], None]] = Event()
 
     @property
     def target_spells_updated(self) -> Event[Callable[[list[Spell]], None]]:
         return self._target_spells_updated
 
     @property
+    def toggle_history(self) -> Event[Callable[[], None]]:
+        return self._toggle_history
+
+    @property
+    def quit(self) -> Event[Callable[[], None]]:
+        return self._quit
+
+    @property
     def target_spells(self) -> list[Spell]:
         return self._target_spells
 
     def start(self) -> None:
-        self._key_input.updated.subscribe(self._on_key_input_updated)
-        self._dropdown.updated.subscribe(self._on_dropdown_updated)
+        self._key_input.quit.subscribe(self._on_quit)
+        self._key_input.cycle_spell.subscribe(self._on_cycle_spell)
+        self._key_input.toggle_history.subscribe(self._on_toggle_history_visibility)
 
-        # self._on_targets_updated(SpellType.NONE)  # set a default spell to start
+        self._dropdown.updated.subscribe(self._on_dropdown_updated)
+        self._numeric_input.updated.subscribe(self._on_numeric_input_updated)
 
     def stop(self) -> None:
-        self._key_input.updated.unsubscribe(self._on_key_input_updated)
+        self._key_input.toggle_history.unsubscribe(self._on_toggle_history_visibility)
+        self._key_input.cycle_spell.unsubscribe(self._on_cycle_spell)
+        self._key_input.quit.unsubscribe(self._on_quit)
+
+        self._numeric_input.updated.unsubscribe(self._on_numeric_input_updated)
         self._dropdown.updated.unsubscribe(self._on_dropdown_updated)
 
-    def _on_key_input_updated(self, spell_id: int) -> None:
+    def _on_numeric_input_updated(self, spell_id: int) -> None:
         entry = self._by_id.get(spell_id)
         if entry is not None:
             self._on_targets_updated(entry.type)
@@ -113,10 +133,27 @@ class DisplaySpellProvider(SpellProviderBase):
             self._dropdown.show_value(entry.dropdown_name)
 
         targets = [target]  # TODO temp until support added for multiple simultaneous spell targets
+
+        self._current_spell_entry_index = next(idx for idx, spell_type in _SPELL_TYPE_MAPPINGS.items() if spell_type is target)
         self._target_spells = [self._spell_factory.create(t) for t in targets]
 
         for spell in self._target_spells:
             if not spell.is_implemented:
                 self._logger.warning(f"Spell '{spell.name}' is not yet implemented! You will be unable to cast. 💀")
 
-        self._target_spells_updated.invoke(self._target_spells)
+        self.target_spells_updated.invoke(self._target_spells)
+
+    def _on_cycle_spell(self, idx_adjustment: int) -> None:
+        target_idx = self._current_spell_entry_index + idx_adjustment
+        clamped_target_idx = max(0, min(target_idx, len(_SPELL_TYPE_MAPPINGS) - 1))
+
+        if clamped_target_idx == self._current_spell_entry_index:
+            return
+
+        self._on_numeric_input_updated(clamped_target_idx)
+
+    def _on_quit(self) -> None:
+        self._quit.invoke()
+
+    def _on_toggle_history_visibility(self) -> None:
+        self._toggle_history.invoke()

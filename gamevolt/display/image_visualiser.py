@@ -64,10 +64,6 @@ class ImageVisualiser:
 
         self._current_img: PhotoImage | None = None
 
-        self.root.bind("<Escape>", lambda _e: self._on_escaped())
-
-        self.escaped: Event[Callable[[], None]] = Event()
-
     # ------------------------------------------------------------------ #
     # Lifecycle
     # ------------------------------------------------------------------ #

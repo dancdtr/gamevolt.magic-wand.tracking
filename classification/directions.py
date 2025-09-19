@@ -1,7 +1,5 @@
 from enum import Enum, auto
 
-from classification.lines import has_azimuth_in_range
-from gamevolt.maths.azimuth import Azimuth
 from gestures.gesture import Gesture
 
 
@@ -13,29 +11,7 @@ class Direction(Enum):
     W = auto()
 
 
-_CARDINAL_ANGLE_VARIANCE = 22.5
 _MOVING_RATIO = 3
-
-
-# =========================================
-# Cardinal Directions
-# =========================================
-
-
-def has_azimuth_n(g: Gesture) -> bool:
-    return has_azimuth_in_range(g, Azimuth.N, _CARDINAL_ANGLE_VARIANCE)
-
-
-def has_azimuth_e(g: Gesture) -> bool:
-    return has_azimuth_in_range(g, Azimuth.E, _CARDINAL_ANGLE_VARIANCE)
-
-
-def has_azimuth_s(g: Gesture) -> bool:
-    return has_azimuth_in_range(g, Azimuth.S, _CARDINAL_ANGLE_VARIANCE)
-
-
-def has_azimuth_w(g: Gesture) -> bool:
-    return has_azimuth_in_range(g, Azimuth.W, _CARDINAL_ANGLE_VARIANCE)
 
 
 # =========================================
@@ -90,10 +66,6 @@ def is_moving_s(g: Gesture) -> bool:
 
 def is_moving_w(g: Gesture) -> bool:
     return g.total_velocity_w > g.total_velocity_e * _MOVING_RATIO
-
-
-def is_moving_e2w(g: Gesture) -> bool:
-    return has_azimuth_in_range(g, Azimuth.E, _CARDINAL_ANGLE_VARIANCE)
 
 
 # =========================================

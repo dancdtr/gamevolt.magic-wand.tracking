@@ -58,9 +58,9 @@ udp_peer = UdpPeer(
 gesture_settings = GestureDetectorSettings(
     start_thresh=1.0,
     end_thresh=0.7,
-    start_frames=3,
-    end_frames=3,
-    max_samples=100,
+    start_frames=2,
+    end_frames=2,
+    max_samples=200,
     min_duration=0.14,
 )
 gesture_detector = GestureDetector(logger, imu_rx, gesture_settings)

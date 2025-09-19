@@ -29,7 +29,13 @@ from spells.spell_type import SpellType
 from wand_client import WandClient
 
 
+class App:
+    def __init__(self):
+        self.is_running = True
+
+
 async def main() -> None:
+    app = App()
     logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
     udp_peer = UdpPeer(
         logger,
@@ -52,10 +58,16 @@ async def main() -> None:
     wand_client = WandClient(logger, message_handler)
 
     spell_image_library_settings = SpellImageLibrarySettings(
-        instruction=ImageProviderSettings(
+        instruction_active=ImageProviderSettings(
             assets_dir="./display/image_assets/spells",
             image_size=300,
             bg_colour=(255, 255, 255),
+            icon_colour=(0, 0, 0),
+        ),
+        instruction_inactive=ImageProviderSettings(
+            assets_dir="./display/image_assets/spells",
+            image_size=300,
+            bg_colour=(128, 128, 128),
             icon_colour=(0, 0, 0),
         ),
         success=ImageProviderSettings(
@@ -80,11 +92,11 @@ async def main() -> None:
     def on_gestures_detected(detected_gestures: DetectedGestures) -> None:
         gesture_history.append(detected_gestures)
 
-    def on_spell(spell_type: SpellType) -> None:
-        logger.info(f"DAN cast ✨✨✨ {spell_type.name} ✨✨✨!!!")
-        spellcasting_visualiser.show_spell_cast(spell_type)
+    def on_spell(spell: Spell) -> None:
+        logger.info(f"DAN cast ✨✨✨ {spell.type.name} ✨✨✨!!!")
+        spellcasting_visualiser.show_spell_cast(spell.type)
         sleep(0.25)
-        spellcasting_visualiser.show_spell_instruction(spell_type)
+        spellcasting_visualiser.show_spell_instruction(spell)
 
     def on_spell_targets_updated(_: list[Spell]) -> None:
         gesture_names = []
@@ -94,9 +106,13 @@ async def main() -> None:
 
         udp_peer.send(TargetGesturesMessage(GestureNames=gesture_names))
 
+    def on_quit() -> None:
+        app.is_running = False
+
     wand_client.gesture_detected.subscribe(on_gestures_detected)
     spell_checker.spell_detected.subscribe(on_spell)
     spell_provider.target_spells_updated.subscribe(on_spell_targets_updated)
+    spellcasting_visualiser.quit.subscribe(on_quit)
 
     logger.info("Starting gesture visualiser...")
     spellcasting_visualiser.start()
@@ -106,7 +122,7 @@ async def main() -> None:
     spell_checker.start()
 
     try:
-        while True:
+        while app.is_running:
             await asyncio.sleep(0.02)
     except KeyboardInterrupt:
         pass

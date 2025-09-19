@@ -37,10 +37,11 @@ class SpellcastingVisualiser:
         self._visualiser = visualiser
 
         # history UI
-        self._history_view = GestureHistoryView(
+        self._gesture_history_view = GestureHistoryView(
             visualiser=self._visualiser,
             parent=self._visualiser.history_bar,
             icon_provider=self._gesture_image_library,
+            history=self._gesture_history,
             max_visible=8,
             icon_pad=0,
         )
@@ -49,7 +50,7 @@ class SpellcastingVisualiser:
         self._running = False
 
         self.target_spell_updated: Event[Callable[[SpellType], None]] = Event()
-        self.escaped: Event[Callable[[], None]] = Event()
+        self.quit: Event[Callable[[], None]] = Event()
 
     def start(self) -> None:
         if self._running:
@@ -65,12 +66,13 @@ class SpellcastingVisualiser:
         self._spell_image_library.load(tk_master=self._visualiser.root)
         self._gesture_image_library.load(tk_master=self._visualiser.root)
 
-        self._history_view.bind_model(self._gesture_history)
+        self._gesture_history_view.start()
 
         self._visualiser.root.deiconify()
 
-        self._visualiser.escaped.subscribe(self._on_escaped)
+        self._spell_provider.toggle_history.subscribe(self._on_toggle_gesture_history_visibility)
         self._spell_provider.target_spells_updated.subscribe(self._on_spells_updated)
+        self._spell_provider.quit.subscribe(self._on_quit)
 
         self._running = True
 
@@ -78,14 +80,15 @@ class SpellcastingVisualiser:
         if self._running:
             self._visualiser.stop()
 
-        self._spell_provider.target_spells_updated.unsubscribe(self._on_spells_updated)
-        self.escaped.unsubscribe(self._on_escaped)
+        self._spell_provider.toggle_history.subscribe(self._on_quit)
+        self._spell_provider.target_spells_updated.subscribe(self._on_spells_updated)
+        self._spell_provider.toggle_history.subscribe(self._on_toggle_gesture_history_visibility)
         self._visualiser.stop()
         self._running = False
 
-    def show_spell_instruction(self, spell_type: SpellType) -> None:
-        image = self._spell_image_library.get_spell_instruction_image(spell_type)  # TODO temp, allow multiple spell targets
-        self._logger.debug(f"Show pic for: {spell_type.name}")
+    def show_spell_instruction(self, spell: Spell) -> None:
+        image = self._spell_image_library.get_spell_instruction_image(spell)  # TODO temp, allow multiple spell targets
+        self._logger.debug(f"Show pic for: {spell.name}")
 
         self._show_image(image)
 
@@ -102,12 +105,14 @@ class SpellcastingVisualiser:
 
         self._visualiser.post_image(image)
 
-    def _on_escaped(self) -> None:
-        self._logger.info("Escape key pressed...")
-        self.escaped.invoke()
-
     def _on_spells_updated(self, spells: list[Spell]) -> None:
         # TODO temp display only 1 spell
         if spells:
-            spell_type = spells[0].type
-            self.show_spell_instruction(spell_type)
+            self.show_spell_instruction(spells[0])
+
+    def _on_toggle_gesture_history_visibility(self) -> None:
+        self._gesture_history_view.toggle()
+
+    def _on_quit(self) -> None:
+        self._logger.info("Quitting...")
+        self.quit.invoke()

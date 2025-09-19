@@ -19,6 +19,7 @@ class GestureHistoryView:
         *,
         parent: tk.Misc | None = None,
         icon_provider: GestureImageLibrary,
+        history: GestureHistory,
         max_visible: int,
         icon_pad: int,
     ) -> None:
@@ -26,6 +27,7 @@ class GestureHistoryView:
         self._root = parent or self._vis.history_bar
         self._icon_provider = icon_provider
         self._max_visible = max_visible
+        self._history = history
         self._pad = icon_pad
 
         # container frame (horizontal flow)
@@ -34,34 +36,36 @@ class GestureHistoryView:
 
         # keep refs to currently displayed icons
         self._icon_refs: list[PhotoImage] = []
-        self._model: GestureHistory | None = None
+
+        self._enabled = True
         self._dirty = False
 
-    def bind_model(self, model: GestureHistory) -> None:
-        if self._model is model:
-            return
-        if self._model is not None:
-            self._model.updated.unsubscribe(self._on_model_updated)
-        self._model = model
-        self._model.updated.subscribe(self._on_model_updated)
-        # initial draw
+    def start(self) -> None:
+        self._history.updated.subscribe(self._on_history_updated)
         self._schedule_render()
 
-    def unbind(self) -> None:
-        if self._model is not None:
-            self._model.updated.unsubscribe(self._on_model_updated)
-            self._model = None
+    def stop(self) -> None:
+        self._history.updated.unsubscribe(self._on_history_updated)
         self._schedule_render()
+
+    def toggle(self) -> None:
+        self._enabled = not self._enabled
+
+        if self._enabled:
+            pass
+        else:
+            self._schedule_render()
 
     # --- internal ---------------------------------------------------------
 
-    def _on_model_updated(self) -> None:
+    def _on_history_updated(self) -> None:
         # This may be called from non-GUI threads → marshal to Tk thread.
         self._schedule_render()
 
     def _schedule_render(self) -> None:
         if self._dirty:
             return
+
         self._dirty = True
         self._vis.post_ui(self._render)
 
@@ -73,7 +77,7 @@ class GestureHistoryView:
             child.destroy()
         self._icon_refs.clear()
 
-        records: list[DetectedGestures] = self._model.items() if self._model else []
+        records: list[DetectedGestures] = self._history.items() if self._history and self._enabled else []
 
         if not records:
             return

@@ -11,6 +11,8 @@ from gamevolt.display.utils import recolour_region_by_threshold
 
 T = TypeVar("T")
 
+_THRESH = 230
+
 
 class PILImageProvider(Generic[T], ABC):
     @abstractmethod
@@ -24,8 +26,8 @@ def load_image(path: str | Path) -> PILImage:
 
 
 def recolour_icon(image: PILImage, colour: tuple[int, int, int]) -> PILImage:
-    return recolour_region_by_threshold(image, colour, 240, False)
+    return recolour_region_by_threshold(image, colour, _THRESH, False)
 
 
 def recolour_bg(image: PILImage, colour: tuple[int, int, int]) -> PILImage:
-    return recolour_region_by_threshold(image, colour, 240, True)
+    return recolour_region_by_threshold(image, colour, _THRESH, True)

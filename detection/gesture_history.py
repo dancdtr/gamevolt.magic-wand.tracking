@@ -28,6 +28,13 @@ class GestureHistory:
         self._detections.clear()
         self.updated.invoke()
 
+    def clear_but_keep_last(self) -> None:
+        if len(self._detections):
+            keep = self._detections.pop()
+            self._detections.clear()
+            self._detections.append(keep)
+            self.updated.invoke()
+
     def items(self) -> list[DetectedGestures]:
         return list(self._detections)
 

@@ -5,13 +5,14 @@ from display.input.key_input import KeyInput
 from gamevolt.events.event import Event
 from gamevolt.toolkit.timer import Timer
 
-_INPUT_DURATION = 0.25
+_INPUT_DURATION = 0.8
 _MAX_LENGTH = 2
 
 
 class NumericInput(KeyInput):
     def __init__(self, root: tk.Misc) -> None:
-        super().__init__(root)
+        # super().__init__(root)
+        self.root = root
 
         self._timer = Timer(_INPUT_DURATION)
         self._input_str = ""

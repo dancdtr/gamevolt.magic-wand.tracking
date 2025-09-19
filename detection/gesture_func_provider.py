@@ -130,11 +130,15 @@ from gestures.gesture import Gesture
 
 type GestureIdentifier = Callable[[Gesture], bool]
 
+def no_op(_: Gesture) -> bool:
+    return False
+
 class GestureFuncProvider:
     def __init__(self, logger: Logger):
         self._logger = logger
 
         self._mappings: dict[GestureType, GestureIdentifier] = {
+            GestureType.NONE: no_op,
             GestureType.LINE_N: is_line_n,
             GestureType.LINE_E: is_line_e,
             GestureType.LINE_S: is_line_s,

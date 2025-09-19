@@ -20,3 +20,9 @@ class SpellProviderBase(ABC):
 
     @property
     def target_spells_updated(self) -> Event[Callable[[list[Spell]], None]]: ...
+
+    @property
+    def toggle_history(self) -> Event[Callable[[], None]]: ...
+
+    @property
+    def quit(self) -> Event[Callable[[], None]]: ...
