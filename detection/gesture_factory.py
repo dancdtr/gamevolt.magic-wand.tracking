@@ -1,3 +1,6 @@
+from logging import Logger
+from uuid import uuid4
+
 import numpy as np
 
 from detection.configuration.gesture_settings import GestureSettings
@@ -11,8 +14,9 @@ from gestures.turn_type import TurnType
 
 
 class GestureFactory:
-    def __init__(self, settings: GestureSettings) -> None:
+    def __init__(self, logger: Logger, settings: GestureSettings) -> None:
         self._settings = settings
+        self._logger = logger
 
     def create(self, gesture_points: list[GesturePoint]) -> Gesture:
         if len(gesture_points) < self._settings.min_sample:
@@ -40,12 +44,16 @@ class GestureFactory:
         turn_points = self._get_velocity_turn_points(points, timestamps)
 
         # You can either extend Gesture to carry these, or stash in a metadata dict
-        return Gesture(
+        gesture = Gesture(
+            id=str(uuid4()),
             points=gesture_points,
             duration=duration,
             extrema_events=extrema,
             turn_events=turn_points,
         )
+
+        self._logger.info(gesture)
+        return gesture
 
     def _get_extrema_sequence(self, points: list[GesturePoint]) -> list[ExtremumEvent]:
         """

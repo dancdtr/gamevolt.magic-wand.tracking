@@ -62,10 +62,19 @@ class SpellIdentifier:
                 f"----------------------------------------"
             )
 
+            duration = f"{sum([g.duration for g in actual_detections]) / 1000:.3f}ms"
+            gesture_ids = [detection.gesture_id for detection in actual_detections]
             if is_match:
+                self._logger.info(
+                    f"'✅' Successfully identified spell ({spell.id}) '{spell.name}' with gestures: {gesture_ids}. Total duration={duration}."
+                )
                 self.spell_detected.invoke(spell)
                 self._gesture_history.set_complete()
                 return
+            else:
+                self._logger.info(
+                    f"'❌' Failed to identify spell ({spell.id}) '{spell.name}' with gestures: {gesture_ids}. Total duration={duration}."
+                )
 
     def _on_spells_updated(self, _: list[Spell]) -> None:
         self._gesture_history.clear()

@@ -69,7 +69,7 @@ message_handler = MessageHandler(logger, udp_peer)
 
 func_provider = GestureFuncProvider(logger)
 gesture_identifier = GestureClassifierController(logger, func_provider, message_handler)
-gesture_factory = GestureFactory(settings=GestureSettings())
+gesture_factory = GestureFactory(logger, settings=GestureSettings())
 
 
 def on_gesture_completed(points: list[GesturePoint]) -> None:
@@ -79,7 +79,7 @@ def on_gesture_completed(points: list[GesturePoint]) -> None:
     gesture_names = [g.name for g in gesture_types]
     logger.debug(f"Identified gestures: {gesture_names}")
 
-    udp_peer.send(DetectedGesturesMessage(duration=gesture.duration, names=gesture_names))
+    udp_peer.send(DetectedGesturesMessage(id=gesture.id, duration=gesture.duration, names=gesture_names))
 
 
 async def main() -> None:

@@ -80,7 +80,7 @@ async def main() -> None:
     spell_image_library = SpellImageLibrary(settings=spell_image_library_settings)
     small_image_library = GestureImageLibrary(settings=ImageLibrarySettings(assets_dir="./display/image_assets/gestures", image_size=60))
 
-    gesture_history = GestureHistory(10)
+    gesture_history = GestureHistory(logger, 10)
     spell_factory = SpellFactory()
     spell_provider = DisplaySpellProvider(logger=logger, spell_factory=spell_factory, root=visualiser.toolbar)
     spellcasting_visualiser = SpellcastingVisualiser(
