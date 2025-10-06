@@ -186,6 +186,18 @@ class GestureType(StrEnum):
     INVERSE_HOOK_W_CCW = "INVERSE_HOOK_W_CCW"
 
     # =========================================
+    # Loops
+    # =========================================
+    LOOP_CW_START_N = "LOOP_CW_START_N"
+    LOOP_CW_START_NE = "LOOP_CW_START_NE"
+    LOOP_CW_START_E = "LOOP_CW_START_E"
+    LOOP_CW_START_SE = "LOOP_CW_START_SE"
+    LOOP_CCW_START_S = "LOOP_CCW_START_S"
+    LOOP_CCW_START_SW = "LOOP_CCW_START_SW"
+    LOOP_CCW_START_W = "LOOP_CCW_START_W"
+    LOOP_CCW_START_NW = "LOOP_CCW_START_NW"
+
+    # =========================================
     # Utils
     # =========================================
     def is_arc(self) -> bool:

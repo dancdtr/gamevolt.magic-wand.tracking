@@ -25,7 +25,6 @@ from messaging.target_gestures_message import TargetGesturesMessage
 from spells.spell import Spell
 from spells.spell_factory import SpellFactory
 from spells.spell_identifier import SpellIdentifier
-from spells.spell_type import SpellType
 from wand_client import WandClient
 
 

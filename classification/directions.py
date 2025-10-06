@@ -3,12 +3,24 @@ from enum import Enum, auto
 from gestures.gesture import Gesture
 
 
-class Direction(Enum):
+class CardinalDirection(Enum):
     NONE = auto()
     N = auto()
     E = auto()
     S = auto()
     W = auto()
+
+
+class InterCardinalDirection(Enum):
+    NONE = auto()
+    N = auto()
+    E = auto()
+    S = auto()
+    W = auto()
+    NE = auto()
+    SE = auto()
+    SW = auto()
+    NW = auto()
 
 
 _MOVING_RATIO = 3
@@ -19,21 +31,21 @@ _MOVING_RATIO = 3
 # =========================================
 
 
-def get_horizontal_direction(g: Gesture) -> Direction:
+def get_horizontal_direction(g: Gesture) -> CardinalDirection:
     if is_moving_e(g):
-        return Direction.E
+        return CardinalDirection.E
     elif is_moving_w(g):
-        return Direction.W
-    return Direction.NONE
+        return CardinalDirection.W
+    return CardinalDirection.NONE
 
 
-def get_vertical_dir(g: Gesture) -> Direction:
+def get_vertical_dir(g: Gesture) -> CardinalDirection:
     if is_moving_n(g):
-        return Direction.N
+        return CardinalDirection.N
     elif is_moving_s(g):
-        return Direction.S
+        return CardinalDirection.S
 
-    return Direction.NONE
+    return CardinalDirection.NONE
 
 
 def is_moving_ne(g: Gesture) -> bool:

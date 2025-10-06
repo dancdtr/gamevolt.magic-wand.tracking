@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import json
-import random
 from bisect import bisect_left
 from collections.abc import Iterator
 from functools import cached_property
-from pprint import pp
 from typing import Counter
 
 from numpy import hypot

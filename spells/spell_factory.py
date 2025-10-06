@@ -9,7 +9,7 @@ _SPELLS = [
     Spell(is_implemented=True, id="SP03", type=SpellType.ARRESTO_MOMENTUM, definition=[G.LINE_NNE, G.LINE_SSE, G.LINE_NNE, G.LINE_SSE]),
     Spell(is_implemented=True, id="SP04", type=SpellType.WINGARDIUM_LEVIOSA, definition=[G.ARC_180_CCW_START_W, G.LINE_S]),
     Spell(is_implemented=True, id="SP05", type=SpellType.METEOLOJINX, definition=[G.ARC_180_CCW_START_E, G.ARC_180_CW_START_W]),
-    Spell(is_implemented=False, id="SP06", type=SpellType.COLOVARIA, definition=[G.NONE]),
+    Spell(is_implemented=True, id="SP06", type=SpellType.COLOVARIA, definition=[G.LOOP_CCW_START_W]),
     Spell(is_implemented=True, id="SP07", type=SpellType.SLUGULUS_ERECTO, definition=[G.LINE_S, G.LINE_WSW, G.LINE_N, G.LINE_ENE]),
     Spell(is_implemented=True, id="SP08", type=SpellType.VENTUS, definition=[G.LINE_SSE, G.LINE_NNE]),
     Spell(is_implemented=False, id="SP09", type=SpellType.RICTUMSEMPRA, definition=[G.NONE]),

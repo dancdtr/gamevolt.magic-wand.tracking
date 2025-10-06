@@ -43,6 +43,7 @@ from classification.arcs import (
     is_arc_540_cw_start_s,
     is_arc_540_cw_start_w,
 )
+from classification.complex import is_loop_ccw_360_start_w
 from classification.crooks import (
     is_crook_e_ccw,
     is_crook_e_cw,
@@ -267,6 +268,14 @@ class GestureFuncProvider:
             GestureType.WAVE_NEGATIVE_SINE_720_E: is_wave_negative_sine_e_720,
             GestureType.WAVE_NEGATIVE_SINE_720_S: is_wave_negative_sine_s_720,
             GestureType.WAVE_NEGATIVE_SINE_720_W: is_wave_negative_sine_w_720,
+            GestureType.LOOP_CW_START_N : is_loop_ccw_360_start_w,
+            GestureType.LOOP_CW_START_NE : is_loop_ccw_360_start_w,
+            GestureType.LOOP_CW_START_E : is_loop_ccw_360_start_w,
+            GestureType.LOOP_CW_START_SE : is_loop_ccw_360_start_w,
+            GestureType.LOOP_CCW_START_S : is_loop_ccw_360_start_w,
+            GestureType.LOOP_CCW_START_SW : is_loop_ccw_360_start_w,
+            GestureType.LOOP_CCW_START_W : is_loop_ccw_360_start_w,
+            GestureType.LOOP_CCW_START_NW : is_loop_ccw_360_start_w,
         }
 
     def get(self, gesture_type: GestureType) -> GestureIdentifier:
