@@ -12,9 +12,6 @@ class Timer:
     def stop(self) -> None:
         self._start_time = None
 
-    def restart(self) -> None:
-        self.start()
-
     @property
     def is_running(self) -> bool:
         return self._start_time is not None and not self.is_complete

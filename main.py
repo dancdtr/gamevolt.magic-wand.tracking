@@ -103,5 +103,5 @@ async def main() -> None:
         logger.info("Stopped Wand Tracking application.")
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# if __name__ == "__main__":
+asyncio.run(main())

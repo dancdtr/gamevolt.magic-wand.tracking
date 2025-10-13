@@ -34,7 +34,7 @@ class NumericInput(KeyInput):
     def _on_alpha_key_pressed(self, key: str) -> None:
         if self._timer.is_complete or len(self._input_str) >= _MAX_LENGTH:
             self._input_str = key
-            self._timer.restart()
+            self._timer.start()
         else:
             self._input_str += key
 

@@ -37,10 +37,10 @@ class SpellIdentifier:
             expected_types = spell.definition
 
             if self._timer.is_complete:
-                self._timer.restart()
+                self._timer.start()
                 self._gesture_history.clear_but_keep_last()  # discard expired gestures, keep only the newest
 
-            self._timer.restart()
+            self._timer.start()
             actual_detections = self._gesture_history.items()[-spell.length :]  # just take a relevant slice for now
 
             if len(expected_types) != len(actual_detections):
