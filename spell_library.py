@@ -122,7 +122,7 @@ OBLONGIUM = SpellDefinition(
 
 
 REVELIO = SpellDefinition(
-    id="SP001",
+    id="SP01",
     name="REVELIO",
     step_groups=[
         SpellStepGroup(
@@ -133,16 +133,23 @@ REVELIO = SpellDefinition(
             relative_distance=3 / 9,
         ),
         SpellStepGroup(
-            name="Curve_270_CW_Start_E",
+            name="Arc_180_CW_Start_E",
             steps=[
                 SpellStep(frozenset({DirectionType.MOVING_NE})),
                 SpellStep(frozenset({DirectionType.MOVING_E, DirectionType.MOVING_NE, DirectionType.MOVING_SE}), 0.03, required=True),
                 SpellStep(frozenset({DirectionType.MOVING_SE})),
-                SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE, DirectionType.MOVING_SW}), 0.03, required=True),
-                SpellStep(frozenset({DirectionType.MOVING_SW})),
-                SpellStep(frozenset({DirectionType.MOVING_W})),
+                SpellStep(frozenset({DirectionType.MOVING_S})),
             ],
-            relative_distance=4 / 9,
+            relative_distance=2 / 9,
+        ),
+        SpellStepGroup(
+            name="Arc_180_CW_Start_W",
+            steps=[
+                # SpellStep(frozenset({DirectionType.MOVING_SW})),
+                SpellStep(frozenset({DirectionType.MOVING_W, DirectionType.MOVING_NW, DirectionType.MOVING_SW}), 0.03, required=True),
+                SpellStep(frozenset({DirectionType.MOVING_SW})),
+            ],
+            relative_distance=2 / 9,
         ),
         SpellStepGroup(
             name="Line_SE",
@@ -171,7 +178,9 @@ LOCOMOTOR = SpellDefinition(
         SpellStepGroup(
             name="Line_SW",
             steps=[
+                SpellStep(frozenset({DirectionType.MOVING_S}), required=False),
                 SpellStep(frozenset({DirectionType.MOVING_SW}), required=True),
+                SpellStep(frozenset({DirectionType.MOVING_W}), required=False),
             ],
             relative_distance=1 / 3,
         ),

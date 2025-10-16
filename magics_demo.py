@@ -5,35 +5,52 @@ import tkinter as tk
 from gamevolt_debugging import TickMonitor
 from gamevolt_logging import get_logger
 
+from difficulty.spell_difficulty_controller import SpellDifficultyController
 from input.mouse_tk_input import MouseTkInput
 from input.wand_position import WandPosition
 from motion.direction_type import DirectionType
 from motion.gesture_history import GestureHistory
 from motion.gesture_segment import GestureSegment
 from motion.motion_processor import DirectionType, MotionProcessor
-from motion.motion_processor_settings import MotionProcessorSettings
+from motion.motion_type import MotionType
 from spell_library import *
+from spells.easy_spell_matcher import EasySpellMatcher
+from spells.library.spell_definition_factory import SpellDefinitionFactory
+from spells.library.spell_difficulty_type import SpellDifficultyType
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
+from spells.spell_matcher_manager import SpellMatcherManager
+from spells.spell_type import SpellType
 from wand_trail import WandTrail
 
 _SAMPLE_FREQUENCY_HZ = 32
 _INTERVAL_MS = int(1000 / _SAMPLE_FREQUENCY_HZ)
 
+
+def _create_spell_definitions(spell_types: list[SpellType], difficulty: SpellDifficultyType) -> list[SpellDefinition]:
+    return [spell_definition_factory.create(spell_type, difficulty) for spell_type in spell_types]
+
+
 logger = get_logger()
 tick_monitor = TickMonitor(30)
 
 history = GestureHistory(max_segments=20, max_age_s=5.0)
-# matcher = SpellMatcher([SQUARIO, OBLONGIUM, RECTANGLIA, REVELIO, RICTUMSEMPRA])
-# matcher = SpellMatcher([RICTUMSEMPRA])
-# matcher = SpellMatcher([SQUARIO, OBLONGIUM, RECTANGLIA])
-matcher = SpellMatcher([LOCOMOTOR, REVELIO])
-# matcher = SpellMatcher([RICTUMSEMPRA])
 
+spell_definition_factory = SpellDefinitionFactory()
+difficulty_controller = SpellDifficultyController()
+spell_types = [SpellType.LOCOMOTOR, SpellType.REVELIO]
+# spell_types = [SpellType.SQUARIO, SpellType.OBLONGIUM, SpellType.RECTANGLIA, SpellType.REVELIO, SpellType.RICTUMSEMPRA]
+
+easy_matcher = EasySpellMatcher(_create_spell_definitions(spell_types, SpellDifficultyType.EASY))
+hard_matcher = SpellMatcher(_create_spell_definitions(spell_types, SpellDifficultyType.HARD))
+
+matcher_manager = SpellMatcherManager(difficulty_controller.difficulty)
+matcher_manager.register(SpellDifficultyType.EASY, easy_matcher)
+matcher_manager.register(SpellDifficultyType.HARD, hard_matcher)
 
 root = tk.Tk()
 root.title("Mock Wand Input")
-root.geometry("800x600+100+100")
+root.geometry("800x800+100+100")
 canvas = tk.Canvas(root, bg="#222", highlightthickness=0)
 canvas.pack(fill="both", expand=True)
 status = tk.Label(root, text="", fg="#ddd", bg="#111")
@@ -51,17 +68,7 @@ trail = WandTrail(
     point_colour="#FFFFFF",
 )
 
-
-processor = MotionProcessor(
-    input=input,
-    settings=MotionProcessorSettings(
-        speed_start=0.50,
-        speed_stop=0.20,
-        min_state_duration_s=0.03,
-        min_dir_duration_s=0.03,
-        axis_deadband_per_s=0.10,
-    ),
-)
+processor = MotionProcessor(input=input)
 
 
 def on_sample(s: WandPosition) -> None:
@@ -71,31 +78,43 @@ def on_sample(s: WandPosition) -> None:
     trail.draw()
 
 
-def on_motion_started(flag: DirectionType) -> None:
-    return
-    print(f"Started motion: {flag.name}")
+def on_state_changed(dir: DirectionType) -> None:
+    # print(f"State: {dir.name}")
+    pass
+
+
+def on_motion_changed(dir: MotionType) -> None:
+    # print(f"Motion: {dir.name}")
+    pass
+
+
+def on_difficulty_toggled() -> None:
+    difficulty_controller.toggle_difficulty()
+    matcher_manager.set_difficulty(difficulty_controller.difficulty)
 
 
 def on_segment_completed(segment: GestureSegment):
-    # print(f"Completed '{segment.direction_type.name}' ({segment.direction:.3f}): {segment.duration_s}s")
+    print(f"Completed '{segment.direction_type.name}' ({segment.direction:.3f}): {segment.duration_s}s")
     history.add(segment)
-    matcher.try_match(history.tail())
+    matcher_manager.try_match(history.tail())
 
 
 def on_spell(match: SpellMatch):
     print(
-        f"Dan cast {match.spell_name}! ✨✨"  # ({match.duration_s:.3f}s duration), {match.segments_used}/{match.total_segments}={match.accuracy * 100:.1f}% accuracy."
+        f"Dumbledore cast {match.spell_name}! ✨✨ ({match.duration_s:.3f}s duration), {match.segments_used}/{match.total_segments}={match.accuracy * 100:.1f}% accuracy."
     )
     history.clear()
 
 
 def main():
     input.position_updated.subscribe(on_sample)
-    processor.state_changed.subscribe(on_motion_started)
+    processor.state_changed.subscribe(on_state_changed)
+    processor.motion_changed.subscribe(on_motion_changed)
     processor.segment_completed.subscribe(on_segment_completed)
-    matcher.matched.subscribe(on_spell)
+    matcher_manager.matched.subscribe(on_spell)
 
     root.bind("c", lambda e: trail.clear())
+    root.bind("d", lambda e: on_difficulty_toggled())
 
     input.start()
     processor.start()

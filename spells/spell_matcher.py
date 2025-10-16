@@ -6,6 +6,7 @@ from motion.direction_type import DirectionType
 from motion.gesture_segment import GestureSegment
 from spells.spell_definition import SpellDefinition
 from spells.spell_match import SpellMatch
+from spells.spell_matcher_base import SpellMatcherBase
 from spells.spell_step import SpellStep
 
 _RELATIVE_TOL = 0.15
@@ -13,14 +14,14 @@ _MIN_TOTAL_DIST = 1e-6
 _CHECK_DISTANCE = False
 
 
-def _segment_distance(seg: GestureSegment) -> float:
-    return max(seg.path_length, 0.0)  # ← direct
-
-
-class SpellMatcher:
+class SpellMatcher(SpellMatcherBase):
     def __init__(self, spells: Sequence[SpellDefinition]):
         self._spells = list(spells)
-        self.matched: Event[Callable[[SpellMatch], None]] = Event()
+        self._matched: Event[Callable[[SpellMatch], None]] = Event()
+
+    @property
+    def matched(self) -> Event[Callable[[SpellMatch], None]]:
+        return self._matched
 
     def try_match(self, history: Sequence[GestureSegment]) -> None:
         if not history:
