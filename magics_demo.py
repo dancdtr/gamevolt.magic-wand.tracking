@@ -22,6 +22,7 @@ from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
 from spells.spell_type import SpellType
 from wand_trail import WandTrail
+from wizard_names_provider import WizardNameProvider
 
 _SAMPLE_FREQUENCY_HZ = 32
 _INTERVAL_MS = int(1000 / _SAMPLE_FREQUENCY_HZ)
@@ -70,6 +71,8 @@ trail = WandTrail(
 
 processor = MotionProcessor(input=input)
 
+name_provider = WizardNameProvider()
+
 
 def on_sample(s: WandPosition) -> None:
     status.config(text=f"({s.x:.3f}, {s.y:.3f}) | {tick_monitor.tick_rate}hz")
@@ -101,7 +104,7 @@ def on_segment_completed(segment: GestureSegment):
 
 def on_spell(match: SpellMatch):
     print(
-        f"Dumbledore cast {match.spell_name}! ✨✨ ({match.duration_s:.3f}s duration), {match.segments_used}/{match.total_segments}={match.accuracy * 100:.1f}% accuracy."
+        f"{name_provider.get_name()} cast {match.spell_name}! ✨✨ ({match.duration_s:.3f}s duration), {match.segments_used}/{match.total_segments}={match.accuracy * 100:.1f}% accuracy."
     )
     history.clear()
 
