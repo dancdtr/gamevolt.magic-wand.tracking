@@ -7,6 +7,9 @@ from gamevolt_debugging import TickMonitor
 from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
+from analysis.spell_trace_adapter import SpellTraceAdapter
+from analysis.spell_trace_session import SpellTraceSessionConfig, SpellTraceSessionManager
+from analysis.spell_tracer import SpellAttemptTrace
 from difficulty.spell_difficulty_controller import SpellDifficultyController
 from input.mouse_tk_input import MouseTkInput
 from input.wand_position import WandPosition
@@ -28,15 +31,15 @@ from wizard_names_provider import WizardNameProvider
 
 _SAMPLE_FREQUENCY_HZ = 30
 
-
 logger = get_logger(LoggingSettings(minimum_level="INFORMATION"))
 tick_monitor = TickMonitor(30)
 
 history = GestureHistory(max_segments=20, max_age_s=5.0)
 
 spell_definition_factory = SpellDefinitionFactory()
-difficulty_controller = SpellDifficultyController()
-spell_types = [SpellType.LOCOMOTOR, SpellType.REVELIO]
+difficulty_controller = SpellDifficultyController(logger)
+spell_types = [SpellType.LOCOMOTOR]
+# spell_types = [SpellType.REVELIO]
 # spell_types = [SpellType.SQUARIO, SpellType.OBLONGIUM, SpellType.RECTANGLIA, SpellType.REVELIO, SpellType.RICTUMSEMPRA]
 
 
@@ -44,12 +47,26 @@ def create_spell_definitions(spell_types: list[SpellType], difficulty: SpellDiff
     return [spell_definition_factory.create(spell_type, difficulty) for spell_type in spell_types]
 
 
-easy_matcher = EasySpellMatcher(create_spell_definitions(spell_types, SpellDifficultyType.EASY))
-hard_matcher = SpellMatcher(create_spell_definitions(spell_types, SpellDifficultyType.HARD))
+# tracer factory
+def _make_trace() -> SpellTraceAdapter:
+    return SpellTraceAdapter(SpellAttemptTrace(spell_id="", spell_name="", key_count=0))
+
+
+trace_session = SpellTraceSessionManager(
+    trace_factory=_make_trace,
+    config=SpellTraceSessionConfig(
+        natural_break_s=0.9,
+        clear_history_on_flush=True,
+        label_prefix="ATTEMPT",
+    ),
+)
+
+easy_matcher = EasySpellMatcher(create_spell_definitions(spell_types, SpellDifficultyType.FORGIVING))
+hard_matcher = SpellMatcher(create_spell_definitions(spell_types, SpellDifficultyType.STRICT))
 
 matcher_manager = SpellMatcherManager(difficulty_controller.difficulty)
-matcher_manager.register(SpellDifficultyType.EASY, easy_matcher)
-matcher_manager.register(SpellDifficultyType.HARD, hard_matcher)
+matcher_manager.register(SpellDifficultyType.FORGIVING, easy_matcher)
+matcher_manager.register(SpellDifficultyType.STRICT, hard_matcher)
 
 root = tk.Tk()
 root.title("Mock Wand Input")
@@ -86,26 +103,35 @@ def on_state_changed(dir: DirectionType) -> None:
     logger.debug(f"State: {dir.name}")
 
 
-def on_motion_changed(dir: MotionType) -> None:
-    logger.debug(f"Motion: {dir.name}")
-
-
-def on_difficulty_toggled() -> None:
-    difficulty_controller.toggle_difficulty()
-    matcher_manager.set_difficulty(difficulty_controller.difficulty)
+def on_motion_changed(mode: MotionType) -> None:
+    logger.debug(f"Motion: {mode.name}")
+    trace_session.on_motion_changed(mode)
 
 
 def on_segment_completed(segment: GestureSegment):
     logger.debug(f"Completed '{segment.direction_type.name}' ({segment.direction:.3f}): {segment.duration_s}s")
     history.add(segment)
-    matcher_manager.try_match(history.tail())
+    trace_session.on_segment(
+        segment,
+        history.tail(),
+        matcher_manager,
+        history_clear_fn=history.clear,  # will be used on natural break if configured
+    )
 
 
 def on_spell(match: SpellMatch):
     logger.info(
-        f"{name_provider.get_name()} cast {match.spell_name}! ✨✨ ({match.duration_s:.3f}s duration), {match.segments_used}/{match.total_segments}={match.accuracy * 100:.1f}% accuracy."
+        f"{name_provider.get_name()} cast {match.spell_name}! ✨✨ "
+        # f"({match.duration_s:.3f}s), {match.segments_used}/{match.total_segments}="
+        # f"{match.accuracy * 100:.1f}%."
     )
-    history.clear()
+    trace_session.on_match(match, history_clear_fn=history.clear)
+
+
+def on_difficulty_toggled() -> None:
+    difficulty_controller.toggle_difficulty()
+    matcher_manager.set_difficulty(difficulty_controller.difficulty)
+    trace_session.on_difficulty_changed()
 
 
 def main():
@@ -115,6 +141,7 @@ def main():
     processor.segment_completed.subscribe(on_segment_completed)
     matcher_manager.matched.subscribe(on_spell)
 
+    root.bind("t", lambda e: trace_session.toggle())
     root.bind("c", lambda e: trail.clear())
     root.bind("d", lambda e: on_difficulty_toggled())
     root.bind("q", lambda e: root.destroy())

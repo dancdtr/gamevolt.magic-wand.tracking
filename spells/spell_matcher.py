@@ -1,7 +1,9 @@
-# spell_matcher.py
-from typing import Callable, List, Sequence
+# spells/spell_matcher.py
+from __future__ import annotations
 
-from gamevolt.events.event import Event
+from typing import List, Optional, Sequence
+
+from analysis.spell_trace_api import SpellTrace
 from motion.direction_type import DirectionType
 from motion.gesture_segment import GestureSegment
 from spells.spell_definition import SpellDefinition
@@ -15,65 +17,34 @@ _CHECK_DISTANCE = False
 
 
 class SpellMatcher(SpellMatcherBase):
-    def __init__(self, spells: Sequence[SpellDefinition]):
-        self._spells = list(spells)
-        self._matched: Event[Callable[[SpellMatch], None]] = Event()
+    """
+    Strict matcher with step-groups and optional relative distance validation.
+    Tries windows newest→oldest; tolerates short NONE between steps.
+    """
 
-    @property
-    def matched(self) -> Event[Callable[[SpellMatch], None]]:
-        return self._matched
+    # Base handles: __init__(spells), matched event, try_match(..., trace), compression, key-steps helper.
 
-    def try_match(self, history: Sequence[GestureSegment]) -> None:
-        if not history:
-            return
-        compressed = self._compress(history)  # oldest → newest
-        for spell in self._spells:
-            m = self._match_spell(spell, compressed)
-            if m:
-                self.matched.invoke(m)
-                break
+    # ---- subclass entry point (called by base with compressed segments + a non-None tracer) ----
+    def _match_spell(
+        self,
+        spell: SpellDefinition,
+        compressed: Sequence[GestureSegment],
+        trace: SpellTrace,  # non-optional (NullSpellTrace when tracing disabled)
+    ) -> Optional[SpellMatch]:
 
-    def _compress(self, segments: Sequence[GestureSegment]) -> list[GestureSegment]:
-        if not segments:
-            return []
-        out: List[GestureSegment] = []
-        cur = segments[0]
-        for seg in segments[1:]:
-            if seg.direction_type == cur.direction_type:
-                total_dur = cur.duration_s + seg.duration_s
-                total_path = cur.path_length + seg.path_length
-                cur = GestureSegment(
-                    start_ts_ms=cur.start_ts_ms,
-                    end_ts_ms=seg.end_ts_ms,
-                    duration_s=total_dur,
-                    sample_count=cur.sample_count + seg.sample_count,
-                    direction_type=cur.direction_type,
-                    avg_vec_x=0.0,
-                    avg_vec_y=0.0,
-                    net_dx=cur.net_dx + seg.net_dx,
-                    net_dy=cur.net_dy + seg.net_dy,
-                    mean_speed=(total_path / total_dur) if total_dur > 0 else 0.0,
-                    path_length=total_path,  # ← carry distance
-                )
-            else:
-                out.append(cur)
-                cur = seg
-        out.append(cur)
-        return out
-
-    def _match_spell(self, spell: SpellDefinition, segments: Sequence[GestureSegment]) -> SpellMatch | None:
-        if not segments:
+        if not compressed:
             return None
-        # Flatten once per spell attempt
+
         flat_steps, group_idx_of_step = self._flatten_with_group_map(spell)
 
         # try windows starting at each index from newest back
-        for start_idx in range(len(segments) - 1, -1, -1):
-            m = self._match_from_index(spell, flat_steps, group_idx_of_step, segments, start_idx)
+        for start_idx in range(len(compressed) - 1, -1, -1):
+            m = self._match_from_index(spell, flat_steps, group_idx_of_step, compressed, start_idx, trace)
             if m:
                 return m
         return None
 
+    # ---- internals ----
     def _flatten_with_group_map(self, spell: SpellDefinition) -> tuple[list[SpellStep], list[int]]:
         flat: list[SpellStep] = []
         group_map: list[int] = []
@@ -90,8 +61,10 @@ class SpellMatcher(SpellMatcherBase):
         group_idx_of_step: Sequence[int],
         segs: Sequence[GestureSegment],
         i_start: int,
-    ) -> SpellMatch | None:
+        trace: SpellTrace,
+    ) -> Optional[SpellMatch]:
 
+        # reversed because we walk newest→oldest
         steps = list(reversed(flat_steps))
         step_to_group = list(reversed(group_idx_of_step))
 
@@ -108,25 +81,27 @@ class SpellMatcher(SpellMatcherBase):
         while i >= 0 and step_idx < len(steps):
             seg = segs[i]
 
-            # ✅ ensure timestamps are captured
+            # capture time window endpoints (chronologically correct)
             if start_ts is None:
                 start_ts = seg.start_ts_ms
             end_ts = seg.end_ts_ms
 
-            step = steps[step_idx]
             dt = seg.duration_s
-            # dist = _segment_distance(seg)
             dist = seg.path_length
+            step = steps[step_idx]
 
             # tolerate short NONE gaps (no distance added)
             if seg.direction_type == DirectionType.NONE:
-                if dt <= spell.max_idle_gap_s:
+                if dt <= (spell.max_idle_gap_s or 0.0):
+                    trace.idle_tolerated(seg, i)
                     total_duration += dt
                     i -= 1
                     continue
                 else:
+                    trace.idle_too_long_reset(seg, i, spell.max_idle_gap_s or 0.0)
                     return None
 
+            # check this segment against the current step
             dir_ok = seg.direction_type in step.allowed
             dur_ok = dt >= step.min_duration_s
 
@@ -138,19 +113,37 @@ class SpellMatcher(SpellMatcherBase):
                 group_distance[gi] += dist
 
                 used += 1
+                trace.step_match(seg, i, step, step_idx)
+
                 step_idx += 1
                 i -= 1
 
                 if spell.max_total_duration_s is not None and total_duration > spell.max_total_duration_s:
+                    # window exceeded for this attempt
+                    window_s = total_duration
+                    trace.window_exceeded_reset(seg, i + 1, window_s, spell.max_total_duration_s)
                     return None
                 continue
 
+            # mismatch handling
+            if not dir_ok:
+                trace.step_fail_dir(seg, i, step, step_idx)
+            elif not dur_ok:
+                trace.step_fail_dur(seg, i, step, step_idx)
+            else:
+                # should not happen; treat as ignored
+                trace.segment_ignored(seg, i, step, step_idx)
+
             if step.required:
+                # required step not satisfied -> abandon this window
                 return None
             else:
+                # optional step: skip to next required without consuming segment
                 step_idx += 1
+                # try same seg against the next step on next loop iteration
                 continue
 
+        # end condition
         if step_idx == len(steps) and used >= spell.min_spell_steps and start_ts is not None and end_ts is not None:
             if _CHECK_DISTANCE:
                 denom = max(total_distance, _MIN_TOTAL_DIST)
@@ -160,6 +153,9 @@ class SpellMatcher(SpellMatcherBase):
                         continue
                     actual = group_distance[gi] / denom
                     if abs(actual - target) > _RELATIVE_TOL:
+                        # Using "segment_ignored" as a generic trace point for distance rejection
+                        # (add a dedicated trace method if you want a clearer label)
+                        trace.segment_ignored(segs[i_start], i_start, steps[min(step_idx, len(steps) - 1)], step_idx)
                         return None
 
             return SpellMatch(
@@ -171,4 +167,5 @@ class SpellMatcher(SpellMatcherBase):
                 segments_used=used,
                 total_segments=len(flat_steps),
             )
+
         return None

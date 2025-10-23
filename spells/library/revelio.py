@@ -6,9 +6,9 @@ from spells.spell_step_group import SpellStepGroup
 
 
 def get_revelio(difficulty: SpellDifficultyType) -> SpellDefinition:
-    if difficulty is SpellDifficultyType.EASY:
+    if difficulty is SpellDifficultyType.FORGIVING:
         return REVELIO_EASY
-    if difficulty is SpellDifficultyType.HARD:
+    if difficulty is SpellDifficultyType.STRICT:
         return REVELIO_HARD
 
     raise ValueError(f"No spell definition for Revelio difficulty: {difficulty.name}")
