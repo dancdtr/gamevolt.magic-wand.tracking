@@ -13,8 +13,10 @@ _SPELL_PROVIDERS: dict[SpellType, Callable[[SpellDifficultyType], SpellDefinitio
 
 
 class SpellDefinitionFactory:
+    def create_spells(self, spell_types: list[SpellType], difficulty: SpellDifficultyType) -> list[SpellDefinition]:
+        return [self.create_spell(spell_type, difficulty) for spell_type in spell_types]
 
-    def create(self, spell_type: SpellType, difficulty: SpellDifficultyType) -> SpellDefinition:
+    def create_spell(self, spell_type: SpellType, difficulty: SpellDifficultyType) -> SpellDefinition:
         provider = _SPELL_PROVIDERS.get(spell_type, None)
 
         if not provider:

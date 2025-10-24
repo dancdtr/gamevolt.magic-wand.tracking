@@ -1,27 +1,17 @@
 # analysis/spell_trace_session.py
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pprint import pp
+from logging import Logger
 from typing import Callable, Sequence
 
-from gamevolt_logging import get_logger
-
+from analysis.spell_trace_adapter_factory import SpellTraceAdapterFactory
 from analysis.spell_trace_api import NullSpellTrace, SpellTrace
+from analysis.spell_trace_session_settings import SpellTraceSessionSettings
 from motion.direction_type import DirectionType
 from motion.gesture_segment import GestureSegment
 from motion.motion_type import MotionType
 from spells.spell_match import SpellMatch
 from spells.spell_matcher_manager import SpellMatcherManager
-
-logger = get_logger()
-
-
-@dataclass
-class SpellTraceSessionConfig:
-    natural_break_s: float = 0.9  # idle NONE ≥ this ends the attempt
-    clear_history_on_flush: bool = True
-    label_prefix: str = "TRACE"
 
 
 class SpellTraceSessionManager:
@@ -30,43 +20,43 @@ class SpellTraceSessionManager:
     (real or NullSpellTrace) to matcher.try_match(), and flushes on match or natural break.
     """
 
-    def __init__(self, trace_factory: Callable[[], SpellTrace], config: SpellTraceSessionConfig | None = None) -> None:
+    def __init__(self, logger: Logger, trace_factory: SpellTraceAdapterFactory, settings: SpellTraceSessionSettings) -> None:
+        self._logger = logger
         self._trace_factory = trace_factory
-        self._cfg = config or SpellTraceSessionConfig()
+        self._settings = settings
         self._enabled: bool = True
 
         # Always hold a tracer (Null until an attempt starts)
         self._trace: SpellTrace = NullSpellTrace()
-        self._active: bool = False  # whether we're inside an active attempt
+        self._in_active_trace: bool = False  # whether we're inside an active attempt
 
     # --- control ---
     def set_enabled(self, enabled: bool) -> None:
-        if not enabled and self._active:
+        if not enabled and self._in_active_trace:
             self.flush("tracing-off")
         self._enabled = enabled
         if not enabled:
             # ensure we’re back to a clean Null tracer
             self._trace = NullSpellTrace()
-            self._active = False
+            self._in_active_trace = False
 
     def toggle(self) -> None:
         self.set_enabled(not self._enabled)
-        logger.info(f"Tracing {'ENABLED' if self._enabled else 'DISABLED'}")
+        self._logger.info(f"Tracing {'ENABLED' if self._enabled else 'DISABLED'}")
 
     # --- hooks you call from your app ---
     def on_motion_changed(self, mode: MotionType) -> None:
         # Start a new attempt on real motion
-        if self._enabled and mode == MotionType.MOVING and not self._active:
-            self._trace = self._trace_factory()
-            self._active = True
+        if self._enabled and mode == MotionType.MOVING and not self._in_active_trace:
+            self._trace = self._trace_factory.create()
+            self._in_active_trace = True
+            self._logger.debug(f"[{self._settings.label_prefix}] trace START")
 
     def on_segment(
         self,
         segment: GestureSegment,
         history_tail: Sequence[GestureSegment],
         matcher_manager: SpellMatcherManager,
-        *,
-        history_clear_fn: Callable[[], None] | None = None,
     ) -> None:
         """
         Feed the tracer into matching each time a segment completes.
@@ -75,33 +65,36 @@ class SpellTraceSessionManager:
         matcher_manager.try_match(history_tail, self._trace)
 
         # Natural break: end attempt after a long NONE
-        if segment.direction_type == DirectionType.NONE and segment.duration_s >= self._cfg.natural_break_s:
+        if segment.direction_type == DirectionType.NONE and segment.duration_s >= self._settings.natural_break_s:
             self.flush("break")
-            if self._cfg.clear_history_on_flush and history_clear_fn:
-                history_clear_fn()
 
-    def on_match(self, match: SpellMatch, *, history_clear_fn: Callable[[], None] | None = None) -> None:
+    def on_match(
+        self,
+        match: SpellMatch,
+    ) -> None:
         # Successful attempt ends the trace
+        print("should print logs")
         self.flush("match")
-        if self._cfg.clear_history_on_flush and history_clear_fn:
-            history_clear_fn()
 
     def on_difficulty_changed(self) -> None:
         # Changing models? close any ongoing attempt
         self.flush("difficulty-changed")
 
-    # --- internals ---
     def flush(self, reason: str = "") -> None:
-        if not self._active:
+        if not self._in_active_trace:
+            self._logger.debug(f"[{self._settings.label_prefix} {reason}] skip flush: no active trace")
             return
-        # If using SpellTraceAdapter, it has .a.pretty(); otherwise rely on tracer’s own logging.
+        # Prefer adapter.a.pretty(); otherwise fall back to tracer.pretty()
         attempt_obj = getattr(self._trace, "a", None)
+        text = None
         if attempt_obj is not None and hasattr(attempt_obj, "pretty"):
-            logger.debug(f"[{self._cfg.label_prefix} {reason}] \n{attempt_obj.pretty()}")
+            text = attempt_obj.pretty()
+        elif hasattr(self._trace, "pretty"):
+            text = self._trace.pretty()
+        if text:
+            self._logger.debug(f"[{self._settings.label_prefix} {reason}]\n{text}")
+        else:
+            self._logger.debug(f"[{self._settings.label_prefix} {reason}] finished attempt (no pretty payload)")
         # Reset to Null tracer
         self._trace = NullSpellTrace()
-        self._active = False
-
-    # Expose the current tracer (always non-null); handy if you need to inspect it
-    def current(self) -> SpellTrace:
-        return self._trace
+        self._in_active_trace = False

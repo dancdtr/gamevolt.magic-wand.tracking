@@ -8,6 +8,7 @@ from logging import Logger
 from gamevolt.toolkit.maths import clamp01
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
+from preview import TkPreview
 
 _INVERT_X = False
 _INVERT_Y = True
@@ -18,11 +19,10 @@ def _get_time() -> int:
 
 
 class MouseTkInput(MotionInputBase):
-    def __init__(self, logger: Logger, root: tk.Misc, window: tk.Widget) -> None:
+    def __init__(self, logger: Logger, preview: TkPreview) -> None:
         super().__init__(logger)
 
-        self._root = root
-        self._window = window
+        self._preview = preview
         self._logger = logger
         self._running = False
 
@@ -37,23 +37,23 @@ class MouseTkInput(MotionInputBase):
             return None
 
         # Ensure geometry is realised
-        if self._window.winfo_width() <= 1 or self._window.winfo_height() <= 1:
-            self._window.update_idletasks()
+        if self._preview.canvas.winfo_width() <= 1 or self._preview.canvas.winfo_height() <= 1:
+            self._preview.canvas.update_idletasks()
 
         # Screen-space pointer
-        sx = self._root.winfo_pointerx()
-        sy = self._root.winfo_pointery()
+        sx = self._preview.root.winfo_pointerx()
+        sy = self._preview.root.winfo_pointery()
 
         # Target widget origin in screen coords
-        tx = self._window.winfo_rootx()
-        ty = self._window.winfo_rooty()
+        tx = self._preview.canvas.winfo_rootx()
+        ty = self._preview.canvas.winfo_rooty()
 
         # Pointer in widget coords (can be outside)
         px = sx - tx
         py = sy - ty
 
-        w = max(self._window.winfo_width(), 1)
-        h = max(self._window.winfo_height(), 1)
+        w = max(self._preview.canvas.winfo_width(), 1)
+        h = max(self._preview.canvas.winfo_height(), 1)
 
         nx = px / w
         ny = py / h
