@@ -38,7 +38,8 @@ class WandTrail:
         self._canvas.bind("<Configure>", lambda e: self.draw())
 
     def add(self, pos: WandPosition) -> None:
-        self._points.append((pos.x, pos.y))
+        if pos.x and pos.y:
+            self._points.append((pos.x, pos.y))
 
     def clear(self) -> None:
         self._points.clear()

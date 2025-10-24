@@ -60,7 +60,6 @@ class MotionProcessor:
         if dir_type != self._motion_state:
             self._motion_state = dir_type
             self.state_changed.invoke(dir_type)
-            # boundary in segments
             self._seg.commit(dir_type, pos)
 
     # tick
@@ -72,15 +71,21 @@ class MotionProcessor:
             self._seg.start(DirectionType.NONE, pos)
             return
 
-        dt = max((pos.ts_ms - self._prev.ts_ms) / 1000.0, 1e-6)
-        vx = (pos.x - self._prev.x) / dt
-        vy = (pos.y - self._prev.y) / dt
+        # NOTE: if two samples share the same timestamp, we treat dt as tiny to avoid div-by-zero.
+        raw_dt_ms = pos.ts_ms - self._prev.ts_ms
+        if raw_dt_ms <= 0:
+            # Optionally: drop the sample instead of clamping.
+            # return
+            raw_dt_ms = 1  # 1 ms fallback
+        dt = raw_dt_ms / 1000.0
+
+        vx = pos.x_delta / dt
+        vy = pos.y_delta / dt
         speed = math.hypot(vx, vy)
 
         # 1) Mode FSM
         ev = self._fsm.update(speed)
         if ev["stop_started"]:
-            # close moving segment immediately and open NONE (don’t change motion yet)
             if self._motion_state != DirectionType.NONE:
                 self._set_direction(DirectionType.NONE, pos)
         if ev["to_stationary"]:
@@ -94,11 +99,10 @@ class MotionProcessor:
             if committed is not None:
                 self._set_direction(committed, pos)
         else:
-            # force direction gate to NONE while not moving
             self._dir.force(DirectionType.NONE)
 
         # 3) Accumulate segment metrics
         if self._seg.active:
-            self._seg.accumulate(pos, self._prev)
+            self._seg.accumulate(pos)
 
         self._prev = pos

@@ -36,11 +36,9 @@ class TkPreview:
     def start(self) -> None:
         # self.register_key_callback("q", self._root.destroy)
         self._key_handler.register_key_callback("q", self._root.destroy)
-        self._key_handler.unregister_key_callback("q", self._root.destroy)
-        self._key_handler.register_key_callback("q", self._root.destroy)
 
     def stop(self) -> None:
-        self._key_handler.register_key_callback("q", self._root.destroy)
+        self._key_handler.unregister_key_callback("q", self._root.destroy)
 
     @property
     def root(self) -> tk.Tk:

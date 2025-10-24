@@ -41,12 +41,12 @@ class SegmentBuilder:
         self._points.clear()
         self._points.append(pos)
 
-    def accumulate(self, pos: WandPosition, prev: WandPosition) -> None:
+    def accumulate(self, pos: WandPosition) -> None:
         if not self._active:
             return
         self._last_ms = pos.ts_ms
-        dx = pos.x - prev.x
-        dy = pos.y - prev.y
+        dx = pos.x_delta
+        dy = pos.y_delta
         self._net_dx += dx
         self._net_dy += dy
         self._path += math.hypot(dx, dy)
@@ -79,7 +79,6 @@ class SegmentBuilder:
         self._active = False
 
     def commit(self, new_dir: DirectionType, pos: WandPosition) -> None:
-        """Close the current segment (if any) and start a new one with new_dir."""
         if self._active:
             self._last_ms = pos.ts_ms
             self.finish()
