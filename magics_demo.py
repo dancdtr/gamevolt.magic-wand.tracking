@@ -11,6 +11,8 @@ from analysis.spell_trace_adapter_factory import SpellTraceAdapterFactory
 from analysis.spell_trace_session import SpellTraceSessionManager
 from analysis.spell_trace_session_settings import SpellTraceSessionSettings
 from difficulty.spell_difficulty_controller import SpellDifficultyController
+from input.imu.configuration.imu_input_settings import ImuInputSettings
+from input.imu.imu_motion_input import ImuInput
 from input.mouse_tk_input import MouseTkInput
 from input.wand_position import WandPosition
 from motion.direction_type import DirectionType
@@ -31,7 +33,7 @@ from wand_trail import WandTrail
 from wizard_names_provider import WizardNameProvider
 
 _SAMPLE_FREQUENCY_HZ = 30
-_SPELL_TYPES = [SpellType.LOCOMOTOR]
+_SPELL_TYPES = [SpellType.LOCOMOTOR, SpellType.REVELIO]
 # _SPELL_TYPES = [SpellType.REVELIO]
 # _SPELL_TYPES = [SpellType.SQUARIO, SpellType.OBLONGIUM, SpellType.RECTANGLIA, SpellType.REVELIO, SpellType.RICTUMSEMPRA]
 
@@ -48,6 +50,7 @@ difficulty_controller = SpellDifficultyController(logger)
 trace_manager = SpellTraceSessionManager(
     logger=logger,
     trace_factory=SpellTraceAdapterFactory(),
+    start_active=False,
     settings=SpellTraceSessionSettings(
         natural_break_s=0.9,
         clear_history_on_flush=True,
@@ -74,6 +77,23 @@ preview = TkPreview(
 )
 
 input = MouseTkInput(logger=logger, preview=preview)
+# input = ImuInput(
+#     logger,
+#     settings=ImuInputSettings(
+#         port="/dev/tty.usbmodem2101",
+#         baudrate=115_200,
+#         read_timeout_s=0.05,
+#         emit_hz=30,
+#         max_step=0.25,
+#         sens_yaw_deg_to_unit=0.04,
+#         sens_pitch_deg_to_unit=0.04,
+#         deadband_dps=0.7,
+#         smooth_alpha=0.25,
+#         invert_x=True,
+#         invert_y=True,
+#         drop_if_large_gap_ms=250,
+#     ),
+# )
 
 trail = WandTrail(
     preview=preview,
@@ -92,6 +112,7 @@ name_provider = WizardNameProvider()
 
 
 def on_sample(s: WandPosition) -> None:
+    # return
     preview.set_status(f"({s.x:.3f}, {s.y:.3f}) | {tick_monitor.tick_rate}hz")
     trail.add(s)
     trail.draw()

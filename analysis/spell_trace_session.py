@@ -20,11 +20,13 @@ class SpellTraceSessionManager:
     (real or NullSpellTrace) to matcher.try_match(), and flushes on match or natural break.
     """
 
-    def __init__(self, logger: Logger, trace_factory: SpellTraceAdapterFactory, settings: SpellTraceSessionSettings) -> None:
+    def __init__(
+        self, logger: Logger, trace_factory: SpellTraceAdapterFactory, start_active: bool, settings: SpellTraceSessionSettings
+    ) -> None:
         self._logger = logger
         self._trace_factory = trace_factory
         self._settings = settings
-        self._enabled: bool = True
+        self._enabled: bool = start_active
 
         # Always hold a tracer (Null until an attempt starts)
         self._trace: SpellTrace = NullSpellTrace()
