@@ -76,7 +76,7 @@ preview = TkPreview(
     )
 )
 
-input = MouseTkInput(logger=logger, preview=preview)
+# input = MouseTkInput(logger=logger, preview=preview)
 # input = ImuInput(
 #     logger,
 #     settings=ImuInputSettings(

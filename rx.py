@@ -20,6 +20,7 @@ from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.messaging.udp.configuration.udp_peer_settings import UdpPeerSettings
 from gamevolt.messaging.udp.configuration.udp_rx_settings import UdpRxSettings
 from gamevolt.messaging.udp.configuration.udp_tx_settings import UdpTxSettings
+from gamevolt.messaging.udp.udp_tx import UdpTx
 from gamevolt.messaging.udp_peer import UdpPeer
 from messaging.target_gestures_message import TargetGesturesMessage
 from spells.spell import Spell
@@ -52,6 +53,14 @@ async def main() -> None:
         ),
     )
     visualiser = ImageVisualiser(settings=ImageVisualiserSettings(500, 500, "Gestures", 60))
+
+    pi_tx = UdpTx(
+        logger,
+        settings=UdpTxSettings(
+            host="172.30.1.96",
+            port=8888,
+        ),
+    )
 
     message_handler = MessageHandler(logger, udp_peer)
     wand_client = WandClient(logger, message_handler)
@@ -94,6 +103,9 @@ async def main() -> None:
     def on_spell(spell: Spell) -> None:
         logger.info(f"DAN cast ✨✨✨ {spell.type.name} ✨✨✨!!!")
         spellcasting_visualiser.show_spell_cast(spell.type)
+
+        # pi_tx.send({"spell": {spell.type.name}})
+        pi_tx.send({})
         sleep(0.25)
         spellcasting_visualiser.show_spell_instruction(spell)
 
