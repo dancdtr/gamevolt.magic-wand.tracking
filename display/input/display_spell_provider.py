@@ -132,7 +132,7 @@ class DisplaySpellProvider(SpellProviderBase):
         if entry is not None:
             self._dropdown.show_value(entry.dropdown_name)
 
-        targets = [target]  # TODO temp until support added for multiple simultaneous spell targets
+        targets = [SpellType.LUMOS_MAXIMA, SpellType.VENTUS]  # TODO temp until support added for multiple simultaneous spell targets
 
         self._current_spell_entry_index = next(idx for idx, spell_type in _SPELL_TYPE_MAPPINGS.items() if spell_type is target)
         self._target_spells = [self._spell_factory.create(t) for t in targets]

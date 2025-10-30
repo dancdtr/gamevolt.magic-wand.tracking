@@ -5,6 +5,7 @@ from logging import Logger
 from typing import Any
 
 from gamevolt.messaging.udp.configuration.udp_tx_settings import UdpTxSettings
+from spells.spell_type import SpellType
 
 
 class UdpTx:
@@ -25,5 +26,10 @@ class UdpTx:
 
         data = json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
+        self._logger.debug(f"Sending to 'udp://{self._settings.address}': {data}")
+        self._sock.sendto(data, self._settings.address)
+
+    def send_spell(self, spell_type: SpellType) -> None:
+        data = json.dumps(spell_type.name, separators=(",", ":")).encode("utf-8")
         self._logger.debug(f"Sending to 'udp://{self._settings.address}': {data}")
         self._sock.sendto(data, self._settings.address)

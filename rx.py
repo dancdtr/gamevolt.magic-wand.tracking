@@ -105,7 +105,7 @@ async def main() -> None:
         spellcasting_visualiser.show_spell_cast(spell.type)
 
         # pi_tx.send({"spell": {spell.type.name}})
-        pi_tx.send({})
+        pi_tx.send_spell(spell.type)
         sleep(0.25)
         spellcasting_visualiser.show_spell_instruction(spell)
 
