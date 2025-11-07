@@ -75,7 +75,6 @@ class SpellTraceSessionManager:
         match: SpellMatch,
     ) -> None:
         # Successful attempt ends the trace
-        print("should print logs")
         self.flush("match")
 
     def on_difficulty_changed(self) -> None:

@@ -15,4 +15,4 @@ class WandPosition:
 
     def __str__(self) -> str:
         abs_part = "" if self.x is None or self.y is None else f" [{self.x:.3f}, {self.y:.3f}]"
-        return f"{self.ts_ms} Δ({self.x_delta:.4f}, {self.y_delta:.4f}){abs_part}"
+        return f"{self.ts_ms} Δ({self.x_delta:.3f}, {self.y_delta:.3f}){abs_part}"

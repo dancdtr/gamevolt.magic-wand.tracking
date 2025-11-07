@@ -4,11 +4,6 @@ from spells.spell_definition import SpellDefinition
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
-
-def get_locomotor(difficulty: SpellDifficultyType) -> SpellDefinition:
-    return LOCOMOTOR
-
-
 LOCOMOTOR = SpellDefinition(
     id="SP02",
     name="LOCOMOTOR",
@@ -41,3 +36,7 @@ LOCOMOTOR = SpellDefinition(
     max_total_duration_s=10.0,
     max_idle_gap_s=1.20,
 )
+
+
+def get_locomotor(difficulty: SpellDifficultyType) -> SpellDefinition:
+    return LOCOMOTOR

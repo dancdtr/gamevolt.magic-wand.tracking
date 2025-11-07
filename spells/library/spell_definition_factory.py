@@ -1,14 +1,18 @@
 from typing import Callable
 
 from spells.library.locomotor import get_locomotor
+from spells.library.lumos_maxima import get_lumos_maxima
 from spells.library.revelio import get_revelio
 from spells.library.spell_difficulty_type import SpellDifficultyType
+from spells.library.ventus import get_ventus
 from spells.spell_definition import SpellDefinition
 from spells.spell_type import SpellType
 
 _SPELL_PROVIDERS: dict[SpellType, Callable[[SpellDifficultyType], SpellDefinition]] = {
     SpellType.REVELIO: get_revelio,
     SpellType.LOCOMOTOR: get_locomotor,
+    SpellType.LUMOS_MAXIMA: get_lumos_maxima,
+    SpellType.VENTUS: get_ventus,
 }
 
 

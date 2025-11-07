@@ -42,7 +42,7 @@ class SerialReceiver:
                     continue
 
                 line = raw.decode("utf-8", errors="ignore").strip()
-                # self._logger.debug(f"Received: {line}")
+                self._logger.debug(f"Received: {line}")
                 self.data_received.invoke(line)
 
         except asyncio.CancelledError:
