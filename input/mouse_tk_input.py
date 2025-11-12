@@ -2,16 +2,15 @@
 from __future__ import annotations
 
 import time
+import tkinter as tk
 from logging import Logger
 
 from gamevolt_debugging import TickMonitor
 
+from input.factories.mouse.configuration.mouse_input_settings import MouseInputSettings
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
-from preview import TkPreview, TkPreviewSettings
-
-_INVERT_X = False
-_INVERT_Y = True
+from preview import TkPreview
 
 
 def _now_ms() -> int:
@@ -20,41 +19,31 @@ def _now_ms() -> int:
 
 class MouseTkInput(MotionInputBase):
     """
-    Normalises the mouse position to [0..1] in canvas space, applies optional axis inversions,
-    then emits per-frame deltas via WandPosition. Absolute x/y are included for debugging/preview.
+    Emits WandPosition samples derived from the mouse over a supplied TkPreview canvas.
+    - Requires a shared TkPreview (does not create, start, stop, or pump the GUI).
+    - Outputs centered coordinates in [-1..1] with +Y up.
     """
 
-    def __init__(self, logger: Logger, sample_frequency: int) -> None:
+    def __init__(self, logger: Logger, settings: MouseInputSettings, preview: TkPreview) -> None:
         super().__init__(logger)
         self._logger = logger
-        self._running = False
+        self._settings = settings
+        self._preview = preview  # MUST be supplied; ownership is external
 
+        self._running = False
         self._prev_x: float | None = None
         self._prev_y: float | None = None
 
-        self._preview = TkPreview(
-            TkPreviewSettings(
-                title="Mock Wand Input",
-                width=800,
-                height=800,
-                buffer=100,
-            )
-        )
-
         self._tick_monitor = TickMonitor()
-
-        self._interval_s = 1.0 / sample_frequency
+        self._interval_s = 1.0 / self._settings.sample_frequency
         self._next_t = time.perf_counter() + self._interval_s
 
-    def start(self) -> None:
+    async def start(self) -> None:
         self._running = True
         self._prev_x = None
         self._prev_y = None
 
-        self._preview.start()
-
     def stop(self) -> None:
-        self._preview.stop()
         self._running = False
 
     def update(self) -> None:
@@ -65,64 +54,73 @@ class MouseTkInput(MotionInputBase):
         if now < self._next_t:
             return
 
-        # Ensure geometry is realised
-        if self._preview.canvas.winfo_width() <= 1 or self._preview.canvas.winfo_height() <= 1:
-            self._preview.canvas.update_idletasks()
+        try:
+            # Geometry should already be realised by whoever pumps the preview.
+            if self._preview.canvas.winfo_width() <= 1 or self._preview.canvas.winfo_height() <= 1:
+                self._preview.canvas.update_idletasks()
 
-        # Screen-space pointer
-        sx = self._preview.root.winfo_pointerx()
-        sy = self._preview.root.winfo_pointery()
+            # Screen-space pointer
+            sx = self._preview.root.winfo_pointerx()
+            sy = self._preview.root.winfo_pointery()
 
-        # Canvas origin in screen coords
-        tx = self._preview.canvas.winfo_rootx()
-        ty = self._preview.canvas.winfo_rooty()
+            # Canvas origin in screen coords
+            tx = self._preview.canvas.winfo_rootx()
+            ty = self._preview.canvas.winfo_rooty()
 
-        # Pointer in canvas coords (can be outside)
-        px = sx - tx
-        py = sy - ty
+            # Pointer in canvas coords (can be outside)
+            px = sx - tx
+            py = sy - ty
 
-        w = max(self._preview.canvas.winfo_width(), 1)
-        h = max(self._preview.canvas.winfo_height(), 1)
+            w = max(self._preview.canvas.winfo_width(), 1)
+            h = max(self._preview.canvas.winfo_height(), 1)
 
-        # Normalised to [0..1] and only when mouse is within window
-        nx = px / w
-        ny = py / h
-        if not (0.0 <= nx <= 1.0 and 0.0 <= ny <= 1.0):
-            return
+            # Normalised to [0..1] for inside-window test
+            nx01 = px / w
+            ny01 = py / h
+            if not (0.0 <= nx01 <= 1.0 and 0.0 <= ny01 <= 1.0):
+                self._next_t = now + self._interval_s
+                return
 
-        if _INVERT_X:
-            nx = 1.0 - nx
-        if _INVERT_Y:
-            ny = 1.0 - ny
+            # Map to centered [-1..1] with +Y up
+            cx = (nx01 - 0.5) * 2.0
+            cy = (0.5 - ny01) * 2.0
 
-        # Compute deltas against last absolute (normalised) position
-        if self._prev_x is None or self._prev_y is None:
-            dx = 0.0
-            dy = 0.0
-        else:
-            dx = nx - self._prev_x
-            dy = ny - self._prev_y
+            # Optional inversions (sign flip)
+            if self._settings.invert_x:
+                cx = -cx
+            if self._settings.invert_y:
+                cy = -cy
 
-        self._prev_x = nx
-        self._prev_y = ny
+            # Deltas
+            if self._prev_x is None or self._prev_y is None:
+                dx = 0.0
+                dy = 0.0
+            else:
+                dx = cx - self._prev_x
+                dy = cy - self._prev_y
 
-        sample = WandPosition(
-            ts_ms=_now_ms(),
-            x_delta=dx,
-            y_delta=dy,
-            x=nx,
-            y=ny,
-        )
+            self._prev_x = cx
+            self._prev_y = cy
 
-        self._tick_monitor.tick()
+            sample = WandPosition(
+                ts_ms=_now_ms(),
+                x_delta=dx,
+                y_delta=dy,
+                nx=cx,
+                ny=cy,
+            )
 
-        self._preview.set_status(f"({sample.x:.2f}, {sample.y:.2f}) | {self._tick_monitor.tick_rate}hz")
+            self._tick_monitor.tick()
+            self.position_updated.invoke(sample)
 
-        self.position_updated.invoke(sample)
+            self._next_t += self._interval_s
+            if now - self._next_t > 0.25:
+                self._next_t = now + self._interval_s
 
-        self._next_t += self._interval_s
-        if now - self._next_t > 0.25:
-            self._next_t = now + self._interval_s
+        except tk.TclError:
+            # Window likely closed by the preview owner; stop cleanly
+            self.stop()
 
     def reset(self) -> None:
-        pass
+        self._prev_x = None
+        self._prev_y = None

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import time
 import tkinter as tk
 
 from gamevolt_logging import get_logger
@@ -11,16 +10,22 @@ from analysis.spell_trace_adapter_factory import SpellTraceAdapterFactory
 from analysis.spell_trace_session import SpellTraceSessionManager
 from analysis.spell_trace_session_settings import SpellTraceSessionSettings
 from difficulty.spell_difficulty_controller import SpellDifficultyController
-from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from gamevolt.serial.serial_receiver import SerialReceiver
+from input.factories.configuration.input_type import InputType
+from input.factories.input_factory import InputFactory
+from input.factories.mouse.configuration.mouse_input_settings import MouseInputSettings
+from input.factories.mouse.mouse_input_factory import MouseInputFactory
+from input.factories.wand.wand_input_factory import _SERIAL_SETTINGS, WandInputFactory
 from input.mouse_tk_input import MouseTkInput
 from input.wand_input import WandInput
 from input.wand_position import WandPosition
+from live_wand_preview import LiveWandPreview, LiveWandPreviewSettings
 from motion.direction_type import DirectionType
 from motion.gesture_history import GestureHistory
 from motion.gesture_segment import GestureSegment
 from motion.motion_processor import DirectionType, MotionProcessor
 from motion.motion_type import MotionType
+from preview import TkPreview, TkPreviewSettings
 from spell_library import *
 from spells.easy_spell_matcher import EasySpellMatcher
 from spells.library.spell_definition_factory import SpellDefinitionFactory
@@ -33,6 +38,7 @@ from wand_data_reader import WandDataReader
 from wand_yawpitch_rmf_interpreter import RMFSettings, YawPitchRMFInterpreter
 from wizard_names_provider import WizardNameProvider
 
+_INPUT_TYPE = InputType.WAND
 # _SPELL_TYPES = [SpellType.LOCOMOTOR, SpellType.REVELIO]
 _SPELL_TYPES = [SpellType.LUMOS_MAXIMA, SpellType.VENTUS]
 # _SPELL_TYPES = [SpellType.LOCOMOTOR]
@@ -64,24 +70,55 @@ matcher_manager.register(
     SpellDifficultyType.STRICT, SpellMatcher(spell_definition_factory.create_spells(_SPELL_TYPES, SpellDifficultyType.STRICT))
 )
 
-# input = MouseTkInput(logger=logger, sample_frequency=30)
+tk_preview_settings = TkPreviewSettings(
+    title="Mouse Input",
+    width=800,
+    height=800,
+    buffer=100,
+)
+tk_preview = TkPreview(tk_preview_settings)
 
-serial_reader = SerialReceiver(
-    logger=logger,
-    settings=SerialReceiverSettings(
-        port="/dev/tty.usbmodem1101",
-        baud=115200,
-        timeout=3,
-        retry_interval=2,
-    ),
+mouse_input_settings = MouseInputSettings(
+    invert_x=False,
+    invert_y=False,
+    sample_frequency=30,
 )
 
-reader = WandDataReader(logger, serial_reader, imu_hz=120.0, target_hz=30.0)
-interpreter = YawPitchRMFInterpreter(RMFSettings(invert_x=True, invert_y=True, gain_x=1.0, gain_y=1.0))
-input = WandInput(logger, reader, interpreter)
+if _INPUT_TYPE is InputType.MOUSE:
+    input = MouseTkInput(logger, mouse_input_settings, tk_preview)
+elif _INPUT_TYPE is InputType.WAND:
+    yaw_pitch_interpreter = YawPitchRMFInterpreter(
+        RMFSettings(
+            invert_x=True,
+            invert_y=True,
+            abs_invert_x=True,
+            abs_invert_y=False,
+            gain_x=1.0,
+            gain_y=1.0,
+        )
+    )
+    wand_data_reader = WandDataReader(
+        logger=logger,
+        serial_reader=SerialReceiver(
+            logger=logger,
+            settings=_SERIAL_SETTINGS,
+        ),
+        imu_hz=120.0,
+        target_hz=30.0,
+    )
+    input = WandInput(logger, wand_data_reader, yaw_pitch_interpreter)
+else:
+    raise RuntimeError(f"No input defined for type '{_INPUT_TYPE}'.")
+
 
 processor = MotionProcessor(input=input)
 name_provider = WizardNameProvider()
+
+preview = LiveWandPreview(
+    input_source=input,
+    preview=tk_preview,
+    settings=LiveWandPreviewSettings(),
+)
 
 
 def on_direction_changed(dir: DirectionType) -> None:
@@ -95,6 +132,7 @@ def on_motion_changed(mode: MotionType) -> None:
     if mode is MotionType.STATIONARY:
         print("resetting input")
         input.reset()
+        preview.clear()
     logger.debug(f"Motion: {mode.name}")
 
 
@@ -124,7 +162,6 @@ def on_spell(match: SpellMatch):
 #     trace_manager.on_difficulty_changed()
 
 
-# input.position_updated.subscribe(on_sample)
 processor.state_changed.subscribe(on_direction_changed)
 processor.motion_changed.subscribe(on_motion_changed)
 processor.segment_completed.subscribe(on_segment_completed)
@@ -132,13 +169,16 @@ matcher_manager.matched.subscribe(on_spell)
 
 
 async def main():
-    await serial_reader.start()
-    input.start()
+    await input.start()
     processor.start()
+    tk_preview.start()
+    preview.start()
 
     try:
         while True:
             input.update()
+            tk_preview.update()
+            preview.update()
             await asyncio.sleep(0.01)
     except tk.TclError:
         pass

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from logging import Logger
+from math import fmod
 from typing import Callable
 
 from gamevolt.events.event import Event
@@ -10,8 +11,13 @@ from input.wand_position import WandPosition
 from wand_data_reader import WandDataMessage, WandDataReader
 from wand_yawpitch_rmf_interpreter import YawPitchRMFInterpreter
 
-_INVERT_X = False
-_INVERT_Y = False
+
+def _wrap180(deg: float) -> float:
+    return ((deg + 180.0) % 360.0) - 180.0
+
+
+def _clamp_unit(v: float) -> float:
+    return -1.0 if v < -1.0 else (1.0 if v > 1.0 else v)
 
 
 class WandInput(MotionInputBase):
@@ -23,12 +29,13 @@ class WandInput(MotionInputBase):
 
         self.position_updated: Event[Callable[[WandPosition], None]] = Event()
 
-    def start(self) -> None:
+    async def start(self) -> None:
+        await self._wand_data_reader.start()
         self._wand_data_reader.wand_position_updated.subscribe(self._on_wand_data_message)
-        self._wand_data_reader.start()
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         self._wand_data_reader.wand_position_updated.unsubscribe(self._on_wand_data_message)
+        await self._wand_data_reader.stop()
 
     def update(self) -> None:
         pass
@@ -36,13 +43,14 @@ class WandInput(MotionInputBase):
     def reset(self) -> None:
         self._yaw_pitch_interpreter.reset()
 
-    def _on_wand_data_message(self, m: WandDataMessage) -> None:
-        wand_pos = self._yaw_pitch_interpreter.on_sample(m.ms, m.yaw, m.pitch)
+    def _on_wand_data_message(self, message: WandDataMessage) -> None:
+        wand_pos = self._yaw_pitch_interpreter.on_sample(message.ms, message.yaw, message.pitch)
+
         adjusted_wand_position = WandPosition(
             ts_ms=wand_pos.ts_ms,
-            x_delta=wand_pos.x_delta * -1 if _INVERT_X else wand_pos.x_delta,
-            y_delta=wand_pos.y_delta * -1 if _INVERT_Y else wand_pos.y_delta,
-            x=wand_pos.x,
-            y=wand_pos.y,
+            x_delta=wand_pos.x_delta,
+            y_delta=wand_pos.y_delta,
+            nx=wand_pos.nx,
+            ny=wand_pos.ny,
         )
         self.position_updated.invoke(adjusted_wand_position)

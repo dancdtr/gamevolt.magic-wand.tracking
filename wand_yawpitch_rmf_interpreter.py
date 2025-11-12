@@ -8,7 +8,21 @@ from typing import Callable, Optional, Tuple
 from gamevolt.events.event import Event
 from input.wand_position import WandPosition
 
+
+def _wrap_pi(rad: float) -> float:
+    """Wrap any angle to [-pi, +pi)."""
+    return ((rad + math.pi) % (2.0 * math.pi)) - math.pi
+
+
 Vec3 = Tuple[float, float, float]
+
+
+def _wrap180(deg: float) -> float:
+    return ((deg + 180.0) % 360.0) - 180.0
+
+
+def _clamp_unit(v: float) -> float:
+    return -1.0 if v < -1.0 else (1.0 if v > 1.0 else v)
 
 
 # ── vector helpers ──────────────────────────────────────────────────────────
@@ -54,19 +68,24 @@ def _orthonormalize(f: Vec3, r: Vec3) -> Tuple[Vec3, Vec3, Vec3]:
 # ── settings ────────────────────────────────────────────────────────────────
 @dataclass(frozen=True)
 class RMFSettings:
-    # World up only used for initial seeding if you choose to seed from up; transport then avoids pole flips.
     up_world: Vec3 = (0.0, 0.0, 1.0)
 
-    # Output shaping
+    # Output shaping (deltas)
     gain_x: float = 1.0
     gain_y: float = 1.0
     deadzone_x: float = 0.0
     deadzone_y: float = 0.0
     invert_x: bool = False
     invert_y: bool = False
-    keep_absolute: bool = True
 
-    # Numerical tolerances
+    # Absolute preview control (independent of delta invert)
+    abs_invert_x: bool = False
+    abs_invert_y: bool = False
+    abs_yaw_limit_deg: float = 90.0  # map yaw ∈ [-limit, +limit] → [-1, +1]
+    abs_pitch_limit_deg: float = 90.0  # map pitch ∈ [-limit, +limit] → [-1, +1]
+    abs_clip_mode: str = "clamp"  # "clamp" | "discard"
+
+    keep_absolute: bool = True
     tiny_angle: float = 1e-9
 
 
@@ -143,34 +162,53 @@ class YawPitchRMFInterpreter:
         self._v_prev = v0
 
     # ── main entry ──────────────────────────────────────────────────────────
+
     def on_sample(self, ts_ms: int, yaw_deg: float, pitch_deg: float) -> WandPosition:
         yaw = math.radians(yaw_deg) + self._yaw_offset
         pitch = math.radians(pitch_deg)
+
+        # --- absolute, bounded normalisation to [-1, 1] using symmetric limits ---
+        yaw_rel = _wrap_pi(yaw)  # shortest-path yaw around ±π
+        yaw_lim = max(1e-6, math.radians(self.cfg.abs_yaw_limit_deg))
+        pit_lim = max(1e-6, math.radians(self.cfg.abs_pitch_limit_deg))
+
+        nx_raw = yaw_rel / yaw_lim
+        ny_raw = pitch / pit_lim
+
+        # if self.cfg.abs_clip_mode == "discard" and (abs(nx_raw) > 1.0 or abs(ny_raw) > 1.0):
+        #     nx = ny = None
+        # else:
+        # clamp-to-range
+        nx = max(-1.0, min(1.0, nx_raw))
+        ny = max(-1.0, min(1.0, ny_raw))
+
+        # apply absolute preview inversions only (not delta inversions)
+        if self.cfg.abs_invert_x:
+            nx = -nx
+        if self.cfg.abs_invert_y:
+            ny = -ny
+
         f_now = _normalize(self._forward_from_yawpitch(yaw, pitch))
 
         if self._f_prev is None:
-            # If user forgot to call lock_frame*, seed from this sample
             self.lock_frame_from_yawpitch(yaw_deg, pitch_deg)
-            return WandPosition(ts_ms, 0.0, 0.0)
+            return WandPosition(ts_ms, 0.0, 0.0, nx, ny)
 
-        # Minimal rotation f_prev -> f_now
+        # --- minimal rotation f_prev -> f_now (unchanged) ---
         cross = _cross(self._f_prev, f_now)
-        s = _norm(cross)  # = sin(angle)
-        c = max(-1.0, min(1.0, _dot(self._f_prev, f_now)))  # = cos(angle)
+        s = _norm(cross)
+        c = max(-1.0, min(1.0, _dot(self._f_prev, f_now)))
         angle = math.atan2(s, c)
         if angle < self.cfg.tiny_angle or s < self.cfg.tiny_angle:
-            # Tiny motion: keep frame, emit ~0
             self._f_prev = f_now
-            return WandPosition(ts_ms, 0.0, 0.0)
+            return WandPosition(ts_ms, 0.0, 0.0, nx, ny)
+
         axis = (cross[0] / s, cross[1] / s, cross[2] / s)
         dtheta = (axis[0] * angle, axis[1] * angle, axis[2] * angle)
 
-        # Project deltas on the PREVIOUS transported view-plane axes
-        # (using previous keeps signs consistent and avoids instantaneous flips)
-        dx = _dot(dtheta, self._v_prev)  # left/right
-        dy = _dot(dtheta, self._r_prev)  # up/down
+        dx = _dot(dtheta, self._v_prev)
+        dy = _dot(dtheta, self._r_prev)
 
-        # Conditioning
         if abs(dx) < self.cfg.deadzone_x:
             dx = 0.0
         if abs(dy) < self.cfg.deadzone_y:
@@ -182,22 +220,16 @@ class YawPitchRMFInterpreter:
         dx *= self.cfg.gain_x
         dy *= self.cfg.gain_y
 
-        # Transport the frame by the SAME minimal rotation
         r_now = _rotate_axis_angle(self._r_prev, axis, angle)
         v_now = _rotate_axis_angle(self._v_prev, axis, angle)
-        # Re-orthonormalize (numerical hygiene)
         f_now, r_now, v_now = _orthonormalize(f_now, r_now)
 
-        # Integrate absolute if desired
-        x_abs = y_abs = None
         if self.cfg.keep_absolute:
             self._x_abs += dx
             self._y_abs += dy
-            x_abs, y_abs = self._x_abs, self._y_abs
 
-        # Emit and update state
         self._f_prev, self._r_prev, self._v_prev = f_now, r_now, v_now
-        return WandPosition(ts_ms, dx, dy, x_abs, y_abs)
+        return WandPosition(ts_ms, dx, dy, nx, ny)
 
     # ── internals ───────────────────────────────────────────────────────────
     def _forward_from_yawpitch(self, yaw: float, pitch: float) -> Vec3:
@@ -205,6 +237,3 @@ class YawPitchRMFInterpreter:
         cp, sp = math.cos(pitch), math.sin(pitch)
         # Standard "no-roll" forward for Z(yaw) then Y(pitch)
         return _normalize((cp * cy, cp * sy, sp))
-
-    # def _emit(self, ts_ms: int, dx: float, dy: float, x: Optional[float] = None, y: Optional[float] = None) -> None:
-    # self.position_updated.invoke(WandPosition(ts_ms=ts_ms, x_delta=dx, y_delta=dy, x=x, y=y))

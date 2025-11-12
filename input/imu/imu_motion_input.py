@@ -200,8 +200,8 @@ class ImuInput(MotionInputBase):
             ts_ms=host_ts_ms,
             x_delta=dx,
             y_delta=dy,
-            x=self._abs_x,
-            y=self._abs_y,
+            nx=self._abs_x,
+            ny=self._abs_y,
         )
         self.position_updated.invoke(sample)
 

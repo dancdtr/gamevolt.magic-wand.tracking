@@ -58,11 +58,14 @@ class WandDataReader:
         self.wand_position_updated: Event[Callable[[WandDataMessage], None]] = Event()
 
     # ── lifecycle ────────────────────────────────────────────────────────────
-    def start(self) -> None:
+    async def start(self) -> None:
+        await self._ser.start()
         self._ser.data_received.subscribe(self._on_line)
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         self._ser.data_received.unsubscribe(self._on_line)
+
+        await self._ser.stop()
         self._pending_headers.clear()
         self._next_emit_ms = None
         self._prev_msg = None
