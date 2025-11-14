@@ -10,10 +10,10 @@ from analysis.spell_trace_adapter_factory import SpellTraceAdapterFactory
 from analysis.spell_trace_session import SpellTraceSessionManager
 from appsettings import AppSettings
 from difficulty.spell_difficulty_controller import SpellDifficultyController
-from gamevolt.visualisation.visualier import Visualiser
 from input.factories.configuration.input_type import InputType
 from input.mouse_input import MouseInput
 from input.wand.wand_input import WandInput
+from input.wand_position import WandPosition
 from motion.direction_type import DirectionType
 from motion.gesture_history import GestureHistory
 from motion.gesture_segment import GestureSegment
@@ -25,7 +25,7 @@ from spells.library.spell_difficulty_type import SpellDifficultyType
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
-from visualisation.input_visualiser import InputVisualiser
+from visualisation.wand_visualiser import WandVisualiser
 from wizards.wizard_names_provider import WizardNameProvider
 
 # from spell_library import *
@@ -64,10 +64,10 @@ matcher_manager.register(
     SpellDifficultyType.STRICT, SpellMatcher(spell_definition_factory.create_spells(settings.spells.targets, SpellDifficultyType.STRICT))
 )
 
-tk_preview = Visualiser(settings.visualiser)
+visualiser = WandVisualiser(settings=settings.wand_visualiser)
 
 if settings.input.input_type is InputType.MOUSE:
-    input = MouseInput(logger, settings.input.mouse, tk_preview)
+    input = MouseInput(logger, settings.input.mouse, visualiser)
 elif settings.input.input_type is InputType.WAND:
     input = WandInput(logger, settings.input.wand)
 else:
@@ -77,11 +77,9 @@ else:
 processor = MotionProcessor(input=input)
 name_provider = WizardNameProvider(settings.wizard)
 
-preview = InputVisualiser(
-    input_source=input,
-    visualiser=tk_preview,
-    settings=settings.live_wand_preview,
-)
+
+def on_position_updated(pos: WandPosition) -> None:
+    visualiser.add_position(pos)
 
 
 def on_direction_changed(dir: DirectionType) -> None:
@@ -92,7 +90,7 @@ def on_direction_changed(dir: DirectionType) -> None:
 def on_motion_changed(mode: MotionType) -> None:
     trace_manager.on_motion_changed(mode)
     if mode is MotionType.STATIONARY:
-        preview.clear()
+        visualiser.clear()
         input.reset()
     logger.debug(f"Motion: {mode.name}")
 
@@ -127,22 +125,21 @@ processor.state_changed.subscribe(on_direction_changed)
 processor.motion_changed.subscribe(on_motion_changed)
 processor.segment_completed.subscribe(on_segment_completed)
 matcher_manager.matched.subscribe(on_spell)
+input.position_updated.subscribe(on_position_updated)
 
 
 async def main():
     try:
         await input.start()
         processor.start()
-        tk_preview.start()
-        preview.start()
+        visualiser.start()
     except Exception as ex:
         raise ex
 
     try:
         while True:
             input.update()
-            tk_preview.update()
-            preview.update()
+            visualiser.update()
             await asyncio.sleep(0.01)
     except tk.TclError:
         pass

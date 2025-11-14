@@ -54,37 +54,38 @@ motion:
     max_segments: 20
     max_age_s: 5.0
 
-visualiser:
-  root:
-    title: "Wand Input"
-    width: 800
-    height: 800
-    buffer: 100
-  canvas:
-    background_colour: "#222"
-    highlight_thickness: 0
+wand_visualiser:
+  visualiser:
+    root:
+      title: "Wand Input"
+      width: 800
+      height: 800
+      buffer: 100
+    canvas:
+      background_colour: "#222"
+      highlight_thickness: 0
   label:
     text: ""
     foreground_colour: "#ddd"
     background_colour: "#111"
     side: "bottom"
     fill: "x"
-
-live_wand_preview:
-  trail_max_points: 64
-  show_axes: True
-  axes_color: "#9ca3af"
-  axes_width: 1
-  line_width: 3
-  line_color: "#ff66d9"
-  draw_points: True
-  point_radius: 3
-  point_colour: "#f2f2f2"
-  smooth: False
-  coords_mode: "centred"
-  y_up: True
-  clip_to_bounds: True
-  pixel_margin: 0
+  axes:
+    show_axes: True
+    colour: "#9ca3af"
+    width: 1
+  trail:
+    max_points: 64
+    line_width: 3
+    line_color: "#ff66d9"
+    draw_points: True
+    point_radius: 3
+    point_colour: "#f2f2f2"
+    smooth: False
+    coords_mode: "centred"
+    y_up: True
+    clip_to_bounds: True
+    pixel_margin: 0
 
 spell_trace_session:
   natural_break_s: 1

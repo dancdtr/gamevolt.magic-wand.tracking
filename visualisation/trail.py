@@ -4,11 +4,12 @@ from collections import deque
 from typing import Deque, Iterable, Sequence
 
 from input.wand_position import WandPosition
+from visualisation.configuration.trail_settings import TrailSettings
 
 
-class InputTrail:
-    def __init__(self, max_points: int = 512) -> None:
-        self._points: Deque[tuple[float, float]] = deque(maxlen=max_points)
+class Trail:
+    def __init__(self, settings: TrailSettings) -> None:
+        self._points: Deque[tuple[float, float]] = deque(maxlen=settings.max_points)
 
     @property
     def max_points(self) -> int:
