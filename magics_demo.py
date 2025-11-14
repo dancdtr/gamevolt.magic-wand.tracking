@@ -20,8 +20,7 @@ from motion.gesture_history import GestureHistory
 from motion.gesture_segment import GestureSegment
 from motion.motion_processor import DirectionType, MotionProcessor
 from motion.motion_type import MotionType
-from preview import TkPreview
-from spell_library import *
+from preview.visualier import Visualiser
 from spells.easy_spell_matcher import EasySpellMatcher
 from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.library.spell_difficulty_type import SpellDifficultyType
@@ -29,6 +28,9 @@ from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
 from wizards.wizard_names_provider import WizardNameProvider
+
+# from spell_library import *
+
 
 # _INPUT_TYPE = InputType.WAND
 # _SPELL_TYPES = [SpellType.LOCOMOTOR, SpellType.REVELIO]
@@ -63,7 +65,7 @@ matcher_manager.register(
     SpellDifficultyType.STRICT, SpellMatcher(spell_definition_factory.create_spells(settings.spells.targets, SpellDifficultyType.STRICT))
 )
 
-tk_preview = TkPreview(settings.tk_preview)
+tk_preview = Visualiser(settings.visualiser)
 
 if settings.input.input_type is InputType.MOUSE:
     input = MouseInput(logger, settings.input.mouse, tk_preview)

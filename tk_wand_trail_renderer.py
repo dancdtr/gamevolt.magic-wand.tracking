@@ -7,7 +7,7 @@ from typing import Tuple
 from coordinate_mode import CoordinateMode
 from gamevolt.configuration.settings_base import SettingsBase
 from input.wand_position_trail import WandPositionTrail
-from preview import TkPreview
+from preview.visualier import Visualiser
 
 
 @dataclass
@@ -25,7 +25,7 @@ class TkWandTrailRendererSettings(SettingsBase):
 
 
 class TkWandTrailRenderer:
-    def __init__(self, preview: TkPreview, trail: WandPositionTrail, settings: TkWandTrailRendererSettings) -> None:
+    def __init__(self, preview: Visualiser, trail: WandPositionTrail, settings: TkWandTrailRendererSettings) -> None:
         self._canvas = preview.canvas
         self._trail = trail
         self._s = settings

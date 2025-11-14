@@ -10,7 +10,7 @@ from gamevolt_debugging import TickMonitor
 from input.factories.mouse.configuration.mouse_settings import MouseSettings
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
-from preview import TkPreview
+from preview.visualier import Visualiser
 
 
 def _now_ms() -> int:
@@ -24,7 +24,7 @@ class MouseInput(MotionInputBase):
     - Outputs centered coordinates in [-1..1] with +Y up.
     """
 
-    def __init__(self, logger: Logger, settings: MouseSettings, preview: TkPreview) -> None:
+    def __init__(self, logger: Logger, settings: MouseSettings, preview: Visualiser) -> None:
         super().__init__(logger)
         self._logger = logger
         self._settings = settings

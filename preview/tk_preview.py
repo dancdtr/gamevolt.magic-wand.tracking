@@ -1,36 +1,25 @@
 import tkinter as tk
 from collections.abc import Callable
-from dataclasses import dataclass
 
-from gamevolt.configuration.settings_base import SettingsBase
+from preview.canvas_factory import CanvasFactory
+from preview.configuration.preview_settings import RootSettings
 from tk_key_handler import TkKeyHandler
 
 
-@dataclass
-class TkPreviewSettings(SettingsBase):
-    title: str
-    width: int
-    height: int
-    buffer: int
-
-    @property
-    def geometry(self) -> str:
-        return f"{self.width}x{self.height}+{self.buffer}+{self.buffer}"
-
-
-class TkPreview:
-    def __init__(
-        self,
-        settings: TkPreviewSettings,
-    ) -> None:
+class Preview:
+    def __init__(self, settings: RootSettings) -> None:
         self._root = tk.Tk()
         self._root.title(settings.title)
 
         self._key_handler = TkKeyHandler(self._root)
 
         self._root.geometry(settings.geometry)
+
         self._canvas = tk.Canvas(self._root, bg="#222", highlightthickness=0)
         self._canvas.pack(fill="both", expand=True)
+
+        self._canvas = CanvasFactory(settings.visualiser.canvas, self._root).create()
+
         self._status = tk.Label(self._root, text="", fg="#ddd", bg="#111")
         self._status.pack(side="bottom", fill="x")
 

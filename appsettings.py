@@ -6,7 +6,7 @@ from gamevolt.configuration.settings_base import SettingsBase
 from input.configuration.input_settings import InputSettings
 from live_wand_preview import LiveWandPreviewSettings
 from motion.configuration.motion_settings import MotionSettings
-from preview import TkPreviewSettings
+from preview.configuration.visualiser_settings import VisualiserSettings
 from spells.configuration.spells_settings import SpellsSettings
 from wizards.configuration.wizard_settings import WizardSettings
 
@@ -25,7 +25,7 @@ class AppSettings(AppSettingsBase):
     spells: SpellsSettings
     input: InputSettings
     motion: MotionSettings
-    tk_preview: TkPreviewSettings
+    visualiser: VisualiserSettings
     live_wand_preview: LiveWandPreviewSettings
     spell_trace_session: SpellTraceSessionSettings
     wizard: WizardSettings

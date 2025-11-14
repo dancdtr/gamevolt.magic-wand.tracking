@@ -54,11 +54,21 @@ motion:
     max_segments: 20
     max_age_s: 5.0
 
-tk_preview:
-  title: "Wand Input"
-  width: 800
-  height: 800
-  buffer: 100
+visualiser:
+  root:
+    title: "Wand Input"
+    width: 800
+    height: 800
+    buffer: 100
+  canvas:
+    background_colour: "#222"
+    highlight_thickness: 0
+  label:
+    text: ""
+    foreground_colour: "#ddd"
+    background_colour: "#111"
+    side: "bottom"
+    fill: "x"
 
 live_wand_preview:
   trail_max_points: 64

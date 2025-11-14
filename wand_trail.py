@@ -5,13 +5,13 @@ from collections import deque
 from typing import Deque, Tuple
 
 from input.wand_position import WandPosition
-from preview import TkPreview
+from preview.visualier import Visualiser
 
 
 class WandTrail:
     def __init__(
         self,
-        preview: TkPreview,
+        preview: Visualiser,
         max_points: int,
         line_width: int,
         line_color: str,

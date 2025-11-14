@@ -9,7 +9,7 @@ from gamevolt.configuration.settings_base import SettingsBase
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
 from input.wand_position_trail import WandPositionTrail
-from preview import TkPreview, TkPreviewSettings
+from preview.visualier import Visualiser
 from tk_wand_trail_renderer import TkWandTrailRenderer, TkWandTrailRendererSettings
 
 
@@ -39,7 +39,7 @@ class LiveWandPreview:
     def __init__(
         self,
         input_source: MotionInputBase,
-        preview: TkPreview,
+        preview: Visualiser,
         settings: LiveWandPreviewSettings,
     ) -> None:
         self._input = input_source
