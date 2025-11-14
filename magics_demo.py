@@ -10,11 +10,9 @@ from analysis.spell_trace_adapter_factory import SpellTraceAdapterFactory
 from analysis.spell_trace_session import SpellTraceSessionManager
 from appsettings import AppSettings
 from difficulty.spell_difficulty_controller import SpellDifficultyController
-from gamevolt.serial.serial_receiver import SerialReceiver
 from input.factories.configuration.input_type import InputType
 from input.mouse_input import MouseInput
 from input.wand.interpreters.wand_yawpitch_rmf_interpreter import YawPitchRMFInterpreter
-from input.wand.wand_data_reader import WandDataReader
 from input.wand.wand_input import WandInput
 from live_wand_preview import LiveWandPreview
 from motion.direction_type import DirectionType
@@ -30,7 +28,7 @@ from spells.library.spell_difficulty_type import SpellDifficultyType
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
-from wizard_names_provider import WizardNameProvider
+from wizards.wizard_names_provider import WizardNameProvider
 
 # _INPUT_TYPE = InputType.WAND
 # _SPELL_TYPES = [SpellType.LOCOMOTOR, SpellType.REVELIO]
@@ -76,7 +74,7 @@ else:
 
 
 processor = MotionProcessor(input=input)
-name_provider = WizardNameProvider()
+name_provider = WizardNameProvider(settings.wizard)
 
 preview = LiveWandPreview(
     input_source=input,

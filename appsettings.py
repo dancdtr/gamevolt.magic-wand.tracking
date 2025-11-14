@@ -8,6 +8,7 @@ from live_wand_preview import LiveWandPreviewSettings
 from motion.configuration.motion_settings import MotionSettings
 from preview import TkPreviewSettings
 from spells.configuration.spells_settings import SpellsSettings
+from wizards.configuration.wizard_settings import WizardSettings
 
 
 # shim for incompatible GV logging module settings
@@ -27,3 +28,4 @@ class AppSettings(AppSettingsBase):
     tk_preview: TkPreviewSettings
     live_wand_preview: LiveWandPreviewSettings
     spell_trace_session: SpellTraceSessionSettings
+    wizard: WizardSettings
