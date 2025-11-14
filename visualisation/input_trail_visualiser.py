@@ -4,13 +4,13 @@ from __future__ import annotations
 from typing import Tuple
 
 from gamevolt.visualisation.visualier import Visualiser
-from input.wand_position_trail import WandPositionTrail
-from visualisation.configuration.input_trail_visualiser_settings import InputTrailVisualiserSettings
+from visualisation.configuration.input_visualiser_settings import InputVisualiserSettings
 from visualisation.coordinate_mode import CoordinateMode
+from visualisation.input_trail import InputTrail
 
 
 class InputTrailVisualiser:
-    def __init__(self, preview: Visualiser, trail: WandPositionTrail, settings: InputTrailVisualiserSettings) -> None:
+    def __init__(self, preview: Visualiser, trail: InputTrail, settings: InputVisualiserSettings) -> None:
         self._canvas = preview.canvas
         self._trail = trail
         self._s = settings

@@ -1,22 +1,22 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from gamevolt.configuration.settings_base import SettingsBase
-from visualisation.configuration.input_trail_visualiser_settings import InputTrailVisualiserSettings
 from visualisation.coordinate_mode import CoordinateMode
 
 
 @dataclass
 class InputVisualiserSettings(SettingsBase):
-    trail_max_points: int = 64
-    show_axes: bool = True
-    axes_color: str = "#9ca3af"
-    axes_width: int = 1
-    tk_wand_trail_renderer: InputTrailVisualiserSettings = field(
-        default_factory=lambda: InputTrailVisualiserSettings(
-            line_width=3,
-            line_color="#22d3ee",
-            draw_points=True,
-            coords_mode=CoordinateMode.CENTRED,  # expects [-1..1] from MouseTkInput
-            y_up=True,
-        )
-    )
+    trail_max_points: int
+    show_axes: bool
+    axes_color: str
+    axes_width: int
+    line_width: int
+    line_color: str
+    draw_points: bool
+    point_radius: int
+    point_colour: str | None
+    smooth: bool
+    coords_mode: CoordinateMode  # "centered" = [-1..1], origin at centre
+    y_up: bool  # True => +Y up (top), False => screen down
+    clip_to_bounds: bool  # clamp input coords into valid range
+    pixel_margin: int  # inner padding (pixels)

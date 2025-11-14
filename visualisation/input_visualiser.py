@@ -6,9 +6,9 @@ import tkinter as tk
 from gamevolt.visualisation.visualier import Visualiser
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
-from input.wand_position_trail import WandPositionTrail
 from visualisation.configuration.input_visualiser_settings import InputVisualiserSettings
-from visualisation.input_trail_renderer import InputTrailVisualiser
+from visualisation.input_trail import InputTrail
+from visualisation.input_trail_visualiser import InputTrailVisualiser
 
 
 class InputVisualiser:
@@ -18,8 +18,8 @@ class InputVisualiser:
         self._input = input_source
         self._preview = visualiser
 
-        self._trail = WandPositionTrail(max_points=self._settings.trail_max_points)
-        self._renderer = InputTrailVisualiser(self._preview, self._trail, self._settings.tk_wand_trail_renderer)
+        self._trail = InputTrail(max_points=self._settings.trail_max_points)
+        self._renderer = InputTrailVisualiser(self._preview, self._trail, self._settings)
 
         self._running = False
         self._need_draw = False

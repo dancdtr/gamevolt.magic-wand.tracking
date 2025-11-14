@@ -75,17 +75,16 @@ live_wand_preview:
   show_axes: True
   axes_color: "#9ca3af"
   axes_width: 1
-  tk_wand_trail_renderer:
-    line_width: 3
-    line_color: "#22d3ee"
-    draw_points: True
-    point_radius: 3
-    point_colour: "#5eead4"
-    smooth: True
-    coords_mode: "centred"
-    y_up: True
-    clip_to_bounds: True
-    pixel_margin: 0
+  line_width: 3
+  line_color: "#ff66d9"
+  draw_points: True
+  point_radius: 3
+  point_colour: "#f2f2f2"
+  smooth: False
+  coords_mode: "centred"
+  y_up: True
+  clip_to_bounds: True
+  pixel_margin: 0
 
 spell_trace_session:
   natural_break_s: 1
