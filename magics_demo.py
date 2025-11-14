@@ -14,6 +14,7 @@ from gamevolt.serial.serial_receiver import SerialReceiver
 from input.factories.configuration.input_type import InputType
 from input.mouse_input import MouseInput
 from input.wand.interpreters.wand_yawpitch_rmf_interpreter import YawPitchRMFInterpreter
+from input.wand.wand_data_reader import WandDataReader
 from input.wand.wand_input import WandInput
 from live_wand_preview import LiveWandPreview
 from motion.direction_type import DirectionType
@@ -29,7 +30,6 @@ from spells.library.spell_difficulty_type import SpellDifficultyType
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
-from wand_data_reader import WandDataReader
 from wizard_names_provider import WizardNameProvider
 
 # _INPUT_TYPE = InputType.WAND
@@ -70,17 +70,7 @@ tk_preview = TkPreview(settings.tk_preview)
 if settings.input.input_type is InputType.MOUSE:
     input = MouseInput(logger, settings.input.mouse, tk_preview)
 elif settings.input.input_type is InputType.WAND:
-    yaw_pitch_interpreter = YawPitchRMFInterpreter(settings=settings.input.wand.rmf)
-    wand_data_reader = WandDataReader(
-        logger=logger,
-        serial_reader=SerialReceiver(
-            logger=logger,
-            settings=settings.input.wand.serial_receiver,
-        ),
-        imu_hz=120.0,
-        target_hz=30.0,
-    )
-    input = WandInput(logger, wand_data_reader, yaw_pitch_interpreter)
+    input = WandInput(logger, settings.input.wand)
 else:
     raise RuntimeError(f"No input defined for type '{settings.input.input_type}'.")
 

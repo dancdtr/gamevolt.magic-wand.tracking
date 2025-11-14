@@ -25,11 +25,14 @@ input:
     sample_frequency: 30
 
   wand:
-    serial_receiver:
-      port: "/dev/tty.usbmodem1101"
-      baud: 115200
-      timeout: 3
-      retry_interval: 2
+    wand_data_reader:
+      imu_hz: 120.0
+      target_hz: 30.0
+      serial_receiver:
+        port: "/dev/tty.usbmodem1101"
+        baud: 115200
+        timeout: 3
+        retry_interval: 2
     rmf:
       invert_x: True
       invert_y: True
@@ -76,5 +79,5 @@ live_wand_preview:
 
 spell_trace_session:
   natural_break_s: 1
-  clear_history_on_flush: true
+  clear_history_on_flush: True
   label_prefix: "ATTEMPT"

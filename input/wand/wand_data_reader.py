@@ -4,10 +4,11 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from logging import Logger
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable
 
 from gamevolt.events.event import Event
 from gamevolt.serial.serial_receiver import SerialReceiver
+from input.wand.wand_data_reader_settings import WandDataReaderSettings
 
 
 @dataclass
@@ -36,15 +37,18 @@ class WandDataReader:
     # Matches either DATA or DATA_RAW lines (be forgiving)
     _DATA_RE = re.compile(r'^(?:DATA|DATA_RAW)\s+seq=(?P<seq>\d+)\s+data="?(?P<data>.*)"?\s*$')
 
-    def __init__(self, logger: Logger, serial_reader: SerialReceiver, imu_hz: float = 120.0, target_hz: Optional[float] = 30.0):
+    def __init__(self, logger: Logger, settings: WandDataReaderSettings):
         self._logger = logger
-        self._ser = serial_reader
+        self._settings = settings
+
+        self._serial = SerialReceiver(logger=logger, settings=settings.serial_receiver)
 
         # timing
-        self._imu_hz = float(imu_hz)
-        self._dt_ms = 1000.0 / self._imu_hz
-        self._target_hz = None if not target_hz or target_hz <= 0 else float(target_hz)
-        self._delay_ms = None if self._target_hz is None else 1000.0 / self._target_hz
+        # self._imu_hz = float(imu_hz)
+        self._dt_ms = 1000.0 / self._settings.imu_hz
+        self._delay_ms = 1000.0 / self._settings.target_hz
+        # self._target_hz = None if not target_hz or target_hz <= 0 else float(target_hz)
+        # self._delay_ms = None if self._target_hz is None else 1000.0 / self._target_hz
 
         # resample state
         self._next_emit_ms: float | None = None
@@ -59,13 +63,13 @@ class WandDataReader:
 
     # ── lifecycle ────────────────────────────────────────────────────────────
     async def start(self) -> None:
-        await self._ser.start()
-        self._ser.data_received.subscribe(self._on_line)
+        await self._serial.start()
+        self._serial.data_received.subscribe(self._on_line)
 
     async def stop(self) -> None:
-        self._ser.data_received.unsubscribe(self._on_line)
+        self._serial.data_received.unsubscribe(self._on_line)
 
-        await self._ser.stop()
+        await self._serial.stop()
         self._pending_headers.clear()
         self._next_emit_ms = None
         self._prev_msg = None
