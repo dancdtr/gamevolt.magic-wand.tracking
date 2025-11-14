@@ -2,11 +2,12 @@ import tkinter as tk
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from gamevolt.configuration.settings_base import SettingsBase
 from tk_key_handler import TkKeyHandler
 
 
 @dataclass
-class TkPreviewSettings:
+class TkPreviewSettings(SettingsBase):
     title: str
     width: int
     height: int

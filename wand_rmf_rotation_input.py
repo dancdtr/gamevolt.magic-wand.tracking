@@ -9,9 +9,10 @@ from gamevolt.events.event import Event
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from gamevolt.serial.serial_receiver import SerialReceiver
 from input.motion_input_base import MotionInputBase  # your base class
+from input.wand.interpreters.configuration.rmf_settings import RMFSettings
+from input.wand.interpreters.wand_yawpitch_rmf_interpreter import YawPitchRMFInterpreter
 from input.wand_position import WandPosition
 from wand_data_reader import WandDataMessage, WandDataReader
-from wand_yawpitch_rmf_interpreter import RMFSettings, YawPitchRMFInterpreter
 
 
 class WandRMFMotionInput(MotionInputBase):

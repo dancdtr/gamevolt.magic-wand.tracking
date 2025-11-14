@@ -10,8 +10,8 @@ class WandPosition:
     y_delta: float
 
     # used for debugging
-    nx: float
-    ny: float
+    nx: float | None
+    ny: float | None
 
     def __str__(self) -> str:
         return f"{self.ts_ms} Δ({self.x_delta:.3f}, {self.y_delta:.3f}) [{self.nx:.3f}, {self.ny:.3f}]"

@@ -7,7 +7,7 @@ from logging import Logger
 
 from gamevolt_debugging import TickMonitor
 
-from input.factories.mouse.configuration.mouse_input_settings import MouseInputSettings
+from input.factories.mouse.configuration.mouse_settings import MouseSettings
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
 from preview import TkPreview
@@ -17,14 +17,14 @@ def _now_ms() -> int:
     return int(time.monotonic() * 1000)
 
 
-class MouseTkInput(MotionInputBase):
+class MouseInput(MotionInputBase):
     """
     Emits WandPosition samples derived from the mouse over a supplied TkPreview canvas.
     - Requires a shared TkPreview (does not create, start, stop, or pump the GUI).
     - Outputs centered coordinates in [-1..1] with +Y up.
     """
 
-    def __init__(self, logger: Logger, settings: MouseInputSettings, preview: TkPreview) -> None:
+    def __init__(self, logger: Logger, settings: MouseSettings, preview: TkPreview) -> None:
         super().__init__(logger)
         self._logger = logger
         self._settings = settings

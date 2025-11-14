@@ -3,11 +3,12 @@ from logging import Logger
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from gamevolt.serial.serial_receiver import SerialReceiver
 from input.motion_input_factory import MotionInputFactory
-from input.wand_input import WandInput
+from input.wand.interpreters.configuration.rmf_settings import RMFSettings
+from input.wand.interpreters.wand_yawpitch_rmf_interpreter import YawPitchRMFInterpreter
+from input.wand.wand_input import WandInput
 from wand_data_reader import WandDataReader
-from wand_yawpitch_rmf_interpreter import RMFSettings, YawPitchRMFInterpreter
 
-_SERIAL_SETTINGS = settings = SerialReceiverSettings(
+serial_settings = SerialReceiverSettings(
     port="/dev/tty.usbmodem1101",
     baud=115200,
     timeout=3,
@@ -24,7 +25,7 @@ class WandInputFactory(MotionInputFactory):
             logger=logger,
             serial_reader=SerialReceiver(
                 logger=logger,
-                settings=_SERIAL_SETTINGS,
+                settings=serial_settings,
             ),
             imu_hz=120.0,
             target_hz=30.0,

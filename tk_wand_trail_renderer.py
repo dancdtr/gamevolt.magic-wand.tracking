@@ -4,19 +4,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Tuple
 
+from coordinate_mode import CoordinateMode
+from gamevolt.configuration.settings_base import SettingsBase
 from input.wand_position_trail import WandPositionTrail
 from preview import TkPreview
 
 
 @dataclass
-class TkWandTrailRendererSettings:
+class TkWandTrailRendererSettings(SettingsBase):
     line_width: int = 2
     line_color: str = "#5eead4"
     draw_points: bool = False
     point_radius: int = 3
     point_colour: str | None = None
     smooth: bool = True
-    coords_mode: str = "centered"  # "centered" = [-1..1], origin at centre
+    coords_mode: CoordinateMode = CoordinateMode.CENTRED  # "centered" = [-1..1], origin at centre
     y_up: bool = True  # True => +Y up (top), False => screen down
     clip_to_bounds: bool = True  # clamp input coords into valid range
     pixel_margin: int = 0  # optional inner padding (pixels)
@@ -106,45 +108,41 @@ class TkWandTrailRenderer:
 
     # ── helpers ──────────────────────────────────────────────────────────────
     def _to_canvas(self, nx: float, ny: float, w: int, h: int) -> Tuple[float, float]:
-        """
-        Convert normalised coords to canvas pixels.
-        Centered mode: nx,ny in [-1..1], origin at centre, +Y up if y_up=True.
-        """
-        if self._s.coords_mode == "centered":
-            if self._s.clip_to_bounds:
-                nx = -1.0 if nx < -1.0 else (1.0 if nx > 1.0 else nx)
-                ny = -1.0 if ny < -1.0 else (1.0 if ny > 1.0 else ny)
+        cm = self._s.coords_mode
 
-            # Effective drawable area with optional margin
+        if cm is CoordinateMode.CENTRED:
+            if self._s.clip_to_bounds:
+                nx = max(-1.0, min(1.0, nx))
+                ny = max(-1.0, min(1.0, ny))
             m = max(0, self._s.pixel_margin)
             w_eff = max(1, w - 2 * m)
             h_eff = max(1, h - 2 * m)
 
-            # Map [-1..1] → [0..(w_eff-1)] and [0..(h_eff-1)]
             x = ((nx + 1.0) * 0.5) * (w_eff - 1) + m
-
-            if self._s.y_up:
-                # +1 (top) -> y=0; -1 (bottom) -> y=h_eff-1
-                y = ((1.0 - (ny + 1.0) * 0.5)) * (h_eff - 1) + m
-            else:
-                # screen-down: -1 (top) -> 0; +1 (bottom) -> h_eff-1
-                y = (((ny + 1.0) * 0.5)) * (h_eff - 1) + m
-
+            y = ((1.0 - (ny + 1.0) * 0.5) if self._s.y_up else ((ny + 1.0) * 0.5)) * (h_eff - 1) + m
             return x, y
 
-        elif self._s.coords_mode == "unit":
-            # Expect [0..1] with (0,0) at top-left
+        elif cm is CoordinateMode.UNIT:
             if self._s.clip_to_bounds:
-                nx = 0.0 if nx < 0.0 else (1.0 if nx > 1.0 else nx)
-                ny = 0.0 if ny < 0.0 else (1.0 if ny > 1.0 else ny)
-
+                nx = max(0.0, min(1.0, nx))
+                ny = max(0.0, min(1.0, ny))
             m = max(0, self._s.pixel_margin)
             w_eff = max(1, w - 2 * m)
             h_eff = max(1, h - 2 * m)
 
             x = nx * (w_eff - 1) + m
-            y = (1.0 - ny) * (h_eff - 1) + m if self._s.y_up else ny * (h_eff - 1) + m
+            y = ((1.0 - ny) if self._s.y_up else ny) * (h_eff - 1) + m
             return x, y
 
-        # Fallback: treat as centered
-        return self._to_canvas(nx, ny, w, h)
+        # Fallback: treat unknown mode as centred (or raise)
+        # raise ValueError(f"Unknown coords_mode: {cm!r}")
+        # Treat as CENTRED:
+        if self._s.clip_to_bounds:
+            nx = max(-1.0, min(1.0, nx))
+            ny = max(-1.0, min(1.0, ny))
+        m = max(0, self._s.pixel_margin)
+        w_eff = max(1, w - 2 * m)
+        h_eff = max(1, h - 2 * m)
+        x = ((nx + 1.0) * 0.5) * (w_eff - 1) + m
+        y = ((1.0 - (ny + 1.0) * 0.5) if self._s.y_up else ((ny + 1.0) * 0.5)) * (h_eff - 1) + m
+        return x, y

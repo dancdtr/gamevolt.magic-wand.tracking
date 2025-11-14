@@ -1,0 +1,80 @@
+---
+name: "conductr.wand-magic.tracking"
+
+logging:
+  file_path: ./Logs/conductr.wand-magic.tracking.log
+  minimum_level: "INFORMATION"
+
+spells:
+  targets:
+    - "lumos_maxima"
+    - "ventus"
+    # - "locomotor"
+    # - "revelio"
+    # - "squario"
+    # - "oblongium"
+    # - "rectanglia"
+    # - "rictumsempra"
+
+input:
+  input_type: "WAND"
+
+  mouse:
+    invert_x: False
+    invert_y: False
+    sample_frequency: 30
+
+  wand:
+    serial_receiver:
+      port: "/dev/tty.usbmodem1101"
+      baud: 115200
+      timeout: 3
+      retry_interval: 2
+    rmf:
+      invert_x: True
+      invert_y: True
+      abs_invert_x: True
+      abs_invert_y: True
+      gain_x: 1.0
+      gain_y: 1.0
+      abs_yaw_limit_deg: 90
+      abs_pitch_limit_deg: 90
+      abs_clip_mode: "DISCARD"
+      deadzone_x: 0.0
+      deadzone_y: 0.0
+      keep_absolute: True
+      tiny_angle: 0
+      world_up: "Z"
+
+motion:
+  gesture_history:
+    max_segments: 20
+    max_age_s: 5.0
+
+tk_preview:
+  title: "Wand Input"
+  width: 800
+  height: 800
+  buffer: 100
+
+live_wand_preview:
+  trail_max_points: 64
+  show_axes: True
+  axes_color: "#9ca3af"
+  axes_width: 1
+  tk_wand_trail_renderer:
+    line_width: 3
+    line_color: "#22d3ee"
+    draw_points: True
+    point_radius: 3
+    point_colour: "#5eead4"
+    smooth: True
+    coords_mode: "centred"
+    y_up: True
+    clip_to_bounds: True
+    pixel_margin: 0
+
+spell_trace_session:
+  natural_break_s: 1
+  clear_history_on_flush: true
+  label_prefix: "ATTEMPT"

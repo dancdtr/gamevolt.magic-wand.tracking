@@ -24,7 +24,8 @@ class WandPositionTrail:
         self._points.append((x, y))
 
     def add(self, pos: WandPosition) -> None:
-        self.add_xy(pos.nx, pos.ny)
+        if pos.nx and pos.ny:
+            self.add_xy(pos.nx, pos.ny)
 
     def extend_xy(self, pts: Iterable[tuple[float, float]]) -> None:
         for x, y in pts:

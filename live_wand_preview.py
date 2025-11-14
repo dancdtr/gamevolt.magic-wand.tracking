@@ -4,6 +4,8 @@ from __future__ import annotations
 import tkinter as tk
 from dataclasses import dataclass, field
 
+from coordinate_mode import CoordinateMode
+from gamevolt.configuration.settings_base import SettingsBase
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
 from input.wand_position_trail import WandPositionTrail
@@ -12,17 +14,17 @@ from tk_wand_trail_renderer import TkWandTrailRenderer, TkWandTrailRendererSetti
 
 
 @dataclass
-class LiveWandPreviewSettings:
+class LiveWandPreviewSettings(SettingsBase):
     trail_max_points: int = 64
     show_axes: bool = True
     axes_color: str = "#9ca3af"
     axes_width: int = 1
-    renderer: TkWandTrailRendererSettings = field(
+    tk_wand_trail_renderer: TkWandTrailRendererSettings = field(
         default_factory=lambda: TkWandTrailRendererSettings(
             line_width=3,
             line_color="#22d3ee",
             draw_points=True,
-            coords_mode="centered",  # expects [-1..1] from MouseTkInput
+            coords_mode=CoordinateMode.CENTRED,  # expects [-1..1] from MouseTkInput
             y_up=True,
         )
     )
@@ -45,7 +47,7 @@ class LiveWandPreview:
         self._settings = settings
 
         self._trail = WandPositionTrail(max_points=self._settings.trail_max_points)
-        self._renderer = TkWandTrailRenderer(self._preview, self._trail, self._settings.renderer)
+        self._renderer = TkWandTrailRenderer(self._preview, self._trail, self._settings.tk_wand_trail_renderer)
 
         self._running = False
         self._need_draw = False
