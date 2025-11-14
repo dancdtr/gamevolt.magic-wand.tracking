@@ -2,7 +2,7 @@ import tkinter as tk
 from collections.abc import Callable
 
 
-class TkKeyHandler:
+class KeyHandler:
     def __init__(self, root: tk.Tk) -> None:
         self._root = root
 

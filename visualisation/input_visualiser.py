@@ -2,52 +2,24 @@
 from __future__ import annotations
 
 import tkinter as tk
-from dataclasses import dataclass, field
 
-from coordinate_mode import CoordinateMode
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.visualisation.visualier import Visualiser
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
 from input.wand_position_trail import WandPositionTrail
-from preview.visualier import Visualiser
-from tk_wand_trail_renderer import TkWandTrailRenderer, TkWandTrailRendererSettings
+from visualisation.configuration.input_visualiser_settings import InputVisualiserSettings
+from visualisation.input_trail_renderer import InputTrailVisualiser
 
 
-@dataclass
-class LiveWandPreviewSettings(SettingsBase):
-    trail_max_points: int = 64
-    show_axes: bool = True
-    axes_color: str = "#9ca3af"
-    axes_width: int = 1
-    tk_wand_trail_renderer: TkWandTrailRendererSettings = field(
-        default_factory=lambda: TkWandTrailRendererSettings(
-            line_width=3,
-            line_color="#22d3ee",
-            draw_points=True,
-            coords_mode=CoordinateMode.CENTRED,  # expects [-1..1] from MouseTkInput
-            y_up=True,
-        )
-    )
-
-
-class LiveWandPreview:
-    """
-    Runs a Tk preview window and draws wand positions from a MotionInputBase.
-    Call start() once, then call update() each tick in your main loop.
-    """
-
-    def __init__(
-        self,
-        input_source: MotionInputBase,
-        preview: Visualiser,
-        settings: LiveWandPreviewSettings,
-    ) -> None:
-        self._input = input_source
-        self._preview = preview
+class InputVisualiser:
+    def __init__(self, input_source: MotionInputBase, visualiser: Visualiser, settings: InputVisualiserSettings) -> None:
         self._settings = settings
 
+        self._input = input_source
+        self._preview = visualiser
+
         self._trail = WandPositionTrail(max_points=self._settings.trail_max_points)
-        self._renderer = TkWandTrailRenderer(self._preview, self._trail, self._settings.tk_wand_trail_renderer)
+        self._renderer = InputTrailVisualiser(self._preview, self._trail, self._settings.tk_wand_trail_renderer)
 
         self._running = False
         self._need_draw = False

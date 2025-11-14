@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Deque, Tuple
+from typing import Deque
 
+from gamevolt.visualisation.visualier import Visualiser
 from input.wand_position import WandPosition
-from preview.visualier import Visualiser
 
 
-class WandTrail:
+class InputTrail:
     def __init__(
         self,
         preview: Visualiser,
@@ -31,7 +31,7 @@ class WandTrail:
         self.point_radius = point_radius
         self.norm_y_is_math_up = norm_y_is_math_up
 
-        self._points: Deque[Tuple[float, float]] = deque(maxlen=max_points)
+        self._points: Deque[tuple[float, float]] = deque(maxlen=max_points)
         self._line_id: int | None = None
         self._dot_ids: list[int] = []
 
@@ -97,7 +97,7 @@ class WandTrail:
                     self._canvas.create_oval(x - r, y - r, x + r, y + r, fill=self.point_colour, outline=self.point_colour)
                 )
 
-    def _to_canvas(self, nx: float, ny: float, w: int, h: int) -> Tuple[float, float]:
+    def _to_canvas(self, nx: float, ny: float, w: int, h: int) -> tuple[float, float]:
         x = nx * w
         y = (1.0 - ny) * h if self.norm_y_is_math_up else ny * h
         return x, y

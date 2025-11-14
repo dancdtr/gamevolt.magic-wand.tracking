@@ -10,23 +10,22 @@ from analysis.spell_trace_adapter_factory import SpellTraceAdapterFactory
 from analysis.spell_trace_session import SpellTraceSessionManager
 from appsettings import AppSettings
 from difficulty.spell_difficulty_controller import SpellDifficultyController
+from gamevolt.visualisation.visualier import Visualiser
 from input.factories.configuration.input_type import InputType
 from input.mouse_input import MouseInput
-from input.wand.interpreters.wand_yawpitch_rmf_interpreter import YawPitchRMFInterpreter
 from input.wand.wand_input import WandInput
-from live_wand_preview import LiveWandPreview
 from motion.direction_type import DirectionType
 from motion.gesture_history import GestureHistory
 from motion.gesture_segment import GestureSegment
 from motion.motion_processor import DirectionType, MotionProcessor
 from motion.motion_type import MotionType
-from preview.visualier import Visualiser
 from spells.easy_spell_matcher import EasySpellMatcher
 from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.library.spell_difficulty_type import SpellDifficultyType
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
+from visualisation.input_visualiser import InputVisualiser
 from wizards.wizard_names_provider import WizardNameProvider
 
 # from spell_library import *
@@ -78,9 +77,9 @@ else:
 processor = MotionProcessor(input=input)
 name_provider = WizardNameProvider(settings.wizard)
 
-preview = LiveWandPreview(
+preview = InputVisualiser(
     input_source=input,
-    preview=tk_preview,
+    visualiser=tk_preview,
     settings=settings.live_wand_preview,
 )
 

@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from preview.configuration.canvas_settings import CanvasSettings
+from gamevolt.visualisation.configuration.canvas_settings import CanvasSettings
 
 
 class CanvasFactory:

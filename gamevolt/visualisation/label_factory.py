@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from preview.configuration.label_settings import LabelSettings
+from gamevolt.visualisation.configuration.label_settings import LabelSettings
 
 
 class LabelFactory:

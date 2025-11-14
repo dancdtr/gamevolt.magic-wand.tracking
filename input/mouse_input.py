@@ -7,10 +7,10 @@ from logging import Logger
 
 from gamevolt_debugging import TickMonitor
 
+from gamevolt.visualisation.visualier import Visualiser
 from input.factories.mouse.configuration.mouse_settings import MouseSettings
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
-from preview.visualier import Visualiser
 
 
 def _now_ms() -> int:

@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from preview.configuration.preview_settings import RootSettings
+from gamevolt.visualisation.configuration.preview_settings import RootSettings
 
 
 class RootFactory:

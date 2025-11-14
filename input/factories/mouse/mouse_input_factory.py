@@ -1,10 +1,10 @@
 from logging import Logger
 
+from gamevolt.visualisation.visualier import RootSettings
 from input.factories.mouse.configuration.mouse_settings import MouseSettings
 from input.motion_input_base import MotionInputBase
 from input.motion_input_factory import MotionInputFactory
 from input.mouse_input import MouseInput
-from preview.visualier import RootSettings
 
 _TK_PREVIEW_SETTINGS = RootSettings(
     title="Mouse Input",

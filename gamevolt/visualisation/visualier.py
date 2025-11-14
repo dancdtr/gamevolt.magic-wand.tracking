@@ -1,30 +1,22 @@
 import tkinter as tk
 from collections.abc import Callable
 
-from preview.canvas_factory import CanvasFactory
-from preview.configuration.preview_settings import RootSettings
-from tk_key_handler import TkKeyHandler
+from gamevolt.visualisation.canvas_factory import CanvasFactory
+from gamevolt.visualisation.configuration.visualiser_settings import VisualiserSettings
+from gamevolt.visualisation.key_handler import KeyHandler
+from gamevolt.visualisation.label_factory import LabelFactory
+from gamevolt.visualisation.root_factory import RootFactory
 
 
-class Preview:
-    def __init__(self, settings: RootSettings) -> None:
-        self._root = tk.Tk()
-        self._root.title(settings.title)
+class Visualiser:
+    def __init__(self, settings: VisualiserSettings) -> None:
+        self._root = RootFactory(settings.root).create()
+        self._canvas = CanvasFactory(settings.canvas, self._root).create()
+        self._status = LabelFactory(settings.label, self._root).create()
 
-        self._key_handler = TkKeyHandler(self._root)
-
-        self._root.geometry(settings.geometry)
-
-        self._canvas = tk.Canvas(self._root, bg="#222", highlightthickness=0)
-        self._canvas.pack(fill="both", expand=True)
-
-        self._canvas = CanvasFactory(settings.visualiser.canvas, self._root).create()
-
-        self._status = tk.Label(self._root, text="", fg="#ddd", bg="#111")
-        self._status.pack(side="bottom", fill="x")
+        self._key_handler = KeyHandler(self._root)
 
     def start(self) -> None:
-        # self.register_key_callback("q", self._root.destroy)
         self._key_handler.register_key_callback("q", self._root.destroy)
 
     def stop(self) -> None:
