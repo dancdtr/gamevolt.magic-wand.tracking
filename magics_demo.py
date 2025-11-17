@@ -18,7 +18,7 @@ from motion.direction_type import DirectionType
 from motion.gesture_history import GestureHistory
 from motion.gesture_segment import GestureSegment
 from motion.motion_processor import DirectionType, MotionProcessor
-from motion.motion_type import MotionType
+from motion.motion_type import MotionPhaseType
 from spells.easy_spell_matcher import EasySpellMatcher
 from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.library.spell_difficulty_type import SpellDifficultyType
@@ -64,7 +64,7 @@ else:
     raise RuntimeError(f"No input defined for type '{settings.input.input_type}'.")
 
 
-processor = MotionProcessor(input=input)
+processor = MotionProcessor(settings=settings.motion.processor, input=input)
 name_provider = WizardNameProvider(settings.wizard)
 
 
@@ -77,9 +77,9 @@ def on_direction_changed(dir: DirectionType) -> None:
     logger.info(f"State: {dir.name}")
 
 
-def on_motion_changed(mode: MotionType) -> None:
+def on_motion_changed(mode: MotionPhaseType) -> None:
     trace_manager.on_motion_changed(mode)
-    if mode is MotionType.STATIONARY:
+    if mode is MotionPhaseType.STATIONARY:
         visualiser.clear()
         input.reset()
     logger.debug(f"Motion: {mode.name}")
@@ -111,7 +111,7 @@ def on_spell(match: SpellMatch):
 #     trace_manager.on_difficulty_changed()
 
 
-processor.state_changed.subscribe(on_direction_changed)
+processor.direction_changed.subscribe(on_direction_changed)
 processor.motion_changed.subscribe(on_motion_changed)
 processor.segment_completed.subscribe(on_segment_completed)
 matcher_manager.matched.subscribe(on_spell)

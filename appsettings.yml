@@ -53,6 +53,14 @@ motion:
   gesture_history:
     max_segments: 20
     max_age_s: 5.0
+  processor:
+    speed_start: 0.50
+    speed_stop: 0.20
+    min_state_duration_s: 0.05
+    min_dir_duration_s: 0.06
+    axis_deadband_per_s: 0.10
+    max_segment_points: 256
+    min_stopped_duration: 0.3
 
 wand_visualiser:
   visualiser:

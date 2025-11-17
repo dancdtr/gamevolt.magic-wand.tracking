@@ -9,7 +9,7 @@ from analysis.spell_trace_api import NullSpellTrace, SpellTrace
 from analysis.spell_trace_session_settings import SpellTraceSessionSettings
 from motion.direction_type import DirectionType
 from motion.gesture_segment import GestureSegment
-from motion.motion_type import MotionType
+from motion.motion_type import MotionPhaseType
 from spells.spell_match import SpellMatch
 from spells.spell_matcher_manager import SpellMatcherManager
 
@@ -47,9 +47,9 @@ class SpellTraceSessionManager:
         self._logger.info(f"Tracing {'ENABLED' if self._enabled else 'DISABLED'}")
 
     # --- hooks you call from your app ---
-    def on_motion_changed(self, mode: MotionType) -> None:
+    def on_motion_changed(self, mode: MotionPhaseType) -> None:
         # Start a new attempt on real motion
-        if self._enabled and mode == MotionType.MOVING and not self._in_active_trace:
+        if self._enabled and mode == MotionPhaseType.MOVING and not self._in_active_trace:
             self._trace = self._trace_factory.create()
             self._in_active_trace = True
             self._logger.debug(f"[{self._settings.label_prefix}] trace START")

@@ -6,10 +6,11 @@ from typing import Callable
 from gamevolt.events.event import Event
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
+from motion.configuration.motion_processor_settings import MotionProcessorSettings
 from motion.direction_gate import DirectionGate
 from motion.direction_type import DirectionType
-from motion.motion_mode_fsm import MotionModeFSM
-from motion.motion_type import MotionType
+from motion.motion_mode_fsm import MotionPhaseTracker
+from motion.motion_type import MotionPhaseType
 from motion.segment_builder import SegmentBuilder
 
 _SPEED_START: float = 0.50
@@ -22,21 +23,22 @@ _MAX_SEGMENT_POINTS: int = 256
 
 
 class MotionProcessor:
-    def __init__(self, input: MotionInputBase):
+    def __init__(self, settings: MotionProcessorSettings, input: MotionInputBase):
+        self._settings = settings
         self._input = input
 
-        self.state_changed: Event[Callable[[DirectionType], None]] = Event()
-        self.motion_changed: Event[Callable[[MotionType], None]] = Event()
+        self.direction_changed: Event[Callable[[DirectionType], None]] = Event()
+        self.motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.segment_completed: Event[Callable[[...], None]] = Event()  # type: ignore[typeddict]
 
         # Components
-        self._fsm = MotionModeFSM(_SPEED_START, _SPEED_STOP, _MIN_STATE_DURATION_S, _MIN_STOPPED_DURATION_S)
+        self._phase_tracker = MotionPhaseTracker(_SPEED_START, _SPEED_STOP, _MIN_STATE_DURATION_S, _MIN_STOPPED_DURATION_S)
         self._dir = DirectionGate(_MIN_DIR_DURATION_S, _AXIS_DEADBAND_PER_S, _SPEED_STOP)
         self._seg = SegmentBuilder(_MAX_SEGMENT_POINTS)
         self._seg.segment_completed.subscribe(self._on_segment_completed)
 
         # State
-        self._motion_mode: MotionType = MotionType.NONE
+        self._motion_mode: MotionPhaseType = MotionPhaseType.NONE
         self._motion_state: DirectionType = DirectionType.NONE
         self._prev: WandPosition | None = None
 
@@ -51,51 +53,49 @@ class MotionProcessor:
     def _on_segment_completed(self, seg) -> None:
         self.segment_completed.invoke(seg)
 
-    def _set_motion(self, mode: MotionType) -> None:
-        if mode != self._motion_mode:
-            self._motion_mode = mode
-            self.motion_changed.invoke(mode)
+    def _set_motion_phase(self, phase: MotionPhaseType) -> None:
+        if phase != self._motion_mode:
+            self._motion_mode = phase
+            self.motion_changed.invoke(phase)
 
     def _set_direction(self, dir_type: DirectionType, pos: WandPosition) -> None:
         if dir_type != self._motion_state:
             self._motion_state = dir_type
-            self.state_changed.invoke(dir_type)
+            self.direction_changed.invoke(dir_type)
             self._seg.commit(dir_type, pos)
 
-    # tick
     def _on_position(self, pos: WandPosition) -> None:
         if self._prev is None:
             self._prev = pos
             # initialise in STATIONARY with idle segment
-            self._set_motion(MotionType.STATIONARY)
+            self._set_motion_phase(MotionPhaseType.STATIONARY)
             self._seg.start(DirectionType.NONE, pos)
             return
 
-        # NOTE: if two samples share the same timestamp, we treat dt as tiny to avoid div-by-zero.
         raw_dt_ms = pos.ts_ms - self._prev.ts_ms
         if raw_dt_ms <= 0:
-            # Optionally: drop the sample instead of clamping.
-            # return
-            raw_dt_ms = 1  # 1 ms fallback
+            # Drop the sample if two samples share the same timestamp
+            return
         dt = raw_dt_ms / 1000.0
 
         vx = pos.x_delta / dt
         vy = pos.y_delta / dt
         speed = math.hypot(vx, vy)
 
-        # 1) Mode FSM
-        ev = self._fsm.update(speed)
-        if ev["stop_started"]:
-            if self._motion_state != DirectionType.NONE:
-                self._set_direction(DirectionType.NONE, pos)
-        if ev["to_stationary"]:
-            self._set_motion(MotionType.STATIONARY)
-        if ev["to_moving"]:
-            self._set_motion(MotionType.MOVING)
+        phase_update = self._phase_tracker.step(speed)
+
+        if phase_update.new_phase is not None:
+            print(phase_update.new_phase)
+            self._set_motion_phase(phase_update.new_phase)
+
+        if phase_update.stop_started:
+            print("pause")
+            self.direction_changed.invoke(DirectionType.NONE)
 
         # 2) Direction while MOVING
-        if self._motion_mode == MotionType.MOVING:
+        if self._motion_mode == MotionPhaseType.MOVING:
             committed = self._dir.update(vx, vy, speed)
+            print(committed)
             if committed is not None:
                 self._set_direction(committed, pos)
         else:
