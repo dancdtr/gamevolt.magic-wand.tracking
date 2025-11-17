@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from gamevolt.configuration.settings_base import SettingsBase
 from gamevolt.visualisation.configuration.canvas_settings import CanvasSettings
-from gamevolt.visualisation.configuration.label_settings import LabelSettings
 from gamevolt.visualisation.configuration.preview_settings import RootSettings
 
 
@@ -10,4 +9,3 @@ from gamevolt.visualisation.configuration.preview_settings import RootSettings
 class VisualiserSettings(SettingsBase):
     root: RootSettings
     canvas: CanvasSettings
-    label: LabelSettings

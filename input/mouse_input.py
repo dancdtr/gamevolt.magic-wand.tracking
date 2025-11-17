@@ -1,4 +1,4 @@
-# mouse_tk_input.py
+# mouse_input.py
 from __future__ import annotations
 
 import time
@@ -7,7 +7,7 @@ from logging import Logger
 
 from gamevolt_debugging import TickMonitor
 
-from gamevolt.visualisation.visualier import Visualiser
+from gamevolt.visualisation.visualiser import Visualiser
 from input.factories.mouse.configuration.mouse_settings import MouseSettings
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
@@ -24,19 +24,20 @@ class MouseInput(MotionInputBase):
     - Outputs centered coordinates in [-1..1] with +Y up.
     """
 
-    def __init__(self, logger: Logger, settings: MouseSettings, preview: Visualiser) -> None:
+    def __init__(self, logger: Logger, settings: MouseSettings, visualiser: Visualiser) -> None:
         super().__init__(logger)
         self._logger = logger
         self._settings = settings
-        self._preview = preview  # MUST be supplied; ownership is external
-
-        self._running = False
-        self._prev_x: float | None = None
-        self._prev_y: float | None = None
+        self._visualiser = visualiser
 
         self._tick_monitor = TickMonitor()
         self._interval_s = 1.0 / self._settings.sample_frequency
         self._next_t = time.perf_counter() + self._interval_s
+
+        self._prev_x: float | None = None
+        self._prev_y: float | None = None
+
+        self._running = False
 
     async def start(self) -> None:
         self._running = True
@@ -56,23 +57,23 @@ class MouseInput(MotionInputBase):
 
         try:
             # Geometry should already be realised by whoever pumps the preview.
-            if self._preview.canvas.winfo_width() <= 1 or self._preview.canvas.winfo_height() <= 1:
-                self._preview.canvas.update_idletasks()
+            if self._visualiser.canvas.winfo_width() <= 1 or self._visualiser.canvas.winfo_height() <= 1:
+                self._visualiser.canvas.update_idletasks()
 
             # Screen-space pointer
-            sx = self._preview.root.winfo_pointerx()
-            sy = self._preview.root.winfo_pointery()
+            sx = self._visualiser.root.winfo_pointerx()
+            sy = self._visualiser.root.winfo_pointery()
 
             # Canvas origin in screen coords
-            tx = self._preview.canvas.winfo_rootx()
-            ty = self._preview.canvas.winfo_rooty()
+            tx = self._visualiser.canvas.winfo_rootx()
+            ty = self._visualiser.canvas.winfo_rooty()
 
             # Pointer in canvas coords (can be outside)
             px = sx - tx
             py = sy - ty
 
-            w = max(self._preview.canvas.winfo_width(), 1)
-            h = max(self._preview.canvas.winfo_height(), 1)
+            w = max(self._visualiser.canvas.winfo_width(), 1)
+            h = max(self._visualiser.canvas.winfo_height(), 1)
 
             # Normalised to [0..1] for inside-window test
             nx01 = px / w

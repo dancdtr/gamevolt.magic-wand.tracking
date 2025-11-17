@@ -1,6 +1,6 @@
 from logging import Logger
 
-from gamevolt.visualisation.visualier import RootSettings
+from gamevolt.visualisation.visualiser import RootSettings
 from input.factories.mouse.configuration.mouse_settings import MouseSettings
 from input.motion_input_base import MotionInputBase
 from input.motion_input_factory import MotionInputFactory
