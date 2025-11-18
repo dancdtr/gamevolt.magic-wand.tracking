@@ -1,9 +1,8 @@
 # spells/spell_matcher.py
 from __future__ import annotations
 
-from typing import List, Optional, Sequence
+from typing import Sequence
 
-from analysis.spell_trace_api import SpellTrace
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_segment import GestureSegment
 from spells.spell_definition import SpellDefinition
@@ -17,20 +16,7 @@ _CHECK_DISTANCE = False
 
 
 class SpellMatcher(SpellMatcherBase):
-    """
-    Strict matcher with step-groups and optional relative distance validation.
-    Tries windows newest→oldest; tolerates short NONE between steps.
-    """
-
-    # Base handles: __init__(spells), matched event, try_match(..., trace), compression, key-steps helper.
-
-    # ---- subclass entry point (called by base with compressed segments + a non-None tracer) ----
-    def _match_spell(
-        self,
-        spell: SpellDefinition,
-        compressed: Sequence[GestureSegment],
-        trace: SpellTrace,  # non-optional (NullSpellTrace when tracing disabled)
-    ) -> Optional[SpellMatch]:
+    def _match_spell(self, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
 
         if not compressed:
             return None
@@ -39,12 +25,11 @@ class SpellMatcher(SpellMatcherBase):
 
         # try windows starting at each index from newest back
         for start_idx in range(len(compressed) - 1, -1, -1):
-            m = self._match_from_index(spell, flat_steps, group_idx_of_step, compressed, start_idx, trace)
+            m = self._match_from_index(spell, flat_steps, group_idx_of_step, compressed, start_idx)
             if m:
                 return m
         return None
 
-    # ---- internals ----
     def _flatten_with_group_map(self, spell: SpellDefinition) -> tuple[list[SpellStep], list[int]]:
         flat: list[SpellStep] = []
         group_map: list[int] = []
@@ -61,8 +46,7 @@ class SpellMatcher(SpellMatcherBase):
         group_idx_of_step: Sequence[int],
         segs: Sequence[GestureSegment],
         i_start: int,
-        trace: SpellTrace,
-    ) -> Optional[SpellMatch]:
+    ) -> SpellMatch | None:
 
         # reversed because we walk newest→oldest
         steps = list(reversed(flat_steps))
@@ -93,12 +77,10 @@ class SpellMatcher(SpellMatcherBase):
             # tolerate short NONE gaps (no distance added)
             if seg.direction_type == DirectionType.NONE:
                 if dt <= (spell.max_idle_gap_s or 0.0):
-                    trace.idle_tolerated(seg, i)
                     total_duration += dt
                     i -= 1
                     continue
                 else:
-                    trace.idle_too_long_reset(seg, i, spell.max_idle_gap_s or 0.0)
                     return None
 
             # check this segment against the current step
@@ -113,7 +95,6 @@ class SpellMatcher(SpellMatcherBase):
                 group_distance[gi] += dist
 
                 used += 1
-                trace.step_match(seg, i, step, step_idx)
 
                 step_idx += 1
                 i -= 1
@@ -121,18 +102,8 @@ class SpellMatcher(SpellMatcherBase):
                 if spell.max_total_duration_s is not None and total_duration > spell.max_total_duration_s:
                     # window exceeded for this attempt
                     window_s = total_duration
-                    trace.window_exceeded_reset(seg, i + 1, window_s, spell.max_total_duration_s)
                     return None
                 continue
-
-            # mismatch handling
-            if not dir_ok:
-                trace.step_fail_dir(seg, i, step, step_idx)
-            elif not dur_ok:
-                trace.step_fail_dur(seg, i, step, step_idx)
-            else:
-                # should not happen; treat as ignored
-                trace.segment_ignored(seg, i, step, step_idx)
 
             if step.required:
                 # required step not satisfied -> abandon this window
@@ -153,9 +124,6 @@ class SpellMatcher(SpellMatcherBase):
                         continue
                     actual = group_distance[gi] / denom
                     if abs(actual - target) > _RELATIVE_TOL:
-                        # Using "segment_ignored" as a generic trace point for distance rejection
-                        # (add a dedicated trace method if you want a clearer label)
-                        trace.segment_ignored(segs[i_start], i_start, steps[min(step_idx, len(steps) - 1)], step_idx)
                         return None
 
             return SpellMatch(

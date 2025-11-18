@@ -1,10 +1,8 @@
 # spells/spell_matcher_base.py
 from __future__ import annotations
 
-from typing import Callable, List, Optional, Sequence
+from collections.abc import Callable, Sequence
 
-from analysis.spell_trace_api import SpellTrace
-from analysis.spell_trace_ctx import spell_trace_ctx
 from gamevolt.events.event import Event
 from motion.gesture.gesture_segment import GestureSegment
 from spells.spell_definition import SpellDefinition
@@ -18,34 +16,19 @@ class SpellMatcherBase:
         self.matched: Event[Callable[[SpellMatch], None]] = Event()
 
     # ----- public entry point -----
-    def try_match(self, history: Sequence[GestureSegment], trace: SpellTrace) -> None:
+    def try_match(self, history: Sequence[GestureSegment]) -> None:
         if not history:
             return
         compressed = self._compress(history)  # oldest → newest
 
         for spell in self._spells:
-            key_steps = self._key_steps(spell)
-
-            with spell_trace_ctx(spell, compressed, trace) as T:
-                # optional: let tracer know key count (if it supports it)
-                set_kc = getattr(T, "set_key_count", None)
-                if callable(set_kc):
-                    set_kc(len(key_steps))
-                T.compressed_summary(compressed)
-
-                match = self._match_spell(spell, compressed, T)
-                if match:
-                    T.complete(match.end_ts_ms)
-                    self.matched.invoke(match)
-                    break
+            match = self._match_spell(spell, compressed)
+            if match:
+                self.matched.invoke(match)
+                break
 
     # ----- subclass must implement -----
-    def _match_spell(
-        self,
-        spell: SpellDefinition,
-        compressed: Sequence[GestureSegment],
-        trace: SpellTrace | None,
-    ) -> Optional[SpellMatch]:
+    def _match_spell(self, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
         raise NotImplementedError
 
     # ----- shared helpers -----
@@ -61,7 +44,7 @@ class SpellMatcherBase:
         """
         if not segments:
             return []
-        out: List[GestureSegment] = []
+        out: list[GestureSegment] = []
         cur = segments[0]
         for seg in segments[1:]:
             if seg.direction_type == cur.direction_type:
