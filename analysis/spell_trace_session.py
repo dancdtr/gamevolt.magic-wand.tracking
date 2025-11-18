@@ -7,8 +7,8 @@ from typing import Callable, Sequence
 from analysis.spell_trace_adapter_factory import SpellTraceAdapterFactory
 from analysis.spell_trace_api import NullSpellTrace, SpellTrace
 from analysis.spell_trace_session_settings import SpellTraceSessionSettings
-from motion.direction_type import DirectionType
-from motion.gesture_segment import GestureSegment
+from motion.direction.direction_type import DirectionType
+from motion.gesture.gesture_segment import GestureSegment
 from motion.motion_type import MotionPhaseType
 from spells.spell_match import SpellMatch
 from spells.spell_matcher_manager import SpellMatcherManager

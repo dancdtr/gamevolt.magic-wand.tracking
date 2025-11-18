@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from typing import Iterable
 
 from analysis.spell_trace_api import NullSpellTrace, SpellTrace
-from motion.gesture_segment import GestureSegment
+from motion.gesture.gesture_segment import GestureSegment
 from spells.spell_definition import SpellDefinition
 
 

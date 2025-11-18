@@ -6,9 +6,9 @@ from typing import Callable, Deque
 
 from gamevolt.events.event import Event
 from input.wand_position import WandPosition
-from motion.configuration.segment_builder_settings import SegmentBuilderSettings
-from motion.direction_type import DirectionType
-from motion.gesture_segment import GestureSegment
+from motion.direction.direction_type import DirectionType
+from motion.gesture.gesture_segment import GestureSegment
+from motion.segment.configuration.segment_builder_settings import SegmentBuilderSettings
 
 
 class SegmentBuilder:

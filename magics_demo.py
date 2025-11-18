@@ -14,10 +14,10 @@ from input.factories.configuration.input_type import InputType
 from input.mouse_input import MouseInput
 from input.wand.wand_input import WandInput
 from input.wand_position import WandPosition
-from motion.direction_type import DirectionType
-from motion.gesture_history import GestureHistory
-from motion.gesture_segment import GestureSegment
-from motion.motion_processor import DirectionType, MotionProcessor
+from motion.direction.direction_type import DirectionType
+from motion.gesture.gesture_history import GestureHistory
+from motion.gesture.gesture_segment import GestureSegment
+from motion.motion_processor import MotionProcessor
 from motion.motion_type import MotionPhaseType
 from spells.easy_spell_matcher import EasySpellMatcher
 from spells.library.spell_definition_factory import SpellDefinitionFactory

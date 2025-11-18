@@ -1,4 +1,4 @@
-from motion.direction_type import DirectionType
+from motion.direction.direction_type import DirectionType
 from spells.library.spell_difficulty_type import SpellDifficultyType
 from spells.spell_definition import SpellDefinition
 from spells.spell_step import SpellStep

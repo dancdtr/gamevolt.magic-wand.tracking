@@ -4,8 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
-from motion.direction_type import DirectionType
-from motion.gesture_segment import GestureSegment
+from motion.direction.direction_type import DirectionType
+from motion.gesture.gesture_segment import GestureSegment
 from spells.spell_step import SpellStep
 
 

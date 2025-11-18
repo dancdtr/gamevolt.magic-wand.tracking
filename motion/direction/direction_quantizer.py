@@ -1,16 +1,11 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
 
 from gamevolt.toolkit.timer import Timer
-from motion.configuration.direction_quantizer_settings import DirectionQuantizerSettings
-from motion.direction_type import DirectionType
-
-
-@dataclass(frozen=True)
-class DirectionUpdate:
-    new_direction: DirectionType | None
+from motion.direction.configuration.direction_quantizer_settings import DirectionQuantizerSettings
+from motion.direction.direction_type import DirectionType
+from motion.direction.direction_update import DirectionUpdate
 
 
 class DirectionQuantizer:

@@ -4,8 +4,8 @@ from __future__ import annotations
 from typing import Optional, Sequence
 
 from analysis.spell_trace_api import SpellTrace
-from motion.direction_type import DirectionType
-from motion.gesture_segment import GestureSegment
+from motion.direction.direction_type import DirectionType
+from motion.gesture.gesture_segment import GestureSegment
 from spells.spell_definition import SpellDefinition
 from spells.spell_match import SpellMatch
 from spells.spell_matcher_base import SpellMatcherBase

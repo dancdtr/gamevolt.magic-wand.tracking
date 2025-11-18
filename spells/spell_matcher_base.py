@@ -6,7 +6,7 @@ from typing import Callable, List, Optional, Sequence
 from analysis.spell_trace_api import SpellTrace
 from analysis.spell_trace_ctx import spell_trace_ctx
 from gamevolt.events.event import Event
-from motion.gesture_segment import GestureSegment
+from motion.gesture.gesture_segment import GestureSegment
 from spells.spell_definition import SpellDefinition
 from spells.spell_match import SpellMatch
 from spells.spell_step import SpellStep

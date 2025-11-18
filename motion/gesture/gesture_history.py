@@ -4,8 +4,8 @@ from __future__ import annotations
 from collections import deque
 from typing import Deque
 
-from motion.configuration.gesture_history_settings import GestureHistorySettings
-from motion.gesture_segment import GestureSegment
+from motion.gesture.configuration.gesture_history_settings import GestureHistorySettings
+from motion.gesture.gesture_segment import GestureSegment
 
 
 class GestureHistory:
