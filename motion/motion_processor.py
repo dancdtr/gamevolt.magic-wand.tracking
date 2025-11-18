@@ -6,8 +6,9 @@ from typing import Callable
 from gamevolt.events.event import Event
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
+from motion.configuration.direction_quantizer_settings import DirectionQuantizerSettings
 from motion.configuration.motion_processor_settings import MotionProcessorSettings
-from motion.direction_gate import DirectionGate
+from motion.direction_quantizer import DirectionQuantizer
 from motion.direction_type import DirectionType
 from motion.motion_phase_tracker import MotionPhaseTracker
 from motion.motion_type import MotionPhaseType
@@ -17,6 +18,11 @@ _SPEED_STOP: float = 0.20
 _MIN_DIR_DURATION_S: float = 0.03
 _AXIS_DEADBAND_PER_S: float = 0.10
 _MAX_SEGMENT_POINTS: int = 256
+# quantizer_settings = DirectionQuantizerSettings(
+#     speed_stop=_SPEED_STOP,
+#     min_direction_duration=_MIN_DIR_DURATION_S,
+#     axis_deadband_per_s=_AXIS_DEADBAND_PER_S,
+# )
 
 
 class MotionProcessor:
@@ -30,7 +36,7 @@ class MotionProcessor:
 
         # Components
         self._phase_tracker = MotionPhaseTracker(settings.phase_tracker)
-        self._dir = DirectionGate(_MIN_DIR_DURATION_S, _AXIS_DEADBAND_PER_S, _SPEED_STOP)
+        self._dir = DirectionQuantizer(settings.direction_quantizer)
         self._seg = SegmentBuilder(_MAX_SEGMENT_POINTS)
         self._seg.segment_completed.subscribe(self._on_segment_completed)
 
@@ -47,8 +53,9 @@ class MotionProcessor:
         self._input.position_updated.unsubscribe(self._on_position)
 
     def reset(self) -> None:
+        print("resetting")
         self._phase_tracker.reset()
-        # reset self._dir?
+        self._dir.reset()
         # reset self._seg?
 
     # event relay
@@ -96,9 +103,9 @@ class MotionProcessor:
 
         # 2) Direction while MOVING
         if self._motion_mode == MotionPhaseType.MOVING:
-            committed = self._dir.update(vx, vy, speed)
-            if committed is not None:
-                self._set_direction(committed, pos)
+            direction_update = self._dir.step(vx, vy, speed)
+            if direction_update.new_direction is not None:
+                self._set_direction(direction_update.new_direction, pos)
         else:
             self._dir.force(DirectionType.NONE)
 

@@ -59,9 +59,11 @@ motion:
       speed_stop: 0.20
       min_state_duration: 0.03
       min_stopped_duration: 0.3
-    min_dir_duration: 0.03
-    axis_deadband_per_s: 0.10
     max_segment_points: 256
+    direction_quantizer:
+      speed_stop: 0.2
+      min_direction_duration: 0.03
+      axis_deadband_per_s: 0.1
 
 wand_visualiser:
   visualiser:
