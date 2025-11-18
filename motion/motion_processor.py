@@ -9,6 +9,7 @@ from input.wand_position import WandPosition
 from motion.configuration.motion_processor_settings import MotionProcessorSettings
 from motion.direction_quantizer import DirectionQuantizer
 from motion.direction_type import DirectionType
+from motion.gesture_segment import GestureSegment
 from motion.motion_phase_tracker import MotionPhaseTracker
 from motion.motion_type import MotionPhaseType
 from motion.segment_builder import SegmentBuilder
@@ -19,32 +20,30 @@ class MotionProcessor:
         self._settings = settings
         self._input = input
 
+        self.segment_completed: Event[Callable[[GestureSegment], None]] = Event()
         self.direction_changed: Event[Callable[[DirectionType], None]] = Event()
         self.motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
-        self.segment_completed: Event[Callable[[...], None]] = Event()  # type: ignore[typeddict]
 
         self._direction_quantizer = DirectionQuantizer(settings.direction_quantizer)
         self._phase_tracker = MotionPhaseTracker(settings.phase_tracker)
-        self._seg = SegmentBuilder(settings.max_segment_points)
+        self._segment_builder = SegmentBuilder(settings.segment_builder)
 
-        # State
         self._motion_mode: MotionPhaseType = MotionPhaseType.NONE
         self._motion_state: DirectionType = DirectionType.NONE
         self._previous_position: WandPosition | None = None
 
-    # lifecycle
     def start(self) -> None:
         self._input.position_updated.subscribe(self._on_position)
-        self._seg.segment_completed.subscribe(self._on_segment_completed)
+        self._segment_builder.segment_completed.subscribe(self._on_segment_completed)
 
     def stop(self) -> None:
-        self._seg.segment_completed.unsubscribe(self._on_segment_completed)
+        self._segment_builder.segment_completed.unsubscribe(self._on_segment_completed)
         self._input.position_updated.unsubscribe(self._on_position)
 
     def reset(self) -> None:
         self._phase_tracker.reset()
         self._direction_quantizer.reset()
-        # reset self._seg?
+        # self._segment_builder.reset()
 
     def _set_motion_phase(self, phase: MotionPhaseType) -> None:
         if phase != self._motion_mode:
@@ -55,7 +54,7 @@ class MotionProcessor:
         if dir_type != self._motion_state:
             self._motion_state = dir_type
             self.direction_changed.invoke(dir_type)
-            self._seg.commit(dir_type, pos)
+            self._segment_builder.commit(dir_type, pos)
 
     def _on_segment_completed(self, seg) -> None:
         self.segment_completed.invoke(seg)
@@ -65,7 +64,7 @@ class MotionProcessor:
             self._previous_position = pos
 
             self._set_motion_phase(MotionPhaseType.STATIONARY)
-            self._seg.start(DirectionType.NONE, pos)
+            self._segment_builder.start(DirectionType.NONE, pos)
             return
 
         raw_dt_ms = pos.ts_ms - self._previous_position.ts_ms
@@ -95,7 +94,7 @@ class MotionProcessor:
         else:
             self._direction_quantizer.force(DirectionType.NONE)
 
-        if self._seg.active:
-            self._seg.accumulate(pos)
+        if self._segment_builder.active:
+            self._segment_builder.accumulate(pos)
 
         self._previous_position = pos
