@@ -6,23 +6,12 @@ from typing import Callable
 from gamevolt.events.event import Event
 from input.motion_input_base import MotionInputBase
 from input.wand_position import WandPosition
-from motion.configuration.direction_quantizer_settings import DirectionQuantizerSettings
 from motion.configuration.motion_processor_settings import MotionProcessorSettings
 from motion.direction_quantizer import DirectionQuantizer
 from motion.direction_type import DirectionType
 from motion.motion_phase_tracker import MotionPhaseTracker
 from motion.motion_type import MotionPhaseType
 from motion.segment_builder import SegmentBuilder
-
-_SPEED_STOP: float = 0.20
-_MIN_DIR_DURATION_S: float = 0.03
-_AXIS_DEADBAND_PER_S: float = 0.10
-_MAX_SEGMENT_POINTS: int = 256
-# quantizer_settings = DirectionQuantizerSettings(
-#     speed_stop=_SPEED_STOP,
-#     min_direction_duration=_MIN_DIR_DURATION_S,
-#     axis_deadband_per_s=_AXIS_DEADBAND_PER_S,
-# )
 
 
 class MotionProcessor:
@@ -34,33 +23,28 @@ class MotionProcessor:
         self.motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.segment_completed: Event[Callable[[...], None]] = Event()  # type: ignore[typeddict]
 
-        # Components
+        self._direction_quantizer = DirectionQuantizer(settings.direction_quantizer)
         self._phase_tracker = MotionPhaseTracker(settings.phase_tracker)
-        self._dir = DirectionQuantizer(settings.direction_quantizer)
-        self._seg = SegmentBuilder(_MAX_SEGMENT_POINTS)
-        self._seg.segment_completed.subscribe(self._on_segment_completed)
+        self._seg = SegmentBuilder(settings.max_segment_points)
 
         # State
         self._motion_mode: MotionPhaseType = MotionPhaseType.NONE
         self._motion_state: DirectionType = DirectionType.NONE
-        self._prev: WandPosition | None = None
+        self._previous_position: WandPosition | None = None
 
     # lifecycle
     def start(self) -> None:
         self._input.position_updated.subscribe(self._on_position)
+        self._seg.segment_completed.subscribe(self._on_segment_completed)
 
     def stop(self) -> None:
+        self._seg.segment_completed.unsubscribe(self._on_segment_completed)
         self._input.position_updated.unsubscribe(self._on_position)
 
     def reset(self) -> None:
-        print("resetting")
         self._phase_tracker.reset()
-        self._dir.reset()
+        self._direction_quantizer.reset()
         # reset self._seg?
-
-    # event relay
-    def _on_segment_completed(self, seg) -> None:
-        self.segment_completed.invoke(seg)
 
     def _set_motion_phase(self, phase: MotionPhaseType) -> None:
         if phase != self._motion_mode:
@@ -73,15 +57,18 @@ class MotionProcessor:
             self.direction_changed.invoke(dir_type)
             self._seg.commit(dir_type, pos)
 
+    def _on_segment_completed(self, seg) -> None:
+        self.segment_completed.invoke(seg)
+
     def _on_position(self, pos: WandPosition) -> None:
-        if self._prev is None:
-            self._prev = pos
-            # initialise in STATIONARY with idle segment
+        if self._previous_position is None:
+            self._previous_position = pos
+
             self._set_motion_phase(MotionPhaseType.STATIONARY)
             self._seg.start(DirectionType.NONE, pos)
             return
 
-        raw_dt_ms = pos.ts_ms - self._prev.ts_ms
+        raw_dt_ms = pos.ts_ms - self._previous_position.ts_ms
         if raw_dt_ms <= 0:
             return
         dt = raw_dt_ms / 1000.0
@@ -101,16 +88,14 @@ class MotionProcessor:
         # if phase_update.stop_started:
         # pass
 
-        # 2) Direction while MOVING
         if self._motion_mode == MotionPhaseType.MOVING:
-            direction_update = self._dir.step(vx, vy, speed)
+            direction_update = self._direction_quantizer.step(vx, vy, speed)
             if direction_update.new_direction is not None:
                 self._set_direction(direction_update.new_direction, pos)
         else:
-            self._dir.force(DirectionType.NONE)
+            self._direction_quantizer.force(DirectionType.NONE)
 
-        # 3) Accumulate segment metrics
         if self._seg.active:
             self._seg.accumulate(pos)
 
-        self._prev = pos
+        self._previous_position = pos

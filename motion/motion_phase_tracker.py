@@ -9,14 +9,6 @@ from motion.motion_type import MotionPhaseType
 
 @dataclass(frozen=True)
 class MotionPhaseUpdate:
-    """
-    Result of a MotionPhaseTracker step.
-
-    - new_phase: the newly committed phase, or None if no phase change.
-    - stop_started: True on the *first* tick of a stop episode
-      (speed <= speed_stop and we just opened a new stop window).
-    """
-
     new_phase: MotionPhaseType | None = None
     stop_started: bool = False
 
