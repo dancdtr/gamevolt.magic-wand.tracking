@@ -9,7 +9,7 @@ from input.wand_position import WandPosition
 from motion.configuration.motion_processor_settings import MotionProcessorSettings
 from motion.direction_gate import DirectionGate
 from motion.direction_type import DirectionType
-from motion.motion_mode_fsm import MotionPhaseTracker
+from motion.motion_phase_tracker import MotionPhaseTracker
 from motion.motion_type import MotionPhaseType
 from motion.segment_builder import SegmentBuilder
 
@@ -17,6 +17,7 @@ _SPEED_START: float = 0.50
 _SPEED_STOP: float = 0.20
 _MIN_STATE_DURATION_S: float = 0.03
 _MIN_DIR_DURATION_S: float = 0.03
+
 _AXIS_DEADBAND_PER_S: float = 0.10
 _MIN_STOPPED_DURATION_S: float = 0.3
 _MAX_SEGMENT_POINTS: int = 256
@@ -74,7 +75,6 @@ class MotionProcessor:
 
         raw_dt_ms = pos.ts_ms - self._prev.ts_ms
         if raw_dt_ms <= 0:
-            # Drop the sample if two samples share the same timestamp
             return
         dt = raw_dt_ms / 1000.0
 
@@ -85,17 +85,17 @@ class MotionProcessor:
         phase_update = self._phase_tracker.step(speed)
 
         if phase_update.new_phase is not None:
-            print(phase_update.new_phase)
             self._set_motion_phase(phase_update.new_phase)
 
-        if phase_update.stop_started:
-            print("pause")
-            self.direction_changed.invoke(DirectionType.NONE)
+            if phase_update.new_phase == MotionPhaseType.STATIONARY:
+                self._set_direction(DirectionType.NONE, pos)
+
+        # if phase_update.stop_started:
+        # pass
 
         # 2) Direction while MOVING
         if self._motion_mode == MotionPhaseType.MOVING:
             committed = self._dir.update(vx, vy, speed)
-            print(committed)
             if committed is not None:
                 self._set_direction(committed, pos)
         else:

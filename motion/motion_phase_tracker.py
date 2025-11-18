@@ -21,13 +21,7 @@ class MotionPhaseUpdate:
 
 
 class MotionPhaseTracker:
-    def __init__(
-        self,
-        speed_start: float,
-        speed_stop: float,
-        min_state_dwell_s: float,
-        min_stopped_duration_s: float,
-    ) -> None:
+    def __init__(self, speed_start: float, speed_stop: float, min_state_dwell_s: float, min_stopped_duration_s: float) -> None:
         self.speed_start = speed_start
         self.speed_stop = speed_stop
 
