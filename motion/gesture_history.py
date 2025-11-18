@@ -4,15 +4,16 @@ from __future__ import annotations
 from collections import deque
 from typing import Deque
 
+from motion.configuration.gesture_history_settings import GestureHistorySettings
 from motion.gesture_segment import GestureSegment
 
 
 class GestureHistory:
     """Rolling store of recent segments, pruned by age and length."""
 
-    def __init__(self, max_segments: int = 200, max_age_s: float = 4.0):
-        self._buf: Deque[GestureSegment] = deque(maxlen=max_segments)
-        self._max_age_s = max_age_s
+    def __init__(self, settings: GestureHistorySettings):
+        self._buf: Deque[GestureSegment] = deque(maxlen=settings.max_segments)
+        self._max_age_s = settings.max_age
 
     def add(self, seg: GestureSegment) -> None:
         self._buf.append(seg)

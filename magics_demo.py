@@ -33,7 +33,7 @@ print(settings)
 
 logger = get_logger(LoggingSettings(file_path=settings.logging.file_path, minimum_level=settings.logging.minimum_level))
 
-history = GestureHistory(max_segments=20, max_age_s=5.0)
+history = GestureHistory(settings.motion.gesture_history)
 spell_definition_factory = SpellDefinitionFactory()
 difficulty_controller = SpellDifficultyController(logger, start_difficulty=SpellDifficultyType.FORGIVING)
 

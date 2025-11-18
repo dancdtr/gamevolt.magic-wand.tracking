@@ -52,7 +52,7 @@ input:
 motion:
   gesture_history:
     max_segments: 20
-    max_age_s: 5.0
+    max_age: 5.0
   processor:
     phase_tracker:
       speed_start: 0.50
