@@ -82,6 +82,7 @@ def on_motion_changed(mode: MotionPhaseType) -> None:
     if mode is MotionPhaseType.STATIONARY:
         visualiser.clear()
         input.reset()
+        processor.reset()
     logger.debug(f"Motion: {mode.name}")
 
 
@@ -103,6 +104,7 @@ def on_spell(match: SpellMatch):
     )
     trace_manager.on_match(match)
     history.clear()
+    processor.reset()
 
 
 # def on_difficulty_toggled() -> None:

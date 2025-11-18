@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from gamevolt.toolkit.timer import Timer
+from motion.configuration.motion_phase_tracker_settings import MotionPhaseTrackerSettings
 from motion.motion_type import MotionPhaseType
 
 
@@ -21,20 +22,14 @@ class MotionPhaseUpdate:
 
 
 class MotionPhaseTracker:
-    def __init__(self, speed_start: float, speed_stop: float, min_state_dwell_s: float, min_stopped_duration_s: float) -> None:
-        self.speed_start = speed_start
-        self.speed_stop = speed_stop
+    def __init__(self, settings: MotionPhaseTrackerSettings) -> None:
+        self._settings = settings
 
-        self._move_dwell = Timer(min_state_dwell_s)
-        self._stop_timer = Timer(min_stopped_duration_s)
+        self._move_dwell = Timer(settings.min_state_duration)
+        self._stop_timer = Timer(settings.min_stopped_duration)
 
         self._state: MotionPhaseType = MotionPhaseType.NONE
         self._stop_idle_open = False
-
-    @property
-    def phase(self) -> MotionPhaseType:
-        """Current committed motion phase."""
-        return self._state
 
     def reset(self) -> None:
         self._state = MotionPhaseType.NONE
@@ -53,7 +48,7 @@ class MotionPhaseTracker:
         prev_state = self._state
         stop_started = False
 
-        if speed >= self.speed_start:
+        if speed >= self._settings.speed_start:
             # cancel any pending stop; clear stop-episode gate
             self._stop_timer.stop()
             self._stop_idle_open = False
@@ -72,7 +67,7 @@ class MotionPhaseTracker:
             # below START → in band or below STOP
             self._move_dwell.stop()
 
-            if speed <= self.speed_stop:
+            if speed <= self._settings.speed_stop:
                 if not self._stop_timer.is_running and not self._stop_timer.is_complete:
                     self._stop_timer.start()
                     # first tick of a true stop episode

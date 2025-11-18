@@ -13,13 +13,9 @@ from motion.motion_phase_tracker import MotionPhaseTracker
 from motion.motion_type import MotionPhaseType
 from motion.segment_builder import SegmentBuilder
 
-_SPEED_START: float = 0.50
 _SPEED_STOP: float = 0.20
-_MIN_STATE_DURATION_S: float = 0.03
 _MIN_DIR_DURATION_S: float = 0.03
-
 _AXIS_DEADBAND_PER_S: float = 0.10
-_MIN_STOPPED_DURATION_S: float = 0.3
 _MAX_SEGMENT_POINTS: int = 256
 
 
@@ -33,7 +29,7 @@ class MotionProcessor:
         self.segment_completed: Event[Callable[[...], None]] = Event()  # type: ignore[typeddict]
 
         # Components
-        self._phase_tracker = MotionPhaseTracker(_SPEED_START, _SPEED_STOP, _MIN_STATE_DURATION_S, _MIN_STOPPED_DURATION_S)
+        self._phase_tracker = MotionPhaseTracker(settings.phase_tracker)
         self._dir = DirectionGate(_MIN_DIR_DURATION_S, _AXIS_DEADBAND_PER_S, _SPEED_STOP)
         self._seg = SegmentBuilder(_MAX_SEGMENT_POINTS)
         self._seg.segment_completed.subscribe(self._on_segment_completed)
@@ -49,6 +45,11 @@ class MotionProcessor:
 
     def stop(self) -> None:
         self._input.position_updated.unsubscribe(self._on_position)
+
+    def reset(self) -> None:
+        self._phase_tracker.reset()
+        # reset self._dir?
+        # reset self._seg?
 
     # event relay
     def _on_segment_completed(self, seg) -> None:

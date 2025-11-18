@@ -14,5 +14,5 @@ class MotionProcessorSettings(SettingsBase):
     # min_dir_duration_s: float  # = 0.06  # direction needs to be stable for this long before commit
     axis_deadband_per_s: float  # = 0.10  # ignore tiny axis components to reduce flicker at low speeds
     max_segment_points: int  # = 256  # cap how many raw points are stored per segment
-    min_stopped_duration: float  # = 0.3
+    min_dir_duration: float  # = 0.3
     phase_tracker: MotionPhaseTrackerSettings
