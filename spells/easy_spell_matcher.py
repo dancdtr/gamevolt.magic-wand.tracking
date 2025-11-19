@@ -50,9 +50,9 @@ class EasySpellMatcher(SpellMatcherBase):
                         return self._mk(spell, start_ts, end_ts, matched_keys, len(key_steps))
 
             # overall time window
-            if spell.max_total_duration_s is not None and start_ts is not None:
+            if spell.max_total_duration is not None and start_ts is not None:
                 window_s = (seg.end_ts_ms - start_ts) / 1000.0
-                if window_s > spell.max_total_duration_s:
+                if window_s > spell.max_total_duration:
                     i_key = matched_keys = 0
                     started = False
                     start_ts = None

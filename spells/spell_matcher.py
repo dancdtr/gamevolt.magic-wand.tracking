@@ -59,13 +59,13 @@ class SpellMatcher(SpellMatcherBase):
         group_distance = [0.0 for _ in spell.step_groups]
         total_distance = 0.0
 
-        # NEW: total time spent in "filler" segments (any direction)
+        # total time spent in "filler" segments (any direction)
         filler_duration = 0.0
 
         def would_exceed_total_duration(extra: float) -> bool:
-            if spell.max_total_duration_s is None:
+            if spell.max_total_duration is None:
                 return False
-            return (total_duration + extra) > spell.max_total_duration_s
+            return (total_duration + extra) > spell.max_total_duration
 
         i = i_start
         while i >= 0 and step_idx < len(steps):

@@ -15,8 +15,8 @@ class SpellDefinition:
     # minimum matched spell steps for completion
     min_spell_steps: int
 
-    # min_total_duration_s: float | None = None
-    max_total_duration_s: float | None = None
+    min_total_duration: float | None = None
+    max_total_duration: float | None = None
 
     # legacy per-segment idle tolerance for DirectionType.NONE
     max_idle_gap_s: float = 0.20

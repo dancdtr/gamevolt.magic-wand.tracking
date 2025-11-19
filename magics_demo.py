@@ -35,7 +35,7 @@ logger = get_logger(LoggingSettings(file_path=settings.logging.file_path, minimu
 
 history = GestureHistory(settings.motion.gesture_history)
 spell_definition_factory = SpellDefinitionFactory()
-difficulty_controller = SpellDifficultyController(logger, start_difficulty=SpellDifficultyType.FORGIVING)
+difficulty_controller = SpellDifficultyController(logger, start_difficulty=SpellDifficultyType.STRICT)
 
 trace_manager = SpellTraceSessionManager(
     logger=logger,
@@ -100,7 +100,7 @@ def on_spell(match: SpellMatch):
     logger.info(
         f"{name_provider.get_name()} cast {match.spell_name}! ✨✨ "
         # f"({match.duration_s:.3f}s), {match.segments_used}/{match.total_segments}="
-        # f"{match.accuracy * 100:.1f}%."
+        f"{match.accuracy * 100:.1f}%."
     )
     trace_manager.on_match(match)
     history.clear()
