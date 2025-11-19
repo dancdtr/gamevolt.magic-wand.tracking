@@ -12,16 +12,29 @@ class SpellDefinition:
     name: str
     step_groups: Sequence[SpellStepGroup]
 
-    # minimum matched spell steps for completion
     min_spell_steps: int
 
-    min_total_duration: float | None = None
-    max_total_duration: float | None = None
+    # ── Rule toggles ───────────────────────────────────────────────
+    check_duration: bool = True
+    check_distance: bool = True
+    check_group_distance_ratio: bool = False
+
+    # ── Duration constraints (for DurationRule) ───────────────────
+    min_total_duration_s: float | None = None
+    max_total_duration_s: float | None = None
+
+    # ── Distance constraints (for DistanceRule) ───────────────────
+    min_total_distance: float | None = None
+    max_total_distance: float | None = None
+
+    # ── Group distance ratio params (for GroupDistanceRatioRule) ──
+    group_distance_rel_tol: float = 0.15  # how close to target ratio
+    group_distance_min_total: float = 1e-6  # avoid div-by-zero
 
     # legacy per-segment idle tolerance for DirectionType.NONE
     max_idle_gap_s: float = 0.20
 
-    # How much total "filler" time (any direction, incl NONE) can appear between key steps before we reject the match
+    # how much total "filler" time (any direction, incl NONE)
     max_filler_duration_s: float = 0.25
 
     @property

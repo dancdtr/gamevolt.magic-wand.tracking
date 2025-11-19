@@ -26,7 +26,7 @@ LUMOS_MAXIMA = SpellDefinition(
         ),
     ],
     min_spell_steps=2,
-    max_total_duration=10.0,
+    max_total_duration_s=10.0,
     max_idle_gap_s=1.20,
     max_filler_duration_s=0.5,
 )

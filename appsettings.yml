@@ -10,7 +10,7 @@ spells:
     # - "lumos_maxima"
     # - "ventus"
     # - "locomotor"
-    - "revelio"
+    # - "revelio"
     # - "squario"
     # - "oblongium"
     # - "rectanglia"

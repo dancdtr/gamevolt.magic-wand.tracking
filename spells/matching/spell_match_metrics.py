@@ -1,0 +1,12 @@
+from collections.abc import Sequence
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class SpellMatchMetrics:
+    total_duration_s: float
+    filler_duration_s: float
+    total_distance: float
+    group_distance: Sequence[float]
+    used_steps: int
+    total_steps: int

@@ -1,20 +1,26 @@
+# spells/spell_matcher.py
 from __future__ import annotations
 
 from typing import Sequence
 
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_segment import GestureSegment
+from spells.matching.rules.distance_rule import DistanceRule
+from spells.matching.rules.duration_rule import DurationRule
+from spells.matching.rules.group_distance_duration_rule import GroupDistanceRatioRule
+from spells.matching.rules.spell_rule import SpellRule
+from spells.matching.spell_match_context import SpellMatchContext
+from spells.matching.spell_match_metrics import SpellMatchMetrics
 from spells.spell_definition import SpellDefinition
 from spells.spell_match import SpellMatch
 from spells.spell_matcher_base import SpellMatcherBase
 from spells.spell_step import SpellStep
 
-_RELATIVE_TOL = 0.15
-_MIN_TOTAL_DIST = 1e-6
-_CHECK_DISTANCE = False
-
 
 class SpellMatcher(SpellMatcherBase):
+    def __init__(self, spells: list[SpellDefinition]) -> None:
+        super().__init__(spells)
+
     def _match_spell(self, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
         if not compressed:
             return None
@@ -23,9 +29,10 @@ class SpellMatcher(SpellMatcherBase):
 
         # try windows starting at each index from newest back
         for start_idx in range(len(compressed) - 1, -1, -1):
-            m = self._match_from_index(spell, flat_steps, group_idx_of_step, compressed, start_idx)
-            if m:
-                return m
+            match = self._match_from_index(spell, flat_steps, group_idx_of_step, compressed, start_idx)
+            if match:
+                return match
+
         return None
 
     def _flatten_with_group_map(self, spell: SpellDefinition) -> tuple[list[SpellStep], list[int]]:
@@ -36,6 +43,22 @@ class SpellMatcher(SpellMatcherBase):
                 flat.append(st)
                 group_map.append(gi)
         return flat, group_map
+
+    def _build_rules(self, spell: SpellDefinition) -> list[SpellRule]:
+        rules: list[SpellRule] = []
+
+        if spell.check_duration:
+            rules.append(DurationRule())
+
+        if spell.check_distance:
+            rules.append(DistanceRule())
+
+        if spell.check_group_distance_ratio:
+            rules.append(GroupDistanceRatioRule())
+
+        # TODO - generate rules from an appsettings driven factory
+
+        return rules
 
     def _match_from_index(
         self,
@@ -63,9 +86,9 @@ class SpellMatcher(SpellMatcherBase):
         filler_duration = 0.0
 
         def would_exceed_total_duration(extra: float) -> bool:
-            if spell.max_total_duration is None:
+            if spell.max_total_duration_s is None:
                 return False
-            return (total_duration + extra) > spell.max_total_duration
+            return (total_duration + extra) > spell.max_total_duration_s
 
         i = i_start
         while i >= 0 and step_idx < len(steps):
@@ -83,7 +106,8 @@ class SpellMatcher(SpellMatcherBase):
             # helper: try to treat this segment as filler (any direction)
             def try_consume_as_filler() -> bool:
                 nonlocal filler_duration, total_duration, i
-                # (optional) hard per-seg limit for NONE gaps
+
+                # optional hard per-seg limit for NONE gaps
                 if seg.direction_type == DirectionType.NONE and dt > spell.max_idle_gap_s:
                     return False
 
@@ -100,7 +124,7 @@ class SpellMatcher(SpellMatcherBase):
                 i -= 1
                 return True
 
-            # If it's NONE, we *only* consider it as filler, never as a step
+            # If it's NONE, we only consider it as filler, never as a step
             if seg.direction_type == DirectionType.NONE:
                 if not try_consume_as_filler():
                     return None
@@ -133,27 +157,34 @@ class SpellMatcher(SpellMatcherBase):
                 # still aiming to match the same step_idx on the next iteration
                 continue
 
-            # Can't treat it as filler; if the step is required, the spell fails.
+            # Can't treat it as filler; if the step is required, the spell fails
             if step.required:
                 return None
 
-            # Optional step: skip it and try to match this same seg against the next step
             step_idx += 1
-            # NOTE: we intentionally do NOT decrement i here so we
-            # re-check this same segment against the next step.
+            # NOTE: we intentionally do NOT decrement i here
 
-        # end condition
+        rules = self._build_rules(spell)
+
         if step_idx == len(steps) and used >= spell.min_spell_steps and start_ts is not None and end_ts is not None:
-            # optional distance-ratio check
-            if _CHECK_DISTANCE:
-                denom = max(total_distance, _MIN_TOTAL_DIST)
-                for gi, grp in enumerate(spell.step_groups):
-                    target = getattr(grp, "relative_distance", None)
-                    if target is None:
-                        continue
-                    actual = group_distance[gi] / denom
-                    if abs(actual - target) > _RELATIVE_TOL:
-                        return None
+            metrics = SpellMatchMetrics(
+                total_duration_s=total_duration,
+                filler_duration_s=filler_duration,
+                total_distance=total_distance,
+                group_distance=group_distance,
+                used_steps=used,
+                total_steps=len(flat_steps),
+            )
+
+            ctx = SpellMatchContext(
+                spell=spell,
+                segments=segs,
+                metrics=metrics,
+            )
+
+            for rule in rules:
+                if not rule.validate(ctx):
+                    return None
 
             return SpellMatch(
                 spell_id=spell.id,
