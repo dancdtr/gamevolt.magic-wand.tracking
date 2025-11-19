@@ -7,17 +7,17 @@ logging:
 
 spells:
   targets:
-    - "lumos_maxima"
-    - "ventus"
+    # - "lumos_maxima"
+    # - "ventus"
     # - "locomotor"
-    # - "revelio"
+    - "revelio"
     # - "squario"
     # - "oblongium"
     # - "rectanglia"
     # - "rictumsempra"
 
 input:
-  input_type: "mouse"
+  input_type: "wand"
 
   mouse:
     invert_x: False
@@ -58,10 +58,10 @@ motion:
       speed_start: 0.50
       speed_stop: 0.20
       min_state_duration: 0.03
-      min_stopped_duration: 0.3
+      min_stopped_duration: 0.15
     direction_quantizer:
       speed_stop: 0.2
-      min_direction_duration: 0.03
+      min_direction_duration: 0.01
       axis_deadband_per_s: 0.1
     segment_builder:
       max_sample_count: 256

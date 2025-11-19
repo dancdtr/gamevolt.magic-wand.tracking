@@ -1,4 +1,3 @@
-# spells/spell_matcher.py
 from __future__ import annotations
 
 from typing import Sequence
@@ -17,7 +16,6 @@ _CHECK_DISTANCE = False
 
 class SpellMatcher(SpellMatcherBase):
     def _match_spell(self, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
-
         if not compressed:
             return None
 
@@ -54,12 +52,20 @@ class SpellMatcher(SpellMatcherBase):
 
         step_idx = 0
         used = 0
-        start_ts = None
-        end_ts = None
+        start_ts: int | None = None
+        end_ts: int | None = None
         total_duration = 0.0
 
         group_distance = [0.0 for _ in spell.step_groups]
         total_distance = 0.0
+
+        # NEW: total time spent in "filler" segments (any direction)
+        filler_duration = 0.0
+
+        def would_exceed_total_duration(extra: float) -> bool:
+            if spell.max_total_duration_s is None:
+                return False
+            return (total_duration + extra) > spell.max_total_duration_s
 
         i = i_start
         while i >= 0 and step_idx < len(steps):
@@ -74,20 +80,41 @@ class SpellMatcher(SpellMatcherBase):
             dist = seg.path_length
             step = steps[step_idx]
 
-            # tolerate short NONE gaps (no distance added)
+            # helper: try to treat this segment as filler (any direction)
+            def try_consume_as_filler() -> bool:
+                nonlocal filler_duration, total_duration, i
+                # (optional) hard per-seg limit for NONE gaps
+                if seg.direction_type == DirectionType.NONE and dt > spell.max_idle_gap_s:
+                    return False
+
+                # respect overall filler budget
+                if filler_duration + dt > spell.max_filler_duration_s:
+                    return False
+
+                # respect overall spell window
+                if would_exceed_total_duration(dt):
+                    return False
+
+                filler_duration += dt
+                total_duration += dt
+                i -= 1
+                return True
+
+            # If it's NONE, we *only* consider it as filler, never as a step
             if seg.direction_type == DirectionType.NONE:
-                if dt <= (spell.max_idle_gap_s or 0.0):
-                    total_duration += dt
-                    i -= 1
-                    continue
-                else:
+                if not try_consume_as_filler():
                     return None
+                continue
 
             # check this segment against the current step
             dir_ok = seg.direction_type in step.allowed
             dur_ok = dt >= step.min_duration_s
 
             if dir_ok and dur_ok:
+                # matched a step
+                if would_exceed_total_duration(dt):
+                    return None
+
                 total_duration += dt
                 total_distance += dist
 
@@ -95,27 +122,29 @@ class SpellMatcher(SpellMatcherBase):
                 group_distance[gi] += dist
 
                 used += 1
-
                 step_idx += 1
                 i -= 1
-
-                if spell.max_total_duration_s is not None and total_duration > spell.max_total_duration_s:
-                    # window exceeded for this attempt
-                    window_s = total_duration
-                    return None
                 continue
 
+            # At this point: seg does NOT satisfy the current step
+
+            # First, see if we can "forgive" it as filler
+            if try_consume_as_filler():
+                # still aiming to match the same step_idx on the next iteration
+                continue
+
+            # Can't treat it as filler; if the step is required, the spell fails.
             if step.required:
-                # required step not satisfied -> abandon this window
                 return None
-            else:
-                # optional step: skip to next required without consuming segment
-                step_idx += 1
-                # try same seg against the next step on next loop iteration
-                continue
+
+            # Optional step: skip it and try to match this same seg against the next step
+            step_idx += 1
+            # NOTE: we intentionally do NOT decrement i here so we
+            # re-check this same segment against the next step.
 
         # end condition
         if step_idx == len(steps) and used >= spell.min_spell_steps and start_ts is not None and end_ts is not None:
+            # optional distance-ratio check
             if _CHECK_DISTANCE:
                 denom = max(total_distance, _MIN_TOTAL_DIST)
                 for gi, grp in enumerate(spell.step_groups):

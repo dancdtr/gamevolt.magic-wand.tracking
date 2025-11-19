@@ -64,7 +64,7 @@ class SpellTraceSessionManager:
         Feed the tracer into matching each time a segment completes.
         If the segment is a long NONE, flush (natural break).
         """
-        matcher_manager.try_match(history_tail, self._trace)
+        matcher_manager.try_match(history_tail)
 
         # Natural break: end attempt after a long NONE
         if segment.direction_type == DirectionType.NONE and segment.duration_s >= self._settings.natural_break_s:

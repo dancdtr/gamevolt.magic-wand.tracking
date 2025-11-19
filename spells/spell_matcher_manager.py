@@ -22,7 +22,7 @@ class SpellMatcherManager:
     def set_difficulty(self, difficulty: SpellDifficultyType) -> None:
         self._difficulty = difficulty
 
-    def try_match(self, history: Sequence[GestureSegment], trace: SpellTrace) -> None:
+    def try_match(self, history: Sequence[GestureSegment]) -> None:
         if not history:
             return
 

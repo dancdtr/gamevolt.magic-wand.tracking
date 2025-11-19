@@ -12,7 +12,7 @@ LOCOMOTOR = SpellDefinition(
             name="Line_N",
             steps=[
                 SpellStep(frozenset({DirectionType.MOVING_N}), required=True),
-                SpellStep(frozenset({DirectionType.MOVING_NE}), required=False),
+                # SpellStep(frozenset({DirectionType.MOVING_NE}), required=False),
             ],
             relative_distance=1 / 3,
         ),
@@ -20,7 +20,7 @@ LOCOMOTOR = SpellDefinition(
             name="Line_SW",
             steps=[
                 SpellStep(frozenset({DirectionType.MOVING_SW}), required=True),
-                SpellStep(frozenset({DirectionType.MOVING_S}), required=False),
+                # SpellStep(frozenset({DirectionType.MOVING_S}), required=False),
             ],
             relative_distance=1 / 3,
         ),
@@ -35,6 +35,7 @@ LOCOMOTOR = SpellDefinition(
     min_spell_steps=3,
     max_total_duration_s=10.0,
     max_idle_gap_s=1.20,
+    max_filler_duration_s=0.4,
 )
 
 
