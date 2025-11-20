@@ -14,6 +14,7 @@ VENTUS = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_SE}), required=True),
             ],
             relative_distance=1 / 2,
+            relative_duration=1 / 2,
         ),
         SpellStepGroup(
             name="Line_NE",
@@ -21,6 +22,7 @@ VENTUS = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_NE}), required=True),
             ],
             relative_distance=1 / 2,
+            relative_duration=1 / 2,
         ),
     ],
     min_spell_steps=2,

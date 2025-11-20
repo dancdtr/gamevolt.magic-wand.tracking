@@ -1,5 +1,7 @@
 from typing import Callable
 
+from spells.library.alohomora import get_alohomora
+from spells.library.incendio import get_incendio
 from spells.library.locomotor import get_locomotor
 from spells.library.lumos_maxima import get_lumos_maxima
 from spells.library.revelio import get_revelio
@@ -13,6 +15,8 @@ _SPELL_PROVIDERS: dict[SpellType, Callable[[SpellDifficultyType], SpellDefinitio
     SpellType.LOCOMOTOR: get_locomotor,
     SpellType.LUMOS_MAXIMA: get_lumos_maxima,
     SpellType.VENTUS: get_ventus,
+    SpellType.INCENDIO: get_incendio,
+    SpellType.ALOHOMORA: get_alohomora,
 }
 
 

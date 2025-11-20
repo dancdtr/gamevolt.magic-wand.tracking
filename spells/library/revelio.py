@@ -25,6 +25,7 @@ REVELIO_HARD = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_N}), required=True),
             ],
             relative_distance=3 / 9,
+            relative_duration=3 / 9,
         ),
         SpellStepGroup(
             name="Curve_270_CW_Start_E",
@@ -37,6 +38,7 @@ REVELIO_HARD = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_W})),
             ],
             relative_distance=4 / 9,
+            relative_duration=4 / 9,
         ),
         SpellStepGroup(
             name="Line_SE",
@@ -44,6 +46,7 @@ REVELIO_HARD = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_SE}), required=True),
             ],
             relative_distance=2 / 9,
+            relative_duration=2 / 9,
         ),
     ],
     min_spell_steps=4,
@@ -62,6 +65,7 @@ REVELIO_EASY = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_N}), required=True),
             ],
             relative_distance=3 / 9,
+            relative_duration=3 / 9,
         ),
         SpellStepGroup(
             name="Arc_180_CW_Start_E",
@@ -72,6 +76,7 @@ REVELIO_EASY = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_S})),
             ],
             relative_distance=2 / 9,
+            relative_duration=2 / 9,
         ),
         SpellStepGroup(
             name="Arc_180_CW_Start_W",
@@ -81,6 +86,7 @@ REVELIO_EASY = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_SW})),
             ],
             relative_distance=2 / 9,
+            relative_duration=2 / 9,
         ),
         SpellStepGroup(
             name="Line_SE",
@@ -88,6 +94,7 @@ REVELIO_EASY = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_SE}), required=True),
             ],
             relative_distance=2 / 9,
+            relative_duration=2 / 9,
         ),
     ],
     min_spell_steps=5,

@@ -8,6 +8,7 @@ from motion.gesture.gesture_segment import GestureSegment
 from spells.matching.rules.distance_rule import DistanceRule
 from spells.matching.rules.duration_rule import DurationRule
 from spells.matching.rules.group_distance_duration_rule import GroupDistanceRatioRule
+from spells.matching.rules.group_duration_ratio_rule import GroupDurationRatioRule
 from spells.matching.rules.spell_rule import SpellRule
 from spells.matching.spell_match_context import SpellMatchContext
 from spells.matching.spell_match_metrics import SpellMatchMetrics
@@ -56,6 +57,9 @@ class SpellMatcher(SpellMatcherBase):
         if spell.check_group_distance_ratio:
             rules.append(GroupDistanceRatioRule())
 
+        if spell.check_group_duration_ratio:
+            rules.append(GroupDurationRatioRule())
+
         # TODO - generate rules from an appsettings driven factory
 
         return rules
@@ -80,6 +84,8 @@ class SpellMatcher(SpellMatcherBase):
         total_duration = 0.0
 
         group_distance = [0.0 for _ in spell.step_groups]
+        group_duration = [0.0 for _ in spell.step_groups]
+
         total_distance = 0.0
 
         # total time spent in "filler" segments (any direction)
@@ -144,6 +150,7 @@ class SpellMatcher(SpellMatcherBase):
 
                 gi = step_to_group[step_idx]
                 group_distance[gi] += dist
+                group_duration[gi] += dt
 
                 used += 1
                 step_idx += 1
@@ -167,11 +174,13 @@ class SpellMatcher(SpellMatcherBase):
         rules = self._build_rules(spell)
 
         if step_idx == len(steps) and used >= spell.min_spell_steps and start_ts is not None and end_ts is not None:
+            # if used >= spell.min_spell_steps and start_ts is not None and end_ts is not None:
             metrics = SpellMatchMetrics(
                 total_duration_s=total_duration,
                 filler_duration_s=filler_duration,
                 total_distance=total_distance,
                 group_distance=group_distance,
+                group_duration_s=group_duration,  # NEW
                 used_steps=used,
                 total_steps=len(flat_steps),
             )
@@ -184,6 +193,7 @@ class SpellMatcher(SpellMatcherBase):
 
             for rule in rules:
                 if not rule.validate(ctx):
+                    print(f"failed rule: {rule.__qualname__}")
                     return None
 
             return SpellMatch(
@@ -195,5 +205,7 @@ class SpellMatcher(SpellMatcherBase):
                 segments_used=used,
                 total_segments=len(flat_steps),
             )
+        # else:
+        # print(f"{step_idx} | {len(steps)},  {used >= spell.min_spell_steps}, {start_ts is not None}, {end_ts is not None}")
 
         return None

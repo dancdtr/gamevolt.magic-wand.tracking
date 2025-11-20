@@ -18,6 +18,7 @@ class SpellDefinition:
     check_duration: bool = True
     check_distance: bool = True
     check_group_distance_ratio: bool = False
+    check_group_duration_ratio: bool = False
 
     # ── Duration constraints (for DurationRule) ───────────────────
     min_total_duration_s: float | None = None
@@ -36,6 +37,9 @@ class SpellDefinition:
 
     # how much total "filler" time (any direction, incl NONE)
     max_filler_duration_s: float = 0.25
+
+    group_duration_rel_tol: float = 0.25
+    group_duration_min_total_s: float = 1e-3
 
     @property
     def steps(self) -> list[SpellStep]:

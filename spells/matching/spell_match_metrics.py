@@ -8,5 +8,6 @@ class SpellMatchMetrics:
     filler_duration_s: float
     total_distance: float
     group_distance: Sequence[float]
+    group_duration_s: Sequence[float]
     used_steps: int
     total_steps: int

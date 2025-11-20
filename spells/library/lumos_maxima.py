@@ -15,6 +15,7 @@ LUMOS_MAXIMA = SpellDefinition(
                 # SpellStep(frozenset({DirectionType.MOVING_N}), required=True),
             ],
             relative_distance=1 / 2,
+            relative_duration=1 / 2,
         ),
         SpellStepGroup(
             name="Line_SE",
@@ -23,12 +24,18 @@ LUMOS_MAXIMA = SpellDefinition(
                 # SpellStep(frozenset({DirectionType.MOVING_S}), required=True),
             ],
             relative_distance=1 / 2,
+            relative_duration=1 / 2,
         ),
     ],
     min_spell_steps=2,
+    min_total_duration_s=0.5,
     max_total_duration_s=10.0,
     max_idle_gap_s=1.20,
     max_filler_duration_s=0.5,
+    check_distance=False,
+    check_duration=True,
+    check_group_distance_ratio=False,
+    check_group_duration_ratio=False,
 )
 
 
