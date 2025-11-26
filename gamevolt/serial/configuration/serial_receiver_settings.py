@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
+from gamevolt.configuration.settings_base import SettingsBase
+
 
 @dataclass
-class SerialReceiverSettings:
+class SerialReceiverSettings(SettingsBase):
     port: str
     baud: int
     timeout: int

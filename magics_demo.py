@@ -1,131 +1,89 @@
 from __future__ import annotations
 
-import time
+import asyncio
 import tkinter as tk
 
-from gamevolt_debugging import TickMonitor
 from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
 from analysis.spell_trace_adapter_factory import SpellTraceAdapterFactory
 from analysis.spell_trace_session import SpellTraceSessionManager
-from analysis.spell_trace_session_settings import SpellTraceSessionSettings
+from appsettings import AppSettings
 from difficulty.spell_difficulty_controller import SpellDifficultyController
-from input.imu.configuration.imu_input_settings import ImuInputSettings
-from input.imu.imu_motion_input import ImuInput
-from input.mouse_tk_input import MouseTkInput
+from input.factories.configuration.input_type import InputType
+from input.mouse_input import MouseInput
+from input.wand.wand_input import WandInput
 from input.wand_position import WandPosition
-from motion.direction_type import DirectionType
-from motion.gesture_history import GestureHistory
-from motion.gesture_segment import GestureSegment
-from motion.motion_processor import DirectionType, MotionProcessor
-from motion.motion_type import MotionType
-from preview import TkPreview, TkPreviewSettings
-from spell_library import *
+from motion.direction.direction_type import DirectionType
+from motion.gesture.gesture_history import GestureHistory
+from motion.gesture.gesture_segment import GestureSegment
+from motion.motion_processor import MotionProcessor
+from motion.motion_type import MotionPhaseType
 from spells.easy_spell_matcher import EasySpellMatcher
 from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.library.spell_difficulty_type import SpellDifficultyType
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
-from spells.spell_type import SpellType
-from wand_trail import WandTrail
-from wizard_names_provider import WizardNameProvider
+from visualisation.wand_visualiser import WandVisualiser
+from wizards.wizard_names_provider import WizardNameProvider
 
-_SAMPLE_FREQUENCY_HZ = 30
-_SPELL_TYPES = [SpellType.LOCOMOTOR, SpellType.REVELIO]
-# _SPELL_TYPES = [SpellType.REVELIO]
-# _SPELL_TYPES = [SpellType.SQUARIO, SpellType.OBLONGIUM, SpellType.RECTANGLIA, SpellType.REVELIO, SpellType.RICTUMSEMPRA]
+settings = AppSettings.load(config_path="./appsettings.yml", config_env_path=None)
+print(settings)
 
-logger = get_logger(LoggingSettings(minimum_level="DEBUG"))
+logger = get_logger(LoggingSettings(file_path=settings.logging.file_path, minimum_level=settings.logging.minimum_level))
 
-tick_monitor = TickMonitor(30)
-
-history = GestureHistory(max_segments=20, max_age_s=5.0)
-
+history = GestureHistory(settings.motion.gesture_history)
 spell_definition_factory = SpellDefinitionFactory()
-
-difficulty_controller = SpellDifficultyController(logger)
+difficulty_controller = SpellDifficultyController(logger, start_difficulty=SpellDifficultyType.STRICT)
 
 trace_manager = SpellTraceSessionManager(
     logger=logger,
     trace_factory=SpellTraceAdapterFactory(),
     start_active=False,
-    settings=SpellTraceSessionSettings(
-        natural_break_s=0.9,
-        clear_history_on_flush=True,
-        label_prefix="ATTEMPT",
-    ),
+    settings=settings.spell_trace_session,
 )
 
 
 matcher_manager = SpellMatcherManager(difficulty_controller.difficulty)
 matcher_manager.register(
-    SpellDifficultyType.FORGIVING, EasySpellMatcher(spell_definition_factory.create_spells(_SPELL_TYPES, SpellDifficultyType.FORGIVING))
+    SpellDifficultyType.FORGIVING,
+    EasySpellMatcher(logger, spell_definition_factory.create_spells(settings.spells.targets, SpellDifficultyType.FORGIVING)),
 )
 matcher_manager.register(
-    SpellDifficultyType.STRICT, SpellMatcher(spell_definition_factory.create_spells(_SPELL_TYPES, SpellDifficultyType.STRICT))
+    SpellDifficultyType.STRICT,
+    SpellMatcher(logger, spell_definition_factory.create_spells(settings.spells.targets, SpellDifficultyType.STRICT)),
 )
 
-preview = TkPreview(
-    TkPreviewSettings(
-        title="Mock Wand Input",
-        width=800,
-        height=800,
-        buffer=100,
-    )
-)
+visualiser = WandVisualiser(settings=settings.wand_visualiser)
 
-input = MouseTkInput(logger=logger, preview=preview)
-# input = ImuInput(
-#     logger,
-#     settings=ImuInputSettings(
-#         port="/dev/tty.usbmodem2101",
-#         baudrate=115_200,
-#         read_timeout_s=0.05,
-#         emit_hz=30,
-#         max_step=0.25,
-#         sens_yaw_deg_to_unit=0.04,
-#         sens_pitch_deg_to_unit=0.04,
-#         deadband_dps=0.7,
-#         smooth_alpha=0.25,
-#         invert_x=True,
-#         invert_y=True,
-#         drop_if_large_gap_ms=250,
-#     ),
-# )
-
-trail = WandTrail(
-    preview=preview,
-    max_points=90,
-    line_width=4,
-    line_color="#00ffcc",
-    smooth=False,
-    draw_points=True,
-    point_radius=4,
-    point_colour="#FFFFFF",
-)
-
-processor = MotionProcessor(input=input)
-
-name_provider = WizardNameProvider()
+if settings.input.input_type is InputType.MOUSE:
+    input = MouseInput(logger, settings.input.mouse, visualiser)
+elif settings.input.input_type is InputType.WAND:
+    input = WandInput(logger, settings.input.wand)
+else:
+    raise RuntimeError(f"No input defined for type '{settings.input.input_type}'.")
 
 
-def on_sample(s: WandPosition) -> None:
-    # return
-    preview.set_status(f"({s.x:.3f}, {s.y:.3f}) | {tick_monitor.tick_rate}hz")
-    trail.add(s)
-    trail.draw()
+processor = MotionProcessor(settings=settings.motion.processor, input=input)
+name_provider = WizardNameProvider(settings.wizard)
+
+
+def on_position_updated(pos: WandPosition) -> None:
+    visualiser.add_position(pos)
 
 
 def on_direction_changed(dir: DirectionType) -> None:
+    # logger.info(f"State: {dir.name}")
     return
-    logger.debug(f"State: {dir.name}")
 
 
-def on_motion_changed(mode: MotionType) -> None:
+def on_motion_changed(mode: MotionPhaseType) -> None:
     trace_manager.on_motion_changed(mode)
-    # return
+    if mode is MotionPhaseType.STATIONARY:
+        visualiser.clear()
+        input.reset()
+        processor.reset()
     logger.debug(f"Motion: {mode.name}")
 
 
@@ -143,52 +101,44 @@ def on_spell(match: SpellMatch):
     logger.info(
         f"{name_provider.get_name()} cast {match.spell_name}! ✨✨ "
         # f"({match.duration_s:.3f}s), {match.segments_used}/{match.total_segments}="
-        # f"{match.accuracy * 100:.1f}%."
+        f"{match.accuracy * 100:.1f}%."
     )
     trace_manager.on_match(match)
     history.clear()
+    processor.reset()
 
 
-def on_difficulty_toggled() -> None:
-    difficulty_controller.toggle_difficulty()
-    matcher_manager.set_difficulty(difficulty_controller.difficulty)
-    trace_manager.on_difficulty_changed()
+# def on_difficulty_toggled() -> None:
+#     # difficulty_controller.toggle_difficulty()
+#     # matcher_manager.set_difficulty(difficulty_controller.difficulty)
+#     trace_manager.on_difficulty_changed()
 
 
-def main():
-    input.position_updated.subscribe(on_sample)
-    processor.state_changed.subscribe(on_direction_changed)
-    processor.motion_changed.subscribe(on_motion_changed)
-    processor.segment_completed.subscribe(on_segment_completed)
-    matcher_manager.matched.subscribe(on_spell)
-    preview.register_key_callback("t", trace_manager.toggle)
-    preview.register_key_callback("c", trail.clear)
-    preview.register_key_callback("d", on_difficulty_toggled)
+processor.direction_changed.subscribe(on_direction_changed)
+processor.motion_changed.subscribe(on_motion_changed)
+processor.segment_completed.subscribe(on_segment_completed)
+matcher_manager.matched.subscribe(on_spell)
+input.position_updated.subscribe(on_position_updated)
 
-    input.start()
-    processor.start()
-    preview.start()
 
-    interval_s = 1.0 / _SAMPLE_FREQUENCY_HZ
-    next_t = time.perf_counter() + interval_s
+async def main():
+    try:
+        await input.start()
+        processor.start()
+        visualiser.start()
+    except Exception as ex:
+        raise ex
 
     try:
         while True:
-            preview.update()
-
-            now = time.perf_counter()
-            if now >= next_t:
-                tick_monitor.tick()
-                input.update()
-                next_t += interval_s
-
-                if now - next_t > 0.25:
-                    next_t = now + interval_s
-
-            time.sleep(0.001)
+            input.update()
+            visualiser.update()
+            await asyncio.sleep(0.01)
     except tk.TclError:
         pass
+    except Exception as ex:
+        raise ex
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

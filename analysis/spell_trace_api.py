@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Iterable, Protocol
 
-from motion.gesture_segment import GestureSegment
+from motion.gesture.gesture_segment import GestureSegment
 from spells.spell_definition import SpellDefinition
 from spells.spell_step import SpellStep
 

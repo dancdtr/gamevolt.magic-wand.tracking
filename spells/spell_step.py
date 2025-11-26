@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from motion.direction_type import DirectionType
+from motion.direction.direction_type import DirectionType
 
 
 @dataclass(frozen=True)

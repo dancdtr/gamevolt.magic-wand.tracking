@@ -1,0 +1,132 @@
+---
+name: "conductr.wand-magic.tracking"
+
+logging:
+  file_path: ./Logs/conductr.wand-magic.tracking.log
+  minimum_level: "INFORMATION"
+
+spells:
+  targets:
+    # - "lumos_maxima"
+    # - "alohomora"
+    # - "incendio"
+    # - "ventus"
+    # - "locomotor"
+    # - "wingardium_leviosa"
+    - "rictumsempra"
+    # - "revelio"
+    # - "squario"
+    # - "oblongium"
+    # - "rectanglia"
+
+input:
+  input_type: "wand"
+
+  mouse:
+    invert_x: False
+    invert_y: False
+    sample_frequency: 30
+
+  wand:
+    wand_data_reader:
+      imu_hz: 120.0
+      target_hz: 30.0
+      serial_receiver:
+        port: "/dev/tty.usbmodem1101"
+        baud: 115200
+        timeout: 3
+        retry_interval: 2
+    rmf:
+      invert_x: True
+      invert_y: True
+      abs_invert_x: True
+      abs_invert_y: True
+      gain_x: 1.0
+      gain_y: 1.0
+      abs_yaw_limit_deg: 90
+      abs_pitch_limit_deg: 90
+      abs_clip_mode: "DISCARD"
+      deadzone_x: 0.0
+      deadzone_y: 0.0
+      keep_absolute: True
+      tiny_angle: 0
+      world_up: "Z"
+
+motion:
+  gesture_history:
+    max_segments: 20
+    max_age: 5.0
+  processor:
+    phase_tracker:
+      speed_start: 0.50
+      speed_stop: 0.20
+      min_state_duration: 0.03
+      min_stopped_duration: 0.15
+    direction_quantizer:
+      speed_stop: 0.2
+      min_direction_duration: 0.01
+      axis_deadband_per_s: 0.1
+    segment_builder:
+      max_sample_count: 256
+
+wand_visualiser:
+  visualiser:
+    root:
+      title: "Wand Input"
+      width: 800
+      height: 800
+      buffer: 100
+    canvas:
+      background_colour: "#222"
+      highlight_thickness: 0
+  label:
+    text: ""
+    foreground_colour: "#ddd"
+    background_colour: "#111"
+    side: "bottom"
+    fill: "x"
+  axes:
+    show_axes: True
+    colour: "#9ca3af"
+    width: 1
+  trail:
+    max_points: 64
+    line_width: 3
+    line_color: "#ff66d9"
+    draw_points: True
+    point_radius: 3
+    point_colour: "#f2f2f2"
+    smooth: False
+    coords_mode: "centred"
+    y_up: True
+    clip_to_bounds: True
+    pixel_margin: 0
+
+spell_trace_session:
+  natural_break_s: 1
+  clear_history_on_flush: True
+  label_prefix: "ATTEMPT"
+
+wizard:
+  names:
+    - "Harry Potter"
+    - "Hermione Granger"
+    - "Ron Weasley"
+    - "Albus Dumbledore"
+    - "Minerva McGonagall"
+    - "Severus Snape"
+    - "Sirius Black"
+    - "Remus Lupin"
+    - "Rubeus Hagrid"
+    - "Bellatrix Lestrange"
+    - "Lord Voldemort"
+    - "Draco Malfoy"
+    - "Lucius Malfoy"
+    - "Narcissa Malfoy"
+    - "Ginny Weasley"
+    - "Luna Lovegood"
+    - "Neville Longbottom"
+    - "Dolores Umbridge"
+    - "Gellert Grindelwald"
+    - "Kingsley Shacklebolt"
+    - "Gilderoy Lockhart"

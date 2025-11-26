@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
 
-class MotionType(Enum):
+class MotionPhaseType(Enum):
     NONE = auto()
     STATIONARY = auto()
     MOVING = auto()
