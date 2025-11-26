@@ -41,6 +41,13 @@ class SpellDefinition:
     # can appear between key steps before we reject the match.
     max_filler_duration_s: float = 0.25
 
+    # Minimum "rest" time before the spell starts, or None to disable.
+    min_pre_pause_s: float | None = None
+    # Minimum "rest" time after the spell ends, or None to disable.
+    min_post_pause_s: float | None = None
+    # Threshold below which mean_speed counts as "paused".
+    pause_speed_threshold: float = 0.01
+
     @property
     def steps(self) -> list[SpellStep]:
         steps: list[SpellStep] = []

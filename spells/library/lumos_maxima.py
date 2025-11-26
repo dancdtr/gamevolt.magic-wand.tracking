@@ -36,6 +36,9 @@ LUMOS_MAXIMA = SpellDefinition(
     check_duration=True,
     check_group_distance_ratio=False,
     check_group_duration_ratio=False,
+    min_pre_pause_s=0.15,
+    min_post_pause_s=0.15,
+    pause_speed_threshold=0.04,
 )
 
 

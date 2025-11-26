@@ -9,6 +9,8 @@ from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.matching.rules.distance_rule import DurationRule
 from spells.matching.rules.duration_rule import DistanceRule
 from spells.matching.rules.group_distance_duration_rule import GroupDistanceRatioRule
+from spells.matching.rules.pause_at_end_rule import PauseAtEndRule
+from spells.matching.rules.pause_before_start_rule import PauseBeforeStartRule
 from spells.matching.rules.spell_rule import SpellRule
 from spells.matching.spell_match_context import SpellMatchContext
 from spells.matching.spell_match_metrics import SpellMatchMetrics
@@ -62,6 +64,12 @@ class SpellMatcher(SpellMatcherBase):
         if spell.check_group_distance_ratio:
             rules.append(GroupDistanceRatioRule())
 
+        if spell.min_pre_pause_s is not None and spell.min_pre_pause_s > 0.0:
+            rules.append(PauseBeforeStartRule())
+
+        if spell.min_post_pause_s is not None and spell.min_post_pause_s > 0.0:
+            rules.append(PauseAtEndRule())
+
         # TODO: add GroupDurationRatioRule and YAML-driven rules here
 
         return rules
@@ -98,6 +106,9 @@ class SpellMatcher(SpellMatcherBase):
         matched_required = 0
         matched_optional = 0
 
+        used_min_idx: int | None = None  # oldest
+        used_max_idx: int | None = None  # newest
+
         def would_exceed_total_duration(extra: float) -> bool:
             if spell.max_total_duration_s is None:
                 return False
@@ -111,6 +122,7 @@ class SpellMatcher(SpellMatcherBase):
         i = i_start
         while i >= 0 and step_idx < step_count:
             seg = segs[i]
+            current_idx = i
 
             # capture time window endpoints (chronologically correct)
             if start_ts is None:
@@ -152,7 +164,8 @@ class SpellMatcher(SpellMatcherBase):
                 )
 
             def try_consume_as_filler() -> bool:
-                nonlocal filler_duration, total_duration, i
+                nonlocal filler_duration, total_duration, i, used_min_idx, used_max_idx
+                current_idx = i
 
                 # optional hard per-seg limit for NONE gaps
                 if seg.direction_type == DirectionType.NONE and dt > spell.max_idle_gap_s:
@@ -174,6 +187,11 @@ class SpellMatcher(SpellMatcherBase):
                 gi_filler = step_to_group[step_idx]
                 group_distance[gi_filler] += dist
                 # group_duration[gi_filler] += dt  # if you want duration, too
+
+                if used_min_idx is None or current_idx < used_min_idx:
+                    used_min_idx = current_idx
+                if used_max_idx is None or current_idx > used_max_idx:
+                    used_max_idx = current_idx
 
                 log_group_state("FILLER")
 
@@ -218,6 +236,12 @@ class SpellMatcher(SpellMatcherBase):
                     matched_required += 1
                 else:
                     matched_optional += 1
+
+                # mark this segment index as used
+                if used_min_idx is None or current_idx < used_min_idx:
+                    used_min_idx = current_idx
+                if used_max_idx is None or current_idx > used_max_idx:
+                    used_max_idx = current_idx
 
                 log_group_state("MATCH ")
 
@@ -285,19 +309,15 @@ class SpellMatcher(SpellMatcherBase):
         total_used = matched_required + matched_optional
 
         if matched_required == required_total and total_used >= spell.min_spell_steps and start_ts is not None and end_ts is not None:
-            metrics = SpellMatchMetrics(
-                total_duration_s=total_duration,
-                filler_duration_s=filler_duration,
-                total_distance=total_distance,
-                group_distance=group_distance,
-                group_duration_s=group_duration,
-                used_steps=total_used,
-                total_steps=len(flat_steps),
-                required_matched=matched_required,
-                required_total=required_total,
-                optional_matched=matched_optional,
-                optional_total=optional_total,
-            )
+            # guard: should never be None if we used any segments
+            if used_min_idx is None or used_max_idx is None:
+                # fall back to the start_idx as a conservative window
+                window_start_index = i_start
+                window_end_index = i_start
+            else:
+                # segments list is chronological: 0 = oldest, so min is start
+                window_start_index = used_min_idx
+                window_end_index = used_max_idx
 
             metrics = SpellMatchMetrics(
                 total_duration_s=total_duration,
@@ -317,6 +337,8 @@ class SpellMatcher(SpellMatcherBase):
                 spell=spell,
                 segments=segs,
                 metrics=metrics,
+                window_start_index=window_start_index,
+                window_end_index=window_end_index,
             )
 
             for rule in rules:
