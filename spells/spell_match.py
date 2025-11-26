@@ -24,6 +24,8 @@ class SpellMatch:
     # Filler diagnostics (useful for scoring later)
     filler_duration_s: float
 
+    accuracy_score: float
+
     @property
     def accuracy(self) -> float:
         if self.total_segments <= 0:

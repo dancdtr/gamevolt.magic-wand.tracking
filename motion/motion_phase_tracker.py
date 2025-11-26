@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from gamevolt.toolkit.timer import Timer
 from motion.configuration.motion_phase_tracker_settings import MotionPhaseTrackerSettings
+from motion.motion_phase_type import MotionPhaseType
 from motion.motion_phase_update import MotionPhaseUpdate
-from motion.motion_type import MotionPhaseType
 
 
 class MotionPhaseTracker:

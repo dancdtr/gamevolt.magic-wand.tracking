@@ -7,13 +7,13 @@ logging:
 
 spells:
   targets:
-    # - "lumos_maxima"
+    - "lumos_maxima"
     # - "alohomora"
     # - "incendio"
     # - "ventus"
     # - "locomotor"
     # - "wingardium_leviosa"
-    - "rictumsempra"
+    # - "rictumsempra"
     # - "revelio"
     # - "squario"
     # - "oblongium"
@@ -106,6 +106,13 @@ spell_trace_session:
   natural_break_s: 1
   clear_history_on_flush: True
   label_prefix: "ATTEMPT"
+
+accuracy:
+  weights:
+    step_count_weight: 0.7
+    relative_group_distance_weight: 0.15
+    relative_group_duration_weight: 0.15
+    required_step_bias: 0.5
 
 wizard:
   names:

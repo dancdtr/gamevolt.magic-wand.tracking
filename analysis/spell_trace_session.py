@@ -9,7 +9,7 @@ from analysis.spell_trace_api import NullSpellTrace, SpellTrace
 from analysis.spell_trace_session_settings import SpellTraceSessionSettings
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_segment import GestureSegment
-from motion.motion_type import MotionPhaseType
+from motion.motion_phase_type import MotionPhaseType
 from spells.spell_match import SpellMatch
 from spells.spell_matcher_manager import SpellMatcherManager
 

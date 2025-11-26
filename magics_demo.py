@@ -17,8 +17,9 @@ from input.wand_position import WandPosition
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_history import GestureHistory
 from motion.gesture.gesture_segment import GestureSegment
+from motion.motion_phase_type import MotionPhaseType
 from motion.motion_processor import MotionProcessor
-from motion.motion_type import MotionPhaseType
+from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.easy_spell_matcher import EasySpellMatcher
 from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.library.spell_difficulty_type import SpellDifficultyType
@@ -52,7 +53,11 @@ matcher_manager.register(
 )
 matcher_manager.register(
     SpellDifficultyType.STRICT,
-    SpellMatcher(logger, spell_definition_factory.create_spells(settings.spells.targets, SpellDifficultyType.STRICT)),
+    SpellMatcher(
+        logger=logger,
+        accuracy_scorer=SpellAccuracyScorer(settings=settings.accuracy),
+        spells=spell_definition_factory.create_spells(settings.spells.targets, SpellDifficultyType.STRICT),
+    ),
 )
 
 visualiser = WandVisualiser(settings=settings.wand_visualiser)

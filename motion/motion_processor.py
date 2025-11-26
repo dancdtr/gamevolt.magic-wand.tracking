@@ -9,7 +9,7 @@ from motion.direction.direction_quantizer import DirectionQuantizer
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_segment import GestureSegment
 from motion.motion_phase_tracker import MotionPhaseTracker
-from motion.motion_type import MotionPhaseType
+from motion.motion_phase_type import MotionPhaseType
 from motion.segment.segment_builder import SegmentBuilder
 
 

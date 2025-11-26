@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from motion.motion_type import MotionPhaseType
+from motion.motion_phase_type import MotionPhaseType
 
 
 @dataclass(frozen=True)

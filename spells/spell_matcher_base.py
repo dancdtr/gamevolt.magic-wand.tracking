@@ -15,6 +15,7 @@ class SpellMatcherBase:
     def __init__(self, logger: Logger, spells: Sequence[SpellDefinition]):
         self._logger = logger
         self._spells = list(spells)
+
         self.matched: Event[Callable[[SpellMatch], None]] = Event()
 
     # ----- public entry point -----
