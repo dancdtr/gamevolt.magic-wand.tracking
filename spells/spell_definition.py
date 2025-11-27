@@ -17,14 +17,16 @@ class SpellDefinition:
     min_spell_steps: int
 
     # Rule toggles
+    check_pre_start_pause: bool = True
+    check_post_end_pause: bool = True
     check_duration: bool = True
     check_distance: bool = True
     check_group_distance_ratio: bool = False
     check_group_duration_ratio: bool = False  # reserved for later
 
     # Duration / distance constraints
-    min_total_duration_s: float | None = None
-    max_total_duration_s: float | None = None
+    min_total_duration_s: float = 0.1
+    max_total_duration_s: float = 5
     min_total_distance: float | None = None
     max_total_distance: float | None = None
 
@@ -42,9 +44,9 @@ class SpellDefinition:
     max_filler_duration_s: float = 0.25
 
     # Minimum "rest" time before the spell starts, or None to disable.
-    min_pre_pause_s: float | None = None
+    min_pre_pause_s: float = 0
     # Minimum "rest" time after the spell ends, or None to disable.
-    min_post_pause_s: float | None = None
+    min_post_pause_s: float = 0
     # Threshold below which mean_speed counts as "paused".
     pause_speed_threshold: float = 0.01
 
