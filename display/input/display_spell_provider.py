@@ -7,9 +7,9 @@ from display.input.drop_down import DropDown
 from display.input.key_input import KeyInput
 from display.input.numeric_input import NumericInput
 from gamevolt.events.event import Event
+from spells.selection.spell_selector_base import SpellSelectorBase
 from spells.spell import Spell
 from spells.spell_factory import SpellFactory
-from spells.spell_provider_base import SpellProviderBase
 from spells.spell_type import SpellType
 
 _SPELL_TYPE_MAPPINGS = {
@@ -49,7 +49,7 @@ _SPELL_TYPE_MAPPINGS = {
 _DIVIDER = " - "
 
 
-class DisplaySpellProvider(SpellProviderBase):
+class DisplaySpellProvider(SpellSelectorBase):
     def __init__(self, logger: Logger, spell_factory: SpellFactory, root: tk.Misc) -> None:
         super().__init__(logger)
         self._spell_factory = spell_factory

@@ -6,7 +6,7 @@ from gamevolt.events.event import Event
 from spells.spell import Spell
 
 
-class SpellProviderBase(ABC):
+class SpellSelectorBase(ABC):
     def __init__(self, logger: Logger) -> None:
         super().__init__()
         self._logger = logger

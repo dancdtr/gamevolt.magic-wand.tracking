@@ -34,8 +34,8 @@ REVELIO_HARD = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_E})),
                 SpellStep(frozenset({DirectionType.MOVING_SE})),
                 SpellStep(frozenset({DirectionType.MOVING_S})),
-                SpellStep(frozenset({DirectionType.MOVING_SW})),
-                SpellStep(frozenset({DirectionType.MOVING_W})),
+                SpellStep(frozenset({DirectionType.MOVING_SW, DirectionType.MOVING_W}), required=True),
+                # SpellStep(frozenset({DirectionType.MOVING_W})),
             ],
             relative_distance=4 / 9,
             relative_duration=4 / 9,
@@ -43,7 +43,7 @@ REVELIO_HARD = SpellDefinition(
         SpellStepGroup(
             name="Line_SE",
             steps=[
-                SpellStep(frozenset({DirectionType.MOVING_SE}), required=True),
+                SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_E}), required=True),
             ],
             relative_distance=2 / 9,
             relative_duration=2 / 9,

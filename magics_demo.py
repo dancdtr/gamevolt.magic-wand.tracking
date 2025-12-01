@@ -14,6 +14,7 @@ from input.factories.configuration.input_type import InputType
 from input.mouse_input import MouseInput
 from input.wand.wand_input import WandInput
 from input.wand_position import WandPosition
+from messaging.unity_udp_tx import UnityUdpTx
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_history import GestureHistory
 from motion.gesture.gesture_segment import GestureSegment
@@ -28,6 +29,8 @@ from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
 from visualisation.wand_visualiser import WandVisualiser
 from wizards.wizard_names_provider import WizardNameProvider
+
+_WAND_ID = "DefaultWand"
 
 settings = AppSettings.load(config_path="./appsettings.yml", config_env_path=None)
 print(settings)
@@ -45,6 +48,7 @@ trace_manager = SpellTraceSessionManager(
     settings=settings.spell_trace_session,
 )
 
+unity_udp_tx = UnityUdpTx(logger, settings.unity_udp)
 
 matcher_manager = SpellMatcherManager(difficulty_controller.difficulty)
 matcher_manager.register(
@@ -104,10 +108,12 @@ def on_segment_completed(segment: GestureSegment):
 
 def on_spell(match: SpellMatch):
     logger.info(
-        f"{name_provider.get_name()} cast {match.spell_name}! ✨✨ "
+        f"{name_provider.get_name()} cast {match.spell_name}! ✨✨"
         # f"({match.duration_s:.3f}s), {match.segments_used}/{match.total_segments}="
         f"{match.accuracy * 100:.1f}%."
     )
+
+    unity_udp_tx.on_spell_detected(match)
     trace_manager.on_match(match)
     history.clear()
     processor.reset()

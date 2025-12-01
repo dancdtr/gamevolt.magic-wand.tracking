@@ -6,7 +6,7 @@ from gamevolt.messaging.udp.configuration.udp_tx_settings import UdpTxSettings
 from gamevolt.messaging.udp.udp_tx import UdpTx
 
 
-class UdpMessageSender(MessageSenderProtocol):
+class DemoUdpMessageSender(MessageSenderProtocol):
     def __init__(self, logger: Logger, settings: UdpTxSettings) -> None:
         self._logger = logger
         self._settings = settings

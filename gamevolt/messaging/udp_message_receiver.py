@@ -26,5 +26,5 @@ class UdpMessageReceiver(MessageReceiverProtocol):
         self._udp_rx.stop()
 
     def _on_data_received(self, data: str) -> None:
-        self._logger.info(f"RX ← {data}")
+        self._logger.debug(f"RX ← {data}")
         self.message_received.invoke(data)

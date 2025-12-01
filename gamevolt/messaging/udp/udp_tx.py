@@ -17,13 +17,18 @@ class UdpTx:
         self._sequence_id = 0
 
     def send(self, payload: dict[str, Any]) -> None:
-        self._sequence_id += 1
+        # self._sequence_id += 1
 
-        payload.setdefault("Type", "gesture")
-        payload.setdefault("Ts", time.time())
-        payload.setdefault("Id", self._sequence_id)
+        # payload.setdefault("Type", "gesture")
+        # payload.setdefault("Ts", time.time())
+        # payload.setdefault("Id", self._sequence_id)
 
         data = json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
         self._logger.debug(f"Sending to 'udp://{self._settings.address}': {data}")
+        self._sock.sendto(data, self._settings.address)
+
+    def send_str(self, payload: str) -> None:
+        data = json.dumps(payload).encode("utf-8")
+        self._logger.info(f"Sending to 'udp://{self._settings.address}': {data}")
         self._sock.sendto(data, self._settings.address)

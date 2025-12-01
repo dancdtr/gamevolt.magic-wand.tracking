@@ -7,14 +7,14 @@ logging:
 
 spells:
   targets:
-    - "lumos_maxima"
+    # - "lumos_maxima"
     # - "alohomora"
-    # - "incendio"
+    - "incendio"
     # - "ventus"
     # - "locomotor"o
-    # - "wingardium_leviosa"
+    - "wingardium_leviosa"
     # - "rictumsempra"
-    # - "revelio"
+    - "revelio"
     # - "squario"
     # - "oblongium"
     # - "rectanglia"
@@ -32,7 +32,7 @@ input:
       imu_hz: 120.0
       target_hz: 30.0
       serial_receiver:
-        port: "/dev/tty.usbmodem2101"
+        port: "/dev/tty.usbmodem111101"
         baud: 115200
         timeout: 3
         retry_interval: 2
@@ -113,6 +113,14 @@ accuracy:
     relative_group_distance_weight: 0.15
     relative_group_duration_weight: 0.15
     required_step_bias: 0.5
+
+unity_udp:
+  spell_mapping_keys: ["INCENDIO", "WINGARDIUM_LEVIOSA", "REVELIO"]
+  spell_mapping_values: ["spell1", "spell2", "spell3"]
+
+  udp_tx:
+    host: "0.0.0.0"
+    port: 8050
 
 wizard:
   names:

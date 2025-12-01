@@ -11,7 +11,7 @@ INCENDIO = SpellDefinition(
         SpellStepGroup(
             name="Line_NE",
             steps=[
-                SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_N}), required=True),
+                SpellStep(frozenset({DirectionType.MOVING_NE}), required=True),
             ],
             relative_distance=1 / 3,
             relative_duration=1 / 3,
@@ -19,7 +19,7 @@ INCENDIO = SpellDefinition(
         SpellStepGroup(
             name="Line_SE",
             steps=[
-                SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_S}), required=True),
+                SpellStep(frozenset({DirectionType.MOVING_SE}), required=True),
             ],
             relative_distance=1 / 3,
             relative_duration=1 / 3,
@@ -27,21 +27,28 @@ INCENDIO = SpellDefinition(
         SpellStepGroup(
             name="Line_W",
             steps=[
+                SpellStep(frozenset({DirectionType.MOVING_NW})),
                 SpellStep(frozenset({DirectionType.MOVING_W}), required=True),
+                SpellStep(
+                    frozenset({DirectionType.MOVING_SW}),
+                ),
             ],
             relative_distance=1 / 3,
             relative_duration=1 / 3,
         ),
     ],
     min_spell_steps=3,
-    min_total_duration_s=0.7,
-    max_total_duration_s=3.0,
+    min_total_duration_s=0.5,
+    max_total_duration_s=10.0,
     max_idle_gap_s=1.20,
-    max_filler_duration_s=0.4,
+    max_filler_duration_s=0.5,
     check_distance=False,
     check_duration=True,
     check_group_distance_ratio=False,
     check_group_duration_ratio=False,
+    min_pre_pause_s=0.15,
+    min_post_pause_s=0.15,
+    pause_speed_threshold=0.04,
 )
 
 

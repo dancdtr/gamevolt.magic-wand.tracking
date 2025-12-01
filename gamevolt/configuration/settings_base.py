@@ -285,7 +285,7 @@ class SettingsBase:
                 # Got a dict but annotation isn’t a class type — likely a missing/incorrect annotation
                 raise TypeError(
                     f"[{path}.{key}] got a dict but annotation is {base!r}; "
-                    "did you forget to annotate this field with your Settings dataclass?"
+                    "did you forget to annotate this field with SettingsBase dataclass?"
                 )
 
             # 3) Enum scalar
