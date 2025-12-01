@@ -22,9 +22,10 @@ from input.wand_position import WandPosition
 class WandInput(MotionInputBase):
     def __init__(self, logger: Logger, settings: WandSettings) -> None:
         super().__init__(logger)
+        self._settings = settings
 
-        self._yaw_pitch_interpreter = YawPitchRMFInterpreter(settings.rmf)
         self._wand_data_reader = WandDataReader(logger, settings.wand_data_reader)
+        self._yaw_pitch_interpreter = YawPitchRMFInterpreter(settings.rmf)
 
         self.position_updated: Event[Callable[[WandPosition], None]] = Event()
 
@@ -43,8 +44,9 @@ class WandInput(MotionInputBase):
         self._yaw_pitch_interpreter.reset()
 
     def _on_wand_data_message(self, message: WandDataMessage) -> None:
-        wand_pos = self._yaw_pitch_interpreter.on_sample(message.ms, message.yaw, message.pitch)
+        wand_pos = self._yaw_pitch_interpreter.on_sample(message.id, message.ms, message.yaw, message.pitch)
         adjusted_wand_position = WandPosition(
+            id=message.id,
             ts_ms=wand_pos.ts_ms,
             x_delta=wand_pos.x_delta,
             y_delta=wand_pos.y_delta,

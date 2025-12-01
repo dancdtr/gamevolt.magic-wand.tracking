@@ -100,6 +100,10 @@ class WandDataReader:
         # get header if present; otherwise synthesize something reasonable
         t_base, tag_hex, _ = self._pending_headers.pop(seq, (0, "????", 0))
 
+        if tag_hex != self._settings.wand_id:
+            print(f"ignoring {tag_hex}")
+            return
+
         idx = 0
         for y100, p100 in self._parse_items(data_str):
             ms = int(round(t_base + idx * self._dt_ms))

@@ -9,3 +9,4 @@ class WandDataReaderSettings(SettingsBase):
     serial_receiver: SerialReceiverSettings
     imu_hz: float
     target_hz: float
+    wand_id: str

@@ -1,6 +1,7 @@
 # spells/spell_matcher_base.py
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from logging import Logger
 
@@ -11,12 +12,15 @@ from spells.spell_match import SpellMatch
 from spells.spell_step import SpellStep
 
 
-class SpellMatcherBase:
-    def __init__(self, logger: Logger, spells: Sequence[SpellDefinition]):
+class SpellMatcherBase(ABC):
+    def __init__(self, logger: Logger):
         self._logger = logger
-        self._spells = list(spells)
 
         self.matched: Event[Callable[[SpellMatch], None]] = Event()
+
+    @property
+    @abstractmethod
+    def spell_definitions(self) -> list[SpellDefinition]: ...
 
     # ----- public entry point -----
     def try_match(self, history: Sequence[GestureSegment]) -> None:
@@ -24,7 +28,7 @@ class SpellMatcherBase:
             return
         compressed = self._compress(history)  # oldest → newest
 
-        for spell in self._spells:
+        for spell in self.spell_definitions:
             match = self._match_spell(spell, compressed)
             if match:
                 self.matched.invoke(match)

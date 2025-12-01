@@ -24,13 +24,14 @@ from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.easy_spell_matcher import EasySpellMatcher
 from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.library.spell_difficulty_type import SpellDifficultyType
+from spells.selection.udp_spell_selector import UdpSpellSelector
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
 from visualisation.wand_visualiser import WandVisualiser
 from wizards.wizard_names_provider import WizardNameProvider
 
-_WAND_ID = "DefaultWand"
+# _WAND_ID = "DefaultWand"
 
 settings = AppSettings.load(config_path="./appsettings.yml", config_env_path=None)
 print(settings)
@@ -39,7 +40,7 @@ logger = get_logger(LoggingSettings(file_path=settings.logging.file_path, minimu
 
 history = GestureHistory(settings.motion.gesture_history)
 spell_definition_factory = SpellDefinitionFactory()
-difficulty_controller = SpellDifficultyController(logger, start_difficulty=SpellDifficultyType.STRICT)
+difficulty_controller = SpellDifficultyController(logger, start_difficulty=SpellDifficultyType.FORGIVING)
 
 trace_manager = SpellTraceSessionManager(
     logger=logger,
@@ -49,18 +50,18 @@ trace_manager = SpellTraceSessionManager(
 )
 
 unity_udp_tx = UnityUdpTx(logger, settings.unity_udp)
-
+spell_selector = UdpSpellSelector(logger, settings.spell_selector)
 matcher_manager = SpellMatcherManager(difficulty_controller.difficulty)
+# matcher_manager.register(
+# #     SpellDifficultyType.STRICT,
+# #     EasySpellMatcher(logger, spell_definition_factory.create_spells(settings.spells.targets, SpellDifficultyType.FORGIVING)),
+# # )
 matcher_manager.register(
-    SpellDifficultyType.FORGIVING,
-    EasySpellMatcher(logger, spell_definition_factory.create_spells(settings.spells.targets, SpellDifficultyType.FORGIVING)),
-)
-matcher_manager.register(
-    SpellDifficultyType.STRICT,
-    SpellMatcher(
+    difficulty=SpellDifficultyType.FORGIVING,
+    matcher=SpellMatcher(
         logger=logger,
         accuracy_scorer=SpellAccuracyScorer(settings=settings.accuracy),
-        spells=spell_definition_factory.create_spells(settings.spells.targets, SpellDifficultyType.STRICT),
+        spell_selector=spell_selector,
     ),
 )
 
@@ -125,6 +126,7 @@ def on_spell(match: SpellMatch):
 #     trace_manager.on_difficulty_changed()
 
 
+spell_selector.start()
 processor.direction_changed.subscribe(on_direction_changed)
 processor.motion_changed.subscribe(on_motion_changed)
 processor.segment_completed.subscribe(on_segment_completed)

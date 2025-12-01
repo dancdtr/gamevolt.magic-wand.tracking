@@ -27,6 +27,7 @@ class SpellMatcherManager:
             return
 
         matcher = self._spell_matchers.get(self._difficulty, None)
+
         if not matcher:
             raise KeyError(f"No spell matcher defined for difficulty: '{self._difficulty.name}'!")
 

@@ -104,6 +104,7 @@ class MouseInput(MotionInputBase):
             self._prev_y = cy
 
             sample = WandPosition(
+                id="MOUSE",
                 ts_ms=_now_ms(),
                 x_delta=dx,
                 y_delta=dy,

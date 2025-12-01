@@ -17,14 +17,23 @@ class UdpSpellSelector(SpellSelectorBase):
         self._udp_receiver = UdpRx(logger, settings.udp_receiver)
         self._spell_factory = SpellFactory()
 
+        self._target_spells: list[Spell] = [self._spell_factory.create(SpellType.NONE)]
+
+        self._target_spells_updated = Event[Callable[[list[Spell]], None]]()
+
     @property
-    def target_spells_updated(self) -> Event[Callable[[list[Spell]], None]]: ...
+    def target_spells_updated(self) -> Event[Callable[[list[Spell]], None]]:
+        return self._target_spells_updated
 
     @property
     def toggle_history(self) -> Event[Callable[[], None]]: ...
 
     @property
     def quit(self) -> Event[Callable[[], None]]: ...
+
+    @property
+    def target_spells(self) -> list[Spell]:
+        return self._target_spells
 
     def start(self) -> None:
         super().start()
@@ -33,10 +42,19 @@ class UdpSpellSelector(SpellSelectorBase):
         self._udp_receiver.start()
 
     def _on_message_received(self, message: str) -> None:
-        # handle spell deserialisation
+        self._logger.debug(message)
 
-        self._logger.info(message)
+        if "INCENDIO" in message:
+            spell_type = SpellType.INCENDIO
+        elif "WINGARDIUM_LEVIOSA" in message:
+            spell_type = SpellType.WINGARDIUM_LEVIOSA
+        elif "ALOHOMORA" in message:
+            spell_type = SpellType.ALOHOMORA
+        else:
+            spell_type = SpellType.NONE
 
-        spell_type = SpellType.INCENDIO
         spell = self._spell_factory.create(spell_type)
-        self.target_spells_updated.invoke([spell])
+        self._target_spells = [spell]
+
+        self._logger.info(f"Settings target spells to: {[spell.name for spell in self._target_spells]}")
+        self.target_spells_updated.invoke(self._target_spells)

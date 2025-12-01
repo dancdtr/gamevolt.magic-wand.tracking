@@ -4,6 +4,7 @@ from spells.library.alohomora import get_alohomora
 from spells.library.incendio import get_incendio
 from spells.library.locomotor import get_locomotor
 from spells.library.lumos_maxima import get_lumos_maxima
+from spells.library.none import get_none_spell
 from spells.library.revelio import get_revelio
 from spells.library.rictumsempra import get_rictumsempra
 from spells.library.spell_difficulty_type import SpellDifficultyType
@@ -13,6 +14,7 @@ from spells.spell_definition import SpellDefinition
 from spells.spell_type import SpellType
 
 _SPELL_PROVIDERS: dict[SpellType, Callable[[SpellDifficultyType], SpellDefinition]] = {
+    SpellType.NONE: get_none_spell,
     SpellType.REVELIO: get_revelio,
     SpellType.LOCOMOTOR: get_locomotor,
     SpellType.LUMOS_MAXIMA: get_lumos_maxima,
@@ -25,7 +27,9 @@ _SPELL_PROVIDERS: dict[SpellType, Callable[[SpellDifficultyType], SpellDefinitio
 
 
 class SpellDefinitionFactory:
-    def create_spells(self, spell_types: list[SpellType], difficulty: SpellDifficultyType) -> list[SpellDefinition]:
+    def create_spells(
+        self, spell_types: list[SpellType], difficulty: SpellDifficultyType = SpellDifficultyType.FORGIVING
+    ) -> list[SpellDefinition]:
         return [self.create_spell(spell_type, difficulty) for spell_type in spell_types]
 
     def create_spell(self, spell_type: SpellType, difficulty: SpellDifficultyType) -> SpellDefinition:

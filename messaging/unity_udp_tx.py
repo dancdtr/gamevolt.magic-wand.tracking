@@ -18,7 +18,5 @@ class UnityUdpTx:
         spell_command = self._settings.spell_mappings.get(spell.spell_name)
 
         if spell_command:
-            print("hi")
-
-            payload = f"Event:{spell_command}"
+            payload = f"{spell_command}"
             self._udp_tx.send_str(payload)

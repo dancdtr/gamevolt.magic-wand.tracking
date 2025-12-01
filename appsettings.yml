@@ -8,13 +8,13 @@ logging:
 spells:
   targets:
     # - "lumos_maxima"
-    # - "alohomora"
+    - "alohomora"
     - "incendio"
     # - "ventus"
     # - "locomotor"o
     - "wingardium_leviosa"
     # - "rictumsempra"
-    - "revelio"
+    # - "revelio"
     # - "squario"
     # - "oblongium"
     # - "rectanglia"
@@ -29,10 +29,11 @@ input:
 
   wand:
     wand_data_reader:
+      wand_id: "E001"
       imu_hz: 120.0
       target_hz: 30.0
       serial_receiver:
-        port: "/dev/tty.usbmodem111101"
+        port: "/dev/tty.usbmodem101"
         baud: 115200
         timeout: 3
         retry_interval: 2
@@ -121,6 +122,13 @@ unity_udp:
   udp_tx:
     host: "0.0.0.0"
     port: 8050
+
+spell_selector:
+  udp_receiver:
+    host: "0.0.0.0"
+    port: 8051
+    max_size: 65556
+    recv_timeout_s: 2
 
 wizard:
   names:

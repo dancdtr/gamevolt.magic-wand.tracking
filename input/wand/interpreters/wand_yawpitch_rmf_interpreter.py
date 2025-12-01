@@ -82,7 +82,7 @@ class YawPitchRMFInterpreter:
 
     # ── main entry ──────────────────────────────────────────────────────────
 
-    def on_sample(self, ts_ms: int, yaw_deg: float, pitch_deg: float) -> WandPosition:
+    def on_sample(self, id: str, ts_ms: int, yaw_deg: float, pitch_deg: float) -> WandPosition:
         yaw = math.radians(yaw_deg) + self._yaw_offset
         pitch = math.radians(pitch_deg)
 
@@ -111,7 +111,7 @@ class YawPitchRMFInterpreter:
         if self._f_prev is None:
             self.lock_frame_from_yawpitch(yaw_deg, pitch_deg)
             nx, ny = self._abs_norm_from_locked(f_now)
-            return WandPosition(ts_ms, 0.0, 0.0, nx, ny)
+            return WandPosition(id, ts_ms, 0.0, 0.0, nx, ny)
 
         # --- minimal rotation f_prev -> f_now (unchanged) ---
         cross_product = cross(self._f_prev, f_now)
@@ -121,7 +121,7 @@ class YawPitchRMFInterpreter:
         if angle < self._settings.tiny_angle or s < self._settings.tiny_angle:
             self._f_prev = f_now
             nx, ny = self._abs_norm_from_locked(f_now)
-            return WandPosition(ts_ms, 0.0, 0.0, nx, ny)
+            return WandPosition(id, ts_ms, 0.0, 0.0, nx, ny)
 
         axis = (cross_product[0] / s, cross_product[1] / s, cross_product[2] / s)
         dtheta = (axis[0] * angle, axis[1] * angle, axis[2] * angle)
@@ -151,7 +151,7 @@ class YawPitchRMFInterpreter:
         self._f_prev, self._r_prev, self._v_prev = f_now, r_now, v_now
         nx, ny = self._abs_norm_from_locked(f_now)
 
-        return WandPosition(ts_ms, dx, dy, nx, ny)
+        return WandPosition(id, ts_ms, dx, dy, nx, ny)
 
     # ── internals ───────────────────────────────────────────────────────────
     def _forward_from_yawpitch(self, yaw: float, pitch: float) -> Vec3:
