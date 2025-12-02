@@ -4,7 +4,7 @@ from logging import Logger
 from detection.gesture_history import GestureHistory
 from gamevolt.events.event import Event
 from gamevolt.toolkit.timer import Timer
-from spells.selection.spell_provider_base import SpellSelectorBase
+from spells.selection.spell_selector_base import SpellSelectorBase
 from spells.spell import Spell
 from spells.spell_type import SpellType
 
