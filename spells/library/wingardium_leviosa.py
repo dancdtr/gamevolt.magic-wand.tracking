@@ -36,6 +36,10 @@ WINGARDIUM_LEVIOSA = SpellDefinition(
     ],
     min_spell_steps=4,
     max_total_duration_s=5.0,
+    min_total_duration_s=0.5,
     max_idle_gap_s=1.20,
-    max_filler_duration_s=0.35,
+    max_filler_duration_s=0.5,
+    check_duration=True,
+    min_pre_pause_s=0.15,
+    min_post_pause_s=0.15,
 )

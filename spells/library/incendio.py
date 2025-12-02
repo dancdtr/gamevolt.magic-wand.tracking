@@ -11,7 +11,7 @@ INCENDIO = SpellDefinition(
         SpellStepGroup(
             name="Line_NE",
             steps=[
-                SpellStep(frozenset({DirectionType.MOVING_NE}), required=True),
+                SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_N}), required=True),
             ],
             relative_distance=1 / 3,
             relative_duration=1 / 3,
@@ -19,7 +19,7 @@ INCENDIO = SpellDefinition(
         SpellStepGroup(
             name="Line_SE",
             steps=[
-                SpellStep(frozenset({DirectionType.MOVING_SE}), required=True),
+                SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_S}), required=True),
             ],
             relative_distance=1 / 3,
             relative_duration=1 / 3,
@@ -27,8 +27,7 @@ INCENDIO = SpellDefinition(
         SpellStepGroup(
             name="Line_W",
             steps=[
-                SpellStep(frozenset({DirectionType.MOVING_NW})),
-                SpellStep(frozenset({DirectionType.MOVING_W}), required=True),
+                SpellStep(frozenset({DirectionType.MOVING_W, DirectionType.MOVING_NW}), required=True),
                 SpellStep(
                     frozenset({DirectionType.MOVING_SW}),
                 ),
