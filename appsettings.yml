@@ -1,5 +1,6 @@
 ---
 name: "conductr.wand-magic.tracking"
+version: "x.x.x"
 
 logging:
   file_path: ./Logs/conductr.wand-magic.tracking.log
@@ -33,7 +34,7 @@ input:
       imu_hz: 120.0
       target_hz: 30.0
       serial_receiver:
-        port: "/dev/tty.usbmodem101"
+        port: "/dev/tty.usbmodem14101"
         baud: 115200
         timeout: 3
         retry_interval: 2
@@ -116,7 +117,7 @@ accuracy:
     required_step_bias: 0.5
 
 unity_udp:
-  spell_mapping_keys: ["INCENDIO", "WINGARDIUM_LEVIOSA", "REVELIO"]
+  spell_mapping_keys: ["INCENDIO", "WINGARDIUM_LEVIOSA", "ALOHOMORA"]
   spell_mapping_values: ["spell1", "spell2", "spell3"]
 
   udp_tx:
