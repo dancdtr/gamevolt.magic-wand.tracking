@@ -1,0 +1,54 @@
+# Dockerfile.dev
+# syntax=docker/dockerfile:1.4
+
+FROM ubuntu:22.04 AS builder
+
+RUN apt-get update && \
+    apt-get install -y curl build-essential jq binutils zip
+
+WORKDIR /app
+
+RUN curl -Ls "https://micro.mamba.pm/api/micromamba/linux-$(uname -m)/latest" \
+    | tar -xvj -C /usr/local/bin --strip-components=1 bin/micromamba
+
+ARG AWS_ACCESS_KEY_ID
+ARG AWS_SECRET_ACCESS_KEY
+ARG CONDA_ENV_NAME
+ARG BUILD_VERSION
+
+COPY . .
+
+ENV MAMBA_NO_NETLINK=1
+
+RUN micromamba create --prefix /opt/conda/envs/temp-env python=3.11 pip awscli --yes && \
+    micromamba clean --all --yes
+
+ENV PATH=/opt/conda/envs/temp-env/bin:$PATH
+
+RUN apt-get update && \
+    apt-get install -y build-essential jq binutils zip
+
+RUN apt-get update && \
+    apt-get install -y \
+    libgl1-mesa-glx \
+    libsm6 \
+    libxext6 \
+    libice6 \
+    libglib2.0-0 \
+    libxrender1
+
+ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+ENV AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+
+RUN export CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain gamevolt --domain-owner 797574014321 --region eu-north-1 --query authorizationToken --output text) && \
+    pip config set global.extra-index-url "https://aws:${CODEARTIFACT_AUTH_TOKEN}@gamevolt-797574014321.d.codeartifact.eu-north-1.amazonaws.com/pypi/gamevolt.python/simple/" && \
+    micromamba create --prefix /opt/conda/envs/${CONDA_ENV_NAME} -f environment.yml --yes && \
+    micromamba clean --all --yes
+
+ENV PATH=/opt/conda/envs/${CONDA_ENV_NAME}/bin:$PATH
+
+RUN chmod +x ./build.sh
+RUN bash ./build.sh ${BUILD_VERSION}
+
+FROM scratch AS export
+COPY --from=builder /app/.dist/. /

@@ -2,13 +2,22 @@ name: gamevolt.magic-wand.tracking
 channels:
   - conda-forge
 dependencies:
-  - python==3.13
+  - python==3.11
   - pip
+  - numpy
+  - scipy
+  - pyserial
   - pip:
+      - gamevolt.python.debugging==1.1.0
+      - gamevolt.python.logging==2.1.1
+      - jsonmerge
+      - pyserial-asyncio
+      - uvloop
+      - pyinstaller
+      - pytest==8.3.5
       - black==25.1.0
       - isort==6.0.0
-      - pytest==8.3.5
-      - bleak
-      - numpy
-      - scipy
-      - pyserial
+      - mypy==1.18.1
+      - pylint==3.3.8
+      - ruff==0.13.0
+      - vulture==2.14
