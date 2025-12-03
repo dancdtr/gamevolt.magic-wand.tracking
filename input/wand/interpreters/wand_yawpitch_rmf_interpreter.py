@@ -126,8 +126,20 @@ class YawPitchRMFInterpreter:
         axis = (cross_product[0] / s, cross_product[1] / s, cross_product[2] / s)
         dtheta = (axis[0] * angle, axis[1] * angle, axis[2] * angle)
 
-        dx = dot(dtheta, self._v_prev)
-        dy = dot(dtheta, self._r_prev)
+        # --- choose basis for delta projection ------------------------------
+        # New behaviour: express the incremental rotation in the fixed
+        # "gesture canvas" defined at reset (f_lock, r_lock, v_lock),
+        # instead of the moving local frame.
+        if hasattr(self, "_r_lock") and hasattr(self, "_v_lock") and self._r_lock is not None and self._v_lock is not None:
+            basis_r = self._r_lock  # "up/down" axis in locked plane
+            basis_v = self._v_lock  # "left/right" axis in locked plane
+        else:
+            # Fallback to previous behaviour if lock not initialised yet
+            basis_r = self._r_prev
+            basis_v = self._v_prev
+
+        dx = dot(dtheta, basis_v)
+        dy = dot(dtheta, basis_r)
 
         if abs(dx) < self._settings.deadzone_x:
             dx = 0.0
