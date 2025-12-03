@@ -1,7 +1,6 @@
+from gamevolt.io.file_handlers.file_handler import FileHandler
 from gamevolt.io.typing import JsonLike
-
-from ..utils import load_json, save_json, try_load_json
-from .file_handler import FileHandler
+from gamevolt.io.utils import load_json, save_json, try_load_json
 
 
 class JsonFileHandler(FileHandler):

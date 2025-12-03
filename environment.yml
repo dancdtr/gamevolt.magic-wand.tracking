@@ -2,7 +2,7 @@ name: gamevolt.magic-wand.tracking
 channels:
   - conda-forge
 dependencies:
-  - python==3.11
+  - python==3.12
   - pip
   - numpy
   - scipy
@@ -21,3 +21,4 @@ dependencies:
       - pylint==3.3.8
       - ruff==0.13.0
       - vulture==2.14
+      - pyyaml

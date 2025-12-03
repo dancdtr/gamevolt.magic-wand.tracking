@@ -9,7 +9,9 @@ import jsonmerge
 
 from gamevolt.configuration.errors.appsettings_error import AppsettingsError
 from gamevolt.configuration.settings_base import SettingsBase
-from gamevolt.io.file_handlers import FileHandler, JsonFileHandler, YamlFileHandler
+from gamevolt.io.file_handlers.file_handler import FileHandler
+from gamevolt.io.file_handlers.json_file_handler import JsonFileHandler
+from gamevolt.io.file_handlers.yaml_file_handler import YamlFileHandler
 from gamevolt.io.typing import JsonLike
 
 

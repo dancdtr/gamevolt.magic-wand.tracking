@@ -298,7 +298,7 @@ class SpellMatcher(SpellMatcherBase):
         self._logger.info(
             "MATCHED spell=%s score=%.3f win_start=%d "
             "required %d/%d + optional %d/%d = total %d/%d "
-            "total_distance=%.3f group_distance=%s group_ratios=%s filler_duration=%.3f",
+            "total_duration=%.3f, total_distance=%.3f group_distance=%s group_ratios=%s filler_duration=%.3f",
             spell.name,
             accuracy.score,
             i_start,
@@ -308,6 +308,7 @@ class SpellMatcher(SpellMatcherBase):
             optional_total,
             total_used,
             required_total + optional_total,
+            total_duration,
             total_distance,
             dict(zip(group_names, group_distance)),
             dict(zip(group_names, [round(r, 3) for r in final_ratios])),

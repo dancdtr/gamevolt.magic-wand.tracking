@@ -34,7 +34,7 @@ input:
       imu_hz: 120.0
       target_hz: 30.0
       serial_receiver:
-        port: "/dev/tty.usbmodem14101"
+        port: "/dev/tty.usbmodem1101"
         baud: 115200
         timeout: 3
         retry_interval: 2
@@ -45,8 +45,8 @@ input:
       abs_invert_y: True
       gain_x: 1.0
       gain_y: 1.0
-      abs_yaw_limit_deg: 90
-      abs_pitch_limit_deg: 90
+      abs_yaw_limit_deg: 180
+      abs_pitch_limit_deg: 180
       abs_clip_mode: "DISCARD"
       deadzone_x: 0.0
       deadzone_y: 0.0
@@ -57,7 +57,7 @@ input:
 motion:
   gesture_history:
     max_segments: 20
-    max_age: 5.0
+    max_age: 3
   processor:
     phase_tracker:
       speed_start: 0.50

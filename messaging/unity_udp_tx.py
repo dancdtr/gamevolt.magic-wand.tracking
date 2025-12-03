@@ -14,7 +14,6 @@ class UnityUdpTx:
         self._udp_tx = UdpTx(logger, settings.udp_tx)
 
     def on_spell_detected(self, spell: SpellMatch) -> None:
-        print(self._settings.spell_mappings)
         spell_command = self._settings.spell_mappings.get(spell.spell_name)
 
         if spell_command:

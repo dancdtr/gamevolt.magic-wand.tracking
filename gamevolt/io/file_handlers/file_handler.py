@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from ..typing import JsonLike
+from gamevolt.io.typing import JsonLike
 
 
 class FileHandler(ABC):

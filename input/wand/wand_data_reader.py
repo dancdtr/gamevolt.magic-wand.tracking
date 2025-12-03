@@ -101,7 +101,7 @@ class WandDataReader:
         t_base, tag_hex, _ = self._pending_headers.pop(seq, (0, "????", 0))
 
         if tag_hex != self._settings.wand_id:
-            print(f"ignoring {tag_hex}")
+            # print(f"ignoring {tag_hex}")
             return
 
         idx = 0

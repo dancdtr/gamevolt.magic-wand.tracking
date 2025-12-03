@@ -4,15 +4,21 @@ from spells.matching.rules.spell_rule import SpellRule
 from spells.matching.spell_match_context import SpellMatchContext
 
 
-class DistanceRule(SpellRule):
+class DurationRule(SpellRule):
     def validate(self, ctx: SpellMatchContext) -> bool:
         spell = ctx.spell
-        dist = ctx.metrics.total_distance
+        m = ctx.metrics
 
-        if spell.min_total_distance is not None and dist < spell.min_total_distance:
+        key_duration = m.total_duration_s - m.filler_duration_s
+
+        if spell.min_total_duration_s is not None and key_duration < spell.min_total_duration_s:
             return False
 
-        if spell.max_total_distance is not None and dist > spell.max_total_distance:
+        if spell.max_total_duration_s is not None and key_duration > spell.max_total_duration_s:
             return False
+
+        print(
+            f"Total: {m.total_duration_s:.2f} - {m.filler_duration_s:2f} = {(m.total_duration_s - m.filler_duration_s):.2f} | min: {spell.min_total_duration_s}"
+        )
 
         return True

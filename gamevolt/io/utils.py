@@ -3,7 +3,7 @@ import os
 
 import yaml
 
-from .typing import JsonLike, YamlLike
+from gamevolt.io.typing import JsonLike, YamlLike
 
 
 def load_json(path: str) -> JsonLike:

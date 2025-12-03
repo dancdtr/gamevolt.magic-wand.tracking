@@ -33,7 +33,7 @@ from wizards.wizard_names_provider import WizardNameProvider
 
 # _WAND_ID = "DefaultWand"
 
-settings = AppSettings.load(config_path="./appsettings.yml", config_env_path=None)
+settings = AppSettings.load(config_path="./appsettings.yml", config_env_path="./appsettings.env.yml")
 print(settings)
 
 logger = get_logger(LoggingSettings(file_path=settings.logging.file_path, minimum_level=settings.logging.minimum_level))

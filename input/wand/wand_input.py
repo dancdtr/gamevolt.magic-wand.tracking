@@ -11,13 +11,6 @@ from input.wand.interpreters.wand_yawpitch_rmf_interpreter import YawPitchRMFInt
 from input.wand.wand_data_reader import WandDataMessage, WandDataReader
 from input.wand_position import WandPosition
 
-# def _wrap180(deg: float) -> float:
-#     return ((deg + 180.0) % 360.0) - 180.0
-
-
-# def _clamp_unit(v: float) -> float:
-#     return -1.0 if v < -1.0 else (1.0 if v > 1.0 else v)
-
 
 class WandInput(MotionInputBase):
     def __init__(self, logger: Logger, settings: WandSettings) -> None:

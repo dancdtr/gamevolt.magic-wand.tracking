@@ -21,7 +21,7 @@ DEPLOY_BASE="${DEPLOY_BASE:-/home/$USER/CDTR}"
 
 CURRENT_DIR="$DEPLOY_BASE/Current"
 INSTALL_DIR="$CURRENT_DIR"
-ENV_FILE="environment.json"
+ENV_FILE="appsettings.env.yml"
 
 # ─── Args ─────────────────────────────────────────────────────────────────────
 [[ $# -eq 1 ]] || die "Usage: $0 <version>"

@@ -7,7 +7,7 @@ CDTR_DIR="$USER_DIR/CDTR"
 
 alias cdtr="cd $CDTR_DIR"
 alias wand-appsettings="nano $USER_DIR/CDTR/Current/appsettings.yml"
-alias wand-environment="nano $USER_DIR/CDTR/Current/environment.yml"
+alias wand-environment="nano $USER_DIR/CDTR/Current/appsettings.env.yml"
 alias wand-install="bash $CDTR_DIR/install.sh"
 alias wand-start="sudo systemctl start $SERVICE_NAME"
 alias wand-stop="sudo systemctl stop $SERVICE_NAME"
