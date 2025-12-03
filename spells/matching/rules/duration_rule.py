@@ -17,8 +17,4 @@ class DurationRule(SpellRule):
         if spell.max_total_duration_s is not None and key_duration > spell.max_total_duration_s:
             return False
 
-        print(
-            f"Total: {m.total_duration_s:.2f} - {m.filler_duration_s:2f} = {(m.total_duration_s - m.filler_duration_s):.2f} | min: {spell.min_total_duration_s}"
-        )
-
         return True

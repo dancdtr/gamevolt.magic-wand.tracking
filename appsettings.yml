@@ -45,8 +45,8 @@ input:
       abs_invert_y: True
       gain_x: 1.0
       gain_y: 1.0
-      abs_yaw_limit_deg: 180
-      abs_pitch_limit_deg: 180
+      abs_yaw_limit_deg: 90
+      abs_pitch_limit_deg: 90
       abs_clip_mode: "DISCARD"
       deadzone_x: 0.0
       deadzone_y: 0.0

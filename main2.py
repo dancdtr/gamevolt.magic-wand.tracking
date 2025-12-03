@@ -94,6 +94,7 @@ def on_motion_changed(mode: MotionPhaseType) -> None:
         visualiser.clear()
         input.reset()
         processor.reset()
+        history.clear()
     logger.debug(f"Motion: {mode.name}")
 
 
