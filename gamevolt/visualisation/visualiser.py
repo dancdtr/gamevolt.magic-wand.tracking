@@ -18,7 +18,11 @@ class Visualiser(VisualiserProtocol):
 
         self._is_running = False
 
-        self.on_quit: Event[Callable[[], None]] = Event()
+        self._quit: Event[Callable[[], None]] = Event()
+
+    @property
+    def quit(self) -> Event[Callable[[], None]]:
+        return self._quit
 
     @property
     def root(self) -> tk.Tk:
@@ -66,4 +70,4 @@ class Visualiser(VisualiserProtocol):
 
     def _on_quit(self) -> None:
         print("Quitting...")
-        self.on_quit.invoke()
+        self.quit.invoke()

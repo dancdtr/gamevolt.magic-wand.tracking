@@ -131,6 +131,7 @@ def on_spell(match: SpellMatch):
 #     # matcher_manager.set_difficulty(difficulty_controller.difficulty)
 #     trace_manager.on_difficulty_changed()
 
+quit_event = asyncio.Event()
 
 spell_selector.start()
 processor.direction_changed.subscribe(on_direction_changed)
@@ -138,9 +139,11 @@ processor.motion_changed.subscribe(on_motion_changed)
 processor.segment_completed.subscribe(on_segment_completed)
 matcher_manager.matched.subscribe(on_spell)
 input.position_updated.subscribe(on_position_updated)
+visualiser.quit.subscribe(lambda: quit_event.set())
 
 
 async def main():
+    logger.info(f"Running '{settings.name}' version: '{settings.version}'...")
     try:
         await input.start()
         processor.start()
@@ -149,7 +152,7 @@ async def main():
         raise ex
 
     try:
-        while True:
+        while not quit_event.is_set():
             input.update()
             visualiser.update()
             await asyncio.sleep(0.01)
@@ -160,4 +163,9 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Exiting on user interrupt...")
+    finally:
+        logger.info(f"Exited '{settings.name}'.")

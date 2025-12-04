@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+from gamevolt.events.event import Event
 from input.wand_position import WandPosition
 
 
@@ -17,3 +18,6 @@ class VisualiserProtocol:
     def unregister_key_callbacks(self, key: str) -> None: ...
 
     def add_position(self, wand_position: WandPosition) -> None: ...
+
+    @property
+    def quit(self) -> Event[Callable[[], None]]: ...
