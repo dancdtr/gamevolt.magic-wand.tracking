@@ -6,16 +6,10 @@ from spells.spell_step_group import SpellStepGroup
 
 
 def get_revelio(difficulty: SpellDifficultyType) -> SpellDefinition:
-    return REVELIO_HARD
-    if difficulty is SpellDifficultyType.FORGIVING:
-        return REVELIO_EASY
-    if difficulty is SpellDifficultyType.STRICT:
-        return REVELIO_HARD
-
-    raise ValueError(f"No spell definition for Revelio difficulty: {difficulty.name}")
+    return REVELIO
 
 
-REVELIO_HARD = SpellDefinition(
+REVELIO = SpellDefinition(
     id="SP001",
     name="REVELIO",
     step_groups=[
@@ -34,8 +28,8 @@ REVELIO_HARD = SpellDefinition(
                 SpellStep(frozenset({DirectionType.MOVING_E})),
                 SpellStep(frozenset({DirectionType.MOVING_SE})),
                 SpellStep(frozenset({DirectionType.MOVING_S})),
-                SpellStep(frozenset({DirectionType.MOVING_SW, DirectionType.MOVING_W}), required=True),
-                # SpellStep(frozenset({DirectionType.MOVING_W})),
+                SpellStep(frozenset({DirectionType.MOVING_SW})),
+                SpellStep(frozenset({DirectionType.MOVING_W})),
             ],
             relative_distance=4 / 9,
             relative_duration=4 / 9,
@@ -50,9 +44,11 @@ REVELIO_HARD = SpellDefinition(
         ),
     ],
     min_spell_steps=4,
-    max_total_duration_s=5.0,
-    max_idle_gap_s=1.20,
-    max_filler_duration_s=0.35,
+    min_total_duration_s=1,
+    max_total_duration_s=3.0,
+    max_idle_gap_s=0.6,
+    max_filler_duration_s=0.6,
+    check_duration=True,
 )
 
 REVELIO_EASY = SpellDefinition(
