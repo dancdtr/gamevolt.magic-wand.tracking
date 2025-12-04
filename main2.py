@@ -29,11 +29,13 @@ from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
 from visualisation.wand_visualiser import WandVisualiser
+from visualisation.wand_visualiser_factory import WandVisualiserFactory
 from wizards.wizard_names_provider import WizardNameProvider
 
-# _WAND_ID = "DefaultWand"
-
-settings = AppSettings.load(config_path="./appsettings.yml", config_env_path="./appsettings.env.yml")
+# TODO build path
+config_path = "./appsettings.yml"
+config_env_path = "./appsettings.env.yml"
+settings = AppSettings.load(config_path=config_path, config_env_path=config_env_path)
 print(settings)
 
 logger = get_logger(LoggingSettings(file_path=settings.logging.file_path, minimum_level=settings.logging.minimum_level))
@@ -64,10 +66,13 @@ matcher_manager.register(
         spell_selector=spell_selector,
     ),
 )
-
-visualiser = WandVisualiser(settings=settings.wand_visualiser)
+visualiser = WandVisualiserFactory(logger, settings.wand_visualiser).create()
 
 if settings.input.input_type is InputType.MOUSE:
+    if not isinstance(visualiser, WandVisualiser):
+        raise RuntimeError(
+            f"Cannot use the mock mouse input system without a visualiser - ensure wand_visualiser is enabled in appsettings.env.yml."
+        )
     input = MouseInput(logger, settings.input.mouse, visualiser)
 elif settings.input.input_type is InputType.WAND:
     input = WandInput(logger, settings.input.wand)

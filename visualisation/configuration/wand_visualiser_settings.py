@@ -9,6 +9,7 @@ from visualisation.configuration.trail_settings import TrailSettings
 
 @dataclass
 class WandVisualiserSettings(SettingsBase):
+    is_enabled: bool
     visualiser: VisualiserSettings
     label: LabelSettings
     axes: AxesSettings

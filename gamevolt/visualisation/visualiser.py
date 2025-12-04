@@ -6,9 +6,10 @@ from gamevolt.visualisation.canvas_factory import CanvasFactory
 from gamevolt.visualisation.configuration.visualiser_settings import VisualiserSettings
 from gamevolt.visualisation.key_handler import KeyHandler
 from gamevolt.visualisation.root_factory import RootFactory
+from gamevolt.visualisation.visualiser_protocol import VisualiserProtocol
 
 
-class Visualiser:
+class Visualiser(VisualiserProtocol):
     def __init__(self, settings: VisualiserSettings) -> None:
         self._root = RootFactory(settings.root).create()
         self._canvas = CanvasFactory(settings.canvas, self._root).create()

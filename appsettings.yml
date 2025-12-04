@@ -34,7 +34,7 @@ input:
       imu_hz: 120.0
       target_hz: 30.0
       serial_receiver:
-        port: "/dev/tty.usbmodem1101"
+        port: "/dev/serial/by-id/usb-iLabs_Challenger_2040_UWB_DF622C64176C2627-if00"
         baud: 115200
         timeout: 3
         retry_interval: 2
@@ -72,6 +72,7 @@ motion:
       max_sample_count: 256
 
 wand_visualiser:
+  is_enabled: True
   visualiser:
     root:
       title: "Wand Input"
