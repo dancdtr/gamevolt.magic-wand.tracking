@@ -51,8 +51,8 @@ trace_manager = SpellTraceSessionManager(
     settings=settings.spell_trace_session,
 )
 
-unity_udp_tx = UnityUdpTx(logger, settings.unity_udp)
-spell_selector = UdpSpellSelector(logger, settings.spell_selector)
+unity_udp_tx = UnityUdpTx(logger, settings.udp_peer.udp_transmitter, settings.unity_udp)
+spell_selector = UdpSpellSelector(logger, settings.udp_peer)
 matcher_manager = SpellMatcherManager(difficulty_controller.difficulty)
 # matcher_manager.register(
 # #     SpellDifficultyType.STRICT,

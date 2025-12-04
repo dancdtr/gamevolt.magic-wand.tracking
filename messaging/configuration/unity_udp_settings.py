@@ -6,10 +6,10 @@ from spells.spell_type import SpellType
 
 
 @dataclass
-class UnityUdpTxSettings(SettingsBase):
+class UnityUdpSettings(SettingsBase):
     spell_mapping_keys: list[str]
     spell_mapping_values: list[str]
-    udp_tx: UdpTxSettings
+    # udp_tx: UdpTxSettings
 
     @property
     def spell_mappings(self) -> dict[str, str]:

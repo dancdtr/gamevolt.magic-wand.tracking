@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 
+from gamevolt.configuration.settings_base import SettingsBase
 from gamevolt.messaging.udp.configuration.udp_rx_settings import UdpRxSettings
 from gamevolt.messaging.udp.configuration.udp_tx_settings import UdpTxSettings
 
 
 @dataclass
-class UdpPeerSettings:
-    udp_tx: UdpTxSettings
-    udp_rx: UdpRxSettings
+class UdpPeerSettings(SettingsBase):
+    udp_transmitter: UdpTxSettings
+    udp_receiver: UdpRxSettings
     # local_host: str
     # local_port: int
     # remote_host: str

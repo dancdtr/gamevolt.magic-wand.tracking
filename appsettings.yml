@@ -121,11 +121,10 @@ unity_udp:
   spell_mapping_keys: ["INCENDIO", "WINGARDIUM_LEVIOSA", "ALOHOMORA"]
   spell_mapping_values: ["spell1", "spell2", "spell3"]
 
-  udp_tx:
+udp_peer:
+  udp_transmitter:
     host: "0.0.0.0"
     port: 8050
-
-spell_selector:
   udp_receiver:
     host: "0.0.0.0"
     port: 8051

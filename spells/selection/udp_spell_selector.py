@@ -2,7 +2,9 @@ from collections.abc import Callable
 from logging import Logger
 
 from gamevolt.events.event import Event
+from gamevolt.messaging.udp.configuration.udp_peer_settings import UdpPeerSettings
 from gamevolt.messaging.udp.udp_rx import UdpRx
+from gamevolt.messaging.udp.udp_tx import UdpTx
 from spells.selection.configuration.spell_selector_settings import SpellSelectorSettings
 from spells.selection.spell_selector_base import SpellSelectorBase
 from spells.spell import Spell
@@ -11,9 +13,10 @@ from spells.spell_type import SpellType
 
 
 class UdpSpellSelector(SpellSelectorBase):
-    def __init__(self, logger: Logger, settings: SpellSelectorSettings) -> None:
+    def __init__(self, logger: Logger, settings: UdpPeerSettings) -> None:
         super().__init__(logger)
 
+        self._udp_transmitter = UdpTx(logger, settings.udp_transmitter)
         self._udp_receiver = UdpRx(logger, settings.udp_receiver)
         self._spell_factory = SpellFactory()
 
@@ -40,6 +43,8 @@ class UdpSpellSelector(SpellSelectorBase):
 
         self._udp_receiver.message_received.subscribe(self._on_message_received)
         self._udp_receiver.start()
+
+        self._udp_transmitter.send_str("hello")
 
     def _on_message_received(self, message: str) -> None:
         self._logger.debug(message)

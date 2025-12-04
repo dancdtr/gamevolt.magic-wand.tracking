@@ -42,11 +42,11 @@ imu_rx = IMUBinaryReceiver(logger, rx_settings, imu_settings)
 udp_peer = UdpPeer(
     logger,
     settings=UdpPeerSettings(
-        udp_tx=UdpTxSettings(
+        udp_transmitter=UdpTxSettings(
             host="127.0.0.1",
             port=9998,
         ),
-        udp_rx=UdpRxSettings(
+        udp_receiver=UdpRxSettings(
             host="127.0.0.1",
             port=9999,
             max_size=65536,

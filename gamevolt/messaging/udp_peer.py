@@ -15,8 +15,8 @@ class UdpPeer(MessageReceiverProtocol, MessageSenderProtocol):
         super().__init__()
         self._logger = logger
 
-        self._tx = UdpTx(logger, settings.udp_tx)
-        self._rx = UdpRx(logger, settings.udp_rx)
+        self._tx = UdpTx(logger, settings.udp_transmitter)
+        self._rx = UdpRx(logger, settings.udp_receiver)
 
         self._message_received: Event[Callable[[str], None]] = Event()
 
