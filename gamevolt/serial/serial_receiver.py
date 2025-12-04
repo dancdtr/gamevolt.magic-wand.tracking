@@ -25,14 +25,14 @@ class SerialReceiver:
             self._logger.warning("SerialReceiver is already started!")
             return
 
-        self._logger.info("Starting SerialReceiver...")
+        self._logger.debug(f"Starting SerialReceiver on port '{self._settings.port}'...")
 
         self._reader, self._writer = await serial_asyncio.open_serial_connection(
             url=self._settings.port,
             baudrate=self._settings.baud,
         )
         self._read_task = asyncio.create_task(self._read_loop())
-        self._logger.info("SerialReceiver started.")
+        self._logger.info(f"SerialReceiver on port '{self._settings.port}' started.")
 
     async def _read_loop(self) -> None:
         try:
@@ -55,7 +55,7 @@ class SerialReceiver:
             self._logger.debug("Exiting SerialReceiver read loop...")
 
     async def stop(self) -> None:
-        self._logger.info("Stopping SerialReceiver...")
+        self._logger.debug(f"Stopping SerialReceiver on port '{self._settings.port}'...")
         if self._read_task:
             self._read_task.cancel()
             with suppress(asyncio.CancelledError):
@@ -68,4 +68,4 @@ class SerialReceiver:
             self._writer = None
             self._reader = None
 
-        self._logger.info("SerialReceiver stopped.")
+        self._logger.info(f"Stopped SerialReceiver on port '{self._settings.port}'.")
