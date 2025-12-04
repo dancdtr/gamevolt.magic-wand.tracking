@@ -1,10 +1,10 @@
 from collections.abc import Callable
 
 from gamevolt.events.event import Event
-from gamevolt.visualisation.visualiser_protocol import VisualiserProtocol
+from visualisation.visualiser_protocol import WandVisualiserProtocol
 
 
-class HeadlessVisualiser(VisualiserProtocol):
+class HeadlessVisualiser(WandVisualiserProtocol):
     def __init__(self) -> None:
         super().__init__()
         self._quit: Event[Callable[[], None]] = Event()

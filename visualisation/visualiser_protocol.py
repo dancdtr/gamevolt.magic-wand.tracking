@@ -4,7 +4,7 @@ from gamevolt.events.event import Event
 from input.wand_position import WandPosition
 
 
-class VisualiserProtocol:
+class WandVisualiserProtocol:
     def start(self) -> None: ...
 
     def stop(self) -> None: ...
