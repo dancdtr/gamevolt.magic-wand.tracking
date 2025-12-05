@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import tkinter as tk
 
 from gamevolt_logging import get_logger
@@ -24,6 +25,7 @@ from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.easy_spell_matcher import EasySpellMatcher
 from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.library.spell_difficulty_type import SpellDifficultyType
+from spells.selection.revelio_spell_selector import RevelioSpellSelector
 from spells.selection.udp_spell_selector import UdpSpellSelector
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
@@ -32,10 +34,10 @@ from visualisation.wand_visualiser import WandVisualiser
 from visualisation.wand_visualiser_factory import WandVisualiserFactory
 from wizards.wizard_names_provider import WizardNameProvider
 
-# TODO build path
-config_path = "./appsettings.yml"
-config_env_path = "./appsettings.env.yml"
-settings = AppSettings.load(config_path=config_path, config_env_path=config_env_path)
+application_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(application_dir, "appsettings.yml")
+config_env_path = os.path.join(application_dir, "appsettings.env.yml")
+settings = AppSettings.load(config_file_path=config_path, config_env_file_path=config_env_path)
 print(settings)
 
 logger = get_logger(LoggingSettings(file_path=settings.logging.file_path, minimum_level=settings.logging.minimum_level))
@@ -53,6 +55,7 @@ trace_manager = SpellTraceSessionManager(
 
 unity_udp_tx = UnityUdpTx(logger, settings.udp_peer.udp_transmitter, settings.unity_udp)
 spell_selector = UdpSpellSelector(logger, settings.udp_peer)
+# spell_selector = RevelioSpellSelector(logger)
 matcher_manager = SpellMatcherManager(difficulty_controller.difficulty)
 # matcher_manager.register(
 # #     SpellDifficultyType.STRICT,

@@ -27,8 +27,8 @@ ALOHOMORA = SpellDefinition(
         SpellStepGroup(
             name="Line_S",
             steps=[
-                # SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE, DirectionType.MOVING_SW}), required=True),
-                SpellStep(frozenset({DirectionType.MOVING_S}), required=True),
+                SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE, DirectionType.MOVING_SW}), required=True),
+                # SpellStep(frozenset({DirectionType.MOVING_S}), required=True),
             ],
             relative_distance=2 / 5,
             relative_duration=2 / 5,
@@ -38,7 +38,7 @@ ALOHOMORA = SpellDefinition(
     min_total_duration_s=0.8,
     max_total_duration_s=3.5,
     max_idle_gap_s=0.4,
-    max_filler_duration_s=0.5,
+    max_filler_duration_s=0.7,
     check_distance=False,
     check_duration=True,
     check_group_distance_ratio=False,
