@@ -123,7 +123,7 @@ unity_udp:
 
 udp_peer:
   udp_transmitter:
-    host: "0.0.0.0"
+    host: "HP-7HA50630"
     port: 8050
   udp_receiver:
     host: "0.0.0.0"

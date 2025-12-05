@@ -20,32 +20,34 @@ class AppSettingsBase(SettingsBase):
     name: str
 
     @classmethod
-    def load(cls, config_path: str, config_env_path: str | None = None, *, strict: bool = True) -> Self:
-        base_handler = cls._pick_handler(config_path)
-        env_handler: FileHandler | None = cls._pick_handler(config_env_path) if config_env_path else None
+    def load(cls, config_file_path: str, config_env_file_path: str | None = None, *, strict: bool = True) -> Self:
+        base_handler = cls._pick_handler(config_file_path)
+        env_handler: FileHandler | None = cls._pick_handler(config_env_file_path) if config_env_file_path else None
 
         # Load base
         try:
-            base_json = cast(JsonLike, base_handler.load(config_path))
+            base_json = cast(JsonLike, base_handler.load(config_file_path))
         except Exception as e:
-            raise AppsettingsError("AppSettings", f"failed to load '{config_path}': {e}") from None
+            raise AppsettingsError("AppSettings", f"failed to load '{config_file_path}': {e}") from None
 
         merged: JsonLike = base_json
 
         # Load env (optional, can be a different format)
-        if config_env_path:
+        if config_env_file_path:
             try:
                 env_json = (
-                    cast(JsonLike, env_handler.try_load(config_env_path)) if env_handler is not None else None  # type: ignore[union-attr]
+                    cast(JsonLike, env_handler.try_load(config_env_file_path)) if env_handler is not None else None  # type: ignore[union-attr]
                 )
             except Exception as e:
-                raise AppsettingsError("AppSettings", f"failed to load env override '{config_env_path}': {e}") from None
+                raise AppsettingsError("AppSettings", f"failed to load env override '{config_env_file_path}': {e}") from None
 
             if env_json:
                 try:
                     merged = cast(JsonLike, jsonmerge.merge(base_json, env_json))  # type: ignore[arg-type]
                 except Exception as e:
-                    raise AppsettingsError("AppSettings", f"failed to merge '{config_env_path}' into '{config_path}': {e}") from None
+                    raise AppsettingsError(
+                        "AppSettings", f"failed to merge '{config_env_file_path}' into '{config_file_path}': {e}"
+                    ) from None
 
         return cls.from_json_like(merged, strict=strict)
 
