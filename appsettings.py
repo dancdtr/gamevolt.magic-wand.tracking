@@ -9,7 +9,6 @@ from messaging.configuration.unity_udp_settings import UnityUdpSettings
 from motion.configuration.motion_settings import MotionSettings
 from spells.accuracy.configuration.accuracy_scorer_settings import SpellAccuracyScorerSettings
 from spells.configuration.spells_settings import SpellsSettings
-from spells.selection.configuration.spell_selector_settings import SpellSelectorSettings
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from wizards.configuration.wizard_settings import WizardSettings
 

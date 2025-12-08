@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+from logging import Logger
 
 from gamevolt.visualisation.axes import Axes
 from gamevolt.visualisation.label_factory import LabelFactory
@@ -14,8 +15,8 @@ from visualisation.visualiser_protocol import WandVisualiserProtocol
 
 
 class WandVisualiser(Visualiser, WandVisualiserProtocol):
-    def __init__(self, settings: WandVisualiserSettings) -> None:
-        super().__init__(settings.visualiser)
+    def __init__(self, logger: Logger, settings: WandVisualiserSettings) -> None:
+        super().__init__(logger, settings.visualiser)
 
         self._wand_visualiser_settings = settings
 

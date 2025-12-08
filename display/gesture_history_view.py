@@ -9,13 +9,13 @@ from PIL.ImageTk import PhotoImage
 from detection.detected_gestures import DetectedGestures
 from detection.gesture_history import GestureHistory
 from display.image_libraries.gesture_image_library import GestureImageLibrary
-from gamevolt.display.image_visualiser import ImageVisualiser
+from gamevolt.visualisation.visualiser import Visualiser
 
 
 class GestureHistoryView:
     def __init__(
         self,
-        visualiser: ImageVisualiser,
+        visualiser: Visualiser,
         *,
         parent: tk.Misc | None = None,
         icon_provider: GestureImageLibrary,
@@ -24,17 +24,15 @@ class GestureHistoryView:
         icon_pad: int,
     ) -> None:
         self._vis = visualiser
-        self._root = parent or self._vis.history_bar
+        self._root = parent or self._vis.root
         self._icon_provider = icon_provider
         self._max_visible = max_visible
         self._history = history
         self._pad = icon_pad
 
-        # container frame (horizontal flow)
         self._frame = tk.Frame(self._root)
         self._frame.pack(side="left", fill="x", expand=True)
 
-        # keep refs to currently displayed icons
         self._icon_refs: list[PhotoImage] = []
 
         self._enabled = True
@@ -50,16 +48,9 @@ class GestureHistoryView:
 
     def toggle(self) -> None:
         self._enabled = not self._enabled
-
-        if self._enabled:
-            pass
-        else:
-            self._schedule_render()
-
-    # --- internal ---------------------------------------------------------
+        self._schedule_render()
 
     def _on_history_updated(self) -> None:
-        # This may be called from non-GUI threads → marshal to Tk thread.
         self._schedule_render()
 
     def _schedule_render(self) -> None:
@@ -72,7 +63,6 @@ class GestureHistoryView:
     def _render(self) -> None:
         self._dirty = False
 
-        # Clear existing widgets
         for child in list(self._frame.children.values()):
             child.destroy()
         self._icon_refs.clear()
@@ -82,11 +72,10 @@ class GestureHistoryView:
         if not records:
             return
 
-        # Show only the last N
         subset = records[-self._max_visible :]
 
         for record in subset:
-            icon = self._icon_provider.get_image(record.main_gesture)  # TODO show all gestures, not just main
+            icon = self._icon_provider.get_image(record.main_gesture)
             if icon is None:
                 continue
 
@@ -95,4 +84,4 @@ class GestureHistoryView:
 
             lbl = tk.Label(self._frame, image=icon)
             lbl.pack(side="left", padx=self._pad, pady=4)
-            self._icon_refs.append(icon)  # keep a ref
+            self._icon_refs.append(icon)

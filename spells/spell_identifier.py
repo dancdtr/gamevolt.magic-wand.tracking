@@ -4,7 +4,7 @@ from logging import Logger
 from detection.gesture_history import GestureHistory
 from gamevolt.events.event import Event
 from gamevolt.toolkit.timer import Timer
-from spells.selection.spell_selector_base import SpellSelectorBase
+from spells.selection.spell_target_controller import SpellTargetController
 from spells.spell import Spell
 from spells.spell_type import SpellType
 
@@ -12,7 +12,7 @@ _SPELL_TIMEOUT = 1  # if a new gesture isnt received in this time then the gestu
 
 
 class SpellIdentifier:
-    def __init__(self, logger: Logger, spell_provider: SpellSelectorBase, gesture_history: GestureHistory) -> None:
+    def __init__(self, logger: Logger, spell_provider: SpellTargetController, gesture_history: GestureHistory) -> None:
         self._logger = logger
 
         self._gesture_history = gesture_history

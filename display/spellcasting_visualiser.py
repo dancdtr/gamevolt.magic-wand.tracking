@@ -1,19 +1,17 @@
-# display/gesture_display.py
+# display/spellcasting_visualiser.py
 from __future__ import annotations
 
-import asyncio
+import tkinter as tk
 from collections.abc import Callable
 from logging import Logger
 
+from PIL.Image import Image as PILImage
 from PIL.ImageTk import PhotoImage
 
-from detection.gesture_history import GestureHistory
-from display.gesture_history_view import GestureHistoryView
-from display.image_libraries.gesture_image_library import GestureImageLibrary
 from display.image_libraries.spell_image_library import SpellImageLibrary
-from display.input.display_spell_provider import DisplaySpellProvider
-from gamevolt.display.image_visualiser import ImageVisualiser
 from gamevolt.events.event import Event
+from gamevolt.visualisation.visualiser import Visualiser
+from spells.control.spell_controller import SpellController
 from spells.spell import Spell
 from spells.spell_type import SpellType
 
@@ -23,96 +21,129 @@ class SpellcastingVisualiser:
         self,
         logger: Logger,
         spell_image_library: SpellImageLibrary,
-        gesture_image_library: GestureImageLibrary,
-        visualiser: ImageVisualiser,
-        gesture_history: GestureHistory,
-        spell_selector: DisplaySpellProvider,
-    ):
+        visualiser: Visualiser,
+        spell_controller: SpellController,
+    ) -> None:
         self._logger = logger
-
-        self._gesture_image_library = gesture_image_library
         self._spell_image_library = spell_image_library
-        self._gesture_history = gesture_history
-        self._spell_provider = spell_selector
         self._visualiser = visualiser
+        self._spell_controller = spell_controller
 
-        # history UI
-        self._gesture_history_view = GestureHistoryView(
-            visualiser=self._visualiser,
-            parent=self._visualiser.history_bar,
-            icon_provider=self._gesture_image_library,
-            history=self._gesture_history,
-            max_visible=8,
-            icon_pad=0,
-        )
+        self._is_running = False
 
-        self._loop: asyncio.AbstractEventLoop | None = None
-        self._running = False
-
-        self.target_spell_updated: Event[Callable[[SpellType], None]] = Event()
         self.quit: Event[Callable[[], None]] = Event()
 
-    def start(self) -> None:
-        if self._running:
-            return
-        try:
-            self._loop = asyncio.get_running_loop()
-        except RuntimeError as exc:
-            raise RuntimeError("GestureDisplay.start() must be called inside an asyncio event loop.") from exc
+        root = self._visualiser.root
 
-        # IMPORTANT: start the visualiser first so Tk root exists
+        try:
+            self._visualiser.canvas.pack_forget()
+        except Exception:
+            pass
+
+        self._toolbar = tk.Frame(root)
+        self._toolbar.pack(side="top", fill="x")
+
+        self._content = tk.Frame(root, bg="black")
+        self._content.pack(side="top", fill="both", expand=True)
+        self._content.pack_propagate(False)
+
+        self._image_label = tk.Label(self._content, anchor="center", bg="black")
+        self._image_label.pack(side="top", fill="both", expand=True)
+
+        self._base_image: PILImage | None = None
+        self._current_img: PhotoImage | None = None
+
+        self._content.bind("<Configure>", self._on_content_resized)
+
+    @property
+    def toolbar(self) -> tk.Frame:
+        return self._toolbar
+
+    def start(self) -> None:
+        if self._is_running:
+            return
+
+        self._is_running = True
+
         self._visualiser.start()
 
         self._spell_image_library.load(tk_master=self._visualiser.root)
-        self._gesture_image_library.load(tk_master=self._visualiser.root)
 
-        self._gesture_history_view.start()
-
-        self._visualiser.root.deiconify()
-
-        self._spell_provider.toggle_history.subscribe(self._on_toggle_gesture_history_visibility)
-        self._spell_provider.target_spells_updated.subscribe(self._on_spells_updated)
-        self._spell_provider.quit.subscribe(self._on_quit)
-
-        self._running = True
+        self._spell_controller.target_spell_updated.subscribe(self._on_target_spell_updated)
+        self._spell_controller.quit.subscribe(self._on_quit)
 
     def stop(self) -> None:
-        if self._running:
-            self._visualiser.stop()
-
-        self._spell_provider.toggle_history.subscribe(self._on_quit)
-        self._spell_provider.target_spells_updated.subscribe(self._on_spells_updated)
-        self._spell_provider.toggle_history.subscribe(self._on_toggle_gesture_history_visibility)
-        self._visualiser.stop()
-        self._running = False
-
-    def show_spell_instruction(self, spell: Spell) -> None:
-        image = self._spell_image_library.get_spell_instruction_image(spell)  # TODO temp, allow multiple spell targets
-        self._logger.debug(f"Show pic for: {spell.name}")
-
-        self._show_image(image)
-
-    def show_spell_cast(self, spell_type: SpellType) -> None:
-        image = self._spell_image_library.get_spell_cast_image(spell_type)  # TODO temp,  handle multiple spell targets
-        self._logger.debug(f"Show pic for: {spell_type.name}")
-
-        self._show_image(image)
-
-    def _show_image(self, image: PhotoImage | None) -> None:
-        if image is None:
-            self._visualiser.clear_image()
+        if not self._is_running:
             return
 
-        self._visualiser.post_image(image)
+        self._is_running = False
 
-    def _on_spells_updated(self, spells: list[Spell]) -> None:
-        # TODO temp display only 1 spell
-        if spells:
-            self.show_spell_instruction(spells[0])
+        self._spell_controller.target_spell_updated.unsubscribe(self._on_target_spell_updated)
+        self._spell_controller.quit.unsubscribe(self._on_quit)
 
-    def _on_toggle_gesture_history_visibility(self) -> None:
-        self._gesture_history_view.toggle()
+        self._visualiser.stop()
+
+    def show_spell_instruction(self, spell: Spell) -> None:
+        image = self._spell_image_library.get_spell_instruction_image(spell)
+        self._logger.debug(f"Show instruction for spell: {spell.name}")
+        self._set_base_image(image)
+
+    def show_spell_cast(self, spell_type: SpellType) -> None:
+        image = self._spell_image_library.get_spell_cast_image(spell_type)
+        self._logger.debug(f"Show cast image for spell: {spell_type.name}")
+        self._set_base_image(image)
+
+    def _set_base_image(self, image: PILImage | PhotoImage | None) -> None:
+        def apply() -> None:
+            if image is None:
+                self._base_image = None
+                self._rescale_image()
+                return
+
+            # Accept either PIL.Image or PhotoImage
+            if isinstance(image, PhotoImage):
+                from PIL import ImageTk
+
+                pil_img = ImageTk.getimage(image)
+            else:
+                pil_img = image
+
+            self._base_image = pil_img.copy()
+            self._rescale_image()
+
+        self._visualiser.post_ui(apply)
+
+    def _rescale_image(self) -> None:
+        if self._base_image is None:
+            self._current_img = None
+            self._image_label.config(image="", bg="black")
+            return
+
+        width = self._content.winfo_width()
+        height = self._content.winfo_height()
+
+        if width <= 1 or height <= 1:
+            return
+
+        img = self._base_image.copy()
+        img.thumbnail((width, height))
+
+        photo = PhotoImage(img)
+        self._current_img = photo
+        self._image_label.config(image=photo, bg="black")
+
+    def _on_content_resized(self, event: tk.Event) -> None:
+        self._rescale_image()
+
+    def _on_target_spell_updated(self, spell: Spell | None) -> None:
+        if spell is None:
+            self._logger.debug("Target spell updated with None")
+            self._set_base_image(None)
+            return
+
+        self._logger.debug(f"Target spell updated; showing instruction for {spell.long_name}")
+        self.show_spell_instruction(spell)
 
     def _on_quit(self) -> None:
-        self._logger.info("Quitting...")
+        self._logger.info("Quit requested from spell controller")
         self.quit.invoke()

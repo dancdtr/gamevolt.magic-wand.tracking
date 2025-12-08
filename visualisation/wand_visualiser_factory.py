@@ -13,6 +13,6 @@ class WandVisualiserFactory:
 
     def create(self) -> WandVisualiserProtocol:
         if self._settings.is_enabled:
-            return WandVisualiser(self._settings)
+            return WandVisualiser(self._logger, self._settings)
         else:
             return HeadlessVisualiser()

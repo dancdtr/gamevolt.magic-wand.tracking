@@ -4,11 +4,11 @@ from typing import Sequence
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_segment import GestureSegment
 from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
+from spells.control.spell_controller import SpellController
 from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.matching.rules.rules_validator import RulesValidator
 from spells.matching.spell_match_context import SpellMatchContext
 from spells.matching.spell_match_metrics import SpellMatchMetrics
-from spells.selection.spell_selector_base import SpellSelectorBase
 from spells.spell_definition import SpellDefinition
 from spells.spell_match import SpellMatch
 from spells.spell_matcher_base import SpellMatcherBase
@@ -16,7 +16,7 @@ from spells.spell_step import SpellStep
 
 
 class SpellMatcher(SpellMatcherBase):
-    def __init__(self, logger: Logger, accuracy_scorer: SpellAccuracyScorer, spell_selector: SpellSelectorBase) -> None:
+    def __init__(self, logger: Logger, accuracy_scorer: SpellAccuracyScorer, spell_selector: SpellController) -> None:
         super().__init__(logger)
         self._accuracy_scorer = accuracy_scorer
         self._rules_validator = RulesValidator()
@@ -26,8 +26,8 @@ class SpellMatcher(SpellMatcherBase):
 
     @property
     def spell_definitions(self) -> list[SpellDefinition]:
-        spell_types = [spell.type for spell in self._spell_selector.target_spells]
-        return self._spell_definition_factory.create_spells([spell.type for spell in self._spell_selector.target_spells])
+        spell_types = [self._spell_selector.target_spell]
+        return self._spell_definition_factory.create_spells([spell.type for spell in spell_types])
 
     # ─── Public API ──────────────────────────────────────────────────────────
 

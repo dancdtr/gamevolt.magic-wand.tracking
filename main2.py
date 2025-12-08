@@ -22,11 +22,12 @@ from motion.gesture.gesture_segment import GestureSegment
 from motion.motion_phase_type import MotionPhaseType
 from motion.motion_processor import MotionProcessor
 from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
+from spells.control.revelio_spell_selector import RevelioSpellSelector
+from spells.control.udp_spell_controller import UdpSpellController
 from spells.easy_spell_matcher import EasySpellMatcher
 from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.library.spell_difficulty_type import SpellDifficultyType
-from spells.selection.revelio_spell_selector import RevelioSpellSelector
-from spells.selection.udp_spell_selector import UdpSpellSelector
+from spells.spell_list import SpellList
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
 from spells.spell_matcher_manager import SpellMatcherManager
@@ -53,9 +54,12 @@ trace_manager = SpellTraceSessionManager(
     settings=settings.spell_trace_session,
 )
 
+spell_list = SpellList(logger)
+
 unity_udp_tx = UnityUdpTx(logger, settings.udp_peer.udp_transmitter, settings.unity_udp)
-spell_selector = UdpSpellSelector(logger, settings.udp_peer)
-# spell_selector = RevelioSpellSelector(logger)
+spell_selector = UdpSpellController(logger, settings.udp_peer, spell_list)
+# spell_selector = RevelioSpellSelector(logger, spell_list)  # type: ignore
+# spell_selector = SpellSelector(logger, spell_factory=SpellFactory(),
 matcher_manager = SpellMatcherManager(difficulty_controller.difficulty)
 # matcher_manager.register(
 # #     SpellDifficultyType.STRICT,
@@ -102,6 +106,7 @@ def on_motion_changed(mode: MotionPhaseType) -> None:
         visualiser.clear()
         input.reset()
         processor.reset()
+        # print([seg.direction_type.name for seg in history.tail()])
         history.clear()
     logger.debug(f"Motion: {mode.name}")
 
@@ -125,6 +130,7 @@ def on_spell(match: SpellMatch):
 
     unity_udp_tx.on_spell_detected(match)
     trace_manager.on_match(match)
+    # print([seg.direction_type.name for seg in history.tail()])
     history.clear()
     processor.reset()
 

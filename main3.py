@@ -1,0 +1,133 @@
+# main3.py
+
+import asyncio
+import tkinter as tk
+from time import sleep
+
+from gamevolt_logging import get_logger
+
+from display.image_libraries.configuration.image_library_settings import ImageLibrarySettings
+from display.image_libraries.configuration.spell_image_library_settings import SpellImageLibrarySettings
+from display.image_libraries.spell_image_library import SpellImageLibrary
+from display.image_providers.configuration.image_provider_settings import ImageProviderSettings
+from display.input.visual_spell_controller import VisualSpellController
+from display.spellcasting_visualiser import SpellcastingVisualiser
+from gamevolt.messaging.events.message_handler import MessageHandler
+from gamevolt.messaging.message import Message
+from gamevolt.messaging.udp.configuration.udp_peer_settings import UdpPeerSettings
+from gamevolt.messaging.udp.configuration.udp_rx_settings import UdpRxSettings
+from gamevolt.messaging.udp.configuration.udp_tx_settings import UdpTxSettings
+from gamevolt.messaging.udp.udp_rx import UdpRx
+from gamevolt.messaging.udp.udp_tx import UdpTx
+from gamevolt.visualisation.configuration.canvas_settings import CanvasSettings
+from gamevolt.visualisation.configuration.preview_settings import RootSettings
+from gamevolt.visualisation.configuration.visualiser_settings import VisualiserSettings
+from gamevolt.visualisation.visualiser import Visualiser
+from messaging.spell_cast_message import SpellCastMessage
+from spells.spell_list import SpellList
+
+APP_NAME = "Spellcasting Visualiser"
+APP_VERSION = "0.1.0"
+logger = get_logger()
+
+root_settings = RootSettings("SpellController", 800, 800, 100)
+canvas_settings = CanvasSettings(background_colour="#222", highlight_thickness=0)
+visualiser_settings = VisualiserSettings(root_settings, canvas_settings)
+
+udp_tx_settings = UdpTxSettings("0.0.0.0", 8051)
+udp_rx_settings = UdpRxSettings("0.0.0.0", 8050, 65556, 2)
+udp_peer_settings = UdpPeerSettings(udp_tx_settings, udp_rx_settings)
+
+
+visualiser_settings = VisualiserSettings(root=root_settings, canvas=canvas_settings)
+visualiser = Visualiser(logger, visualiser_settings)
+
+instruction_settings = ImageProviderSettings("display/image_assets/spells", 500, (255, 255, 255), (0, 0, 0))
+success_settings = ImageProviderSettings("display/image_assets/spells", 500, (0, 255, 0), (0, 0, 0))
+spell_image_library_settings = SpellImageLibrarySettings(instruction_settings, success_settings)
+
+image_library_settings = ImageLibrarySettings("display/image_assets/gestures", 300)
+
+udp_tx = UdpTx(logger, udp_tx_settings)
+udp_rx = UdpRx(logger, udp_rx_settings)
+message_handler = MessageHandler(logger, udp_rx)
+
+spell_list = SpellList(logger)
+
+spell_image_library = SpellImageLibrary(spell_image_library_settings)
+spell_controller = VisualSpellController(logger, spell_list, visualiser, udp_tx, parent=None)
+
+spellcasting_visualiser = SpellcastingVisualiser(
+    logger=logger,
+    spell_image_library=spell_image_library,
+    visualiser=visualiser,
+    spell_controller=spell_controller,
+)
+
+# visual_spell_controller_ui = VisualSpellController(
+#     logger=logger,
+#     spell_list=spell_list,
+#     visualiser=visualiser,
+#     udp_tx=udp_tx,
+#     parent=spellcasting_visualiser.toolbar,
+# )
+
+quit_event = asyncio.Event()
+
+
+def on_spell_cast(message: Message) -> None:
+    if isinstance(message, SpellCastMessage):
+        spell = spell_list.get_by_name(message.SpellType)
+        if spell.type is spell_controller.target_spell.type:
+            # if spell.type is not SpellType.NONE:
+            logger.info(f"Cast {message.SpellType}! ({(message.Confidence * 100):.2f}%)")
+            spellcasting_visualiser.show_spell_cast(spell.type)
+            sleep(0.3)
+            spellcasting_visualiser.show_spell_instruction(spell)
+
+
+spellcasting_visualiser.quit.subscribe(lambda: quit_event.set())
+visualiser.quit.subscribe(lambda: quit_event.set())
+message_handler.subscribe(SpellCastMessage, on_spell_cast)
+
+
+async def run_app() -> None:
+
+    logger.info(f"Running '{APP_NAME}' version '{APP_VERSION}'...")
+
+    try:
+        message_handler.start()
+        spell_controller.start()
+        spellcasting_visualiser.start()
+    except Exception as ex:
+        logger.exception(f"Failed to start application: {ex}")
+        return
+
+    try:
+        while not quit_event.is_set():
+            visualiser.update()
+            await asyncio.sleep(0.01)
+    except tk.TclError:
+        logger.info("Tkinter window closed.")
+    except Exception as ex:
+        logger.exception(f"Unhandled exception in main loop: {ex}")
+    finally:
+        logger.info("Shutting down...")
+        try:
+            spell_controller.stop()
+        except Exception as ex:
+            logger.warning(f"Error while stopping spell controller: {ex}")
+
+        try:
+            spellcasting_visualiser.stop()
+        except Exception as ex:
+            logger.warning(f"Error while stopping visualiser: {ex}")
+
+        logger.info(f"Exited '{APP_NAME}'.")
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(run_app())
+    except KeyboardInterrupt:
+        logger.info("Exiting on user interrupt...")

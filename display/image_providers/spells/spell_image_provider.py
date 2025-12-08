@@ -37,6 +37,5 @@ class SpellImageProvider(PILImageProvider[SpellType]):
 
             base_image = base_image.resize(size, Image.Resampling.LANCZOS)
             base_image = recolour_bg(base_image, self._settings.bg_colour)
-            # base_image = recolour_icon(base_image, self._settings.icon_colour)
 
             self._image_library[spell_type] = base_image

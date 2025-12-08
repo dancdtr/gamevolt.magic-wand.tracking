@@ -6,10 +6,11 @@ from collections.abc import Callable
 from logging import Logger
 
 from gamevolt.events.event import Event
+from gamevolt.messaging.message_receiver_protocol import MessageReceiverProtocol
 from gamevolt.messaging.udp.configuration.udp_rx_settings import UdpRxSettings
 
 
-class UdpRx:
+class UdpRx(MessageReceiverProtocol):
     """
     UDP receiver that raises an event with each received datagram as a UTF-8 string.
 
@@ -37,7 +38,11 @@ class UdpRx:
         self._running = threading.Event()
         self._thread: threading.Thread | None = None
 
-        self.message_received: Event[Callable[[str], None]] = Event()
+        self._message_received: Event[Callable[[str], None]] = Event()
+
+    @property
+    def message_received(self) -> Event[Callable[[str], None]]:
+        return self._message_received
 
     @property
     def is_running(self) -> bool:
