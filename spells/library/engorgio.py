@@ -4,21 +4,21 @@ from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
 
-def lumos_maxima() -> SpellDefinition:
+def engorgio() -> SpellDefinition:
     return SpellDefinition(
         step_groups=[
             SpellStepGroup(
-                name="Line_NE",
+                name="Line_SE",
                 steps=[
-                    SpellStep(frozenset({DirectionType.MOVING_N, DirectionType.MOVING_NE}), required=True),
+                    SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_E}), required=True),
                 ],
                 relative_distance=1 / 2,
                 relative_duration=1 / 2,
             ),
             SpellStepGroup(
-                name="Line_SE",
+                name="Line_NE",
                 steps=[
-                    SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE}), required=True),
+                    SpellStep(frozenset({DirectionType.MOVING_SW, DirectionType.MOVING_W}), required=True),
                 ],
                 relative_distance=1 / 2,
                 relative_duration=1 / 2,
@@ -26,9 +26,7 @@ def lumos_maxima() -> SpellDefinition:
         ],
         min_spell_steps=2,
         min_total_duration_s=0.7,
-        max_total_duration_s=2.5,
-        max_idle_gap_s=0.9,
-        max_filler_duration_s=0.6,
-        check_duration=True,
-        pause_speed_threshold=0.04,
+        max_total_duration_s=2,
+        max_idle_gap_s=0.5,
+        max_filler_duration_s=0.5,
     )

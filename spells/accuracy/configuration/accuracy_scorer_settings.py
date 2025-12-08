@@ -7,3 +7,4 @@ from spells.accuracy.spell_accuracy_weights_settings import SpellAccuracyWeights
 @dataclass
 class SpellAccuracyScorerSettings(SettingsBase):
     weights: SpellAccuracyWeightsSettings
+    fudge: int

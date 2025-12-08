@@ -9,8 +9,6 @@ from spells.spell_step_group import SpellStepGroup
 
 @dataclass
 class SpellDefinition:
-    id: str
-    name: str
     step_groups: Sequence[SpellStepGroup]
 
     # Minimum matched steps (required+optional) for a spell to count

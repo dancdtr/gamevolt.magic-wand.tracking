@@ -4,21 +4,23 @@ from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
 
-def lumos_maxima() -> SpellDefinition:
+def switching() -> SpellDefinition:
     return SpellDefinition(
         step_groups=[
             SpellStepGroup(
-                name="Line_NE",
+                name="Line_S",
                 steps=[
-                    SpellStep(frozenset({DirectionType.MOVING_N, DirectionType.MOVING_NE}), required=True),
+                    SpellStep(frozenset({DirectionType.MOVING_E})),
+                    SpellStep(frozenset({DirectionType.MOVING_SE})),
+                    SpellStep(frozenset({DirectionType.MOVING_S}), required=True),
                 ],
                 relative_distance=1 / 2,
                 relative_duration=1 / 2,
             ),
             SpellStepGroup(
-                name="Line_SE",
+                name="LINE_E",
                 steps=[
-                    SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE}), required=True),
+                    SpellStep(frozenset({DirectionType.MOVING_E}), required=True),
                 ],
                 relative_distance=1 / 2,
                 relative_duration=1 / 2,
@@ -26,9 +28,10 @@ def lumos_maxima() -> SpellDefinition:
         ],
         min_spell_steps=2,
         min_total_duration_s=0.7,
-        max_total_duration_s=2.5,
-        max_idle_gap_s=0.9,
-        max_filler_duration_s=0.6,
+        max_total_duration_s=4.0,
+        max_idle_gap_s=1.2,
+        max_filler_duration_s=1.2,
         check_duration=True,
-        pause_speed_threshold=0.04,
+        min_pre_pause_s=0,
+        min_post_pause_s=0,
     )

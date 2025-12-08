@@ -58,7 +58,7 @@ class SpellMatcher(SpellMatcherBase):
 
     def _match_from_index(
         self,
-        spell: SpellDefinition,
+        spell_definition: SpellDefinition,
         flat_steps: Sequence[SpellStep],
         group_idx_of_step: Sequence[int],
         segs: Sequence[GestureSegment],
@@ -78,7 +78,7 @@ class SpellMatcher(SpellMatcherBase):
         end_ts: int | None = None
         total_duration = 0.0
 
-        group_count = len(spell.step_groups)
+        group_count = len(spell_definition.step_groups)
         group_distance = [0.0 for _ in range(group_count)]
         group_duration = [0.0 for _ in range(group_count)]
         total_distance = 0.0
@@ -91,7 +91,7 @@ class SpellMatcher(SpellMatcherBase):
         used_min_idx: int | None = None  # oldest in this window
         used_max_idx: int | None = None  # newest in this window
 
-        group_names = [g.name for g in spell.step_groups]
+        group_names = [g.name for g in spell_definition.step_groups]
 
         i = i_start
         while i >= 0 and step_idx < step_count:
@@ -122,7 +122,7 @@ class SpellMatcher(SpellMatcherBase):
                     "step_idx=%d/%d required=%s dist=%.3f dt=%.3f "
                     "group_distance=%s group_ratios=%s",
                     prefix,
-                    spell.name,
+                    self._spell_controller.target_spell.name,
                     i_start,
                     seg_idx_in_window,
                     seg_dir_name,
@@ -146,7 +146,7 @@ class SpellMatcher(SpellMatcherBase):
                 nonlocal filler_duration, total_duration, i
 
                 # still keep the semantic that long NONE gaps break the window
-                if seg.direction_type == DirectionType.NONE and dt > spell.max_idle_gap_s:
+                if seg.direction_type == DirectionType.NONE and dt > spell_definition.max_idle_gap_s:
                     return False
 
                 filler_duration += dt
@@ -167,7 +167,7 @@ class SpellMatcher(SpellMatcherBase):
                 if not try_consume_as_filler():
                     self._logger.debug(
                         "NONE segment rejected as filler: spell=%s seg_win_idx=%d dt=%.3f",
-                        spell.name,
+                        self._spell_controller.target_spell.name,
                         seg_idx_in_window,
                         dt,
                     )
@@ -203,7 +203,7 @@ class SpellMatcher(SpellMatcherBase):
 
             self._logger.debug(
                 "MISMATCH spell=%s win_start=%d seg_win_idx=%d dir=%s step_idx=%d/%d " "step_allowed=%s dt=%.3f dist=%.3f required=%s",
-                spell.name,
+                self._spell_controller.target_spell.name,
                 i_start,
                 seg_idx_in_window,
                 seg_dir_name,
@@ -230,7 +230,7 @@ class SpellMatcher(SpellMatcherBase):
             # Required step not satisfied and can't be filler → this window dies.
             self._logger.debug(
                 "REQUIRED step failed and not filler: spell=%s seg_win_idx=%d step_idx=%d",
-                spell.name,
+                self._spell_controller.target_spell.name,
                 seg_idx_in_window,
                 step_idx,
             )
@@ -268,7 +268,7 @@ class SpellMatcher(SpellMatcherBase):
         )
 
         ctx = SpellMatchContext(
-            spell=spell,
+            spell=spell_definition,
             segments=segs,
             metrics=metrics,
             window_start_index=window_start_index,
@@ -279,7 +279,7 @@ class SpellMatcher(SpellMatcherBase):
         if not self._rules_validator.validate(ctx):
             self._logger.debug(
                 "NO MATCH (rule validator): spell=%s win_start=%d " "matched_required=%d/%d total_used=%d",
-                spell.name,
+                self._spell_controller.target_spell.name,
                 i_start,
                 matched_required,
                 required_total,
@@ -288,18 +288,18 @@ class SpellMatcher(SpellMatcherBase):
             return None
 
         # If we get here, the candidate passed all rules.
-        accuracy = self._accuracy_scorer.calculate(spell, metrics)
+        accuracy = self._accuracy_scorer.calculate(spell_definition, metrics)
 
         if total_distance > 0:
             final_ratios = [gd / total_distance for gd in group_distance]
         else:
             final_ratios = [0.0 for _ in group_distance]
 
-        self._logger.info(
+        self._logger.debug(
             "MATCHED spell=%s score=%.3f win_start=%d "
             "required %d/%d + optional %d/%d = total %d/%d "
             "total_duration=%.3f, total_distance=%.3f group_distance=%s group_ratios=%s filler_duration=%.3f",
-            spell.name,
+            self._spell_controller.target_spell.name,
             accuracy.score,
             i_start,
             matched_required,
@@ -316,8 +316,8 @@ class SpellMatcher(SpellMatcherBase):
         )
 
         return SpellMatch(
-            spell_id=spell.id,
-            spell_name=spell.name,
+            self._spell_controller.target_spell.code,
+            self._spell_controller.target_spell.name,
             start_ts_ms=start_ts,
             end_ts_ms=end_ts,
             duration_s=total_duration,

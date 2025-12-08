@@ -11,7 +11,7 @@ from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_segment import GestureSegment
 from motion.motion_phase_type import MotionPhaseType
 from spells.spell_match import SpellMatch
-from spells.spell_matcher_manager import SpellMatcherManager
+from spells.spell_matcher import SpellMatcher
 
 
 class SpellTraceSessionManager:
@@ -58,13 +58,13 @@ class SpellTraceSessionManager:
         self,
         segment: GestureSegment,
         history_tail: Sequence[GestureSegment],
-        matcher_manager: SpellMatcherManager,
+        matcher: SpellMatcher,
     ) -> None:
         """
         Feed the tracer into matching each time a segment completes.
         If the segment is a long NONE, flush (natural break).
         """
-        matcher_manager.try_match(history_tail)
+        matcher.try_match(history_tail)
 
         # Natural break: end attempt after a long NONE
         if segment.direction_type == DirectionType.NONE and segment.duration_s >= self._settings.natural_break_s:
@@ -76,10 +76,6 @@ class SpellTraceSessionManager:
     ) -> None:
         # Successful attempt ends the trace
         self.flush("match")
-
-    def on_difficulty_changed(self) -> None:
-        # Changing models? close any ongoing attempt
-        self.flush("difficulty-changed")
 
     def flush(self, reason: str = "") -> None:
         if not self._in_active_trace:

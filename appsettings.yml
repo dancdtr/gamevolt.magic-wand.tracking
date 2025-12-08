@@ -45,8 +45,8 @@ input:
       abs_invert_y: True
       gain_x: 1.0
       gain_y: 1.0
-      abs_yaw_limit_deg: 90
-      abs_pitch_limit_deg: 90
+      abs_yaw_limit_deg: 135
+      abs_pitch_limit_deg: 135
       abs_clip_mode: "DISCARD"
       deadzone_x: 0.0
       deadzone_y: 0.0
@@ -63,7 +63,7 @@ motion:
       speed_start: 0.50
       speed_stop: 0.20
       min_state_duration: 0.03
-      min_stopped_duration: 0.15
+      min_stopped_duration: 0.2
     direction_quantizer:
       speed_stop: 0.2
       min_direction_duration: 0.01
@@ -111,6 +111,7 @@ spell_trace_session:
   label_prefix: "ATTEMPT"
 
 accuracy:
+  fudge: 10
   weights:
     step_count_weight: 0.7
     relative_group_distance_weight: 0.15

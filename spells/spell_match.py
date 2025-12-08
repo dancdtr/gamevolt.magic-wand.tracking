@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from spells.spell_type import SpellType
-
 
 @dataclass(frozen=True)
 class SpellMatch:
