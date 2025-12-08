@@ -15,17 +15,14 @@ from input.factories.configuration.input_type import InputType
 from input.mouse_input import MouseInput
 from input.wand.wand_input import WandInput
 from input.wand_position import WandPosition
-from messaging.unity_udp_tx import UnityUdpTx
+from messaging.spell_cast_udp_tx import SpellCastUdpTx
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_history import GestureHistory
 from motion.gesture.gesture_segment import GestureSegment
 from motion.motion_phase_type import MotionPhaseType
 from motion.motion_processor import MotionProcessor
 from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
-from spells.control.revelio_spell_selector import RevelioSpellSelector
 from spells.control.udp_spell_controller import UdpSpellController
-from spells.easy_spell_matcher import EasySpellMatcher
-from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.library.spell_difficulty_type import SpellDifficultyType
 from spells.spell_list import SpellList
 from spells.spell_match import SpellMatch
@@ -44,7 +41,6 @@ print(settings)
 logger = get_logger(LoggingSettings(file_path=settings.logging.file_path, minimum_level=settings.logging.minimum_level))
 
 history = GestureHistory(settings.motion.gesture_history)
-spell_definition_factory = SpellDefinitionFactory()
 difficulty_controller = SpellDifficultyController(logger, start_difficulty=SpellDifficultyType.FORGIVING)
 
 trace_manager = SpellTraceSessionManager(
@@ -56,21 +52,16 @@ trace_manager = SpellTraceSessionManager(
 
 spell_list = SpellList(logger)
 
-unity_udp_tx = UnityUdpTx(logger, settings.udp_peer.udp_transmitter, settings.unity_udp)
-spell_selector = UdpSpellController(logger, settings.udp_peer, spell_list)
-# spell_selector = RevelioSpellSelector(logger, spell_list)  # type: ignore
-# spell_selector = SpellSelector(logger, spell_factory=SpellFactory(),
+udp_tx = SpellCastUdpTx(logger, settings.udp_peer.udp_transmitter)
+spell_controller = UdpSpellController(logger, settings.udp_peer, spell_list)
+
 matcher_manager = SpellMatcherManager(difficulty_controller.difficulty)
-# matcher_manager.register(
-# #     SpellDifficultyType.STRICT,
-# #     EasySpellMatcher(logger, spell_definition_factory.create_spells(settings.spells.targets, SpellDifficultyType.FORGIVING)),
-# # )
 matcher_manager.register(
     difficulty=SpellDifficultyType.FORGIVING,
     matcher=SpellMatcher(
         logger=logger,
         accuracy_scorer=SpellAccuracyScorer(settings=settings.accuracy),
-        spell_selector=spell_selector,
+        spell_controller=spell_controller,
     ),
 )
 visualiser = WandVisualiserFactory(logger, settings.wand_visualiser).create()
@@ -106,7 +97,7 @@ def on_motion_changed(mode: MotionPhaseType) -> None:
         visualiser.clear()
         input.reset()
         processor.reset()
-        # print([seg.direction_type.name for seg in history.tail()])
+        print([seg.direction_type.name for seg in history.tail()])
         history.clear()
     logger.debug(f"Motion: {mode.name}")
 
@@ -128,7 +119,7 @@ def on_spell(match: SpellMatch):
         f"{match.accuracy * 100:.1f}%."
     )
 
-    unity_udp_tx.on_spell_detected(match)
+    udp_tx.on_spell_detected(match)
     trace_manager.on_match(match)
     # print([seg.direction_type.name for seg in history.tail()])
     history.clear()
@@ -142,7 +133,7 @@ def on_spell(match: SpellMatch):
 
 quit_event = asyncio.Event()
 
-spell_selector.start()
+spell_controller.start()
 processor.direction_changed.subscribe(on_direction_changed)
 processor.motion_changed.subscribe(on_motion_changed)
 processor.segment_completed.subscribe(on_segment_completed)

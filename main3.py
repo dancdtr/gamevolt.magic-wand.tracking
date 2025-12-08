@@ -23,7 +23,9 @@ from gamevolt.visualisation.configuration.canvas_settings import CanvasSettings
 from gamevolt.visualisation.configuration.preview_settings import RootSettings
 from gamevolt.visualisation.configuration.visualiser_settings import VisualiserSettings
 from gamevolt.visualisation.visualiser import Visualiser
+from messaging.hello_message import HelloMessage
 from messaging.spell_cast_message import SpellCastMessage
+from messaging.target_spell_updated_message import TargetSpellUpdatedMessage
 from spells.spell_list import SpellList
 
 APP_NAME = "Spellcasting Visualiser"
@@ -86,9 +88,14 @@ def on_spell_cast(message: Message) -> None:
             spellcasting_visualiser.show_spell_instruction(spell)
 
 
+def on_hello(_: Message) -> None:
+    udp_tx.send(TargetSpellUpdatedMessage(spell_controller.target_spell.name).to_dict())
+
+
 spellcasting_visualiser.quit.subscribe(lambda: quit_event.set())
 visualiser.quit.subscribe(lambda: quit_event.set())
 message_handler.subscribe(SpellCastMessage, on_spell_cast)
+message_handler.subscribe(HelloMessage, on_hello)
 
 
 async def run_app() -> None:

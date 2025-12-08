@@ -42,13 +42,3 @@ class UdpSpellController(SpellController):
             self._logger.debug(f"Resolved spell type from UDP message: {message.SpellTypeName}")
             spell = self._spell_list.get_by_name(message.SpellTypeName.casefold())
             self.set_target_by_type(spell.type)
-
-    def _parse_spell_type(self, message: str) -> SpellType:
-        if "incendeio".casefold() in message:
-            return SpellType.INCENDIO
-        if "WINGARDIUM_LEVIOSA".casefold() in message:
-            return SpellType.WINGARDIUM_LEVIOSA
-        if "ALOHOMORA".casefold() in message:
-            return SpellType.ALOHOMORA
-
-        return SpellType.NONE

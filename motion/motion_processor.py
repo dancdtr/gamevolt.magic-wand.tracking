@@ -77,13 +77,11 @@ class MotionProcessor:
         phase_update = self._phase_tracker.step(speed)
 
         if phase_update.new_phase is not None:
-            self._set_motion_phase(phase_update.new_phase)
-
             if phase_update.new_phase == MotionPhaseType.STATIONARY:
-                self._set_direction(DirectionType.NONE, pos)
+                if self._motion_state != DirectionType.NONE:
+                    self._set_direction(DirectionType.NONE, pos)
 
-        # if phase_update.stop_started:
-        # pass
+            self._set_motion_phase(phase_update.new_phase)
 
         if self._motion_mode == MotionPhaseType.MOVING:
             direction_update = self._direction_quantizer.step(vx, vy, speed)

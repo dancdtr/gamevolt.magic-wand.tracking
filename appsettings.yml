@@ -117,10 +117,6 @@ accuracy:
     relative_group_duration_weight: 0.15
     required_step_bias: 0.5
 
-unity_udp:
-  spell_mapping_keys: ["INCENDIO", "WINGARDIUM_LEVIOSA", "ALOHOMORA"]
-  spell_mapping_values: ["spell1", "spell2", "spell3"]
-
 udp_peer:
   udp_transmitter:
     host: "HP-7HA50630"

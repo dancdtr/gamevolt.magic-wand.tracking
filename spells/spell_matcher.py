@@ -16,17 +16,17 @@ from spells.spell_step import SpellStep
 
 
 class SpellMatcher(SpellMatcherBase):
-    def __init__(self, logger: Logger, accuracy_scorer: SpellAccuracyScorer, spell_selector: SpellController) -> None:
+    def __init__(self, logger: Logger, accuracy_scorer: SpellAccuracyScorer, spell_controller: SpellController) -> None:
         super().__init__(logger)
         self._accuracy_scorer = accuracy_scorer
         self._rules_validator = RulesValidator()
 
-        self._spell_selector = spell_selector
+        self._spell_controller = spell_controller
         self._spell_definition_factory = SpellDefinitionFactory()
 
     @property
     def spell_definitions(self) -> list[SpellDefinition]:
-        spell_types = [self._spell_selector.target_spell]
+        spell_types = [self._spell_controller.target_spell]
         return self._spell_definition_factory.create_spells([spell.type for spell in spell_types])
 
     # ─── Public API ──────────────────────────────────────────────────────────
