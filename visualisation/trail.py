@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections import deque
 from typing import Deque, Iterable, Sequence
 
-from input.wand_position import WandPosition
 from visualisation.configuration.trail_settings import TrailSettings
+from wand.wand_rotation import WandRotation
 
 
 class Trail:
@@ -24,7 +24,7 @@ class Trail:
     def add_xy(self, x: float, y: float) -> None:
         self._points.append((x, y))
 
-    def add(self, pos: WandPosition) -> None:
+    def add(self, pos: WandRotation) -> None:
         if pos.nx and pos.ny:
             self.add_xy(pos.nx, pos.ny)
 
@@ -33,5 +33,4 @@ class Trail:
             self._points.append((x, y))
 
     def points(self) -> Sequence[tuple[float, float]]:
-        # Return a stable snapshot; still cheap for UI usage
         return list(self._points)

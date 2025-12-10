@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class SpellMatch:
+    wand_id: str
     spell_id: str
     spell_name: str
     start_ts_ms: int

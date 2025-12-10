@@ -5,13 +5,17 @@ from visualisation.coordinate_mode import CoordinateMode
 
 
 @dataclass
+class TrailColourSettings(SettingsBase):
+    line_color: str
+    point_colour: str
+
+
+@dataclass
 class TrailSettings(SettingsBase):
     max_points: int
-    line_width: int
-    line_color: str
     draw_points: bool
+    line_width: int
     point_radius: int
-    point_colour: str | None
     smooth: bool
     coords_mode: CoordinateMode  # "centered" = [-1..1], origin at centre
     y_up: bool  # True => +Y up (top), False => screen down

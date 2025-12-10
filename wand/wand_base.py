@@ -2,13 +2,14 @@ from logging import Logger
 from typing import Callable
 
 from gamevolt.events.event import Event
-from input.wand_position import WandPosition
+from motion.motion_processor import MotionProcessor
+from wand.wand_rotation import WandRotation
 
 
-class MotionInputBase:
-    def __init__(self, logger: Logger) -> None:
+class WandBase:
+    def __init__(self, logger: Logger, motion_processor: MotionProcessor) -> None:
         self._logger = logger
-        self.position_updated: Event[Callable[[WandPosition], None]] = Event()
+        self.position_updated: Event[Callable[[WandRotation], None]] = Event()
 
     async def start(self) -> None: ...
 

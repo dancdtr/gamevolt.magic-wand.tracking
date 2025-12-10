@@ -5,8 +5,12 @@ from gamevolt.serial.configuration.serial_receiver_settings import SerialReceive
 
 
 @dataclass
-class WandDataReaderSettings(SettingsBase):
-    serial_receiver: SerialReceiverSettings
+class WandClientSettings(SettingsBase):
     imu_hz: float
     target_hz: float
-    wand_id: str
+
+
+@dataclass
+class WandServerSettings(SettingsBase):
+    serial_receiver: SerialReceiverSettings
+    client: WandClientSettings

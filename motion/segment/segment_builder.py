@@ -5,10 +5,10 @@ from collections import deque
 from typing import Callable, Deque
 
 from gamevolt.events.event import Event
-from input.wand_position import WandPosition
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_segment import GestureSegment
 from motion.segment.configuration.segment_builder_settings import SegmentBuilderSettings
+from wand.wand_rotation import WandRotation
 
 
 class SegmentBuilder:
@@ -39,7 +39,7 @@ class SegmentBuilder:
         self._net_dx: float = 0.0
         self._net_dy: float = 0.0
         self._path: float = 0.0
-        self._points: Deque[WandPosition] = deque(maxlen=settings.max_sample_count)
+        self._points: Deque[WandRotation] = deque(maxlen=settings.max_sample_count)
 
         self.segment_completed: Event[Callable[[GestureSegment], None]] = Event()
 
@@ -47,7 +47,7 @@ class SegmentBuilder:
     def active(self) -> bool:
         return self._active
 
-    def start(self, dir_type: DirectionType, pos: WandPosition) -> None:
+    def start(self, dir_type: DirectionType, pos: WandRotation) -> None:
         self._active = True
         self._direction = dir_type
         self._start_ms = pos.ts_ms
@@ -59,7 +59,7 @@ class SegmentBuilder:
         self._points.clear()
         self._points.append(pos)
 
-    def accumulate(self, pos: WandPosition) -> None:
+    def accumulate(self, pos: WandRotation) -> None:
         if not self._active:
             return
 
@@ -99,7 +99,7 @@ class SegmentBuilder:
         self._active = False
         self.segment_completed.invoke(seg)
 
-    def commit(self, new_dir: DirectionType, pos: WandPosition) -> None:
+    def commit(self, new_dir: DirectionType, pos: WandRotation) -> None:
         if self._active:
             self._last_ms = pos.ts_ms
             self.finish()

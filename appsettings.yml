@@ -21,23 +21,38 @@ spells:
     # - "rectanglia"
 
 input:
+  server:
+    client:
+      imu_hz: 120.0
+      target_hz: 30.0
+    serial_receiver:
+      port: "/dev/serial/by-id/usb-iLabs_Challenger_2040_UWB_DF622C64176C2627-if00"
+      baud: 115200
+      timeout: 3
+      retry_interval: 2
   input_type: "wand"
+  tracked_wands:
+    [
+      {
+        id: "E001",
+        colour: { line_color: "#FF3EBF", point_colour: "#FF3EBF" },
+      },
+      {
+        id: "E004",
+        colour: { line_color: "#FD7227", point_colour: "#FD7227" },
+      },
+      {
+        id: "E005",
+        colour: { line_color: "#3EFF4E", point_colour: "#3EFF4E" },
+      },
+    ]
 
-  mouse:
+  mock:
     invert_x: False
     invert_y: False
     sample_frequency: 30
 
   wand:
-    wand_data_reader:
-      wand_id: "E001"
-      imu_hz: 120.0
-      target_hz: 30.0
-      serial_receiver:
-        port: "/dev/serial/by-id/usb-iLabs_Challenger_2040_UWB_DF622C64176C2627-if00"
-        baud: 115200
-        timeout: 3
-        retry_interval: 2
     rmf:
       invert_x: True
       invert_y: True
@@ -93,12 +108,10 @@ wand_visualiser:
     colour: "#9ca3af"
     width: 1
   trail:
-    max_points: 64
     line_width: 3
-    line_color: "#ff66d9"
-    draw_points: True
     point_radius: 3
-    point_colour: "#f2f2f2"
+    max_points: 64
+    draw_points: True
     smooth: False
     coords_mode: "centred"
     y_up: True

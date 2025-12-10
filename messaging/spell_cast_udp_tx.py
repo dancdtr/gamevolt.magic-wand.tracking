@@ -13,4 +13,10 @@ class SpellCastUdpTx:
         self._udp_tx = UdpTx(logger, udp_settings)
 
     def on_spell_detected(self, match: SpellMatch) -> None:
-        self._udp_tx.send(SpellCastMessage(match.spell_name.upper(), match.accuracy).to_dict())
+        self._udp_tx.send(
+            SpellCastMessage(
+                WandId=match.wand_id,
+                SpellType=match.spell_name.upper(),
+                Confidence=match.accuracy,
+            ).to_dict()
+        )

@@ -23,19 +23,22 @@ class SpellMatcherBase(ABC):
     def spell_definitions(self) -> list[SpellDefinition]: ...
 
     # ----- public entry point -----
-    def try_match(self, history: Sequence[GestureSegment]) -> None:
+    def try_match(self, wand_id: str, history: Sequence[GestureSegment]) -> bool:
         if not history:
-            return
+            return False
         compressed = self._compress(history)  # oldest → newest
 
         for spell in self.spell_definitions:
-            match = self._match_spell(spell, compressed)
+            match = self._match_spell(wand_id, spell, compressed)
             if match:
+                self._logger.info(f"({wand_id} cast {match.spell_name}! ✨✨" f"{match.accuracy_score * 100:.1f}%")
                 self.matched.invoke(match)
-                break
+                return True
+
+        return False
 
     # ----- subclass must implement -----
-    def _match_spell(self, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
+    def _match_spell(self, wand_id: str, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
         raise NotImplementedError
 
     # ----- shared helpers -----

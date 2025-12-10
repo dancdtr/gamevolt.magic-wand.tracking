@@ -10,23 +10,20 @@ from gamevolt_logging.configuration import LoggingSettings
 from analysis.spell_trace_adapter_factory import SpellTraceAdapterFactory
 from analysis.spell_trace_session import SpellTraceSessionManager
 from appsettings import AppSettings
-from input.factories.configuration.input_type import InputType
-from input.mouse_input import MouseInput
-from input.wand.wand_input import WandInput
-from input.wand_position import WandPosition
 from messaging.spell_cast_udp_tx import SpellCastUdpTx
-from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_history import GestureHistory
-from motion.gesture.gesture_segment import GestureSegment
-from motion.motion_phase_type import MotionPhaseType
-from motion.motion_processor import MotionProcessor
+from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.control.udp_spell_controller import UdpSpellController
 from spells.spell_list import SpellList
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
-from visualisation.wand_visualiser import WandVisualiser
+from visualisation.configuration.visualised_wand_factory import VisualisedWandFactory
+from visualisation.trail_factory import TrailFactory
 from visualisation.wand_visualiser_factory import WandVisualiserFactory
+from wand.tracked_wand_factory import MotionProcessorFactory
+from wand.tracked_wand_manager import TrackedWandManager
+from wand.wand_server import WandServer
 from wizards.wizard_names_provider import WizardNameProvider
 
 application_dir = os.path.dirname(os.path.abspath(__file__))
@@ -51,93 +48,50 @@ spell_list = SpellList(logger)
 udp_tx = SpellCastUdpTx(logger, settings.udp_peer.udp_transmitter)
 spell_controller = UdpSpellController(logger, settings.udp_peer, spell_list)
 
-matcher = SpellMatcher(logger=logger, accuracy_scorer=SpellAccuracyScorer(settings=settings.accuracy), spell_controller=spell_controller)
+spell_matcher = SpellMatcher(
+    logger=logger, accuracy_scorer=SpellAccuracyScorer(settings=settings.accuracy), spell_controller=spell_controller
+)
 
-visualiser = WandVisualiserFactory(logger, settings.wand_visualiser).create()
+server = WandServer(logger, settings.input, settings.input.server)
 
-if settings.input.input_type is InputType.MOUSE:
-    if not isinstance(visualiser, WandVisualiser):
-        raise RuntimeError(
-            f"Cannot use the mock mouse input system without a visualiser - ensure wand_visualiser is enabled in appsettings.env.yml."
-        )
-    input = MouseInput(logger, settings.input.mouse, visualiser)
-elif settings.input.input_type is InputType.WAND:
-    input = WandInput(logger, settings.input.wand)
-else:
-    raise RuntimeError(f"No input defined for type '{settings.input.input_type}'.")
-
-
-processor = MotionProcessor(settings=settings.motion.processor, input=input)
+motion_processor_factory = MotionProcessorFactory(logger, settings.motion.processor)
+gesture_history_factory = GestureHistoryFactory(logger, settings.motion.gesture_history)
 name_provider = WizardNameProvider(settings.wizard)
+tracked_wand_manager = TrackedWandManager(logger, settings.input, server, motion_processor_factory, gesture_history_factory, spell_matcher)
 
-
-def on_position_updated(pos: WandPosition) -> None:
-    visualiser.add_position(pos)
-
-
-def on_direction_changed(dir: DirectionType) -> None:
-    # logger.info(f"State: {dir.name}")
-    return
-
-
-def on_motion_changed(mode: MotionPhaseType) -> None:
-    trace_manager.on_motion_changed(mode)
-    if mode is MotionPhaseType.STATIONARY:
-        visualiser.clear()
-        input.reset()
-        processor.reset()
-        # print([seg.direction_type.name for seg in history.tail()])
-        history.clear()
-    logger.debug(f"Motion: {mode.name}")
-
-
-def on_segment_completed(segment: GestureSegment):
-    logger.debug(f"Completed '{segment.direction_type.name}' ({segment.direction:.3f}): {segment.duration_s}s")
-    history.add(segment)
-    trace_manager.on_segment(
-        segment,
-        history.tail(),
-        matcher,
-    )
+trail_factory = TrailFactory(logger, settings.wand_visualiser.trail)
+visualised_wand_factory = VisualisedWandFactory(logger, trail_factory)
+visualiser = WandVisualiserFactory(logger, settings.wand_visualiser, settings.input, visualised_wand_factory, tracked_wand_manager).create()
 
 
 def on_spell(match: SpellMatch):
-    logger.info(
-        f"{name_provider.get_name()} cast {match.spell_name}! ✨✨"
-        # f"({match.duration_s:.3f}s), {match.segments_used}/{match.total_segments}="
-        f"{match.accuracy_score * 100:.1f}%"
-    )
-
     udp_tx.on_spell_detected(match)
-    trace_manager.on_match(match)
-    # print([seg.direction_type.name for seg in history.tail()])
-    history.clear()
-    processor.reset()
+    # tracked_wand_manager.on_spell_cast(match.wand_id)
 
 
 quit_event = asyncio.Event()
 
-spell_controller.start()
-processor.direction_changed.subscribe(on_direction_changed)
-processor.motion_changed.subscribe(on_motion_changed)
-processor.segment_completed.subscribe(on_segment_completed)
-matcher.matched.subscribe(on_spell)
-input.position_updated.subscribe(on_position_updated)
+spell_matcher.matched.subscribe(on_spell)
+# input.position_updated.subscribe(on_position_updated)
 visualiser.quit.subscribe(lambda: quit_event.set())
+tracked_wand_manager.wand_rotation_updated.subscribe(visualiser.add_rotation)
+
+spell_controller.start()
 
 
 async def main():
     logger.info(f"Running '{settings.name}' version: '{settings.version}'...")
     try:
-        await input.start()
-        processor.start()
+        await server.start()
+        tracked_wand_manager.start()
         visualiser.start()
     except Exception as ex:
         raise ex
 
     try:
         while not quit_event.is_set():
-            input.update()
+            # input.update()
+            tracked_wand_manager.update()
             visualiser.update()
             await asyncio.sleep(0.01)
     except tk.TclError:

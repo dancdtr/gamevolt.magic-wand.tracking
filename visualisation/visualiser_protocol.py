@@ -1,7 +1,7 @@
 from collections.abc import Callable
 
 from gamevolt.events.event import Event
-from input.wand_position import WandPosition
+from wand.wand_rotation import WandRotation
 
 
 class WandVisualiserProtocol:
@@ -17,7 +17,7 @@ class WandVisualiserProtocol:
 
     def unregister_key_callbacks(self, key: str) -> None: ...
 
-    def add_position(self, wand_position: WandPosition) -> None: ...
+    def add_rotation(self, wand_position: WandRotation) -> None: ...
 
     @property
     def quit(self) -> Event[Callable[[], None]]: ...

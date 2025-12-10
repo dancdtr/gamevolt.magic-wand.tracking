@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class WandPosition:
+class WandRotation:
     id: str
     ts_ms: int
     x_delta: float

@@ -22,3 +22,4 @@ class DemoUdpMessageSender(MessageSenderProtocol):
     def send(self, message: Message) -> None:
         self._logger.debug(f"Sending message: {message}")
         self._udp_tx.send(payload=message.to_dict())
+        print(message.to_dict())

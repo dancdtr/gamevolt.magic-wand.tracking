@@ -34,13 +34,13 @@ class SpellImageLibrary:
         for spell_type, image in self._spell_success_provider.items():
             self._success_images[spell_type] = PhotoImage(image, master=tk_master)
 
-    def get_spell_instruction_image(self, spell: Spell) -> PhotoImage:
+    def get_spell_instruction_image(self, spell_type: SpellType) -> PhotoImage:
         image_dict = self._instruction_active_images
-        image = image_dict.get(spell.type)
+        image = image_dict.get(spell_type)
         if image is not None:
             return image
 
-        raise RuntimeError(f"No image to display for spell instruction: '{spell.type}'!")
+        raise RuntimeError(f"No image to display for spell instruction: '{spell_type}'!")
 
     def get_spell_cast_image(self, spell_type: SpellType) -> PhotoImage:
         image = self._success_images.get(spell_type)

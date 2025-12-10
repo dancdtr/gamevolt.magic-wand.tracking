@@ -1,4 +1,4 @@
-# live_wand_preview.py
+# wand_visualiser.py
 from __future__ import annotations
 
 import tkinter as tk
@@ -7,45 +7,57 @@ from logging import Logger
 from gamevolt.visualisation.axes import Axes
 from gamevolt.visualisation.label_factory import LabelFactory
 from gamevolt.visualisation.visualiser import Visualiser
-from input.wand_position import WandPosition
+from visualisation.configuration.trail_settings import TrailColourSettings
+from visualisation.configuration.visualised_wand_factory import VisualisedWandFactory
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from visualisation.coordinate_mode import CoordinateMode
-from visualisation.trail import Trail
+from visualisation.visualised_wand import VisualisedWand
 from visualisation.visualiser_protocol import WandVisualiserProtocol
+from wand.configuration.input_settings import InputSettings
+from wand.tracked_wand_manager import TrackedWandManager
 
 
 class WandVisualiser(Visualiser, WandVisualiserProtocol):
-    def __init__(self, logger: Logger, settings: WandVisualiserSettings) -> None:
-        super().__init__(logger, settings.visualiser)
+    def __init__(
+        self,
+        logger: Logger,
+        wand_visualiser_settings: WandVisualiserSettings,
+        input_settings: InputSettings,
+        visualised_wand_factory: VisualisedWandFactory,
+        tracked_wand_manager: TrackedWandManager,
+    ) -> None:
+        super().__init__(logger, wand_visualiser_settings.visualiser)
+        self._wand_visualiser_settings = wand_visualiser_settings
+        self._input_settings = input_settings
 
-        self._wand_visualiser_settings = settings
+        self._visualised_wand_factory = visualised_wand_factory
+        self._tracked_wand_manager = tracked_wand_manager
 
-        self._trail = Trail(settings=self._wand_visualiser_settings.trail)
-        self._status = LabelFactory(settings.label, self._root).create()
+        self._status = LabelFactory(wand_visualiser_settings.label, self._root).create()
+        self._axes = Axes(wand_visualiser_settings.axes, canvas=self.canvas)
 
-        self._need_draw = False
-
-        self._axes = Axes(settings.axes, canvas=self.canvas)
-
-        self._line_id: int | None = None
-        self._dot_ids: list[int] = []
+        self._visualised_wands: list[VisualisedWand] = []
 
         self._is_drawing = True
 
-    def set_status(self, status: str) -> None:
-        self._status.config(text=status)
-
-    # ── lifecycle ────────────────────────────────────────────────────────────
     def start(self) -> None:
         super().start()
 
         self.register_key_callback("c", self.clear)
         self.register_key_callback("d", self._on_toggle_drawing)
 
+        self._visualised_wands = self._create_visualised_wands()
+
+        for wand in self._visualised_wands:
+            wand.start()
+
         self._axes.draw()
 
     def stop(self) -> None:
         super().stop()
+
+        for wand in self._visualised_wands:
+            wand.stop()
 
         self.unregister_key_callbacks("c")
         self.unregister_key_callbacks("d")
@@ -59,24 +71,15 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
             super()._on_quit()
             return
 
-        if self._need_draw:
-            self.draw()
-            self._need_draw = False
+        self.draw()
 
-    # ── event handlers ───────────────────────────────────────────────────────
+    def set_status(self, status: str) -> None:
+        self._status.config(text=status)
 
-    def add_position(self, sample: WandPosition) -> None:
-        if sample.nx is None or sample.ny is None:
-            return
-
-        self._trail.add(sample)
-        self.set_status(f"({sample.nx:.2f}, {sample.ny:.2f})")
-        self._need_draw = True
-
-    # ── public helpers ───────────────────────────────────────────────────────
     def clear(self) -> None:
-        self._trail.clear()
-        self._clear_trail_graphics()
+        for wand in self._visualised_wands:
+            wand.clear_trail()
+
         self._axes.draw()
 
     def draw(self) -> None:
@@ -87,62 +90,68 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
         w = max(self._canvas.winfo_width(), 1)
         h = max(self._canvas.winfo_height(), 1)
 
-        # clear old points
-        self._clear_trail_graphics()
+        for wand in self._visualised_wands:
+            wand.erase()
 
         if not self._is_drawing:
             return
 
-        pts = self._trail.points()
-        n = len(pts)
+        for wand in self._visualised_wands:
+            pts = wand.points()
+            n = len(pts)
 
-        if n == 0:
-            if self._line_id is not None:
-                self._canvas.coords(self._line_id, ())
-            return
+            if n == 0:
+                if wand.line_id is not None:
+                    self._canvas.coords(wand.line_id, ())
+                return
 
-        coords: list[float] = []
-        for nx, ny in pts:
-            x, y = self._position_to_canvas(nx, ny, w, h)
-            coords.extend([x, y])
+            coords: list[float] = []
+            for nx, ny in pts:
+                x, y = self._position_to_canvas(nx, ny, w, h)
+                coords.extend([x, y])
 
-        if n >= 2:
-            if self._line_id is None:
-                self._line_id = self._canvas.create_line(
-                    *coords,
-                    fill=self._wand_visualiser_settings.trail.line_color,
-                    width=self._wand_visualiser_settings.trail.line_width,
-                    smooth=self._wand_visualiser_settings.trail.smooth,
-                    splinesteps=12 if self._wand_visualiser_settings.trail.smooth else 1,
-                )
-            else:
-                self._canvas.coords(self._line_id, *coords)
-                self._canvas.itemconfig(
-                    self._line_id,
-                    fill=self._wand_visualiser_settings.trail.line_color,
-                    width=self._wand_visualiser_settings.trail.line_width,
-                    smooth=self._wand_visualiser_settings.trail.smooth,
-                    splinesteps=12 if self._wand_visualiser_settings.trail.smooth else 1,
-                )
-        else:
-            if self._line_id is not None:
-                self._canvas.delete(self._line_id)
-                self._line_id = None
+            line_colour = wand.colour_settings.line_color
+            point_colour = wand.colour_settings.point_colour
+            line_width = self._wand_visualiser_settings.trail.line_width
+            point_radius = self._wand_visualiser_settings.trail.point_radius
 
-        if self._wand_visualiser_settings.trail.draw_points:
-            r = self._wand_visualiser_settings.trail.point_radius
-            it = iter(coords)
-            for x, y in zip(it, it):
-                self._dot_ids.append(
-                    self._canvas.create_oval(
-                        x - r,
-                        y - r,
-                        x + r,
-                        y + r,
-                        fill=self._wand_visualiser_settings.trail.point_colour or self._wand_visualiser_settings.trail.line_color,
-                        outline=self._wand_visualiser_settings.trail.point_colour or self._wand_visualiser_settings.trail.line_color,
+            if n >= 2:
+                if wand.line_id is None:
+                    wand.line_id = self._canvas.create_line(
+                        *coords,
+                        fill=line_colour,
+                        width=line_width,
+                        smooth=self._wand_visualiser_settings.trail.smooth,
+                        splinesteps=12 if self._wand_visualiser_settings.trail.smooth else 1,
                     )
-                )
+                else:
+                    self._canvas.coords(wand.line_id, *coords)
+                    self._canvas.itemconfig(
+                        wand.line_id,
+                        fill=line_colour,
+                        width=line_width,
+                        smooth=self._wand_visualiser_settings.trail.smooth,
+                        splinesteps=12 if self._wand_visualiser_settings.trail.smooth else 1,
+                    )
+            else:
+                if wand.line_id is not None:
+                    self._canvas.delete(wand.line_id)
+                    wand.line_id = None
+
+            if self._wand_visualiser_settings.trail.draw_points:
+                r = point_radius
+                it = iter(coords)
+                for x, y in zip(it, it):
+                    wand.dot_ids.append(
+                        self._canvas.create_oval(
+                            x - r,
+                            y - r,
+                            x + r,
+                            y + r,
+                            fill=point_colour,
+                            outline=point_colour,
+                        )
+                    )
 
     def _on_resize_window(self) -> None:
         super()._on_resize_window()
@@ -152,17 +161,6 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
     def _on_toggle_drawing(self) -> None:
         self._is_drawing = not self._is_drawing
         self.clear()
-
-    def _clear_trail_graphics(self) -> None:
-        # delete main line
-        if self._line_id is not None:
-            self._canvas.delete(self._line_id)
-            self._line_id = None
-
-        # delete point dots
-        for dot_id in self._dot_ids:
-            self._canvas.delete(dot_id)
-        self._dot_ids.clear()
 
     def _position_to_canvas(self, nx: float, ny: float, w: int, h: int) -> tuple[float, float]:
         cm = self._wand_visualiser_settings.trail.coords_mode
@@ -193,3 +191,14 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
 
         else:
             raise ValueError(f"Unknown coords_mode: '{cm}'")
+
+    def _create_visualised_wands(self) -> list[VisualisedWand]:
+        fallback_settings = TrailColourSettings("#ffffff", "ffffff")
+        colour_settings = {wand.id: wand.colour for wand in self._input_settings.tracked_wands}
+
+        wands = []
+        for wand in self._tracked_wand_manager.tracked_wands():
+            settings = colour_settings.get(wand.id, fallback_settings)
+            wands.append(self._visualised_wand_factory.create(settings, wand, self._canvas))
+
+        return wands

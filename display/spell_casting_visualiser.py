@@ -5,21 +5,27 @@ import tkinter as tk
 from collections.abc import Callable
 from logging import Logger
 
+from PIL import ImageTk
 from PIL.Image import Image as PILImage
 from PIL.ImageTk import PhotoImage
 
 from display.image_libraries.spell_image_library import SpellImageLibrary
+from gamevolt.display.utils import recolour_region_by_threshold
 from gamevolt.events.event import Event
+from gamevolt.toolkit.utils import hex_to_rgb
 from gamevolt.visualisation.visualiser import Visualiser
 from spells.control.spell_controller import SpellController
 from spells.spell import Spell
 from spells.spell_type import SpellType
+from visualisation.configuration.trail_settings import TrailColourSettings
+from wand.configuration.input_settings import InputSettings
 
 
-class SpellcastingVisualiser:
+class SpellCastingVisualiser:
     def __init__(
         self,
         logger: Logger,
+        settings: InputSettings,
         spell_image_library: SpellImageLibrary,
         visualiser: Visualiser,
         spell_controller: SpellController,
@@ -53,6 +59,8 @@ class SpellcastingVisualiser:
         self._base_image: PILImage | None = None
         self._current_img: PhotoImage | None = None
 
+        self._wand_colours: dict[str, TrailColourSettings] = {w.id.upper(): w.colour for w in settings.tracked_wands}
+
         self._content.bind("<Configure>", self._on_content_resized)
 
     @property
@@ -84,7 +92,7 @@ class SpellcastingVisualiser:
         self._visualiser.stop()
 
     def show_spell_instruction(self, spell: Spell) -> None:
-        image = self._spell_image_library.get_spell_instruction_image(spell)
+        image = self._spell_image_library.get_spell_instruction_image(spell.type)
         self._logger.debug(f"Show instruction for spell: {spell.name}")
         self._set_base_image(image)
 
@@ -92,6 +100,37 @@ class SpellcastingVisualiser:
         image = self._spell_image_library.get_spell_cast_image(spell_type)
         self._logger.debug(f"Show cast image for spell: {spell_type.name}")
         self._set_base_image(image)
+
+    def show_spell_cast_coloured(self, spell_type: SpellType, wand_id: str) -> None:
+        wand_id = wand_id.upper()
+        colour_settings = self._wand_colours.get(wand_id)
+        rgb = (255, 255, 255) if colour_settings is None else hex_to_rgb(colour_settings.line_color)
+
+        # IMPORTANT: do not touch ImageTk / PhotoImage off the UI thread.
+        def apply() -> None:
+            image = self._spell_image_library.get_spell_instruction_image(spell_type)
+            if image is None:
+                self._base_image = None
+                self._rescale_image()
+                return
+
+            # Convert to PIL.Image on the UI thread (PhotoImage -> PIL)
+            if isinstance(image, PhotoImage):
+                pil_img = ImageTk.getimage(image)
+            else:
+                pil_img = image
+
+            recoloured = recolour_region_by_threshold(
+                pil_img,
+                color=rgb,
+                thresh=250,
+                select_above=True,  # recolour dark pixels (glyph)
+            )
+
+            self._base_image = recoloured.copy()
+            self._rescale_image()
+
+        self._visualiser.post_ui(apply)
 
     def _set_base_image(self, image: PILImage | PhotoImage | None) -> None:
         def apply() -> None:
