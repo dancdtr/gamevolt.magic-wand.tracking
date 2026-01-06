@@ -31,7 +31,7 @@ class SpellMatcher(SpellMatcherBase):
 
     # ─── Public API ──────────────────────────────────────────────────────────
 
-    def _match_spell(self, wand_id: str, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
+    def _match_spell(self, wand_id: str, wand_name: str, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
         if not compressed:
             return None
 
@@ -39,7 +39,7 @@ class SpellMatcher(SpellMatcherBase):
 
         # try windows starting at each index from newest back
         for start_idx in range(len(compressed) - 1, -1, -1):
-            match = self._match_from_index(wand_id, spell, flat_steps, group_idx_of_step, compressed, start_idx)
+            match = self._match_from_index(wand_id, wand_name, spell, flat_steps, group_idx_of_step, compressed, start_idx)
             if match:
                 return match
 
@@ -59,6 +59,7 @@ class SpellMatcher(SpellMatcherBase):
     def _match_from_index(
         self,
         wand_id: str,
+        wand_name: str,
         spell_definition: SpellDefinition,
         flat_steps: Sequence[SpellStep],
         group_idx_of_step: Sequence[int],
@@ -318,6 +319,7 @@ class SpellMatcher(SpellMatcherBase):
 
         return SpellMatch(
             wand_id,
+            wand_name,
             self._spell_controller.target_spell.code,
             self._spell_controller.target_spell.name,
             start_ts_ms=start_ts,

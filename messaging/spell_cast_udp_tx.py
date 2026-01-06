@@ -16,6 +16,7 @@ class SpellCastUdpTx:
         self._udp_tx.send(
             SpellCastMessage(
                 WandId=match.wand_id,
+                WandName=match.wand_name,
                 SpellType=match.spell_name.upper(),
                 Confidence=match.accuracy,
             ).to_dict()

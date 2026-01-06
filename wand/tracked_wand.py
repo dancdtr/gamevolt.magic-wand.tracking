@@ -24,6 +24,7 @@ class TrackedWand(WandBase):
         logger: Logger,
         settings: WandSettings,
         id: str,
+        name: str,
         motion_processor: MotionProcessor,
         gesture_history: GestureHistory,
         spell_matcher: SpellMatcher,
@@ -34,6 +35,8 @@ class TrackedWand(WandBase):
         self._motion_processor = motion_processor
         self._gesture_history = gesture_history
         self._spell_matcher = spell_matcher
+
+        self._name = name
         self._id = id
 
         self._yaw_pitch_interpreter = YawPitchRMFInterpreter(settings.rmf)
@@ -49,6 +52,10 @@ class TrackedWand(WandBase):
     @property
     def id(self) -> str:
         return self._id
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def start(self) -> None:
         self._motion_processor.motion_changed.subscribe(self._on_motion_changed)
@@ -104,5 +111,5 @@ class TrackedWand(WandBase):
         self._gesture_history.add(segment)
         self.gesture_detected.invoke(self._gesture_history)
 
-        if self._spell_matcher.try_match(self.id, self._gesture_history.tail()):
+        if self._spell_matcher.try_match(self.id, self.name, self._gesture_history.tail()):
             self._reset()

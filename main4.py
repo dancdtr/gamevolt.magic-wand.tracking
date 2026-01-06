@@ -21,6 +21,6 @@ udp_tx = UdpTx(logger, settings.udp_peer.udp_transmitter)
 
 accuracy = random.randrange(60, 99) / 100
 
-udp_tx.send(SpellCastMessage("INCENDIO", accuracy).to_dict())
-udp_tx.send(SpellCastMessage("WINGARDIUM_LEVIOSA", accuracy).to_dict())
-udp_tx.send(SpellCastMessage("ALOHOMORA", accuracy).to_dict())
+# udp_tx.send(SpellCastMessage("INCENDIO", accuracy).to_dict())
+# udp_tx.send(SpellCastMessage("WINGARDIUM_LEVIOSA", accuracy).to_dict())
+# udp_tx.send(SpellCastMessage("ALOHOMORA", accuracy).to_dict())

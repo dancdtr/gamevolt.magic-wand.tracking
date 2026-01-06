@@ -37,7 +37,7 @@ def revelio() -> SpellDefinition:
                 relative_duration=2 / 9,
             ),
         ],
-        min_spell_steps=5,
+        min_spell_steps=6,
         min_total_duration_s=0.8,
         max_total_duration_s=3.0,
         max_idle_gap_s=1,

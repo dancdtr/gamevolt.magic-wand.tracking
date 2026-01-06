@@ -38,6 +38,7 @@ class TrackedWandManager:
         self._tracked_wands: dict[str, TrackedWand] = {
             tracked_wand_settings.id: self._tracked_wand_factory.create(tracked_wand_settings)
             for tracked_wand_settings in settings.tracked_wands
+            if tracked_wand_settings.is_enabled
         }
 
         self.wand_motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
@@ -71,7 +72,7 @@ class TrackedWandManager:
         wand = self._tracked_wands.get(raw.id, None)
 
         if wand is None:
-            self._logger.warning(f"No TrackedWand with ID ({id})!")
+            self._logger.warning(f"No TrackedWand with ID ({raw.id})!")
             return
 
         wand.on_rotation_raw_updated(raw)

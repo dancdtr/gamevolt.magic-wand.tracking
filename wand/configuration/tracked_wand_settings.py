@@ -7,4 +7,6 @@ from visualisation.configuration.trail_settings import TrailColourSettings
 @dataclass
 class TrackedWandSettings(SettingsBase):
     id: str
+    name: str
+    is_enabled: bool
     colour: TrailColourSettings

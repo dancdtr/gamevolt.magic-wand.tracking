@@ -7,8 +7,6 @@ import tkinter as tk
 from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
-from analysis.spell_trace_adapter_factory import SpellTraceAdapterFactory
-from analysis.spell_trace_session import SpellTraceSessionManager
 from appsettings import AppSettings
 from messaging.spell_cast_udp_tx import SpellCastUdpTx
 from motion.gesture.gesture_history import GestureHistory
@@ -35,13 +33,6 @@ print(settings)
 logger = get_logger(LoggingSettings(file_path=settings.logging.file_path, minimum_level=settings.logging.minimum_level))
 
 history = GestureHistory(settings.motion.gesture_history)
-
-trace_manager = SpellTraceSessionManager(
-    logger=logger,
-    trace_factory=SpellTraceAdapterFactory(),
-    start_active=False,
-    settings=settings.spell_trace_session,
-)
 
 spell_list = SpellList(logger)
 

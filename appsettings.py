@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from analysis.spell_trace_session_settings import SpellTraceSessionSettings
 from gamevolt.configuration.appsettings_base import AppSettingsBase
 from gamevolt.messaging.udp.configuration.udp_peer_settings import UdpPeerSettings
 from gv_logging.configuration.logging_settings import LoggingSettings
@@ -23,5 +22,4 @@ class AppSettings(AppSettingsBase):
     wand_visualiser: WandVisualiserSettings
     accuracy: SpellAccuracyScorerSettings
     udp_peer: UdpPeerSettings
-    spell_trace_session: SpellTraceSessionSettings
     wizard: WizardSettings
