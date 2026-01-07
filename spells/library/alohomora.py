@@ -33,7 +33,7 @@ def alohomora() -> SpellDefinition:
             ),
         ],
         min_spell_steps=5,
-        min_total_duration_s=0.8,
+        min_total_duration_s=1,
         max_total_duration_s=3.5,
         max_idle_gap_s=0.8,
         max_filler_duration_s=1,

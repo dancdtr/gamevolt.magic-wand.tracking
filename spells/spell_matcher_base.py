@@ -31,7 +31,9 @@ class SpellMatcherBase(ABC):
         for spell in self.spell_definitions:
             match = self._match_spell(wand_id, wand_name, spell, compressed)
             if match:
-                self._logger.info(f"'{wand_name}' ({wand_id}) cast {match.spell_name}! ✨✨" f"{match.accuracy_score * 100:.1f}%")
+                self._logger.info(
+                    f"'{wand_name}' ({wand_id}) cast {match.spell_name}! ✨✨" f"{match.accuracy_score * 100:.1f}% ({match.duration_s:.3f})"
+                )
                 self.matched.invoke(match)
                 return True
 

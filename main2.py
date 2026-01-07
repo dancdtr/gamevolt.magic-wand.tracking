@@ -57,7 +57,7 @@ visualiser = WandVisualiserFactory(logger, settings.wand_visualiser, settings.in
 
 def on_spell(match: SpellMatch):
     udp_tx.on_spell_detected(match)
-    # tracked_wand_manager.on_spell_cast(match.wand_id)
+    tracked_wand_manager.on_spell_cast(match.wand_id)
 
 
 quit_event = asyncio.Event()

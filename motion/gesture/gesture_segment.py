@@ -19,8 +19,8 @@ class GestureSegment:
     avg_vec_y: float
     net_dx: float
     net_dy: float
-    mean_speed: float  # keep for diagnostics if you want
-    path_length: float  # NEW: sum of per-step distances in the segment
+    mean_speed: float
+    path_length: float
 
     @property
     def direction(self) -> float:

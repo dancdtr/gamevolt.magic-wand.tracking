@@ -65,6 +65,10 @@ class TrackedWandManager:
     def tracked_wands(self) -> list[TrackedWand]:
         return list(self._tracked_wands.values())
 
+    def on_spell_cast(self, wand_id: str) -> None:
+        wand = self._get_wand_by_id(wand_id)
+        wand._gesture_history.clear()
+
     def _on_wand_rotation_updated(self, rotation: WandRotation) -> None:
         self.wand_rotation_updated.invoke(rotation)
 
