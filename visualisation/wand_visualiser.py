@@ -103,7 +103,7 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
             if n == 0:
                 if wand.line_id is not None:
                     self._canvas.coords(wand.line_id, ())
-                return
+                continue
 
             coords: list[float] = []
             for nx, ny in pts:
