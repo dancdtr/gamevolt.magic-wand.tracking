@@ -39,7 +39,6 @@ class TrackedWandFactory:
             logger=self._logger,
             settings=self._wand_settings,
             id=settings.id,
-            name=settings.name,
             motion_processor=self._motion_processor_factory.create(),
             gesture_history=self._gesture_history_factory.create(),
             spell_matcher=self._spell_matcher,

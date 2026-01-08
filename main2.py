@@ -68,6 +68,7 @@ visualiser.quit.subscribe(lambda: quit_event.set())
 tracked_wand_manager.wand_rotation_updated.subscribe(visualiser.add_rotation)
 
 spell_controller.start()
+spell_matcher.start()
 
 
 async def main():

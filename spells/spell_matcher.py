@@ -1,6 +1,10 @@
-from logging import Logger
-from typing import Sequence
+# spells/spell_matcher.py
+from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from logging import Logger
+
+from gamevolt.events.event import Event
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_segment import GestureSegment
 from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
@@ -9,29 +13,90 @@ from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.matching.rules.rules_validator import RulesValidator
 from spells.matching.spell_match_context import SpellMatchContext
 from spells.matching.spell_match_metrics import SpellMatchMetrics
+from spells.spell import Spell
 from spells.spell_definition import SpellDefinition
 from spells.spell_match import SpellMatch
-from spells.spell_matcher_base import SpellMatcherBase
 from spells.spell_step import SpellStep
 
 
-class SpellMatcher(SpellMatcherBase):
+class SpellMatcher:
     def __init__(self, logger: Logger, accuracy_scorer: SpellAccuracyScorer, spell_controller: SpellController) -> None:
-        super().__init__(logger)
+        self._logger = logger
+
+        self.matched: Event[Callable[[SpellMatch], None]] = Event()
+
         self._accuracy_scorer = accuracy_scorer
         self._rules_validator = RulesValidator()
 
         self._spell_controller = spell_controller
         self._spell_definition_factory = SpellDefinitionFactory()
 
-    @property
-    def spell_definitions(self) -> list[SpellDefinition]:
-        spell_types = [self._spell_controller.target_spell]
-        return self._spell_definition_factory.create_spells([spell.type for spell in spell_types])
+        self._spell_definitions: list[SpellDefinition] = []
 
-    # ─── Public API ──────────────────────────────────────────────────────────
+    def start(self) -> None:
+        self._spell_controller.target_spell_updated.subscribe(self._on_target_spell_updated)
 
-    def _match_spell(self, wand_id: str, wand_name: str, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
+    def stop(self) -> None:
+        self._spell_controller.target_spell_updated.unsubscribe(self._on_target_spell_updated)
+
+    # ----- public entry point -----
+    def try_match(self, wand_id: str, history: Sequence[GestureSegment]) -> bool:
+        if not history:
+            return False
+
+        compressed = self._compress(history)  # oldest → newest
+
+        for spell in self._spell_definitions:
+            match = self._match_spell(wand_id, spell, compressed)
+            if match:
+                self._logger.info(
+                    f"({wand_id}) cast {match.spell_name}! ✨✨" f"{match.accuracy_score * 100:.1f}% ({match.duration_s:.3f})"
+                )
+                self.matched.invoke(match)
+                return True
+
+        return False
+
+    # ----- shared helpers -----
+    def _key_steps(self, spell: SpellDefinition) -> list[SpellStep]:
+        """Required steps define the key sequence; if none required, use all steps."""
+        req = [st for grp in spell.step_groups for st in grp.steps if getattr(st, "required", False)]
+        return req if req else [st for grp in spell.step_groups for st in grp.steps]
+
+    def _compress(self, segments: Sequence[GestureSegment]) -> list[GestureSegment]:
+        """
+        Merge consecutive identical directions (including NONE is kept separate),
+        summing duration & path_length; recompute mean_speed accordingly.
+        """
+        if not segments:
+            return []
+        out: list[GestureSegment] = []
+        cur = segments[0]
+        for seg in segments[1:]:
+            if seg.direction_type == cur.direction_type:
+                total_dur = cur.duration_s + seg.duration_s
+                total_path = cur.path_length + seg.path_length
+                cur = type(cur)(
+                    start_ts_ms=cur.start_ts_ms,
+                    end_ts_ms=seg.end_ts_ms,
+                    duration_s=total_dur,
+                    sample_count=cur.sample_count + seg.sample_count,
+                    direction_type=cur.direction_type,
+                    avg_vec_x=0.0,
+                    avg_vec_y=0.0,
+                    net_dx=cur.net_dx + seg.net_dx,
+                    net_dy=cur.net_dy + seg.net_dy,
+                    mean_speed=(total_path / total_dur) if total_dur > 0 else 0.0,
+                    path_length=total_path,
+                )
+            else:
+                out.append(cur)
+                cur = seg
+        out.append(cur)
+        return out
+
+    # ----- matching implementation -----
+    def _match_spell(self, wand_id: str, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
         if not compressed:
             return None
 
@@ -39,13 +104,11 @@ class SpellMatcher(SpellMatcherBase):
 
         # try windows starting at each index from newest back
         for start_idx in range(len(compressed) - 1, -1, -1):
-            match = self._match_from_index(wand_id, wand_name, spell, flat_steps, group_idx_of_step, compressed, start_idx)
+            match = self._match_from_index(wand_id, spell, flat_steps, group_idx_of_step, compressed, start_idx)
             if match:
                 return match
 
         return None
-
-    # ─── Internal helpers ────────────────────────────────────────────────────
 
     def _flatten_with_group_map(self, spell: SpellDefinition) -> tuple[list[SpellStep], list[int]]:
         flat: list[SpellStep] = []
@@ -59,7 +122,6 @@ class SpellMatcher(SpellMatcherBase):
     def _match_from_index(
         self,
         wand_id: str,
-        wand_name: str,
         spell_definition: SpellDefinition,
         flat_steps: Sequence[SpellStep],
         group_idx_of_step: Sequence[int],
@@ -202,7 +264,6 @@ class SpellMatcher(SpellMatcherBase):
                 continue
 
             # ─── Mismatch branch ────────────────────────────────────
-
             self._logger.debug(
                 "MISMATCH spell=%s win_start=%d seg_win_idx=%d dir=%s step_idx=%d/%d " "step_allowed=%s dt=%.3f dist=%.3f required=%s",
                 self._spell_controller.target_spell.name,
@@ -218,14 +279,11 @@ class SpellMatcher(SpellMatcherBase):
             )
 
             if not step.required:
-                # OPTIONAL STEP:
-                # Skip it and re-check same segment against next step.
+                # OPTIONAL STEP: skip it and re-check same segment against next step.
                 step_idx += 1
                 continue
 
-            # REQUIRED STEP:
-
-            # Try to treat this segment as filler between required steps.
+            # REQUIRED STEP: try to treat this segment as filler between required steps.
             if try_consume_as_filler():
                 continue
 
@@ -242,8 +300,6 @@ class SpellMatcher(SpellMatcherBase):
 
         total_used = matched_required + matched_optional
 
-        # If we didn't match any required steps or never set timestamps,
-        # there's nothing meaningful to evaluate.
         if matched_required == 0 or start_ts is None or end_ts is None:
             return None
 
@@ -280,7 +336,7 @@ class SpellMatcher(SpellMatcherBase):
         # ALL validation now lives in rules
         if not self._rules_validator.validate(ctx):
             self._logger.debug(
-                "NO MATCH (rule validator): spell=%s win_start=%d " "matched_required=%d/%d total_used=%d",
+                "NO MATCH (rule validator): spell=%s win_start=%d matched_required=%d/%d total_used=%d",
                 self._spell_controller.target_spell.name,
                 i_start,
                 matched_required,
@@ -318,10 +374,9 @@ class SpellMatcher(SpellMatcherBase):
         )
 
         return SpellMatch(
-            wand_id,
-            wand_name,
-            self._spell_controller.target_spell.code,
-            self._spell_controller.target_spell.name,
+            wand_id=wand_id,
+            spell_id=self._spell_controller.target_spell.code,
+            spell_name=self._spell_controller.target_spell.name,
             start_ts_ms=start_ts,
             end_ts_ms=end_ts,
             duration_s=total_duration,
@@ -334,3 +389,6 @@ class SpellMatcher(SpellMatcherBase):
             filler_duration_s=filler_duration,
             accuracy_score=accuracy.score,
         )
+
+    def _on_target_spell_updated(self, spell: Spell) -> None:
+        self._spell_definitions = [self._spell_definition_factory.create_spell(spell.type)]

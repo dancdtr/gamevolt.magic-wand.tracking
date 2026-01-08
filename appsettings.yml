@@ -36,19 +36,16 @@ input:
       {
         id: "E001",
         is_enabled: true,
-        name: "PinkWand",
         colour: { line_color: "#FF3EBF", point_colour: "#FF3EBF" },
       },
       {
         id: "E004",
-        name: "OrangeWand",
         is_enabled: false,
         colour: { line_color: "#FD7227", point_colour: "#FD7227" },
       },
       {
         id: "E005",
-        name: "GreenWand",
-        is_enabled: false,
+        is_enabled: true,
         colour: { line_color: "#3EFF4E", point_colour: "#3EFF4E" },
       },
     ]
