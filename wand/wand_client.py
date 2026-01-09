@@ -1,8 +1,7 @@
-# wand_client.py
-
 from __future__ import annotations
 
-from datetime import datetime
+import time
+from datetime import datetime, timezone
 from logging import Logger
 from typing import Callable, Iterable
 
@@ -12,25 +11,80 @@ from wand.wand_rotation_raw import WandRotationRaw
 
 
 class WandClient:
-    def __init__(self, logger: Logger, settings: WandClientSettings, id: str) -> None:
-        self._logger = logger
-        self._id = id
+    """
+    Per-wand client that:
+    - tracks last-seen time (monotonic + utc) for connection status
+    - parses DATA payload into WandRotationRaw messages
+    - optionally resamples to target_hz
+    """
 
-        target_hz = settings.target_hz
+    def __init__(
+        self,
+        logger: Logger,
+        settings: WandClientSettings,
+        id: str,
+        disconnect_after_s: float = 2.0,
+    ) -> None:
+        self._logger = logger
+        self._id = id.upper()
+        self._disconnect_after_s = float(disconnect_after_s)
+
+        # Resample settings
+        target_hz = getattr(settings, "target_hz", None)
         self._delay_ms: float | None = None
         if target_hz and target_hz > 0:
-            self._delay_ms = 1000.0 / target_hz
+            self._delay_ms = 1000.0 / float(target_hz)
 
-        self._dt_ms = 1000.0 / settings.imu_hz
+        self._dt_ms = 1000.0 / float(settings.imu_hz)
 
-        self._connection_time = datetime.utcnow()
+        # Connection tracking
+        self._last_seen_monotonic: float | None = None
+        self._last_seen_utc: datetime | None = None
 
+        # Resample state
         self._prev_msg: WandRotationRaw | None = None
         self._next_emit_ms: float | None = None
 
         self.wand_rotation_raw_updated: Event[Callable[[WandRotationRaw], None]] = Event()
 
+    @property
+    def id(self) -> str:
+        return self._id
+
+    def touch(self, now_monotonic: float | None = None) -> None:
+        """Mark the client as having received data 'now'."""
+        if now_monotonic is None:
+            now_monotonic = time.monotonic()
+        self._last_seen_monotonic = now_monotonic
+        self._last_seen_utc = datetime.now(timezone.utc)
+
+    def is_connected(self, now_monotonic: float | None = None) -> bool:
+        if self._last_seen_monotonic is None:
+            return False
+        if now_monotonic is None:
+            now_monotonic = time.monotonic()
+        return (now_monotonic - self._last_seen_monotonic) < self._disconnect_after_s
+
+    def seconds_since_seen(self, now_monotonic: float | None = None) -> float | None:
+        if self._last_seen_monotonic is None:
+            return None
+        if now_monotonic is None:
+            now_monotonic = time.monotonic()
+        return now_monotonic - self._last_seen_monotonic
+
+    @property
+    def last_seen_utc(self) -> datetime | None:
+        return self._last_seen_utc
+
+    # ── data ingestion ───────────────────────────────────────────────────────
+
     def on_wand_rotation_data(self, t_base: int, data_str: str) -> None:
+        """
+        Called per DATA line batch.
+        Updates connection timestamp, parses samples, emits (resampled) WandRotationRaw.
+        """
+        self.touch()
+
         idx = 0
         for y100, p100 in self._parse_items(data_str):
             ms = int(round(t_base + idx * self._dt_ms))
@@ -59,6 +113,8 @@ class WandClient:
             except ValueError:
                 continue
             yield (y100, p100)
+
+    # ── resampling + emit ────────────────────────────────────────────────────
 
     def _emit_maybe_resample(self, msg: WandRotationRaw) -> None:
         if self._delay_ms is None:

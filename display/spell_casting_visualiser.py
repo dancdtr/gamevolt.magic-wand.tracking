@@ -17,7 +17,6 @@ from gamevolt.visualisation.visualiser import Visualiser
 from spells.control.spell_controller import SpellController
 from spells.spell import Spell
 from spells.spell_type import SpellType
-from visualisation.configuration.trail_settings import TrailColourSettings
 from wand.configuration.input_settings import InputSettings
 
 
@@ -59,8 +58,6 @@ class SpellCastingVisualiser:
         self._base_image: PILImage | None = None
         self._current_img: PhotoImage | None = None
 
-        self._wand_colours: dict[str, TrailColourSettings] = {w.id.upper(): w.colour for w in settings.tracked_wands}
-
         self._content.bind("<Configure>", self._on_content_resized)
 
     @property
@@ -101,11 +98,7 @@ class SpellCastingVisualiser:
         self._logger.debug(f"Show cast image for spell: {spell_type.name}")
         self._set_base_image(image)
 
-    def show_spell_cast_coloured(self, spell_type: SpellType, wand_id: str) -> None:
-        wand_id = wand_id.upper()
-        colour_settings = self._wand_colours.get(wand_id)
-        rgb = (255, 255, 255) if colour_settings is None else hex_to_rgb(colour_settings.line_color)
-
+    def show_spell_cast_coloured(self, spell_type: SpellType, colour: str) -> None:
         # IMPORTANT: do not touch ImageTk / PhotoImage off the UI thread.
         def apply() -> None:
             image = self._spell_image_library.get_spell_instruction_image(spell_type)
@@ -122,7 +115,7 @@ class SpellCastingVisualiser:
 
             recoloured = recolour_region_by_threshold(
                 pil_img,
-                color=rgb,
+                color=hex_to_rgb(colour),
                 thresh=250,
                 select_above=True,  # recolour dark pixels (glyph)
             )

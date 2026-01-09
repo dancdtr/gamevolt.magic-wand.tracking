@@ -75,6 +75,9 @@ class TrackedWand(WandBase):
         self._gesture_history.clear()
         self.reset.invoke()
 
+    def clear_gesture_history(self) -> None:
+        self._gesture_history.clear()
+
     def on_rotation_raw_updated(self, raw: WandRotationRaw) -> None:
         wand_pos = self._yaw_pitch_interpreter.on_sample(raw.id, raw.ms, raw.yaw, raw.pitch)
         transformed = WandRotation(

@@ -4,7 +4,6 @@ from motion.configuration.motion_processor_settings import MotionProcessorSettin
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from motion.motion_processor import MotionProcessor
 from spells.spell_matcher import SpellMatcher
-from wand.configuration.tracked_wand_settings import TrackedWandSettings
 from wand.configuration.wand_settings import WandSettings
 from wand.tracked_wand import TrackedWand
 
@@ -34,11 +33,11 @@ class TrackedWandFactory:
         self._gesture_history_factory = gesture_history_factory
         self._spell_matcher = spell_matcher
 
-    def create(self, settings: TrackedWandSettings) -> TrackedWand:
+    def create(self, id: str) -> TrackedWand:
         return TrackedWand(
             logger=self._logger,
             settings=self._wand_settings,
-            id=settings.id,
+            id=id,
             motion_processor=self._motion_processor_factory.create(),
             gesture_history=self._gesture_history_factory.create(),
             spell_matcher=self._spell_matcher,

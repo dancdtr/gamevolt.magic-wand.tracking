@@ -36,14 +36,13 @@ history = GestureHistory(settings.motion.gesture_history)
 
 spell_list = SpellList(logger)
 
-udp_tx = SpellCastUdpTx(logger, settings.udp_peer.udp_transmitter)
 spell_controller = UdpSpellController(logger, settings.udp_peer, spell_list)
 
 spell_matcher = SpellMatcher(
     logger=logger, accuracy_scorer=SpellAccuracyScorer(settings=settings.accuracy), spell_controller=spell_controller
 )
 
-server = WandServer(logger, settings.input, settings.input.server)
+server = WandServer(logger, settings.input.server)
 
 motion_processor_factory = MotionProcessorFactory(logger, settings.motion.processor)
 gesture_history_factory = GestureHistoryFactory(logger, settings.motion.gesture_history)
@@ -54,10 +53,12 @@ trail_factory = TrailFactory(logger, settings.wand_visualiser.trail)
 visualised_wand_factory = VisualisedWandFactory(logger, trail_factory)
 visualiser = WandVisualiserFactory(logger, settings.wand_visualiser, settings.input, visualised_wand_factory, tracked_wand_manager).create()
 
+udp_tx = SpellCastUdpTx(logger, settings.udp_peer.udp_transmitter, visualiser)
+
 
 def on_spell(match: SpellMatch):
     udp_tx.on_spell_detected(match)
-    tracked_wand_manager.on_spell_cast(match.wand_id)
+    # tracked_wand_manager.on_spell_cast(match.wand_id)
 
 
 quit_event = asyncio.Event()
@@ -67,15 +68,14 @@ spell_matcher.matched.subscribe(on_spell)
 visualiser.quit.subscribe(lambda: quit_event.set())
 tracked_wand_manager.wand_rotation_updated.subscribe(visualiser.add_rotation)
 
-spell_controller.start()
-spell_matcher.start()
-
 
 async def main():
     logger.info(f"Running '{settings.name}' version: '{settings.version}'...")
     try:
-        await server.start()
+        spell_controller.start()
+        spell_matcher.start()
         tracked_wand_manager.start()
+        await server.start()
         visualiser.start()
     except Exception as ex:
         raise ex

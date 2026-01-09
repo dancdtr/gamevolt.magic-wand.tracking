@@ -14,3 +14,4 @@ class WandVisualiserSettings(SettingsBase):
     label: LabelSettings
     axes: AxesSettings
     trail: TrailSettings
+    colours: list[str]

@@ -6,7 +6,7 @@ from visualisation.coordinate_mode import CoordinateMode
 
 @dataclass
 class TrailColourSettings(SettingsBase):
-    line_color: str
+    line_colour: str
     point_colour: str
 
 

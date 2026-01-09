@@ -9,7 +9,14 @@ from wand.wand_rotation import WandRotation
 
 
 class VisualisedWand:
-    def __init__(self, logger: Logger, settings: TrailColourSettings, tracked_wand: TrackedWand, trail: Trail, canvas: tk.Canvas) -> None:
+    def __init__(
+        self,
+        logger: Logger,
+        settings: TrailColourSettings,
+        tracked_wand: TrackedWand,
+        trail: Trail,
+        canvas: tk.Canvas,
+    ) -> None:
         self._logger = logger
         self.settings = settings
 
@@ -36,6 +43,12 @@ class VisualisedWand:
         self._tracked_wand.reset.unsubscribe(self.clear_trail)
         self._tracked_wand.rotation_updated.unsubscribe(self._add_rotation)
 
+    def dispose(self) -> None:
+        """For removal/disconnect: unsubscribe + clear visuals."""
+        self.stop()
+        self.erase()
+        self.clear_trail()
+
     def clear_trail(self) -> None:
         self._trail.clear()
 
@@ -48,14 +61,10 @@ class VisualisedWand:
             self._canvas.delete(dot_id)
         self.dot_ids.clear()
 
-        # self._trail.clear()
-
     def points(self) -> Sequence[tuple[float, float]]:
         return self._trail.points()
 
     def _add_rotation(self, sample: WandRotation) -> None:
         if sample.nx is None or sample.ny is None:
             return
-
         self._trail.add(sample)
-        # self.set_status(f"({sample.nx:.2f}, {sample.ny:.2f})")

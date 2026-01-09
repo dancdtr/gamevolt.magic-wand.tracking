@@ -8,3 +8,4 @@ class SpellCastMessage(Message):
     WandId: str
     SpellType: str
     Confidence: float
+    Colour: str

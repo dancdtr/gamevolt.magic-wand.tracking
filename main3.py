@@ -83,7 +83,7 @@ def on_spell_cast(message: Message) -> None:
         if spell.type is spell_controller.target_spell.type:
             # if spell.type is not SpellType.NONE:
             logger.info(f"({message.WandId}) cast {message.SpellType}! ({(message.Confidence * 100):.2f}%)")
-            spellcasting_visualiser.show_spell_cast_coloured(spell.type, message.WandId)
+            spellcasting_visualiser.show_spell_cast_coloured(spell.type, message.Colour)
             sleep(0.3)
             spellcasting_visualiser.show_spell_instruction(spell)
 

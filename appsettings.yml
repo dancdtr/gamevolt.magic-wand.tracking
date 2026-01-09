@@ -21,7 +21,14 @@ spells:
     # - "rectanglia"
 
 input:
+  tracked_wands:
+    enable_filtering: false
+    filtered_ids: ["E0001"]
   server:
+    filter_wands: false
+    filtered_wand_ids: []
+    disconnect_after_s: 2.0
+    header_ttl_s: 2.0
     client:
       imu_hz: 120.0
       target_hz: 30.0
@@ -31,25 +38,6 @@ input:
       timeout: 3
       retry_interval: 2
   input_type: "wand"
-  tracked_wands:
-    [
-      {
-        id: "E001",
-        is_enabled: true,
-        colour: { line_color: "#FF3EBF", point_colour: "#FF3EBF" },
-      },
-      {
-        id: "E004",
-        is_enabled: false,
-        colour: { line_color: "#FD7227", point_colour: "#FD7227" },
-      },
-      {
-        id: "E005",
-        is_enabled: true,
-        colour: { line_color: "#3EFF4E", point_colour: "#3EFF4E" },
-      },
-    ]
-
   mock:
     invert_x: False
     invert_y: False
@@ -120,6 +108,23 @@ wand_visualiser:
     y_up: True
     clip_to_bounds: True
     pixel_margin: 0
+  colours:
+    - "#e65c59"
+    - "#7cb342"
+    - "#fdd835"
+    - "#00acc1"
+    - "#fb8c00"
+    - "#ca537f"
+    - "#994aae"
+    - "#888fbe"
+    - "#1e88e5"
+    - "#5e35b1"
+    - "#039be5"
+    - "#00897b"
+    - "#43a047"
+    - "#f4511e"
+    - "#6d4c41"
+    - "#546e7a"
 
 accuracy:
   fudge: 10
