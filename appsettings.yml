@@ -69,7 +69,7 @@ motion:
       speed_start: 0.50
       speed_stop: 0.20
       min_state_duration: 0.03
-      min_stopped_duration: 0.2
+      min_stopped_duration: 3
     direction_quantizer:
       speed_stop: 0.2
       min_direction_duration: 0.01
