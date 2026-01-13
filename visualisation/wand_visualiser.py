@@ -46,6 +46,7 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
 
         self.register_key_callback("c", self.clear)
         self.register_key_callback("d", self._on_toggle_drawing)
+        self.register_key_callback("r", self._on_reset_wand_forwards)
 
         self._sync_visualised_wands()
 
@@ -163,6 +164,10 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
     def _on_toggle_drawing(self) -> None:
         self._is_drawing = not self._is_drawing
         self.clear()
+
+    def _on_reset_wand_forwards(self) -> None:
+        self._logger.info("Resetting wand forwads")
+        self._tracked_wand_manager.reset_wand_forwards()
 
     def _position_to_canvas(self, nx: float, ny: float, w: int, h: int) -> tuple[float, float]:
         cm = self._wand_visualiser_settings.trail.coords_mode

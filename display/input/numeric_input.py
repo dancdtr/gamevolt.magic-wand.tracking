@@ -1,7 +1,7 @@
 import tkinter as tk
 from collections.abc import Callable
 
-from display.input.key_input import KeyInput
+from display.input.key_input import SpellVisualiserKeyInput
 from gamevolt.events.event import Event
 from gamevolt.toolkit.timer import Timer
 
@@ -9,7 +9,7 @@ _INPUT_DURATION = 0.8
 _MAX_LENGTH = 2
 
 
-class NumericInput(KeyInput):
+class NumericInput(SpellVisualiserKeyInput):
     def __init__(self, root: tk.Misc) -> None:
         # super().__init__(root)
         self.root = root

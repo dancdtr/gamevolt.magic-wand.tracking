@@ -3,7 +3,7 @@ from collections.abc import Callable
 from logging import Logger
 
 from display.input.drop_down import DropDown
-from display.input.key_input import KeyInput
+from display.input.key_input import SpellVisualiserKeyInput
 from display.input.numeric_input import NumericInput
 from gamevolt.events.event import Event
 from gamevolt.messaging.udp.udp_tx import UdpTx
@@ -30,7 +30,7 @@ class VisualSpellController(SpellController):
         dropdown_parent = parent or root
 
         self._dropdown = DropDown(dropdown_parent, {k: v for k, v in zip(spell_list.ids, spell_list.names)})
-        self._key_input = KeyInput(root)
+        self._key_input = SpellVisualiserKeyInput(root)
         self._numeric_input = NumericInput(root)
 
     def start(self) -> None:
@@ -74,6 +74,7 @@ class VisualSpellController(SpellController):
     def _on_cycle_spell(self, idx_adjustment: int) -> None:
         self._logger.debug(f"Cycle spell by: {idx_adjustment}")
         self.cycle_target(idx_adjustment)
+        self._dropdown.show_value(self._current_index)
 
     def _on_toggle_history_visibility(self) -> None:
         self._logger.debug("Toggling history visibility")

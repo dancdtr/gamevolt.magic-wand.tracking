@@ -4,7 +4,7 @@ from collections.abc import Callable
 from gamevolt.events.event import Event
 
 
-class KeyInput:
+class SpellVisualiserKeyInput:
     def __init__(self, root: tk.Misc) -> None:
         self.root = root
 

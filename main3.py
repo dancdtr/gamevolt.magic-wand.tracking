@@ -68,7 +68,6 @@ settings = AppSettings.load(config_file_path=config_path, config_env_file_path=c
 
 spellcasting_visualiser = SpellCastingVisualiser(
     logger=logger,
-    settings=settings.input,
     spell_image_library=spell_image_library,
     visualiser=visualiser,
     spell_controller=spell_controller,

@@ -90,6 +90,10 @@ class TrackedWandManager:
     def tracked_wands(self) -> list[TrackedWand]:
         return list(self._tracked_wands.values())
 
+    def reset_wand_forwards(self) -> None:
+        for wand in self.tracked_wands():
+            wand.reset_forward()
+
     # def on_spell_cast(self, wand_id: str) -> None:
     #     wand_id = wand_id.upper()
     #     wand = self._tracked_wands.get(wand_id)

@@ -71,10 +71,12 @@ class TrackedWand(WandBase):
 
     def _reset(self) -> None:
         self._motion_processor.reset()
-        self._yaw_pitch_interpreter.reset()
         self._gesture_history.clear()
-
         self.reset.invoke()
+
+    def reset_forward(self) -> None:
+        self._yaw_pitch_interpreter.reset()
+        self._reset()
 
     def clear_gesture_history(self) -> None:
         self._gesture_history.clear()

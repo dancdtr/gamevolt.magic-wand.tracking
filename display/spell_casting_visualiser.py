@@ -17,14 +17,12 @@ from gamevolt.visualisation.visualiser import Visualiser
 from spells.control.spell_controller import SpellController
 from spells.spell import Spell
 from spells.spell_type import SpellType
-from wand.configuration.input_settings import InputSettings
 
 
 class SpellCastingVisualiser:
     def __init__(
         self,
         logger: Logger,
-        settings: InputSettings,
         spell_image_library: SpellImageLibrary,
         visualiser: Visualiser,
         spell_controller: SpellController,
