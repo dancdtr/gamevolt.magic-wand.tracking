@@ -70,9 +70,10 @@ class TrackedWand(WandBase):
         pass
 
     def _reset(self) -> None:
-        self._yaw_pitch_interpreter.reset()
         self._motion_processor.reset()
+        self._yaw_pitch_interpreter.reset()
         self._gesture_history.clear()
+
         self.reset.invoke()
 
     def clear_gesture_history(self) -> None:
@@ -92,13 +93,13 @@ class TrackedWand(WandBase):
         self._motion_processor.on_rotation_updated(transformed)
         self.rotation_updated.invoke(transformed)
 
-    def _on_motion_changed(self, mode: MotionPhaseType) -> None:
-        if mode is MotionPhaseType.STATIONARY:
+    def _on_motion_changed(self, motion_phase: MotionPhaseType) -> None:
+        if motion_phase is MotionPhaseType.STATIONARY:
             self._reset()
-            self.motion_changed.invoke()
+            self.motion_changed.invoke(motion_phase)
 
-        self._logger.debug(f"Motion: {mode.name}")
-        self.motion_changed.invoke(mode)
+        self._logger.debug(f"Motion: {motion_phase.name}")
+        self.motion_changed.invoke(motion_phase)
 
     def _on_direction_changed(self, direction: DirectionType) -> None:
         self.direction_changed.invoke(direction)
@@ -107,6 +108,8 @@ class TrackedWand(WandBase):
         self._logger.debug(f"Completed '{segment.direction_type.name}' ({segment.direction:.3f}): {segment.duration_s}s")
         self._gesture_history.add(segment)
         self.gesture_detected.invoke(self._gesture_history)
+
+        self._spell_matcher.try_match
 
         if self._spell_matcher.try_match(self.id, self._gesture_history.tail()):
             self._reset()

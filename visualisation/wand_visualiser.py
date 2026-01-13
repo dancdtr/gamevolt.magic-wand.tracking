@@ -34,14 +34,12 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
         self._visualised_wand_factory = visualised_wand_factory
         self._tracked_wand_manager = tracked_wand_manager
 
+        self._colour_assigner = WandColourAssigner(self._wand_visualiser_settings.colours)
         self._status = LabelFactory(wand_visualiser_settings.label, self._root).create()
         self._axes = Axes(wand_visualiser_settings.axes, canvas=self.canvas)
 
         self._visualised_wands: dict[str, VisualisedWand] = {}
         self._is_drawing = True
-
-        # New: colour allocator from settings palette
-        self._colour_assigner = WandColourAssigner(self._wand_visualiser_settings.colours)
 
     def start(self) -> None:
         super().start()
@@ -76,7 +74,6 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
             super()._on_quit()
             return
 
-        # main loop drives updates elsewhere (as you said), so just sync visuals here
         self._sync_visualised_wands()
         self.draw()
 
@@ -85,7 +82,7 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
 
     def clear(self) -> None:
         for vw in self._visualised_wands.values():
-            vw.clear_trail()
+            vw.reset()
         self._axes.draw()
 
     def draw(self) -> None:

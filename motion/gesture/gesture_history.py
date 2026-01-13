@@ -30,7 +30,6 @@ class GestureHistory:
 
     def clear(self) -> None:
         self._buf.clear()
-        print("CLEARED!")
 
     def _prune(self) -> None:
         if not self._buf:

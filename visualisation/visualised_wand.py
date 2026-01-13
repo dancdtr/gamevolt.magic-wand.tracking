@@ -37,20 +37,15 @@ class VisualisedWand:
 
     def start(self) -> None:
         self._tracked_wand.rotation_updated.subscribe(self._add_rotation)
-        self._tracked_wand.reset.subscribe(self.clear_trail)
+        self._tracked_wand.reset.subscribe(self.reset)
 
     def stop(self) -> None:
-        self._tracked_wand.reset.unsubscribe(self.clear_trail)
+        self._tracked_wand.reset.unsubscribe(self.reset)
         self._tracked_wand.rotation_updated.unsubscribe(self._add_rotation)
 
-    def dispose(self) -> None:
-        """For removal/disconnect: unsubscribe + clear visuals."""
-        self.stop()
-        self.erase()
-        self.clear_trail()
-
-    def clear_trail(self) -> None:
+    def reset(self) -> None:
         self._trail.clear()
+        self.erase()
 
     def erase(self) -> None:
         if self.line_id is not None:
@@ -63,6 +58,10 @@ class VisualisedWand:
 
     def points(self) -> Sequence[tuple[float, float]]:
         return self._trail.points()
+
+    def dispose(self) -> None:
+        self.stop()
+        self.reset()
 
     def _add_rotation(self, sample: WandRotation) -> None:
         if sample.nx is None or sample.ny is None:

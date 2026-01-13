@@ -50,9 +50,6 @@ class YawPitchRMFInterpreter:
         self._x_abs = self._y_abs = 0.0
         self._yaw_offset = 0.0
 
-    def zero_absolute(self) -> None:
-        self._x_abs = self._y_abs = 0.0
-
     def set_heading_offset_rad(self, yaw_rad: float) -> None:
         """Optional: static yaw offset (about world up) applied when building forward."""
         self._yaw_offset = yaw_rad
