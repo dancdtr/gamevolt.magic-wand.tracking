@@ -1,6 +1,5 @@
 ---
 name: "conductr.wand-magic.tracking"
-version: "x.x.x"
 
 logging:
   file_path: ./Logs/conductr.wand-magic.tracking.log

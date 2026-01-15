@@ -14,7 +14,6 @@ from wizards.configuration.wizard_settings import WizardSettings
 @dataclass
 class AppSettings(AppSettingsBase):
     name: str
-    version: str
     logging: LoggingSettings
     spells: SpellsSettings
     input: InputSettings

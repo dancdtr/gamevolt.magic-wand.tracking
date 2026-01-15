@@ -7,7 +7,6 @@ import os
 import tkinter as tk
 
 from gamevolt_logging import get_logger
-from gamevolt_logging.configuration import LoggingSettings
 
 from appsettings import AppSettings
 from gamevolt.io.utils import bundled_path, install_path
@@ -33,7 +32,7 @@ config_env_path = install_path("appsettings.env.yml")
 settings = AppSettings.load(config_file_path=config_path, config_env_file_path=config_env_path)
 print(settings)
 
-logger = get_logger(LoggingSettings(file_path=settings.logging.file_path, minimum_level=settings.logging.minimum_level))
+logger = get_logger(settings.logging.to_gamevolt_logging_settings())
 
 history = GestureHistory(settings.motion.gesture_history)
 
@@ -73,7 +72,7 @@ tracked_wand_manager.wand_rotation_updated.subscribe(visualiser.add_rotation)
 
 
 async def main():
-    logger.info(f"Running '{settings.name}' version: '{settings.version}'...")
+    logger.info(f"Running '{settings.name}'...")
     try:
         spell_controller.start()
         spell_matcher.start()

@@ -12,8 +12,6 @@ from application.spells_role import SpellsRole
 from application.wands_role import WandsRole
 from gamevolt.application.roles_registry import RolesRegistry
 
-logger = get_logger()
-
 
 def _is_frozen() -> bool:
     return bool(getattr(sys, "frozen", False))
@@ -30,9 +28,9 @@ def _log_build_info() -> None:
     try:
         import build_info
 
-        logger.info(f"Build: v{build_info.VERSION} ({build_info.GIT_SHA}) {build_info.BUILD_TIME_UTC}")
+        print(f"Build: v{build_info.VERSION} ({build_info.GIT_SHA}) {build_info.BUILD_TIME_UTC}")
     except Exception:
-        logger.info("Build: (no build_info)")
+        print("Build: (no build_info)")
 
 
 roles = RolesRegistry().register(WandsRole()).register(SpellsRole())
@@ -108,13 +106,14 @@ def main() -> int:
     if role:
         app = roles.get(role)
         if not app:
-            logger.error(f"Unknown role: {role}")
+            print(f"Unknown role: {role}")
             return 2
-        logger.info(f"Starting role: {role}")
+        print(f"Starting role: {role}")
         return int(asyncio.run(app.run()) or 0)
 
     # Supervisor mode
-    logger.info("Starting wand demo application...")
+    print("Starting wand demo application...")
+
     _log_build_info()
     try:
         return int(asyncio.run(_run_supervisor()) or 0)
