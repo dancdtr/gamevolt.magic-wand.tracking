@@ -7,13 +7,14 @@ dependencies:
   - numpy
   - scipy
   - pyserial
+  - pillow
   - pip:
       - gamevolt.python.debugging==1.1.0
       - gamevolt.python.logging==2.1.1
       - jsonmerge
       - pyserial-asyncio
       - uvloop
-      - pyinstaller
+      - pyinstaller==6.18.0
       - pytest==8.3.5
       - black==25.1.0
       - isort==6.0.0

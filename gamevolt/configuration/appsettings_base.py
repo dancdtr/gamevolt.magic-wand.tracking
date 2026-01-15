@@ -34,6 +34,12 @@ class AppSettingsBase(SettingsBase):
 
         # Load env (optional, can be a different format)
         if config_env_file_path:
+            env_exists = os.path.exists(config_env_file_path)
+            if env_exists:
+                print(f"AppSettings env override found: {config_env_file_path}")
+            else:
+                print(f"AppSettings env override not found (will ignore): {config_env_file_path}")
+
             try:
                 env_json = (
                     cast(JsonLike, env_handler.try_load(config_env_file_path)) if env_handler is not None else None  # type: ignore[union-attr]
@@ -42,12 +48,18 @@ class AppSettingsBase(SettingsBase):
                 raise AppsettingsError("AppSettings", f"failed to load env override '{config_env_file_path}': {e}") from None
 
             if env_json:
+                print(f"AppSettings env override loaded and will be merged: {config_env_file_path}")
                 try:
                     merged = cast(JsonLike, jsonmerge.merge(base_json, env_json))  # type: ignore[arg-type]
                 except Exception as e:
                     raise AppsettingsError(
                         "AppSettings", f"failed to merge '{config_env_file_path}' into '{config_file_path}': {e}"
                     ) from None
+            else:
+                # Covers: missing file, empty file, or try_load returned None
+                print(f"AppSettings env override not applied (empty or missing): {config_env_file_path}")
+        else:
+            print(f"AppSettings env override path not provided.")
 
         return cls.from_json_like(merged, strict=strict)
 

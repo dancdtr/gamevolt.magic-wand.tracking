@@ -21,5 +21,6 @@ class AppSettings(AppSettingsBase):
     motion: MotionSettings
     wand_visualiser: WandVisualiserSettings
     accuracy: SpellAccuracyScorerSettings
-    udp_peer: UdpPeerSettings
+    wands_udp: UdpPeerSettings
+    spells_udp: UdpPeerSettings
     wizard: WizardSettings

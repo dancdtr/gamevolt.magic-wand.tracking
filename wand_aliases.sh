@@ -1,7 +1,7 @@
 # wand_aliases.sh
 
 APPLICATION_NAME="wand_demo"
-USER_DIR="/home/cdtr"
+USER_DIR="~"
 CDTR_DIR="$USER_DIR/CDTR"
 CURRENT_DIR="$CDTR_DIR/Current"
 

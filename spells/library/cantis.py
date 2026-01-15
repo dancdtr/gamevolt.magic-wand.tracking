@@ -20,7 +20,7 @@ def cantis() -> SpellDefinition:
                 relative_duration=2 / 5,
             ),
             SpellStepGroup(
-                name="Circle",
+                name="UpperArm",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_N}), required=True),
                 ],
@@ -28,7 +28,7 @@ def cantis() -> SpellDefinition:
                 relative_duration=2 / 5,
             ),
             SpellStepGroup(
-                name="Circle",
+                name="Flick",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_S})),
                     SpellStep(frozenset({DirectionType.MOVING_SE})),

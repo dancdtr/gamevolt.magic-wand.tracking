@@ -1,107 +1,126 @@
-# main.py
+from __future__ import annotations
 
 import asyncio
+import os
+import signal
+import sys
+from typing import Sequence
 
 from gamevolt_logging import get_logger
-from gamevolt_logging.configuration import LoggingSettings
 
-from classification.gesture_classifier_controller import GestureClassifierController
-from detection.configuration.gesture_detector_settings import GestureDetectorSettings
-from detection.configuration.gesture_settings import GestureSettings
-from detection.gesture_detector import GestureDetector
-from detection.gesture_factory import GestureFactory
-from detection.gesture_func_provider import GestureFuncProvider
-from gamevolt.imu.configuration.imu_settings import ImuSettings
-from gamevolt.imu.imu_binary_receiver import IMUBinaryReceiver
-from gamevolt.messaging.events.message_handler import MessageHandler
-from gamevolt.messaging.udp.configuration.udp_peer_settings import UdpPeerSettings
-from gamevolt.messaging.udp.configuration.udp_rx_settings import UdpRxSettings
-from gamevolt.messaging.udp.configuration.udp_tx_settings import UdpTxSettings
-from gamevolt.messaging.udp_peer import UdpPeer
-from gamevolt.serial.configuration.binary_serial_receiver_settings import BinarySerialReceiverSettings
-from gamevolt.serial.configuration.binary_settings import BinarySettings
-from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
-from gestures.gesture_point import GesturePoint
-from messaging.detected_gesture_message import DetectedGesturesMessage
+from application.spells_role import SpellsRole
+from application.wands_role import WandsRole
+from gamevolt.application.roles_registry import RolesRegistry
 
-logger = get_logger(LoggingSettings("./Logs/wand_tracking.log", "INFORMATION"))
-
-GYRO_START_THRESH = 1.0
-GYRO_END_THRESH = 0.7
-GYRO_END_FRAMES = 5
+logger = get_logger()
 
 
-rx_settings = BinarySerialReceiverSettings(
-    SerialReceiverSettings(port="/dev/cu.usbmodem21401", baud=115200, timeout=1, retry_interval=3.0),
-    BinarySettings("<I9f"),
-)
-
-# imu_settings = ImuSettings(flip_x=True, flip_y=True, flip_z=True)
-imu_settings = ImuSettings(flip_x=False, flip_y=False, flip_z=False)
-imu_rx = IMUBinaryReceiver(logger, rx_settings, imu_settings)
-udp_peer = UdpPeer(
-    logger,
-    settings=UdpPeerSettings(
-        udp_transmitter=UdpTxSettings(
-            host="127.0.0.1",
-            port=9998,
-        ),
-        udp_receiver=UdpRxSettings(
-            host="127.0.0.1",
-            port=9999,
-            max_size=65536,
-            recv_timeout_s=0.25,
-        ),
-    ),
-)
-
-gesture_settings = GestureDetectorSettings(
-    start_thresh=1.0,
-    end_thresh=0.7,
-    start_frames=2,
-    end_frames=2,
-    max_samples=200,
-    min_duration=0.14,
-)
-gesture_detector = GestureDetector(logger, imu_rx, gesture_settings)
-
-message_handler = MessageHandler(logger, udp_peer)
-
-func_provider = GestureFuncProvider(logger)
-gesture_identifier = GestureClassifierController(logger, func_provider, message_handler)
-gesture_factory = GestureFactory(logger, settings=GestureSettings())
+def _is_frozen() -> bool:
+    return bool(getattr(sys, "frozen", False))
 
 
-def on_gesture_completed(points: list[GesturePoint]) -> None:
-    gesture = gesture_factory.create(points)
-    gesture_types = gesture_identifier.identify(gesture)
-
-    gesture_names = [g.name for g in gesture_types]
-    logger.debug(f"Identified gestures: {gesture_names}")
-
-    udp_peer.send(DetectedGesturesMessage(id=gesture.id, duration=gesture.duration, names=gesture_names))
+def _get_arg_value(prefix: str, default: str | None = None) -> str | None:
+    for arg in sys.argv[1:]:
+        if arg.startswith(prefix + "="):
+            return arg.split("=", 1)[1]
+    return default
 
 
-async def main() -> None:
-    logger.info("Starting Wand Tracking application...")
-    gesture_detector.motion_ended.subscribe(on_gesture_completed)
-
-    await imu_rx.start()
-    udp_peer.start()
-    gesture_detector.start()
-    gesture_identifier.start()
-    message_handler.start()
-
+def _log_build_info() -> None:
     try:
-        while True:
-            await asyncio.sleep(0.02)
-    except asyncio.exceptions.CancelledError:
-        logger.info("Stopping Wand Tracking application...")
-    finally:
-        gesture_detector.stop()
-        await imu_rx.stop()
-        logger.info("Stopped Wand Tracking application.")
+        import build_info
+
+        logger.info(f"Build: v{build_info.VERSION} ({build_info.GIT_SHA}) {build_info.BUILD_TIME_UTC}")
+    except Exception:
+        logger.info("Build: (no build_info)")
 
 
-# if __name__ == "__main__":
-asyncio.run(main())
+roles = RolesRegistry().register(WandsRole()).register(SpellsRole())
+
+
+async def _run_supervisor() -> int:
+    if _is_frozen():
+        cmd_wands: Sequence[str] = [sys.executable, "--role=wands"]
+        cmd_spells: Sequence[str] = [sys.executable, "--role=spells"]
+    else:
+        here = os.path.dirname(os.path.abspath(__file__))
+        cmd_wands = [sys.executable, os.path.join(here, "wands_main.py")]
+        cmd_spells = [sys.executable, os.path.join(here, "spells_main.py")]
+
+    wands_proc = await asyncio.create_subprocess_exec(*cmd_wands, start_new_session=True)
+    spells_proc = await asyncio.create_subprocess_exec(*cmd_spells, start_new_session=True)
+
+    async def terminate(proc: asyncio.subprocess.Process) -> None:
+        if proc.returncode is not None:
+            return
+        try:
+            proc.send_signal(signal.SIGINT)
+        except ProcessLookupError:
+            return
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=2.0)
+            return
+        except asyncio.TimeoutError:
+            pass
+        try:
+            proc.terminate()
+        except ProcessLookupError:
+            return
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=2.0)
+        except asyncio.TimeoutError:
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
+
+    stop_event = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            loop.add_signal_handler(sig, stop_event.set)
+        except NotImplementedError:
+            pass
+
+    t_wands = asyncio.create_task(wands_proc.wait())
+    t_spells = asyncio.create_task(spells_proc.wait())
+    t_stop = asyncio.create_task(stop_event.wait())
+
+    done, _ = await asyncio.wait({t_wands, t_spells, t_stop}, return_when=asyncio.FIRST_COMPLETED)
+
+    if t_stop in done:
+        await terminate(wands_proc)
+        await terminate(spells_proc)
+        return 0
+
+    if t_wands in done:
+        await terminate(spells_proc)
+        return int(wands_proc.returncode or 0)
+
+    await terminate(wands_proc)
+    return int(spells_proc.returncode or 0)
+
+
+def main() -> int:
+    role = _get_arg_value("--role", default=None)
+
+    # Role mode: run one role app in-process
+    if role:
+        app = roles.get(role)
+        if not app:
+            logger.error(f"Unknown role: {role}")
+            return 2
+        logger.info(f"Starting role: {role}")
+        return int(asyncio.run(app.run()) or 0)
+
+    # Supervisor mode
+    logger.info("Starting wand demo application...")
+    _log_build_info()
+    try:
+        return int(asyncio.run(_run_supervisor()) or 0)
+    except KeyboardInterrupt:
+        return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

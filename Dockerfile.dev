@@ -20,7 +20,7 @@ COPY . .
 
 ENV MAMBA_NO_NETLINK=1
 
-RUN micromamba create --prefix /opt/conda/envs/temp-env python=3.11 pip awscli --yes && \
+RUN micromamba create --prefix /opt/conda/envs/temp-env python=3.12 pip awscli --yes && \
     micromamba clean --all --yes
 
 ENV PATH=/opt/conda/envs/temp-env/bin:$PATH

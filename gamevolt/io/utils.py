@@ -1,5 +1,7 @@
 import json
 import os
+import sys
+from pathlib import Path
 
 import yaml
 
@@ -59,3 +61,47 @@ def save_yaml(data: YamlLike, path: str) -> None:
             yaml.safe_dump(data, f, sort_keys=False, default_flow_style=False)
     except Exception as e:
         raise IOError(f"Failed to save YAML to {path}: {e}")
+
+
+def _entry_dir() -> Path:
+    """
+    Directory of the entrypoint script you executed (e.g. main.py).
+    This is the repo root when you run `python main.py` from the repo.
+    """
+    try:
+        p = Path(sys.argv[0]).resolve()
+        if p.is_file():
+            return p.parent
+    except Exception:
+        pass
+    return Path.cwd()
+
+
+def bundled_root() -> str:
+    """
+    Where bundled resources live.
+    - PyInstaller: sys._MEIPASS (extracted bundle dir)
+    - Dev: directory of the entry script (repo root)
+    """
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return str(Path(getattr(sys, "_MEIPASS")).resolve())
+    return str(_entry_dir())
+
+
+def install_root() -> str:
+    """
+    Where user-editable/runtime files live.
+    - PyInstaller: directory containing the executable
+    - Dev: directory of the entry script (repo root)
+    """
+    if getattr(sys, "frozen", False):
+        return str(Path(sys.executable).resolve().parent)
+    return str(_entry_dir())
+
+
+def bundled_path(*parts: str) -> str:
+    return os.path.join(bundled_root(), *parts)
+
+
+def install_path(*parts: str) -> str:
+    return os.path.join(install_root(), *parts)

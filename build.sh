@@ -34,6 +34,18 @@ mkdir -p "$WORK_DIR" "$OUTPUT_DIR"
 info "Ensuring dist dir exists → $DIST_DIR (old ZIPs kept)"
 mkdir -p "$DIST_DIR"
 
+# ─── Generate build_info.py (bundled into PyInstaller) ─────────────────────────
+GIT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+BUILD_TIME_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+info "Generating build_info.py (version=$VERSION sha=$GIT_SHA time=$BUILD_TIME_UTC)"
+cat > "$PROJECT_ROOT/build_info.py" <<EOF
+# Auto-generated at build time. Do not edit.
+VERSION = "${VERSION}"
+GIT_SHA = "${GIT_SHA}"
+BUILD_TIME_UTC = "${BUILD_TIME_UTC}"
+EOF
+
 # ─── Run PyInstaller ───────────────────────────────────────────────────────────
 info "Running PyInstaller → workpath=$WORK_DIR, distpath=$OUTPUT_DIR"
 pyinstaller \
@@ -58,17 +70,17 @@ else
 fi
 info "Detected application output at → $APP_OUTPUT"
 
-# ─── Patch version in appsettings.yml (if present) ───────────────────────────
-APP_SETTINGS="$APP_OUTPUT/appsettings.yml"
-if [[ -f "$APP_SETTINGS" ]]; then
-  info "Updating version in appsettings.yml to $VERSION"
-  jq --arg version "$VERSION" \
-     '.version = $version' \
-     "$APP_SETTINGS" > "$APP_SETTINGS.tmp" \
-  && mv "$APP_SETTINGS.tmp" "$APP_SETTINGS"
-else
-  info "No appsettings.yml at $APP_SETTINGS; skipping version bump"
-fi
+# # ─── Patch version in appsettings.yml (if present) ───────────────────────────
+# APP_SETTINGS="$APP_OUTPUT/appsettings.yml"
+# if [[ -f "$APP_SETTINGS" ]]; then
+#   info "Updating version in appsettings.yml to $VERSION"
+#   jq --arg version "$VERSION" \
+#      '.version = $version' \
+#      "$APP_SETTINGS" > "$APP_SETTINGS.tmp" \
+#   && mv "$APP_SETTINGS.tmp" "$APP_SETTINGS"
+# else
+#   info "No appsettings.yml at $APP_SETTINGS; skipping version bump"
+# fi
 
 # ─── Zip up into .dist ─────────────────────────────────────────────────────────
 ZIP_FILE="${APPLICATION_NAME}-${VERSION}.zip"
@@ -78,6 +90,8 @@ info "Zipping up $APP_OUTPUT → $ZIP_PATH"
   cd "$APP_OUTPUT"
   zip -r -q "$ZIP_PATH" .
 )
+
+# rm -f "$PROJECT_ROOT/build_info.py"
 
 [[ -f "$ZIP_PATH" ]] \
   && info "✅ Build ZIP created at $ZIP_PATH" \

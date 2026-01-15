@@ -1,3 +1,5 @@
+# main2.py
+
 from __future__ import annotations
 
 import asyncio
@@ -8,6 +10,7 @@ from gamevolt_logging import get_logger
 from gamevolt_logging.configuration import LoggingSettings
 
 from appsettings import AppSettings
+from gamevolt.io.utils import bundled_path, install_path
 from messaging.spell_cast_udp_tx import SpellCastUdpTx
 from motion.gesture.gesture_history import GestureHistory
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
@@ -25,8 +28,8 @@ from wand.wand_server import WandServer
 from wizards.wizard_names_provider import WizardNameProvider
 
 application_dir = os.path.dirname(os.path.abspath(__file__))
-config_path = os.path.join(application_dir, "appsettings.yml")
-config_env_path = os.path.join(application_dir, "appsettings.env.yml")
+config_path = bundled_path("appsettings.yml")
+config_env_path = install_path("appsettings.env.yml")
 settings = AppSettings.load(config_file_path=config_path, config_env_file_path=config_env_path)
 print(settings)
 
@@ -36,7 +39,7 @@ history = GestureHistory(settings.motion.gesture_history)
 
 spell_list = SpellList(logger)
 
-spell_controller = UdpSpellController(logger, settings.udp_peer, spell_list)
+spell_controller = UdpSpellController(logger, settings.wands_udp, spell_list)
 
 spell_matcher = SpellMatcher(
     logger=logger, accuracy_scorer=SpellAccuracyScorer(settings=settings.accuracy), spell_controller=spell_controller
@@ -53,7 +56,7 @@ trail_factory = TrailFactory(logger, settings.wand_visualiser.trail)
 visualised_wand_factory = VisualisedWandFactory(logger, trail_factory)
 visualiser = WandVisualiserFactory(logger, settings.wand_visualiser, settings.input, visualised_wand_factory, tracked_wand_manager).create()
 
-udp_tx = SpellCastUdpTx(logger, settings.udp_peer.udp_transmitter, visualiser)
+udp_tx = SpellCastUdpTx(logger, settings.wands_udp.udp_transmitter, visualiser)
 
 
 def on_spell(match: SpellMatch):
