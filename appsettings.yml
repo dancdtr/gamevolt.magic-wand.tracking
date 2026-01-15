@@ -5,20 +5,6 @@ logging:
   file_path: ./Logs/conductr.wand-magic.tracking.log
   minimum_level: "INFORMATION"
 
-spells:
-  targets:
-    # - "lumos_maxima"
-    - "alohomora"
-    - "incendio"
-    # - "ventus"
-    # - "locomotor"o
-    - "wingardium_leviosa"
-    # - "rictumsempra"
-    # - "revelio"
-    # - "squario"
-    # - "oblongium"
-    # - "rectanglia"
-
 input:
   tracked_wands:
     enable_filtering: false

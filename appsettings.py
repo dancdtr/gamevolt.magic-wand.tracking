@@ -5,7 +5,6 @@ from gamevolt.messaging.udp.configuration.udp_peer_settings import UdpPeerSettin
 from gv_logging.configuration.logging_settings import LoggingSettings
 from motion.configuration.motion_settings import MotionSettings
 from spells.accuracy.configuration.accuracy_scorer_settings import SpellAccuracyScorerSettings
-from spells.configuration.spells_settings import SpellsSettings
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from wand.configuration.input_settings import InputSettings
 from wizards.configuration.wizard_settings import WizardSettings
@@ -15,7 +14,6 @@ from wizards.configuration.wizard_settings import WizardSettings
 class AppSettings(AppSettingsBase):
     name: str
     logging: LoggingSettings
-    spells: SpellsSettings
     input: InputSettings
     motion: MotionSettings
     wand_visualiser: WandVisualiserSettings
