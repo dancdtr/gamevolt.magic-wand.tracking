@@ -6,11 +6,15 @@ import signal
 import sys
 from typing import Sequence
 
-from gamevolt_logging import get_logger
+import uvloop
 
 from application.spells_role import SpellsRole
 from application.wands_role import WandsRole
 from gamevolt.application.roles_registry import RolesRegistry
+
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+roles = RolesRegistry().register(WandsRole()).register(SpellsRole())
 
 
 def _is_frozen() -> bool:
@@ -31,9 +35,6 @@ def _log_build_info() -> None:
         print(f"Build: v{build_info.VERSION} ({build_info.GIT_SHA}) {build_info.BUILD_TIME_UTC}")
     except Exception:
         print("Build: (no build_info)")
-
-
-roles = RolesRegistry().register(WandsRole()).register(SpellsRole())
 
 
 async def _run_supervisor() -> int:
