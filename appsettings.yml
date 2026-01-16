@@ -94,10 +94,10 @@ wand_visualiser:
     clip_to_bounds: True
     pixel_margin: 0
   colours:
+    - "#00acc1"
+    - "#fdd835"
     - "#e65c59"
     - "#7cb342"
-    - "#fdd835"
-    - "#00acc1"
     - "#fb8c00"
     - "#ca537f"
     - "#994aae"
