@@ -1,98 +1,56 @@
-from collections.abc import Callable
+# spells/control/udp_spell_controller.py
+from __future__ import annotations
+
 from logging import Logger
 
 from gamevolt.events.event import Event
+from gamevolt.messaging.events.message_handler import MessageHandler
+from gamevolt.messaging.message import Message
+from gamevolt.messaging.udp.configuration.udp_peer_settings import UdpPeerSettings
+from gamevolt.messaging.udp.udp_rx import UdpRx
+from gamevolt.messaging.udp.udp_tx import UdpTx
+from messaging.hello_message import HelloMessage
+from messaging.target_spell_updated_message import TargetSpellUpdatedMessage
+from spells.control.spell_target_store import SpellTargetStore
 from spells.spell import Spell
 from spells.spell_list import SpellList
-from spells.spell_type import SpellType
 
 
 class SpellController:
-    def __init__(self, logger: Logger, spell_list: SpellList) -> None:
+    def __init__(self, logger: Logger, settings: UdpPeerSettings, spell_list: SpellList) -> None:
         self._logger = logger
         self._spell_list = spell_list
+        self._store = SpellTargetStore(logger, spell_list)
 
-        self._spells: list[Spell] = self._spell_list.items
-        self._spells.sort(key=lambda s: s.id)
-
-        self._by_id = {s.id: s for s in self._spells}
-        self._by_type = {s.type: s for s in self._spells}
-
-        self._target_spell: Spell = self._spell_list.get_default()
-        self._current_index = 0
-
-        self._target_spell_updated: Event[Callable[[Spell], None]] = Event()
-        self._toggle_history: Event[Callable[[], None]] = Event()
-        self._quit: Event[Callable[[], None]] = Event()
-
-    @property
-    def spells(self) -> list[Spell]:
-        return self._spells
+        self._udp_transmitter = UdpTx(logger, settings.udp_transmitter)
+        self._udp_message_handler = MessageHandler(logger, UdpRx(logger, settings.udp_receiver))
 
     @property
     def target_spell(self) -> Spell:
-        return self._target_spell
+        return self._store.target_spell
 
     @property
-    def target_spell_updated(self) -> Event[Callable[[Spell], None]]:
-        return self._target_spell_updated
-
-    @property
-    def toggle_history(self) -> Event[Callable[[], None]]:
-        return self._toggle_history
-
-    @property
-    def quit(self) -> Event[Callable[[], None]]:
-        return self._quit
+    def target_spell_updated(self) -> Event:
+        return self._store.target_spell_updated
 
     def start(self) -> None:
-        pass
+        self._logger.debug("Starting UdpSpellController")
+        self._udp_message_handler.subscribe(TargetSpellUpdatedMessage, self._on_target_spell_updated)
+        self._udp_message_handler.start()
+
+        self._udp_transmitter.send(HelloMessage().to_dict())
 
     def stop(self) -> None:
-        pass
+        self._logger.debug("Stopping UdpSpellController")
+        self._udp_message_handler.unsubscribe(TargetSpellUpdatedMessage, self._on_target_spell_updated)
+        self._udp_message_handler.stop()
 
-    def set_target_by_id(self, spell_id: int) -> None:
-        if not self._spells:
+    def _on_target_spell_updated(self, message: Message) -> None:
+        self._logger.debug(f"Received UDP message: {message!r}")
+
+        if not isinstance(message, TargetSpellUpdatedMessage):
             return
 
-        min_id = min(self._by_id.keys())
-        max_id = max(self._by_id.keys())
-        clamped_id = max(min_id, min(spell_id, max_id))
-
-        if clamped_id != spell_id:
-            self._logger.debug(f"Clamped spell id {spell_id} to {clamped_id}")
-
-        spell = self._by_id[clamped_id]
-        self._set_target(spell)
-
-    def set_target_by_type(self, spell_type: SpellType) -> None:
-        spell = self._by_type.get(spell_type)
-        if spell is None:
-            self._logger.warning(f"Unknown spell type: {spell_type}")
-            return
-
-        self._set_target(spell)
-
-    def cycle_target(self, delta: int) -> None:
-        if not self._spells:
-            return
-
-        new_index = self._current_index + delta
-        new_index = max(0, min(new_index, len(self._spells) - 1))
-        if new_index == self._current_index:
-            return
-
-        spell = self._spells[new_index]
-        self._set_target(spell)
-
-    def _set_target(self, spell: Spell) -> None:
+        spell = self._spell_list.get_by_name(message.SpellTypeName.casefold())
         self._logger.info(f"Setting spell target to: {spell.long_name}")
-
-        try:
-            self._current_index = self._spells.index(spell)
-        except ValueError:
-            self._logger.warning(f"Spell not in spell list: {spell}")
-            return
-
-        self._target_spell = spell
-        self._target_spell_updated.invoke(self._target_spell)
+        self._store.set_target_by_type(spell.type)

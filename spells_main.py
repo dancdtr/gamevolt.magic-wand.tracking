@@ -2,7 +2,6 @@
 
 import asyncio
 import os
-import sys
 import tkinter as tk
 from time import sleep
 
@@ -13,7 +12,7 @@ from display.image_libraries.configuration.image_library_settings import ImageLi
 from display.image_libraries.configuration.spell_image_library_settings import SpellImageLibrarySettings
 from display.image_libraries.spell_image_library import SpellImageLibrary
 from display.image_providers.configuration.image_provider_settings import ImageProviderSettings
-from display.input.visual_spell_controller import VisualSpellController
+from display.input.spell_selector import SpellSelector
 from display.spell_casting_visualiser import SpellCastingVisualiser
 from gamevolt.io.utils import bundled_path, install_path
 from gamevolt.messaging.events.message_handler import MessageHandler
@@ -57,7 +56,7 @@ message_handler = MessageHandler(logger, udp_rx)
 spell_list = SpellList(logger)
 
 spell_image_library = SpellImageLibrary(spell_image_library_settings)
-spell_controller = VisualSpellController(logger, spell_list, visualiser, udp_tx, parent=None)
+spell_controller = SpellSelector(logger, spell_list, visualiser, udp_tx, parent=None)
 
 application_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = bundled_path("appsettings.yml")
@@ -79,7 +78,7 @@ def on_spell_cast(message: Message) -> None:
         spell = spell_list.get_by_name(message.SpellType)
         if spell.type is spell_controller.target_spell.type:
             # if spell.type is not SpellType.NONE:
-            logger.info(f"({message.WandId}) cast {message.SpellType}! ({(message.Confidence * 100):.2f}%)")
+            logger.debug(f"({message.WandId}) cast {message.SpellType}! ({(message.Confidence * 100):.2f}%)")
             spellcasting_visualiser.show_spell_cast_coloured(spell.type, message.Colour)
             sleep(0.3)
             spellcasting_visualiser.show_spell_instruction(spell)

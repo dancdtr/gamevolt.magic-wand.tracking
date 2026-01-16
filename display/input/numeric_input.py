@@ -1,7 +1,7 @@
 import tkinter as tk
 from collections.abc import Callable
 
-from display.input.key_input import SpellVisualiserKeyInput
+from display.input.spell_visualiser_key_input import SpellVisualiserKeyInput
 from gamevolt.events.event import Event
 from gamevolt.toolkit.timer import Timer
 

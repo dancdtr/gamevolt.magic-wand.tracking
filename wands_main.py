@@ -14,7 +14,7 @@ from messaging.spell_cast_udp_tx import SpellCastUdpTx
 from motion.gesture.gesture_history import GestureHistory
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
-from spells.control.udp_spell_controller import UdpSpellController
+from spells.control.spell_controller import SpellController
 from spells.spell_list import SpellList
 from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
@@ -38,7 +38,7 @@ history = GestureHistory(settings.motion.gesture_history)
 
 spell_list = SpellList(logger)
 
-spell_controller = UdpSpellController(logger, settings.wands_udp, spell_list)
+spell_controller = SpellController(logger, settings.wands_udp, spell_list)
 
 spell_matcher = SpellMatcher(
     logger=logger, accuracy_scorer=SpellAccuracyScorer(settings=settings.accuracy), spell_controller=spell_controller

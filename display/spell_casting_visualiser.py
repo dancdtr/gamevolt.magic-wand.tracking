@@ -10,11 +10,11 @@ from PIL.Image import Image as PILImage
 from PIL.ImageTk import PhotoImage
 
 from display.image_libraries.spell_image_library import SpellImageLibrary
+from display.input.spell_selector import SpellSelector
 from gamevolt.display.utils import recolour_region_by_threshold
 from gamevolt.events.event import Event
 from gamevolt.toolkit.utils import hex_to_rgb
 from gamevolt.visualisation.visualiser import Visualiser
-from spells.control.spell_controller import SpellController
 from spells.spell import Spell
 from spells.spell_type import SpellType
 
@@ -25,7 +25,7 @@ class SpellCastingVisualiser:
         logger: Logger,
         spell_image_library: SpellImageLibrary,
         visualiser: Visualiser,
-        spell_controller: SpellController,
+        spell_controller: SpellSelector,
     ) -> None:
         self._logger = logger
         self._spell_image_library = spell_image_library
