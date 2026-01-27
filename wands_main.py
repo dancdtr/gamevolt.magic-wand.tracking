@@ -88,16 +88,10 @@ async def main():
             tracked_wand_manager.update()
             visualiser.update()
             await asyncio.sleep(0.01)
-    except tk.TclError:
-        pass
-    except Exception as ex:
-        raise ex
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Exiting on user interrupt...")
+        return 0
+    except Exception:
+        logger.exception("Unhandled exception in wands_main")
+        return 1
     finally:
+        # stop/cleanup stuff (if needed)
         logger.info(f"Exited '{settings.name}'.")

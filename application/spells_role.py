@@ -1,11 +1,13 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
+from gamevolt.application.role import Role
 
 
-@dataclass()
-class SpellsRole:
-    name: str = "spells"
+class SpellsRole(Role):
+    def __init__(self) -> None:
+        super().__init__("spells")
 
-    async def run(self) -> int:
+    async def entry_point(self):
         import spells_main
 
-        return int(await spells_main.main() or 0)
+        return await spells_main.main()

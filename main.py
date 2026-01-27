@@ -12,7 +12,14 @@ from application.spells_role import SpellsRole
 from application.wands_role import WandsRole
 from gamevolt.application.roles_registry import RolesRegistry
 
-asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+try:
+    import uvloop
+
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except Exception as ex:
+    print(f"Unable to set asyncio event loop policy to 'uvloops': {ex}")
+    pass
+
 
 roles = RolesRegistry().register(WandsRole()).register(SpellsRole())
 
@@ -43,8 +50,9 @@ async def _run_supervisor() -> int:
         cmd_spells: Sequence[str] = [sys.executable, "--role=spells"]
     else:
         here = os.path.dirname(os.path.abspath(__file__))
-        cmd_wands = [sys.executable, os.path.join(here, "wands_main.py")]
-        cmd_spells = [sys.executable, os.path.join(here, "spells_main.py")]
+        main_py = os.path.join(here, "main.py")
+        cmd_wands = [sys.executable, main_py, "--role=wands"]
+        cmd_spells = [sys.executable, main_py, "--role=spells"]
 
     wands_proc = await asyncio.create_subprocess_exec(*cmd_wands, start_new_session=True)
     spells_proc = await asyncio.create_subprocess_exec(*cmd_spells, start_new_session=True)
@@ -103,19 +111,20 @@ async def _run_supervisor() -> int:
 def main() -> int:
     role = _get_arg_value("--role", default=None)
 
-    # Role mode: run one role app in-process
     if role:
         app = roles.get(role)
         if not app:
             print(f"Unknown role: {role}")
             return 2
         print(f"Starting role: {role}")
-        return int(asyncio.run(app.run()) or 0)
+        try:
+            return int(asyncio.run(app.run()) or 0)
+        except KeyboardInterrupt:
+            return 0
 
-    # Supervisor mode
     print("Starting wand demo application...")
-
     _log_build_info()
+
     try:
         return int(asyncio.run(_run_supervisor()) or 0)
     except KeyboardInterrupt:

@@ -94,8 +94,7 @@ message_handler.subscribe(SpellCastMessage, on_spell_cast)
 message_handler.subscribe(HelloMessage, on_hello)
 
 
-async def main() -> None:
-
+async def main() -> int:
     logger.info(f"Running '{APP_NAME}' version '{APP_VERSION}'...")
 
     try:
@@ -104,16 +103,23 @@ async def main() -> None:
         spellcasting_visualiser.start()
     except Exception as ex:
         logger.exception(f"Failed to start application: {ex}")
-        return
+        return 1
 
     try:
         while not quit_event.is_set():
             visualiser.update()
             await asyncio.sleep(0.01)
+        return 0
     except tk.TclError:
+        # Window closed -> treat as normal-ish exit (choose 0 or 1; I’d pick 0)
         logger.info("Tkinter window closed.")
+        return 0
+    except asyncio.CancelledError:
+        # Normal during shutdown when supervisor cancels tasks
+        return 0
     except Exception as ex:
         logger.exception(f"Unhandled exception in main loop: {ex}")
+        return 1
     finally:
         logger.info("Shutting down...")
         try:
@@ -127,10 +133,3 @@ async def main() -> None:
             logger.warning(f"Error while stopping visualiser: {ex}")
 
         logger.info(f"Exited '{APP_NAME}'.")
-
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Exiting on user interrupt...")

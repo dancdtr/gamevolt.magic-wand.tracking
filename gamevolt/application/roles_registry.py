@@ -1,10 +1,9 @@
 # gamevolt/application/roles_registry.py
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Iterable
 
-from gamevolt.application.role_app import Role
+from gamevolt.application.role import Role
 
 
 class RolesRegistry:
