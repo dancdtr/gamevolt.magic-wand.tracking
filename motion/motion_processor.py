@@ -57,7 +57,7 @@ class MotionProcessor:
         if self._previous_position is None:
             self._previous_position = rotation
 
-            self._set_motion_phase(MotionPhaseType.STATIONARY)
+            self._set_motion_phase(MotionPhaseType.PAUSED)
             self._segment_builder.start(DirectionType.NONE, rotation)
             return
 
@@ -73,7 +73,7 @@ class MotionProcessor:
         phase_update = self._phase_tracker.step(speed)
 
         if phase_update.new_phase is not None:
-            if phase_update.new_phase == MotionPhaseType.STATIONARY:
+            if phase_update.new_phase == MotionPhaseType.PAUSED:
                 if self._motion_state != DirectionType.NONE:
                     self._set_direction(DirectionType.NONE, rotation)
 

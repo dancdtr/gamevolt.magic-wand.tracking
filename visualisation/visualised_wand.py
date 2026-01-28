@@ -37,10 +37,10 @@ class VisualisedWand:
 
     def start(self) -> None:
         self._tracked_wand.rotation_updated.subscribe(self._add_rotation)
-        self._tracked_wand.reset.subscribe(self.reset)
+        self._tracked_wand.forward_reset.subscribe(self.reset)
 
     def stop(self) -> None:
-        self._tracked_wand.reset.unsubscribe(self.reset)
+        self._tracked_wand.forward_reset.unsubscribe(self.reset)
         self._tracked_wand.rotation_updated.unsubscribe(self._add_rotation)
 
     def reset(self) -> None:

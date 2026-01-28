@@ -54,7 +54,9 @@ motion:
       speed_start: 0.50
       speed_stop: 0.20
       min_state_duration: 0.03
-      min_stopped_duration: 0.5
+      min_paused_duration: 0.3
+      min_holding_duration: 0.8
+      min_stopped_duration: 1.3
     direction_quantizer:
       speed_stop: 0.2
       min_direction_duration: 0.01

@@ -43,7 +43,7 @@ class TrackedWand(WandBase):
         self.gesture_detected: Event[Callable[[GestureHistory], None]] = Event()
         self.motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.rotation_updated: Event[Callable[[WandRotation], None]] = Event()
-        self.reset: Event[Callable[[], None]] = Event()
+        self.forward_reset: Event[Callable[[], None]] = Event()
 
         self._last_rotation: WandRotation | None = None
 
@@ -69,14 +69,14 @@ class TrackedWand(WandBase):
         # self._logger.info(f"Wand_{self._id} @ {self._last_rotation}")
         pass
 
-    def _reset(self) -> None:
+    def reset_data(self) -> None:
         self._motion_processor.reset()
         self._gesture_history.clear()
-        self.reset.invoke()
+        self.forward_reset.invoke()
 
     def reset_forward(self) -> None:
         self._yaw_pitch_interpreter.reset()
-        self._reset()
+        # self._reset()
 
     def clear_gesture_history(self) -> None:
         self._gesture_history.clear()
@@ -88,6 +88,8 @@ class TrackedWand(WandBase):
             ts_ms=wand_pos.ts_ms,
             x_delta=wand_pos.x_delta,
             y_delta=wand_pos.y_delta,
+            pitch=raw.pitch,
+            yaw=raw.yaw,
             nx=wand_pos.nx,
             ny=wand_pos.ny,
         )
@@ -96,9 +98,11 @@ class TrackedWand(WandBase):
         self.rotation_updated.invoke(transformed)
 
     def _on_motion_changed(self, motion_phase: MotionPhaseType) -> None:
-        if motion_phase is MotionPhaseType.STATIONARY:
-            self._reset()
-            self.motion_changed.invoke(motion_phase)
+        if motion_phase is MotionPhaseType.HOLDING:
+            self._gesture_history.clear()
+        if motion_phase is MotionPhaseType.STOPPED:
+            self.forward_reset.invoke()
+            self.reset_forward()
 
         self._logger.debug(f"Motion: {motion_phase.name}")
         self.motion_changed.invoke(motion_phase)
@@ -114,4 +118,4 @@ class TrackedWand(WandBase):
         self._spell_matcher.try_match
 
         if self._spell_matcher.try_match(self.id, self._gesture_history.tail()):
-            self._reset()
+            self.reset_data()
