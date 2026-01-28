@@ -93,6 +93,7 @@ class TrackedWandManager:
     def reset_wand_forwards(self) -> None:
         for wand in self.tracked_wands():
             wand.reset_forward()
+            wand.reset_data()
 
     # def on_spell_cast(self, wand_id: str) -> None:
     #     wand_id = wand_id.upper()
