@@ -88,8 +88,6 @@ class TrackedWand(WandBase):
             ts_ms=wand_pos.ts_ms,
             x_delta=wand_pos.x_delta,
             y_delta=wand_pos.y_delta,
-            pitch=raw.pitch,
-            yaw=raw.yaw,
             nx=wand_pos.nx,
             ny=wand_pos.ny,
         )
