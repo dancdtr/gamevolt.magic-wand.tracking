@@ -9,4 +9,5 @@ from motion.direction.direction_type import DirectionType
 class SpellStep:
     allowed: frozenset[DirectionType]
     min_duration_s: float = 0.0  # required dwell in this step
+    max_duration_s: float | None = None  # NEW
     required: bool = False

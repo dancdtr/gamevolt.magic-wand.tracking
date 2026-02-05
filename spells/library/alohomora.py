@@ -1,5 +1,5 @@
 from motion.direction.direction_type import DirectionType
-from spells.spell_definition import SpellDefinition
+from spells.spell_definition import CORNER_PAUSE, SpellDefinition
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
@@ -26,6 +26,7 @@ def alohomora() -> SpellDefinition:
             SpellStepGroup(
                 name="Line_S",
                 steps=[
+                    CORNER_PAUSE,
                     SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE, DirectionType.MOVING_SW}), required=True),
                 ],
                 relative_distance=2 / 5,

@@ -3,8 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Sequence
 
+from motion.direction.direction_type import DirectionType
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
+
+CORNER_PAUSE = SpellStep(
+    frozenset({DirectionType.PAUSE}),
+    min_duration_s=0.06,
+    max_duration_s=0.5,
+    required=False,
+)
 
 
 @dataclass

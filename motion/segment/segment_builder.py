@@ -12,27 +12,11 @@ from wand.wand_rotation import WandRotation
 
 
 class SegmentBuilder:
-    """
-    Owns the active segment and emits completed segments.
-
-    Semantics:
-      - A segment starts with `start(dir_type, pos)`.
-      - Each subsequent `accumulate(pos)` adds deltas (dx, dy) and length to the
-        active segment.
-      - `commit(new_dir, pos)` closes the current segment (if any) using `pos`
-        as the end timestamp, emits it, then starts a new segment at `pos`
-        with the given `new_dir`.
-      - `finish()` closes the active segment (if any) without starting a new one.
-
-    The `sample_count` in GestureSegment counts the number of accumulated
-    motion samples (deltas), not the number of WandPosition points.
-    """
-
     def __init__(self, settings: SegmentBuilderSettings) -> None:
         self._settings = settings
 
         self._active: bool = False
-        self._direction: DirectionType = DirectionType.NONE
+        self._direction: DirectionType = DirectionType.UNKNOWN
         self._start_ms: int = 0
         self._last_ms: int = 0
         self._samples: int = 0
@@ -64,13 +48,18 @@ class SegmentBuilder:
             return
 
         self._last_ms = pos.ts_ms
+        self._samples += 1
+        self._points.append(pos)
+
+        # Recommended: do not let PAUSE segments accumulate “noise distance”
+        if self._direction == DirectionType.PAUSE:
+            return
+
         dx = pos.x_delta
         dy = pos.y_delta
         self._net_dx += dx
         self._net_dy += dy
         self._path += math.hypot(dx, dy)
-        self._samples += 1
-        self._points.append(pos)
 
     def finish(self) -> None:
         if not self._active:
@@ -100,14 +89,20 @@ class SegmentBuilder:
         self.segment_completed.invoke(seg)
 
     def commit(self, new_dir: DirectionType, pos: WandRotation) -> None:
+        # Guard: if upstream accidentally "commits" the same dir repeatedly, just accumulate.
+        if self._active and new_dir == self._direction:
+            self.accumulate(pos)
+            return
+
         if self._active:
             self._last_ms = pos.ts_ms
             self.finish()
+
         self.start(new_dir, pos)
 
     def reset(self) -> None:
         self._active = False
-        self._direction = DirectionType.NONE
+        self._direction = DirectionType.UNKNOWN
         self._start_ms = 0
         self._last_ms = 0
         self._samples = 0

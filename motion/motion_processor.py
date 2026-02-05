@@ -25,7 +25,7 @@ class MotionProcessor:
         self._segment_builder = SegmentBuilder(settings.segment_builder)
 
         self._motion_mode: MotionPhaseType = MotionPhaseType.NONE
-        self._motion_state: DirectionType = DirectionType.NONE
+        self._motion_state: DirectionType = DirectionType.UNKNOWN
         self._previous_position: WandRotation | None = None
 
     def start(self) -> None:
@@ -40,7 +40,7 @@ class MotionProcessor:
         self._segment_builder.reset()  # WHY DID I COMMENT THIS OUT?
 
         self._motion_mode = MotionPhaseType.NONE
-        self._motion_state = DirectionType.NONE
+        self._motion_state = DirectionType.UNKNOWN
         self._previous_position = None
 
     def _set_motion_phase(self, phase: MotionPhaseType) -> None:
@@ -62,7 +62,7 @@ class MotionProcessor:
             self._previous_position = rotation
 
             self._set_motion_phase(MotionPhaseType.PAUSED)
-            self._segment_builder.start(DirectionType.NONE, rotation)
+            self._segment_builder.start(DirectionType.UNKNOWN, rotation)
             return
 
         raw_dt_ms = rotation.ts_ms - self._previous_position.ts_ms
@@ -78,8 +78,8 @@ class MotionProcessor:
 
         if phase_update.new_phase is not None:
             if phase_update.new_phase == MotionPhaseType.PAUSED:
-                if self._motion_state != DirectionType.NONE:
-                    self._set_direction(DirectionType.NONE, rotation)
+                if self._motion_state != DirectionType.UNKNOWN:
+                    self._set_direction(DirectionType.UNKNOWN, rotation)
 
             self._set_motion_phase(phase_update.new_phase)
 
@@ -88,7 +88,7 @@ class MotionProcessor:
             if direction_update.new_direction is not None:
                 self._set_direction(direction_update.new_direction, rotation)
         else:
-            self._direction_quantizer.force(DirectionType.NONE)
+            self._direction_quantizer.force(DirectionType.UNKNOWN)
 
         if self._segment_builder.active:
             self._segment_builder.accumulate(rotation)

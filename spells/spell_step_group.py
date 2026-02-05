@@ -9,3 +9,4 @@ class SpellStepGroup:
     steps: list[SpellStep]
     relative_duration: float
     relative_distance: float
+    min_steps: int = 0

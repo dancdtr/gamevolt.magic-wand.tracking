@@ -2,7 +2,8 @@ from enum import Enum, auto
 
 
 class DirectionType(Enum):
-    NONE = auto()
+    UNKNOWN = auto()
+    PAUSE = auto()
     MOVING_N = auto()
     MOVING_NE = auto()
     MOVING_E = auto()

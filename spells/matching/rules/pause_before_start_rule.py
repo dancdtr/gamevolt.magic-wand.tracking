@@ -37,7 +37,7 @@ class PauseBeforeStartRule(SpellRule):
         while j >= 0 and remaining > 0.0:
             seg = segs[j]
 
-            is_pause = seg.direction_type == DirectionType.NONE or seg.mean_speed <= thresh
+            is_pause = seg.direction_type == DirectionType.UNKNOWN or seg.mean_speed <= thresh
 
             if not is_pause:
                 # As soon as we hit motion, we stop counting pause

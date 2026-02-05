@@ -1,6 +1,7 @@
 # spells/spell_matcher.py
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Sequence
 from logging import Logger
 
@@ -20,7 +21,12 @@ from spells.spell_step import SpellStep
 
 
 class SpellMatcher:
-    def __init__(self, logger: Logger, accuracy_scorer: SpellAccuracyScorer, spell_controller: SpellController) -> None:
+    def __init__(
+        self,
+        logger: Logger,
+        accuracy_scorer: SpellAccuracyScorer,
+        spell_controller: SpellController,
+    ) -> None:
         self._logger = logger
 
         self.matched: Event[Callable[[SpellMatch], None]] = Event()
@@ -49,27 +55,26 @@ class SpellMatcher:
         for spell in self._spell_definitions:
             match = self._match_spell(wand_id, spell, compressed)
             if match:
-                self._logger.info(
-                    f"({wand_id}) cast {match.spell_name}! ✨✨" f"{match.accuracy_score * 100:.1f}% ({match.duration_s:.3f})"
-                )
+                self._logger.info(f"({wand_id}) cast {match.spell_name}! ✨✨{match.accuracy_score * 100:.1f}% ({match.duration_s:.3f})")
+
                 self.matched.invoke(match)
                 return True
 
         return False
 
-    # ----- shared helpers -----
-    def _key_steps(self, spell: SpellDefinition) -> list[SpellStep]:
-        """Required steps define the key sequence; if none required, use all steps."""
-        req = [st for grp in spell.step_groups for st in grp.steps if getattr(st, "required", False)]
-        return req if req else [st for grp in spell.step_groups for st in grp.steps]
+    # ----- helpers -----
+    def _is_pause_step(self, step: SpellStep) -> bool:
+        # Pause steps should match, but never count toward min_spell_steps / used_steps.
+        return step.allowed == frozenset({DirectionType.PAUSE})
 
     def _compress(self, segments: Sequence[GestureSegment]) -> list[GestureSegment]:
         """
-        Merge consecutive identical directions (including NONE is kept separate),
+        Merge consecutive identical directions (including PAUSE/UNKNOWN),
         summing duration & path_length; recompute mean_speed accordingly.
         """
         if not segments:
             return []
+
         out: list[GestureSegment] = []
         cur = segments[0]
         for seg in segments[1:]:
@@ -96,15 +101,26 @@ class SpellMatcher:
         return out
 
     # ----- matching implementation -----
-    def _match_spell(self, wand_id: str, spell: SpellDefinition, compressed: Sequence[GestureSegment]) -> SpellMatch | None:
+    def _match_spell(
+        self,
+        wand_id: str,
+        spell: SpellDefinition,
+        compressed: Sequence[GestureSegment],
+    ) -> SpellMatch | None:
         if not compressed:
             return None
 
         flat_steps, group_idx_of_step = self._flatten_with_group_map(spell)
 
-        # try windows starting at each index from newest back
         for start_idx in range(len(compressed) - 1, -1, -1):
-            match = self._match_from_index(wand_id, spell, flat_steps, group_idx_of_step, compressed, start_idx)
+            match = self._match_from_index(
+                wand_id=wand_id,
+                spell_definition=spell,
+                flat_steps=flat_steps,
+                group_idx_of_step=group_idx_of_step,
+                segs=compressed,
+                i_start=start_idx,
+            )
             if match:
                 return match
 
@@ -128,182 +144,167 @@ class SpellMatcher:
         segs: Sequence[GestureSegment],
         i_start: int,
     ) -> SpellMatch | None:
+        """
+        Walk newest→oldest and try to match reversed step list.
+
+        Key behaviour:
+          - PAUSE steps can match, but never count toward min_spell_steps/used_steps.
+          - Idle-ish segments (PAUSE/UNKNOWN) can still be filler, and long idle filler breaks.
+        """
+
+        def is_idle_dir(d: DirectionType) -> bool:
+            return d in (DirectionType.PAUSE, DirectionType.UNKNOWN)
 
         # reversed because we walk newest→oldest
         steps = list(reversed(flat_steps))
         step_to_group = list(reversed(group_idx_of_step))
 
         step_count = len(steps)
-        required_total = sum(1 for st in steps if st.required)
-        optional_total = step_count - required_total
 
-        step_idx = 0
-        start_ts: int | None = None
-        end_ts: int | None = None
-        total_duration = 0.0
-
-        group_count = len(spell_definition.step_groups)
-        group_distance = [0.0 for _ in range(group_count)]
-        group_duration = [0.0 for _ in range(group_count)]
-        total_distance = 0.0
-
-        filler_duration = 0.0
+        # Totals excluding PAUSE steps (so min_spell_steps can't be satisfied by pauses)
+        scorable_total = sum(1 for st in steps if not self._is_pause_step(st))
+        required_total = sum(1 for st in steps if st.required and not self._is_pause_step(st))
+        optional_total = scorable_total - required_total
 
         matched_required = 0
         matched_optional = 0
 
-        used_min_idx: int | None = None  # oldest in this window
-        used_max_idx: int | None = None  # newest in this window
+        matched_pause = 0
+        pause_duration_s = 0.0
+
+        step_idx = 0
+
+        total_duration = 0.0
+        filler_duration = 0.0
+
+        group_count = len(spell_definition.step_groups)
+        group_distance = [0.0 for _ in range(group_count)]
+        group_duration = [0.0 for _ in range(group_count)]
+        group_steps_matched = [0 for _ in range(group_count)]
+        total_distance = 0.0  # scorable (movement) distance only
+
+        used_min_idx: int | None = None  # oldest used segment in window
+        used_max_idx: int | None = None  # newest used segment in window
 
         group_names = [g.name for g in spell_definition.step_groups]
+
+        def mark_used_index(idx: int) -> None:
+            nonlocal used_min_idx, used_max_idx
+            if used_min_idx is None or idx < used_min_idx:
+                used_min_idx = idx
+            if used_max_idx is None or idx > used_max_idx:
+                used_max_idx = idx
+
+        def log_group_state(prefix: str, seg_idx_in_window: int, seg: GestureSegment, step: SpellStep) -> None:
+            if not self._logger.isEnabledFor(logging.DEBUG):
+                return
+            ratios = [gd / total_distance for gd in group_distance] if total_distance > 0 else [0.0 for _ in group_distance]
+            self._logger.debug(
+                f"{prefix} spell={self._spell_controller.target_spell.name} win_start={i_start} seg_win_idx={seg_idx_in_window} "
+                f"dir={seg.direction_type.name} step_idx={step_idx}/{step_count} step_required={step.required} "
+                f"step_is_pause={self._is_pause_step(step)} dist={seg.path_length:.3f} dt={seg.duration_s:.3f} "
+                f"group_distance={dict(zip(group_names, group_distance))} group_ratios={dict(zip(group_names, [round(r, 3) for r in ratios]))}"
+            )
+
+        def try_consume_as_filler(seg: GestureSegment, current_idx: int, seg_idx_in_window: int) -> bool:
+            nonlocal filler_duration, total_duration
+
+            dt = seg.duration_s
+
+            # Long idle filler breaks the window.
+            if is_idle_dir(seg.direction_type) and dt > spell_definition.max_idle_gap_s:
+                return False
+
+            filler_duration += dt
+            total_duration += dt
+
+            gi_filler = step_to_group[step_idx]
+
+            # Only add distance for non-idle filler (protects ratios from drift).
+            if not is_idle_dir(seg.direction_type):
+                group_distance[gi_filler] += seg.path_length
+
+            mark_used_index(current_idx)
+            log_group_state("FILLER", seg_idx_in_window, seg, steps[step_idx])
+            return True
 
         i = i_start
         while i >= 0 and step_idx < step_count:
             seg = segs[i]
             current_idx = i
 
-            # capture time window endpoints (chronologically correct)
-            if start_ts is None:
-                start_ts = seg.start_ts_ms
-            end_ts = seg.end_ts_ms
-
             dt = seg.duration_s
             dist = seg.path_length
             step = steps[step_idx]
 
-            seg_dir_name = seg.direction_type.name
+            seg_idx_in_window = i_start - i
             step_dirs = {d.name for d in step.allowed}
-            seg_idx_in_window = i_start - i  # 0 = newest
 
-            def log_group_state(prefix: str) -> None:
-                if total_distance > 0:
-                    ratios = [gd / total_distance for gd in group_distance]
-                else:
-                    ratios = [0.0 for _ in group_distance]
-
-                self._logger.debug(
-                    "%s spell=%s win_start=%d seg_win_idx=%d dir=%s "
-                    "step_idx=%d/%d required=%s dist=%.3f dt=%.3f "
-                    "group_distance=%s group_ratios=%s",
-                    prefix,
-                    self._spell_controller.target_spell.name,
-                    i_start,
-                    seg_idx_in_window,
-                    seg_dir_name,
-                    step_idx,
-                    step_count,
-                    step.required,
-                    dist,
-                    dt,
-                    dict(zip(group_names, group_distance)),
-                    dict(zip(group_names, [round(r, 3) for r in ratios])),
-                )
-
-            def mark_used_index(idx: int) -> None:
-                nonlocal used_min_idx, used_max_idx
-                if used_min_idx is None or idx < used_min_idx:
-                    used_min_idx = idx
-                if used_max_idx is None or idx > used_max_idx:
-                    used_max_idx = idx
-
-            def try_consume_as_filler() -> bool:
-                nonlocal filler_duration, total_duration, i
-
-                # still keep the semantic that long NONE gaps break the window
-                if seg.direction_type == DirectionType.NONE and dt > spell_definition.max_idle_gap_s:
-                    return False
-
-                filler_duration += dt
-                total_duration += dt
-
-                gi_filler = step_to_group[step_idx]
-                group_distance[gi_filler] += dist
-                # group_duration[gi_filler] += dt  # optional
-
-                mark_used_index(current_idx)
-                log_group_state("FILLER")
-
-                i -= 1
-                return True
-
-            # NONE segments are always potential filler
-            if seg.direction_type == DirectionType.NONE:
-                if not try_consume_as_filler():
-                    self._logger.debug(
-                        "NONE segment rejected as filler: spell=%s seg_win_idx=%d dt=%.3f",
-                        self._spell_controller.target_spell.name,
-                        seg_idx_in_window,
-                        dt,
-                    )
-                    return None
-                continue
-
-            # check this segment against the current step
             dir_ok = seg.direction_type in step.allowed
-            dur_ok = dt >= step.min_duration_s
+
+            # Support optional SpellStep.max_duration_s if present.
+            max_dur = getattr(step, "max_duration_s", None)
+            dur_ok = dt >= step.min_duration_s and (max_dur is None or dt <= max_dur)
 
             # ─── Match branch ───────────────────────────────────────
             if dir_ok and dur_ok:
                 total_duration += dt
-                total_distance += dist
-
-                gi = step_to_group[step_idx]
-                group_distance[gi] += dist
-                group_duration[gi] += dt
-
-                if step.required:
-                    matched_required += 1
-                else:
-                    matched_optional += 1
-
                 mark_used_index(current_idx)
-                log_group_state("MATCH ")
+
+                if self._is_pause_step(step):
+                    matched_pause += 1
+                    pause_duration_s += dt
+                    log_group_state("MATCH(PAUSE)", seg_idx_in_window, seg, step)
+                else:
+                    total_distance += dist
+                    gi = step_to_group[step_idx]
+                    group_steps_matched[gi] += 1
+                    group_distance[gi] += dist
+                    group_duration[gi] += dt
+
+                    if step.required:
+                        matched_required += 1
+                    else:
+                        matched_optional += 1
+
+                    log_group_state("MATCH", seg_idx_in_window, seg, step)
 
                 step_idx += 1
                 i -= 1
                 continue
 
             # ─── Mismatch branch ────────────────────────────────────
-            self._logger.debug(
-                "MISMATCH spell=%s win_start=%d seg_win_idx=%d dir=%s step_idx=%d/%d " "step_allowed=%s dt=%.3f dist=%.3f required=%s",
-                self._spell_controller.target_spell.name,
-                i_start,
-                seg_idx_in_window,
-                seg_dir_name,
-                step_idx,
-                step_count,
-                step_dirs,
-                dt,
-                dist,
-                step.required,
-            )
+            if self._logger.isEnabledFor(logging.DEBUG):
+                self._logger.debug(
+                    f"MISMATCH spell={self._spell_controller.target_spell.name} win_start={i_start} seg_win_idx={seg_idx_in_window} "
+                    f"dir={seg.direction_type.name} step_idx={step_idx}/{step_count} step_allowed={step_dirs} "
+                    f"dt={dt:.3f} dist={dist:.3f} step_required={step.required} step_is_pause={self._is_pause_step(step)}"
+                )
 
+            # OPTIONAL STEP: skip it and re-check same segment against next step.
             if not step.required:
-                # OPTIONAL STEP: skip it and re-check same segment against next step.
                 step_idx += 1
                 continue
 
             # REQUIRED STEP: try to treat this segment as filler between required steps.
-            if try_consume_as_filler():
+            if try_consume_as_filler(seg, current_idx, seg_idx_in_window):
+                i -= 1
                 continue
 
-            # Required step not satisfied and can't be filler → this window dies.
-            self._logger.debug(
-                "REQUIRED step failed and not filler: spell=%s seg_win_idx=%d step_idx=%d",
-                self._spell_controller.target_spell.name,
-                seg_idx_in_window,
-                step_idx,
-            )
+            if self._logger.isEnabledFor(logging.DEBUG):
+                self._logger.debug(
+                    f"REQUIRED step failed and not filler: spell={self._spell_controller.target_spell.name} "
+                    f"seg_win_idx={seg_idx_in_window} step_idx={step_idx}"
+                )
             return None
 
         # ─── Build metrics & run rules ───────────────────────────────────────
 
-        total_used = matched_required + matched_optional
+        used_steps_scorable = matched_required + matched_optional
 
-        if matched_required == 0 or start_ts is None or end_ts is None:
+        if matched_required == 0:
             return None
 
-        # derive window indices
         if used_min_idx is None or used_max_idx is None:
             window_start_index = i_start
             window_end_index = i_start
@@ -311,14 +312,19 @@ class SpellMatcher:
             window_start_index = used_min_idx
             window_end_index = used_max_idx
 
+        # chronological endpoints (segs is oldest→newest)
+        start_ts = segs[window_start_index].start_ts_ms
+        end_ts = segs[window_end_index].end_ts_ms
+
         metrics = SpellMatchMetrics(
             total_duration_s=total_duration,
             filler_duration_s=filler_duration,
             total_distance=total_distance,
             group_distance=group_distance,
+            group_steps_matched=group_steps_matched,
             group_duration_s=group_duration,
-            used_steps=total_used,
-            total_steps=len(flat_steps),
+            used_steps=used_steps_scorable,  # excludes pause steps
+            total_steps=scorable_total,  # excludes pause steps
             required_matched=matched_required,
             required_total=required_total,
             optional_matched=matched_optional,
@@ -333,45 +339,29 @@ class SpellMatcher:
             window_end_index=window_end_index,
         )
 
-        # ALL validation now lives in rules
         if not self._rules_validator.validate(ctx):
-            self._logger.debug(
-                "NO MATCH (rule validator): spell=%s win_start=%d matched_required=%d/%d total_used=%d",
-                self._spell_controller.target_spell.name,
-                i_start,
-                matched_required,
-                required_total,
-                total_used,
-            )
+            if self._logger.isEnabledFor(logging.DEBUG):
+                self._logger.debug(
+                    f"NO MATCH (rules): spell={self._spell_controller.target_spell.name} win_start={i_start} "
+                    f"required={matched_required}/{required_total} used_scorable={used_steps_scorable}/{scorable_total} "
+                    f"pause_matched={matched_pause} pause_s={pause_duration_s:.3f}"
+                )
             return None
 
-        # If we get here, the candidate passed all rules.
         accuracy = self._accuracy_scorer.calculate(spell_definition, metrics)
 
-        if total_distance > 0:
-            final_ratios = [gd / total_distance for gd in group_distance]
-        else:
-            final_ratios = [0.0 for _ in group_distance]
+        if self._logger.isEnabledFor(logging.DEBUG):
+            ratios = [gd / total_distance for gd in group_distance] if total_distance > 0 else [0.0 for _ in range(group_count)]
+            self._logger.debug(
+                f"MATCHED spell={self._spell_controller.target_spell.name} score={accuracy.score:.3f} win_start={i_start} "
+                f"required={matched_required}/{required_total} optional={matched_optional}/{optional_total} "
+                f"used_scorable={used_steps_scorable}/{scorable_total} pause_matched={matched_pause} pause_s={pause_duration_s:.3f} "
+                f"total_duration={total_duration:.3f} total_distance={total_distance:.3f} "
+                f"group_distance={dict(zip(group_names, group_distance))} group_ratios={dict(zip(group_names, [round(r, 3) for r in ratios]))} "
+                f"filler_duration={filler_duration:.3f}"
+            )
 
-        self._logger.debug(
-            "MATCHED spell=%s score=%.3f win_start=%d "
-            "required %d/%d + optional %d/%d = total %d/%d "
-            "total_duration=%.3f, total_distance=%.3f group_distance=%s group_ratios=%s filler_duration=%.3f",
-            self._spell_controller.target_spell.name,
-            accuracy.score,
-            i_start,
-            matched_required,
-            required_total,
-            matched_optional,
-            optional_total,
-            total_used,
-            required_total + optional_total,
-            total_duration,
-            total_distance,
-            dict(zip(group_names, group_distance)),
-            dict(zip(group_names, [round(r, 3) for r in final_ratios])),
-            filler_duration,
-        )
+        print(f"dist: {total_distance:.2f}")
 
         return SpellMatch(
             wand_id=wand_id,
@@ -380,8 +370,8 @@ class SpellMatcher:
             start_ts_ms=start_ts,
             end_ts_ms=end_ts,
             duration_s=total_duration,
-            segments_used=total_used,
-            total_segments=len(flat_steps),
+            segments_used=used_steps_scorable,  # excludes pause steps
+            total_segments=scorable_total,  # excludes pause steps
             required_matched=matched_required,
             required_total=required_total,
             optional_matched=matched_optional,

@@ -10,6 +10,7 @@ class SpellMatchMetrics:
 
     group_distance: Sequence[float]
     group_duration_s: Sequence[float]
+    group_steps_matched: list[int]
 
     used_steps: int
     total_steps: int

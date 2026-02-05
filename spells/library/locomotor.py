@@ -1,5 +1,5 @@
 from motion.direction.direction_type import DirectionType
-from spells.spell_definition import SpellDefinition
+from spells.spell_definition import CORNER_PAUSE, SpellDefinition
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
@@ -11,6 +11,7 @@ def locomotor() -> SpellDefinition:
                 name="Line_N",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_N}), required=True),
+                    CORNER_PAUSE,
                 ],
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,
@@ -19,8 +20,9 @@ def locomotor() -> SpellDefinition:
                 name="Line_SW",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_S})),
-                    SpellStep(frozenset({DirectionType.MOVING_SW})),
+                    SpellStep(frozenset({DirectionType.MOVING_SW}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_W})),
+                    CORNER_PAUSE,
                 ],
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,

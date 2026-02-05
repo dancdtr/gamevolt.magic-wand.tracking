@@ -3,6 +3,7 @@ from spells.matching.rules.duration_rule import DurationRule
 from spells.matching.rules.group_distance_duration_rule import GroupDistanceRatioRule
 from spells.matching.rules.group_duration_ratio_rule import GroupDurationRatioRule
 from spells.matching.rules.max_filler_rule import MaxFillerRule
+from spells.matching.rules.min_group_steps_rule import MinGroupStepsRule
 from spells.matching.rules.min_steps_rule import MinStepsRule
 from spells.matching.rules.pause_at_end_rule import PauseAtEndRule
 from spells.matching.rules.pause_before_start_rule import PauseBeforeStartRule
@@ -33,6 +34,8 @@ class RulesValidator:
 
         if spell.check_group_distance_ratio:
             rules.append(GroupDistanceRatioRule())
+
+        rules.append(MinGroupStepsRule())
 
         # Pause rules
         if spell.min_pre_pause_s and spell.min_pre_pause_s > 0:
