@@ -39,6 +39,10 @@ class MotionProcessor:
         self._direction_quantizer.reset()
         self._segment_builder.reset()  # WHY DID I COMMENT THIS OUT?
 
+        self._motion_mode = MotionPhaseType.NONE
+        self._motion_state = DirectionType.NONE
+        self._previous_position = None
+
     def _set_motion_phase(self, phase: MotionPhaseType) -> None:
         if phase != self._motion_mode:
             self._motion_mode = phase

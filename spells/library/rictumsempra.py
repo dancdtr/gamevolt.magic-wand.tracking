@@ -37,7 +37,7 @@ def rictumsempra() -> SpellDefinition:
                 relative_duration=1 / 8,
             ),
         ],
-        min_spell_steps=4,
+        min_spell_steps=5,
         max_total_duration_s=3.0,
         min_total_duration_s=0.7,
         max_idle_gap_s=0.8,
