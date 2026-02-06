@@ -109,11 +109,9 @@ class TrackedWand(WandBase):
         self.direction_changed.invoke(direction)
 
     def _on_segment_completed(self, segment: GestureSegment):
-        self._logger.debug(f"Completed '{segment.direction_type.name}' ({segment.direction:.3f}): {segment.duration_s}s")
+        self._logger.info(f"Completed '{segment.direction_type.name}' ({segment.direction:.3f}): {segment.duration_s}s")
         self._gesture_history.add(segment)
         self.gesture_detected.invoke(self._gesture_history)
-
-        self._spell_matcher.try_match
 
         if self._spell_matcher.try_match(self.id, self._gesture_history.tail()):
             self.reset_data()

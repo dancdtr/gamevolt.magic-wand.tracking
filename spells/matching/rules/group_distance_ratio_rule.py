@@ -5,20 +5,21 @@ from spells.matching.spell_match_context import SpellMatchContext
 class GroupDistanceRatioRule(SpellRule):
     def validate(self, ctx: SpellMatchContext) -> bool:
         spell = ctx.spell
-        metrics = ctx.metrics
+        m = ctx.metrics
 
-        total = max(metrics.total_distance, spell.group_distance_min_total)
+        # Use effective total distance (scorable + absorbed jitter)
+        total = max(m.total_distance, spell.group_distance_min_total)
 
         for gi, group in enumerate(spell.step_groups):
             target = getattr(group, "relative_distance", None)
             if target is None:
                 continue
 
-            actual = metrics.group_distance[gi] / total
+            # Use effective group distance (scorable + absorbed jitter attributed to this group)
+            group_dist = m.group_distance[gi] + m.group_absorbed_distance[gi]
+            actual = group_dist / total
 
-            tol_ratio = spell.group_distance_rel_tol
-            band = abs(target) * tol_ratio
-
+            band = abs(target) * spell.group_distance_rel_tol
             lower = max(0.0, target - band)
             upper = min(1.0, target + band)
 

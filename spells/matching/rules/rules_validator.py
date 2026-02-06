@@ -1,6 +1,6 @@
 from spells.matching.rules.distance_rule import DistanceRule
 from spells.matching.rules.duration_rule import DurationRule
-from spells.matching.rules.group_distance_duration_rule import GroupDistanceRatioRule
+from spells.matching.rules.group_distance_ratio_rule import GroupDistanceRatioRule
 from spells.matching.rules.group_duration_ratio_rule import GroupDurationRatioRule
 from spells.matching.rules.max_filler_rule import MaxFillerRule
 from spells.matching.rules.min_group_steps_rule import MinGroupStepsRule
