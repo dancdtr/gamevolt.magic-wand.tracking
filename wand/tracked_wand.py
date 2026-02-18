@@ -10,7 +10,7 @@ from motion.gesture.gesture_history import GestureHistory
 from motion.gesture.gesture_segment import GestureSegment
 from motion.motion_phase_type import MotionPhaseType
 from motion.motion_processor import MotionProcessor
-from spells.spell_matcher import SpellMatcher
+from spells.matching.spell_matcher import SpellMatcher
 from wand.configuration.wand_settings import WandSettings
 from wand.interpreters.wand_yawpitch_rmf_interpreter import YawPitchRMFInterpreter
 from wand.wand_base import WandBase

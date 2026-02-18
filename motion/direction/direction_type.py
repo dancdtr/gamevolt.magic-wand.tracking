@@ -12,3 +12,7 @@ class DirectionType(Enum):
     MOVING_SW = auto()
     MOVING_W = auto()
     MOVING_NW = auto()
+
+    @property
+    def is_idle(self) -> bool:
+        return self.value is DirectionType.PAUSE or self.value is DirectionType.UNKNOWN

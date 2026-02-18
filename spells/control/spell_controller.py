@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from logging import Logger
+from typing import Callable
 
 from gamevolt.events.event import Event
 from gamevolt.messaging.events.message_handler import MessageHandler
@@ -30,7 +31,7 @@ class SpellController:
         return self._store.target_spell
 
     @property
-    def target_spell_updated(self) -> Event:
+    def target_spell_updated(self) -> Event[Callable[[Spell], None]]:
         return self._store.target_spell_updated
 
     def start(self) -> None:

@@ -6,7 +6,7 @@ from typing import Callable
 from gamevolt.events.event import Event
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from motion.motion_phase_type import MotionPhaseType
-from spells.spell_matcher import SpellMatcher
+from spells.matching.spell_matcher import SpellMatcher
 from wand.configuration.input_settings import InputSettings
 from wand.tracked_wand import TrackedWand
 from wand.tracked_wand_factory import MotionProcessorFactory, TrackedWandFactory
@@ -94,6 +94,10 @@ class TrackedWandManager:
         for wand in self.tracked_wands():
             wand.reset_forward()
             wand.reset_data()
+
+    def clear_wand_histories(self) -> None:
+        for wand in self.tracked_wands():
+            wand.clear_gesture_history()
 
     # def on_spell_cast(self, wand_id: str) -> None:
     #     wand_id = wand_id.upper()

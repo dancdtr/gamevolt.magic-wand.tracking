@@ -15,9 +15,10 @@ from motion.gesture.gesture_history import GestureHistory
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.control.spell_controller import SpellController
+from spells.matching.spell_matcher import SpellMatcher
+from spells.spell import Spell
 from spells.spell_list import SpellList
 from spells.spell_match import SpellMatch
-from spells.spell_matcher import SpellMatcher
 from visualisation.configuration.visualised_wand_factory import VisualisedWandFactory
 from visualisation.trail_factory import TrailFactory
 from visualisation.wand_visualiser_factory import WandVisualiserFactory
@@ -63,12 +64,17 @@ def on_spell(match: SpellMatch):
     # tracked_wand_manager.on_spell_cast(match.wand_id)
 
 
+def on_spell_target_updated(spell: Spell) -> None:
+    tracked_wand_manager.clear_wand_histories()
+
+
 quit_event = asyncio.Event()
 
 spell_matcher.matched.subscribe(on_spell)
 # input.position_updated.subscribe(on_position_updated)
 visualiser.quit.subscribe(lambda: quit_event.set())
 tracked_wand_manager.wand_rotation_updated.subscribe(visualiser.add_rotation)
+spell_controller.target_spell_updated.subscribe(on_spell_target_updated)
 
 
 async def main():

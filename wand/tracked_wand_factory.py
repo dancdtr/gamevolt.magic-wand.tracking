@@ -3,7 +3,7 @@ from logging import Logger
 from motion.configuration.motion_processor_settings import MotionProcessorSettings
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from motion.motion_processor import MotionProcessor
-from spells.spell_matcher import SpellMatcher
+from spells.matching.spell_matcher import SpellMatcher
 from wand.configuration.wand_settings import WandSettings
 from wand.tracked_wand import TrackedWand
 
