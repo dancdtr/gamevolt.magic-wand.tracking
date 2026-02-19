@@ -8,26 +8,51 @@ def alohomora() -> SpellDefinition:
     return SpellDefinition(
         step_groups=[
             SpellStepGroup(
-                name="Circle",
+                name="cw_quarter_circle_start_n",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
+                ],
+                relative_distance=3 / 5,
+                relative_duration=3 / 5,
+                min_steps=1,
+            ),
+            SpellStepGroup(
+                name="cw_quarter_circle_start_e",
+                steps=[
                     SpellStep(frozenset({DirectionType.MOVING_S})),
                     SpellStep(frozenset({DirectionType.MOVING_SW})),
+                ],
+                relative_distance=3 / 5,
+                relative_duration=3 / 5,
+                min_steps=1,
+            ),
+            SpellStepGroup(
+                name="cw_quarter_circle_start_s",
+                steps=[
                     SpellStep(frozenset({DirectionType.MOVING_W})),
                     SpellStep(frozenset({DirectionType.MOVING_NW})),
+                ],
+                min_steps=1,
+                relative_distance=3 / 5,
+                relative_duration=3 / 5,
+            ),
+            SpellStepGroup(
+                name="cw_quarter_circle_start_w",
+                steps=[
                     SpellStep(frozenset({DirectionType.MOVING_N})),
                     SpellStep(frozenset({DirectionType.MOVING_NE})),
-                    SpellStep(frozenset({DirectionType.MOVING_E})),
                 ],
+                min_steps=1,
                 relative_distance=3 / 5,
                 relative_duration=3 / 5,
             ),
             SpellStepGroup(
                 name="Line_S",
                 steps=[
+                    SpellStep(frozenset({DirectionType.MOVING_E})),
                     CORNER_PAUSE,
-                    SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE, DirectionType.MOVING_SW}), required=True),
+                    SpellStep(frozenset({DirectionType.MOVING_S}), required=True),
                 ],
                 relative_distance=2 / 5,
                 relative_duration=2 / 5,
@@ -38,10 +63,4 @@ def alohomora() -> SpellDefinition:
         max_total_duration_s=3.5,
         max_idle_gap_s=0.8,
         max_filler_duration_s=1,
-        check_distance=False,
-        check_duration=True,
-        check_group_distance_ratio=False,
-        check_group_duration_ratio=False,
-        min_pre_pause_s=0.0,
-        min_post_pause_s=0.0,
     )

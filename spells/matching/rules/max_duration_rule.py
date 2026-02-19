@@ -4,10 +4,9 @@ from spells.matching.spell_match_context import SpellMatchContext
 
 class MaxDurationRule(SpellRule):
     def validate(self, ctx: SpellMatchContext) -> bool:
-        spell = ctx.spell
         m = ctx.metrics
+        spell = ctx.spell
 
-        # if spell.max_total_duration_s is None:
-        #     return True
+        key_duration = m.total_duration_s - m.filler_duration_s
 
-        return m.total_duration_s <= spell.max_total_duration_s
+        return spell.max_total_duration_s is not None and key_duration <= spell.max_total_duration_s

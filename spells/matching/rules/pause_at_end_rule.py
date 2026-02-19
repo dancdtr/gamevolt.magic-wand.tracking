@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from motion.direction.direction_type import DirectionType
 from spells.matching.rules.spell_rule import SpellRule
 from spells.matching.spell_match_context import SpellMatchContext
 
@@ -37,7 +36,7 @@ class PauseAtEndRule(SpellRule):
         while j < len(segs) and remaining > 0.0:
             seg = segs[j]
 
-            is_pause = seg.direction_type == DirectionType.UNKNOWN or seg.mean_speed <= thresh
+            is_pause = seg.direction_type.is_idle or seg.mean_speed <= thresh
 
             if not is_pause:
                 break

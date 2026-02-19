@@ -80,6 +80,7 @@ class SpellMatcher:
             return False
 
         self._logger.info(f"({wand_id}) cast {match.spell_name}! ✨✨{match.accuracy_score * 100:.1f}% ({match.duration_s:.3f})")
+        self._logger.info(f"Matched: {match.matched_drection_names}")
         self.matched.invoke(match)
         return True
 

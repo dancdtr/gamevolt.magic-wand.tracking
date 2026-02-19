@@ -42,5 +42,4 @@ def revelio() -> SpellDefinition:
         max_total_duration_s=3.0,
         max_idle_gap_s=1,
         max_filler_duration_s=1,
-        check_duration=True,
     )

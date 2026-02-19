@@ -4,6 +4,7 @@ from __future__ import annotations
 from logging import Logger
 from typing import Sequence
 
+from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_segment import GestureSegment
 from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.matching.compile.spell_compiler import CompiledSpell
@@ -80,6 +81,10 @@ class SpellWindowMatcher:
             group_steps_matched=[0 for _ in range(compiled.group_count)],
         )
 
+        # We walk newest→oldest, so we collect directions in reverse-chronological order,
+        # then reverse at the end to produce (oldest→newest) for the SpellMatch.
+        matched_directions_rev: list[DirectionType] = []
+
         i = i_start
         while i >= 0 and state.step_idx < step_count:
             seg = segs[i]
@@ -93,6 +98,7 @@ class SpellWindowMatcher:
                     step=step,
                     group_idx=step_to_group[state.step_idx],
                     current_idx=i,
+                    matched_directions_rev=matched_directions_rev,
                 )
                 self._debugger.on_step_consumed(
                     spell_name=spell_name,
@@ -162,7 +168,11 @@ class SpellWindowMatcher:
         end_ts = segs[window_end_index].end_ts_ms
         used_steps_scorable = state.matched_required + state.matched_optional
 
+        # Convert to chronological order (oldest→newest) for easier analysis/logging.
+        matched_directions: tuple[DirectionType, ...] = tuple(reversed(matched_directions_rev))
+
         return SpellMatch(
+            matched_directions=matched_directions,
             wand_id=wand_id,
             spell_id=spell_id,
             spell_name=spell_name,
@@ -198,9 +208,14 @@ class SpellWindowMatcher:
         step: SpellStep,
         group_idx: int,
         current_idx: int,
+        matched_directions_rev: list[DirectionType],
     ) -> None:
         state.total_duration_s += seg.duration_s
         self._mark_used_index(state, current_idx)
+
+        # Record the segment direction that matched this step.
+        # This includes PAUSE steps if they matched a pause SpellStep.
+        matched_directions_rev.append(seg.direction_type)
 
         if step.is_pause:
             state.matched_pause += 1

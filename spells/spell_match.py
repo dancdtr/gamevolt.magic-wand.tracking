@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from motion.direction.direction_type import DirectionType
+
 
 @dataclass(frozen=True)
 class SpellMatch:
@@ -11,6 +13,8 @@ class SpellMatch:
     start_ts_ms: int
     end_ts_ms: int
     duration_s: float
+
+    matched_directions: tuple[DirectionType, ...]
 
     # Total matched steps (required + optional)
     segments_used: int
@@ -44,3 +48,7 @@ class SpellMatch:
         if self.optional_total <= 0:
             return 0.0
         return self.optional_matched / self.optional_total
+
+    @property
+    def matched_drection_names(self) -> tuple[str, ...]:
+        return tuple(d.name for d in self.matched_directions)
