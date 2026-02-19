@@ -17,6 +17,7 @@ CORNER_PAUSE = SpellStep(
 
 @dataclass
 class SpellDefinition:
+
     step_groups: Sequence[SpellStepGroup]
 
     # Minimum matched steps (required+optional) for a spell to count
