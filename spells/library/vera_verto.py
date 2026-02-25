@@ -15,8 +15,6 @@ def vera_verto() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                 ],
-                relative_distance=1 / 4,
-                relative_duration=1 / 4,
             ),
             SpellStepGroup(
                 name="U_Bend",
@@ -27,8 +25,6 @@ def vera_verto() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_NE})),
                     SpellStep(frozenset({DirectionType.MOVING_N})),
                 ],
-                relative_distance=1 / 2,
-                relative_duration=1 / 2,
             ),
             SpellStepGroup(
                 name="Flick_NE",
@@ -36,8 +32,6 @@ def vera_verto() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_E}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                 ],
-                relative_distance=1 / 4,
-                relative_duration=1 / 4,
             ),
         ],
         min_spell_steps=5,
@@ -45,6 +39,5 @@ def vera_verto() -> SpellDefinition:
         max_total_duration_s=2.5,
         max_idle_gap_s=0.6,
         max_filler_duration_s=0.5,
-        check_duration=True,
         pause_speed_threshold=0.04,
     )

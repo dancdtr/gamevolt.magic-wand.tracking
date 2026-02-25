@@ -16,8 +16,6 @@ def inflatus() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                     SpellStep(frozenset({DirectionType.MOVING_S})),
                 ],
-                relative_distance=1 / 3,
-                relative_duration=1 / 3,
             ),
         ],
         min_spell_steps=3,
@@ -25,5 +23,4 @@ def inflatus() -> SpellDefinition:
         max_total_duration_s=3.0,
         max_idle_gap_s=0.3,
         max_filler_duration_s=0.6,
-        check_duration=True,
     )

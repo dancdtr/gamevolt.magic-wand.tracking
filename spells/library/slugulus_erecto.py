@@ -14,8 +14,6 @@ def slugulus_erecto() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_S}), required=True),
                     CORNER_PAUSE,
                 ],
-                relative_distance=1 / 4,
-                relative_duration=1 / 4,
             ),
             SpellStepGroup(
                 name="Line_SW",
@@ -23,8 +21,6 @@ def slugulus_erecto() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_SW, DirectionType.MOVING_W})),
                     CORNER_PAUSE,
                 ],
-                relative_distance=1 / 4,
-                relative_duration=1 / 4,
             ),
             SpellStepGroup(
                 name="Line_N",
@@ -32,19 +28,12 @@ def slugulus_erecto() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_N})),
                     CORNER_PAUSE,
                 ],
-                relative_distance=1 / 4,
-                relative_duration=1 / 4,
             ),
             SpellStepGroup(
                 name="Line_NW",
                 steps=[
-                    # (name says NW but allowed is NE/E; leaving as-is per your original)
                     SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_E})),
-                    # optional pause at end if you want a “final settle”
-                    # corner_pause,
                 ],
-                relative_distance=1 / 4,
-                relative_duration=1 / 4,
             ),
         ],
         min_spell_steps=4,
@@ -54,5 +43,4 @@ def slugulus_erecto() -> SpellDefinition:
         max_idle_gap_s=0.20,
         # Filler is still allowed, but not massive.
         max_filler_duration_s=0.60,
-        check_duration=True,
     )

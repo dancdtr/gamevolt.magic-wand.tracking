@@ -12,16 +12,12 @@ def ventus() -> SpellDefinition:
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_S}), required=True),
                 ],
-                relative_distance=1 / 2,
-                relative_duration=1 / 2,
             ),
             SpellStepGroup(
                 name="Line_NE",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_N}), required=True),
                 ],
-                relative_distance=1 / 2,
-                relative_duration=1 / 2,
             ),
         ],
         min_spell_steps=2,

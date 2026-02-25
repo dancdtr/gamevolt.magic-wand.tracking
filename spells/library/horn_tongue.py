@@ -15,8 +15,6 @@ def horn_tongue() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_S}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_SW})),
                 ],
-                relative_distance=1 / 3,
-                relative_duration=1 / 3,
             ),
             SpellStepGroup(
                 name="Flick_NE",
@@ -25,8 +23,6 @@ def horn_tongue() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_NE}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_N})),
                 ],
-                relative_distance=1 / 3,
-                relative_duration=1 / 3,
             ),
             SpellStepGroup(
                 name="Flick_SW",
@@ -35,8 +31,6 @@ def horn_tongue() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_SW}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_W})),
                 ],
-                relative_distance=1 / 3,
-                relative_duration=1 / 3,
             ),
         ],
         min_spell_steps=4,
@@ -44,6 +38,5 @@ def horn_tongue() -> SpellDefinition:
         max_total_duration_s=2.5,
         max_idle_gap_s=0.8,
         max_filler_duration_s=0.5,
-        check_duration=True,
         pause_speed_threshold=0.04,
     )

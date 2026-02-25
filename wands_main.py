@@ -66,6 +66,8 @@ def on_spell(match: SpellMatch):
 
 def on_spell_target_updated(spell: Spell) -> None:
     tracked_wand_manager.clear_wand_histories()
+    # for wand in tracked_wand_manager.tracked_wands():
+    # wand.reset_data()
 
 
 quit_event = asyncio.Event()

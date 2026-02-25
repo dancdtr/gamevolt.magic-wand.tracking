@@ -12,16 +12,12 @@ def engorgio() -> SpellDefinition:
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_E}), required=True),
                 ],
-                relative_distance=1 / 2,
-                relative_duration=1 / 2,
             ),
             SpellStepGroup(
                 name="Line_NE",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_SW, DirectionType.MOVING_W}), required=True),
                 ],
-                relative_distance=1 / 2,
-                relative_duration=1 / 2,
             ),
         ],
         min_spell_steps=2,

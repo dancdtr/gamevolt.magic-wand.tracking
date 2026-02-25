@@ -15,8 +15,6 @@ def colovaria() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                     SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_S}), required=True),
                 ],
-                relative_distance=1 / 3,
-                relative_duration=1 / 3,
             ),
             SpellStepGroup(
                 name="Line_S",
@@ -46,5 +44,4 @@ def colovaria() -> SpellDefinition:
         max_total_duration_s=3.5,
         max_idle_gap_s=0.4,
         max_filler_duration_s=0.7,
-        check_duration=True,
     )

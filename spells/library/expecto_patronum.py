@@ -21,8 +21,6 @@ def expecto_patronum() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_S})),
                     SpellStep(frozenset({DirectionType.MOVING_SW, DirectionType.MOVING_W}), required=True),
                 ],
-                relative_distance=1,
-                relative_duration=1,
             ),
         ],
         min_spell_steps=6,
@@ -30,6 +28,5 @@ def expecto_patronum() -> SpellDefinition:
         max_total_duration_s=2.5,
         max_idle_gap_s=0.8,
         max_filler_duration_s=0.8,
-        check_duration=True,
         pause_speed_threshold=0.04,
     )

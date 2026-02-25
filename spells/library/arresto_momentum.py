@@ -12,32 +12,24 @@ def arresto_momentum() -> SpellDefinition:
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_N, DirectionType.MOVING_NE}), required=True),
                 ],
-                relative_distance=1 / 4,
-                relative_duration=1 / 4,
             ),
             SpellStepGroup(
                 name="Line_SE",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE})),
                 ],
-                relative_distance=1 / 4,
-                relative_duration=1 / 4,
             ),
             SpellStepGroup(
                 name="Line_NE",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_N, DirectionType.MOVING_NE})),
                 ],
-                relative_distance=1 / 4,
-                relative_duration=1 / 4,
             ),
             SpellStepGroup(
                 name="Line_SE",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE})),
                 ],
-                relative_distance=1 / 4,
-                relative_duration=1 / 4,
             ),
         ],
         min_spell_steps=4,
@@ -45,5 +37,4 @@ def arresto_momentum() -> SpellDefinition:
         max_total_duration_s=3.0,
         max_idle_gap_s=1,
         max_filler_duration_s=1,
-        check_duration=True,
     )

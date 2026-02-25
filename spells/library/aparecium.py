@@ -12,8 +12,6 @@ def aparecium() -> SpellDefinition:
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_W})),
                 ],
-                relative_distance=1 / 6,
-                relative_duration=1 / 6,
             ),
             SpellStepGroup(
                 name="Squiggle_1",
@@ -23,8 +21,6 @@ def aparecium() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                 ],
-                relative_distance=1 / 6,
-                relative_duration=1 / 6,
             ),
             SpellStepGroup(
                 name="Squiggle_2",
@@ -32,8 +28,6 @@ def aparecium() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_N, DirectionType.MOVING_NE}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                 ],
-                relative_distance=1 / 6,
-                relative_duration=1 / 6,
             ),
             SpellStepGroup(
                 name="Squiggle_3",
@@ -41,8 +35,6 @@ def aparecium() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_S}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                 ],
-                relative_distance=1 / 6,
-                relative_duration=1 / 6,
             ),
             SpellStepGroup(
                 name="Squiggle_4",
@@ -50,8 +42,6 @@ def aparecium() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_N, DirectionType.MOVING_NE}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                 ],
-                relative_distance=1 / 6,
-                relative_duration=1 / 6,
             ),
             SpellStepGroup(
                 name="Squiggle_5",
@@ -59,16 +49,12 @@ def aparecium() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_S}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                 ],
-                relative_distance=1 / 6,
-                relative_duration=1 / 6,
             ),
             SpellStepGroup(
                 name="Squiggle_6",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_N, DirectionType.MOVING_NE}), required=True),
                 ],
-                relative_distance=1 / 6,
-                relative_duration=1 / 6,
             ),
         ],
         min_spell_steps=7,
@@ -76,5 +62,4 @@ def aparecium() -> SpellDefinition:
         max_total_duration_s=5,
         max_idle_gap_s=0.8,
         max_filler_duration_s=1,
-        check_duration=True,
     )

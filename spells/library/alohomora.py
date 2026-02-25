@@ -13,8 +13,6 @@ def alohomora() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                 ],
-                relative_distance=3 / 5,
-                relative_duration=3 / 5,
                 min_steps=1,
             ),
             SpellStepGroup(
@@ -23,8 +21,6 @@ def alohomora() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_S})),
                     SpellStep(frozenset({DirectionType.MOVING_SW})),
                 ],
-                relative_distance=3 / 5,
-                relative_duration=3 / 5,
                 min_steps=1,
             ),
             SpellStepGroup(
@@ -34,8 +30,6 @@ def alohomora() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_NW})),
                 ],
                 min_steps=1,
-                relative_distance=3 / 5,
-                relative_duration=3 / 5,
             ),
             SpellStepGroup(
                 name="cw_quarter_circle_start_w",
@@ -44,8 +38,6 @@ def alohomora() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_NE})),
                 ],
                 min_steps=1,
-                relative_distance=3 / 5,
-                relative_duration=3 / 5,
             ),
             SpellStepGroup(
                 name="Line_S",
@@ -54,8 +46,6 @@ def alohomora() -> SpellDefinition:
                     CORNER_PAUSE,
                     SpellStep(frozenset({DirectionType.MOVING_S}), required=True),
                 ],
-                relative_distance=2 / 5,
-                relative_duration=2 / 5,
             ),
         ],
         min_spell_steps=5,

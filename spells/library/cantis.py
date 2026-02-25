@@ -16,16 +16,12 @@ def cantis() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                 ],
-                relative_distance=2 / 5,
-                relative_duration=2 / 5,
             ),
             SpellStepGroup(
                 name="UpperArm",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_N}), required=True),
                 ],
-                relative_distance=2 / 5,
-                relative_duration=2 / 5,
             ),
             SpellStepGroup(
                 name="Flick",
@@ -34,8 +30,6 @@ def cantis() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                     SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_E}), required=True),
                 ],
-                relative_distance=1 / 5,
-                relative_duration=1 / 5,
             ),
         ],
         min_spell_steps=4,
@@ -43,5 +37,4 @@ def cantis() -> SpellDefinition:
         max_total_duration_s=3.5,
         max_idle_gap_s=0.8,
         max_filler_duration_s=1,
-        check_duration=True,
     )

@@ -12,8 +12,6 @@ def flipendo() -> SpellDefinition:
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE}), required=True),
                 ],
-                relative_distance=1 / 3,
-                relative_duration=1 / 3,
             ),
             SpellStepGroup(
                 name="Flick_NE",
@@ -26,16 +24,12 @@ def flipendo() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                 ],
-                relative_distance=1 / 3,
-                relative_duration=1 / 3,
             ),
             SpellStepGroup(
                 name="Flick_SW",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_N}), required=True),
                 ],
-                relative_distance=1 / 3,
-                relative_duration=1 / 3,
             ),
         ],
         min_spell_steps=5,
@@ -43,6 +37,5 @@ def flipendo() -> SpellDefinition:
         max_total_duration_s=2.5,
         max_idle_gap_s=0.8,
         max_filler_duration_s=0.8,
-        check_duration=True,
         pause_speed_threshold=0.04,
     )

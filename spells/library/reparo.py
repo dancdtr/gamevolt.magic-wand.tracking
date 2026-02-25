@@ -22,8 +22,6 @@ def reparo() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_N})),
                     SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_E}), required=True),
                 ],
-                relative_distance=1,
-                relative_duration=1,
             ),
         ],
         min_spell_steps=6,
@@ -31,5 +29,4 @@ def reparo() -> SpellDefinition:
         max_total_duration_s=2,
         max_idle_gap_s=0.7,
         max_filler_duration_s=1.2,
-        check_duration=True,
     )

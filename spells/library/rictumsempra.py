@@ -16,8 +16,6 @@ def rictumsempra() -> SpellDefinition:
                     CORNER_PAUSE,
                 ],
                 min_steps=1,
-                relative_distance=5 / 8,
-                relative_duration=5 / 8,
             ),
             SpellStepGroup(
                 name="Step2",
@@ -26,8 +24,6 @@ def rictumsempra() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_W}), required=True),
                 ],
                 min_steps=1,
-                relative_distance=2 / 8,
-                relative_duration=2 / 8,
             ),
             SpellStepGroup(
                 name="Step3",
@@ -37,8 +33,6 @@ def rictumsempra() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_NE}), required=True),
                 ],
                 min_steps=1,
-                relative_distance=1 / 8,
-                relative_duration=1 / 8,
             ),
         ],
         min_spell_steps=4,

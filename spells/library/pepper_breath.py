@@ -14,8 +14,6 @@ def pepper_breath() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_N}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_N})),
                 ],
-                relative_distance=1 / 2,
-                relative_duration=1 / 2,
             ),
             SpellStepGroup(
                 name="Flick_NE",
@@ -24,8 +22,6 @@ def pepper_breath() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                     SpellStep(frozenset({DirectionType.MOVING_N})),
                 ],
-                relative_distance=1 / 2,
-                relative_duration=1 / 2,
             ),
         ],
         min_spell_steps=3,
@@ -33,6 +29,5 @@ def pepper_breath() -> SpellDefinition:
         max_total_duration_s=2.5,
         max_idle_gap_s=0.6,
         max_filler_duration_s=0.5,
-        check_duration=True,
         pause_speed_threshold=0.04,
     )

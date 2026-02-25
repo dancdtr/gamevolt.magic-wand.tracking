@@ -1,5 +1,5 @@
 from motion.direction.direction_type import DirectionType
-from spells.spell_definition import SpellDefinition
+from spells.spell_definition import CORNER_PAUSE, SpellDefinition
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
@@ -12,8 +12,6 @@ def revelio() -> SpellDefinition:
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_N}), required=True),
                 ],
-                relative_distance=3 / 9,
-                relative_duration=3 / 9,
             ),
             SpellStepGroup(
                 name="Curve_270_CW_Start_E",
@@ -24,17 +22,14 @@ def revelio() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_S})),
                     SpellStep(frozenset({DirectionType.MOVING_SW})),
                     SpellStep(frozenset({DirectionType.MOVING_W})),
+                    CORNER_PAUSE,
                 ],
-                relative_distance=4 / 9,
-                relative_duration=4 / 9,
             ),
             SpellStepGroup(
                 name="Line_SE",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_E}), required=True),
                 ],
-                relative_distance=2 / 9,
-                relative_duration=2 / 9,
             ),
         ],
         min_spell_steps=6,

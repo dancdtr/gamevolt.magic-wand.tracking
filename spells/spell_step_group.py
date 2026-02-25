@@ -7,6 +7,4 @@ from spells.spell_step import SpellStep
 class SpellStepGroup:
     name: str
     steps: list[SpellStep]
-    relative_duration: float
-    relative_distance: float
     min_steps: int = 0

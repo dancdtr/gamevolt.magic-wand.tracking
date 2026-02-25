@@ -31,8 +31,6 @@ def nebulus() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_W, DirectionType.MOVING_SW}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_SW})),
                 ],
-                relative_distance=1,
-                relative_duration=1,
             ),
         ],
         min_spell_steps=7,
@@ -40,6 +38,5 @@ def nebulus() -> SpellDefinition:
         max_total_duration_s=4.5,
         max_idle_gap_s=0.7,
         max_filler_duration_s=1.4,
-        check_duration=True,
         pause_speed_threshold=0.04,
     )
