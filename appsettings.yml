@@ -5,6 +5,24 @@ logging:
   file_path: ./Logs/conductr.wand-magic.tracking.log
   minimum_level: "INFORMATION"
 
+zones:
+  udp_receiver:
+    host: "0.0.0.0"
+    port: 8053
+    max_size: 65556
+    recv_timeout_s: 2
+
+  zones:
+    - ["1", "ALOHOMORA"]
+    - ["0", "LUMOS_MAXIMA"]
+
+serial:
+  receivers:
+    - port: "/dev/serial/by-id/usb-iLabs_Challenger_2040_UWB_DF622C64176C2627-if00"
+      baud: 115200
+      timeout: 3
+      retry_interval: 2
+
 input:
   tracked_wands:
     enable_filtering: false
@@ -17,11 +35,6 @@ input:
     client:
       imu_hz: 120.0
       target_hz: 30.0
-    serial_receiver:
-      port: "/dev/serial/by-id/usb-iLabs_Challenger_2040_UWB_DF622C64176C2627-if00"
-      baud: 115200
-      timeout: 3
-      retry_interval: 2
   input_type: "wand"
   mock:
     invert_x: False

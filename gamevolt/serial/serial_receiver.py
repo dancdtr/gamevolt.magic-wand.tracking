@@ -7,19 +7,24 @@ import serial_asyncio
 
 from gamevolt.events.event import Event
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
+from gamevolt.serial.line_receiver_protocol import LineReceiverProtocol
 
 
-class SerialReceiver:
+class SerialReceiver(LineReceiverProtocol):
     def __init__(self, logger: Logger, settings: SerialReceiverSettings) -> None:
-        self._logger = logger
+        self._line_received: Event[Callable[[str], None]] = Event()
+
         self._settings = settings
+        self._logger = logger
 
         self._reader: asyncio.StreamReader | None = None
         self._writer: asyncio.StreamWriter | None = None
         self._read_task: asyncio.Task | None = None
         self._running: bool = False
 
-        self.data_received = Event[Callable[[str], None]]()
+    @property
+    def line_received(self) -> Event[Callable[[str], None]]:
+        return self._line_received
 
     async def start(self) -> None:
         if self._read_task is not None and not self._read_task.done():
@@ -114,7 +119,7 @@ class SerialReceiver:
                 self._logger.debug(f"Received from '{self._settings.port}': {line}")
 
                 try:
-                    self.data_received.invoke(line)
+                    self.line_received.invoke(line)
                 except Exception as ex:  # noqa: BLE001
                     self._logger.exception(f"Error in SerialReceiver data_received handler: {ex}")
 

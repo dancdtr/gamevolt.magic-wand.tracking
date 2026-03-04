@@ -4,16 +4,15 @@ from logging import Logger
 from typing import Callable
 
 from gamevolt.events.event import Event
-from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from motion.motion_phase_type import MotionPhaseType
-from spells.spell_matcher import SpellMatcher
 from wand.configuration.input_settings import InputSettings
 from wand.tracked_wand import TrackedWand
-from wand.tracked_wand_factory import MotionProcessorFactory, TrackedWandFactory
+from wand.tracked_wand_factory import TrackedWandFactory
 from wand.wand_client import WandClient
 from wand.wand_rotation import WandRotation
 from wand.wand_rotation_raw import WandRotationRaw
-from wand.wand_server import WandServer
+from wand.wand_server_protocol import WandServerProtocol
+from zones.zone_manager import ZoneManager
 
 
 class TrackedWandManager:
@@ -28,49 +27,33 @@ class TrackedWandManager:
         self,
         logger: Logger,
         settings: InputSettings,
-        server: WandServer,
-        motion_processor_factory: MotionProcessorFactory,
-        gesture_history_factory: GestureHistoryFactory,
-        spell_matcher: SpellMatcher,
+        server: WandServerProtocol,
+        tracked_wand_factory: TrackedWandFactory,
+        zone_manager: ZoneManager,
     ) -> None:
-        self._logger = logger
-        self._server = server
-        self._settings = settings.tracked_wands
-
-        self._tracked_wand_factory = TrackedWandFactory(
-            logger,
-            settings.wand,
-            motion_processor_factory,
-            gesture_history_factory,
-            spell_matcher,
-        )
-
-        # NOTE: we no longer create these up-front; we create on server connect events.
-
-        # Live, connected tracked wands
-        self._tracked_wands: dict[str, TrackedWand] = {}
-
         self.wand_motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.wand_rotation_updated: Event[Callable[[WandRotation], None]] = Event()
 
-    # ── lifecycle ────────────────────────────────────────────────────────────
+        self._tracked_wand_factory = tracked_wand_factory
+        self._settings = settings.tracked_wands
+        self._zone_manager = zone_manager
+        self._server = server
+        self._logger = logger
+
+        self._tracked_wands: dict[str, TrackedWand] = {}
 
     def start(self) -> None:
-        # Server → manager
         self._server.wand_rotation_raw_updated.subscribe(self._on_wand_rotation_raw)
-        self._server.wand_connected.subscribe(self._on_wand_connected)
         self._server.wand_disconnected.subscribe(self._on_wand_disconnected)
+        self._server.wand_connected.subscribe(self._on_wand_connected)
 
-        # If you ever add a "get currently connected clients" API on the server,
-        # you could sync-create here too. For now we rely on events only.
+        self._zone_manager.zone_entered.subscribe(self._on_zone_entered)
 
     def stop(self) -> None:
-        # Unsubscribe first to prevent events during teardown
+        self._server.wand_rotation_raw_updated.unsubscribe(self._on_wand_rotation_raw)
         self._server.wand_disconnected.unsubscribe(self._on_wand_disconnected)
         self._server.wand_connected.unsubscribe(self._on_wand_connected)
-        self._server.wand_rotation_raw_updated.unsubscribe(self._on_wand_rotation_raw)
 
-        # Stop and clear all tracked wands
         for wand in list(self._tracked_wands.values()):
             wand.stop()
             wand.rotation_updated.unsubscribe(self._on_wand_rotation_updated)
@@ -78,14 +61,10 @@ class TrackedWandManager:
         self._tracked_wands.clear()
 
     def update(self) -> None:
-        # Let server prune clients (which will raise disconnect events)
         self._server.update()
 
-        # Update all currently-connected wands
         for wand in self._tracked_wands.values():
             wand.update()
-
-    # ── public helpers ───────────────────────────────────────────────────────
 
     def tracked_wands(self) -> list[TrackedWand]:
         return list(self._tracked_wands.values())
@@ -155,3 +134,27 @@ class TrackedWandManager:
             return
 
         wand.on_rotation_raw_updated(raw)
+
+    def _on_zone_entered(self, zone_id: str, wand_id: str) -> None:
+        wand = self._get_wand(wand_id)
+        zone = self._zone_manager.get_zone(zone_id)
+
+        wand.set_spell_target(zone.spell_type)
+
+        # wand.set_active()
+
+    def _on_zone_exited(self, zone_id: str, wand_id: str) -> None:
+        wand = self._get_wand(wand_id)
+        wand.clear_spell_target()
+
+        # if not self._zone_manager.is_wand_in_zone(wand_id):
+        # wand.set_inactive()
+
+    def _get_wand(self, id: str) -> TrackedWand:
+        for k, v in self._tracked_wands.items():
+            print(k, v.id)
+        wand = self._tracked_wands.get(id)
+        if wand is None:
+            raise KeyError(f"No wand with ID: {id}!")
+
+        return wand

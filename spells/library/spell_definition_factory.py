@@ -79,4 +79,7 @@ class SpellDefinitionFactory:
         if not provider:
             raise ValueError(f"No spell definition for type: '{spell_type.name}'!")
 
-        return provider()
+        definition = provider()
+        definition.spell_type = spell_type
+
+        return definition

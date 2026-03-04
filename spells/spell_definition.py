@@ -6,6 +6,7 @@ from typing import Sequence
 from motion.direction.direction_type import DirectionType
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
+from spells.spell_type import SpellType
 
 CORNER_PAUSE = SpellStep(
     frozenset({DirectionType.PAUSE}),
@@ -55,6 +56,12 @@ class SpellDefinition:
     min_post_pause_s: float = 0
     # Threshold below which mean_speed counts as "paused".
     pause_speed_threshold: float = 0.01
+
+    spell_type: SpellType = SpellType.NONE
+
+    @property
+    def name(self) -> str:
+        return self.spell_type.name
 
     @property
     def steps(self) -> list[SpellStep]:

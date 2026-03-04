@@ -9,15 +9,14 @@ from gamevolt.events.event import Event
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_segment import GestureSegment
 from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
-from spells.control.spell_controller import SpellController
 from spells.library.spell_definition_factory import SpellDefinitionFactory
 from spells.matching.rules.rules_validator import RulesValidator
 from spells.matching.spell_match_context import SpellMatchContext
 from spells.matching.spell_match_metrics import SpellMatchMetrics
-from spells.spell import Spell
 from spells.spell_definition import SpellDefinition
 from spells.spell_match import SpellMatch
 from spells.spell_step import SpellStep
+from spells.spell_type import SpellType
 
 
 class SpellMatcher:
@@ -25,7 +24,6 @@ class SpellMatcher:
         self,
         logger: Logger,
         accuracy_scorer: SpellAccuracyScorer,
-        spell_controller: SpellController,
     ) -> None:
         self._logger = logger
 
@@ -34,16 +32,12 @@ class SpellMatcher:
         self._accuracy_scorer = accuracy_scorer
         self._rules_validator = RulesValidator()
 
-        self._spell_controller = spell_controller
         self._spell_definition_factory = SpellDefinitionFactory()
 
-        self._spell_definitions: list[SpellDefinition] = []
+        self._target_spell_definition: SpellDefinition = self._spell_definition_factory.create_spell(SpellType.NONE)
 
-    def start(self) -> None:
-        self._spell_controller.target_spell_updated.subscribe(self._on_target_spell_updated)
-
-    def stop(self) -> None:
-        self._spell_controller.target_spell_updated.unsubscribe(self._on_target_spell_updated)
+    def set_spell_target(self, type: SpellType) -> None:
+        self._target_spell_definition = self._spell_definition_factory.create_spell(type)
 
     # ----- public entry point -----
     def try_match(self, wand_id: str, history: Sequence[GestureSegment]) -> bool:
@@ -52,8 +46,8 @@ class SpellMatcher:
 
         compressed = self._compress(history)  # oldest → newest
 
-        for spell in self._spell_definitions:
-            match = self._match_spell(wand_id, spell, compressed)
+        if self._target_spell_definition:
+            match = self._match_spell(wand_id, self._target_spell_definition, compressed)
             if match:
                 self._logger.info(f"({wand_id}) cast {match.spell_name}! ✨✨{match.accuracy_score * 100:.1f}% ({match.duration_s:.3f})")
                 self.matched.invoke(match)
@@ -250,7 +244,7 @@ class SpellMatcher:
             ratios = [gd / total_effective_dist for gd in group_distance] if total_effective_dist > 0 else [0.0 for _ in group_distance]
 
             self._logger.debug(
-                f"{prefix} spell={self._spell_controller.target_spell.name} win_start={i_start} seg_win_idx={seg_idx_in_window} "
+                f"{prefix} spell={self._target_spell_definition.name} win_start={i_start} seg_win_idx={seg_idx_in_window} "
                 f"dir={seg.direction_type.name} step_idx={step_idx}/{step_count} step_required={step.required} "
                 f"step_is_pause={self._is_pause_step(step)} dist={seg.path_length:.3f} dt={seg.duration_s:.3f} "
                 f"total_dist={total_distance:.3f} scorable_s={scorable_duration_s:.3f} filler_s={filler_duration_s:.3f} absorbed_s={absorbed_duration_s:.3f} "
@@ -308,7 +302,7 @@ class SpellMatcher:
 
                     if self._logger.isEnabledFor(logging.DEBUG):
                         self._logger.debug(
-                            f"ABSORB filler: spell={self._spell_controller.target_spell.name} win_start={i_start} seg_win_idx={seg_idx_in_window} "
+                            f"ABSORB filler: spell={self._target_spell_definition.name} win_start={i_start} seg_win_idx={seg_idx_in_window} "
                             f"dir={seg.direction_type.name} dt={dt:.3f} dist={dist:.3f} -> group={group_names[best_gi]} adj={best_adj} "
                             f"absorb_max_s={absorb_max_s:.3f} adj_tol={absorb_adjacent_tol}"
                         )
@@ -374,7 +368,7 @@ class SpellMatcher:
             # ─── Mismatch branch ────────────────────────────────────
             if self._logger.isEnabledFor(logging.DEBUG):
                 self._logger.debug(
-                    f"MISMATCH spell={self._spell_controller.target_spell.name} win_start={i_start} seg_win_idx={seg_idx_in_window} "
+                    f"MISMATCH spell={self._target_spell_definition.name} win_start={i_start} seg_win_idx={seg_idx_in_window} "
                     f"dir={seg.direction_type.name} step_idx={step_idx}/{step_count} step_allowed={step_dirs} "
                     f"dt={dt:.3f} dist={dist:.3f} step_required={step.required} step_is_pause={self._is_pause_step(step)}"
                 )
@@ -391,7 +385,7 @@ class SpellMatcher:
 
             if self._logger.isEnabledFor(logging.DEBUG):
                 self._logger.debug(
-                    f"REQUIRED step failed and not filler: spell={self._spell_controller.target_spell.name} "
+                    f"REQUIRED step failed and not filler: spell={self._target_spell_definition.name} "
                     f"seg_win_idx={seg_idx_in_window} step_idx={step_idx}"
                 )
             return None
@@ -445,7 +439,7 @@ class SpellMatcher:
         if not self._rules_validator.validate(ctx):
             if self._logger.isEnabledFor(logging.DEBUG):
                 self._logger.debug(
-                    f"NO MATCH (rules): spell={self._spell_controller.target_spell.name} win_start={i_start} "
+                    f"NO MATCH (rules): spell={self._target_spell_definition.name} win_start={i_start} "
                     f"required={matched_required}/{required_total} used_scorable={used_steps_scorable}/{scorable_total} "
                     f"pause_steps={matched_pause} pause_s={pause_duration_s:.3f} "
                     f"scorable_s={scorable_duration_s:.3f} filler_s={filler_duration_s:.3f} absorbed_s={absorbed_duration_s:.3f} "
@@ -458,7 +452,7 @@ class SpellMatcher:
         if self._logger.isEnabledFor(logging.DEBUG):
             ratios = [gd / total_distance for gd in group_distance] if total_distance > 0 else [0.0 for _ in range(group_count)]
             self._logger.debug(
-                f"MATCHED spell={self._spell_controller.target_spell.name} score={accuracy.score:.3f} win_start={i_start} "
+                f"MATCHED spell={self._target_spell_definition.name} score={accuracy.score:.3f} win_start={i_start} "
                 f"required={matched_required}/{required_total} optional={matched_optional}/{optional_total} "
                 f"used_scorable={used_steps_scorable}/{scorable_total} pause_steps={matched_pause} pause_s={pause_duration_s:.3f} "
                 f"total_duration={total_duration_s:.3f} scorable_s={scorable_duration_s:.3f} filler_s={filler_duration_s:.3f} absorbed_s={absorbed_duration_s:.3f} "
@@ -468,8 +462,8 @@ class SpellMatcher:
 
         return SpellMatch(
             wand_id=wand_id,
-            spell_id=self._spell_controller.target_spell.code,
-            spell_name=self._spell_controller.target_spell.name,
+            spell_id=self._target_spell_definition.name,
+            spell_name=self._target_spell_definition.name,
             start_ts_ms=start_ts,
             end_ts_ms=end_ts,
             duration_s=total_duration_s,
@@ -482,6 +476,3 @@ class SpellMatcher:
             filler_duration_s=filler_duration_s,
             accuracy_score=accuracy.score,
         )
-
-    def _on_target_spell_updated(self, spell: Spell) -> None:
-        self._spell_definitions = [self._spell_definition_factory.create_spell(spell.type)]

@@ -11,6 +11,7 @@ from motion.gesture.gesture_segment import GestureSegment
 from motion.motion_phase_type import MotionPhaseType
 from motion.motion_processor import MotionProcessor
 from spells.spell_matcher import SpellMatcher
+from spells.spell_type import SpellType
 from wand.configuration.wand_settings import WandSettings
 from wand.interpreters.wand_yawpitch_rmf_interpreter import YawPitchRMFInterpreter
 from wand.wand_base import WandBase
@@ -60,6 +61,8 @@ class TrackedWand(WandBase):
     def stop(self) -> None:
         self._motion_processor.stop()
 
+        self._spell_matcher.set_spell_target(SpellType.NONE)
+
         self._motion_processor.segment_completed.unsubscribe(self._on_segment_completed)
         self._motion_processor.motion_changed.unsubscribe(self._on_motion_changed)
 
@@ -68,6 +71,15 @@ class TrackedWand(WandBase):
         # if self._last_rotation:
         # self._logger.info(f"Wand_{self._id} @ {self._last_rotation}")
         pass
+
+    def set_spell_target(self, type: SpellType) -> None:
+        self._logger.info(f"Setting Wand ({self._id}) spell target to: {type.name}.")
+        self._spell_matcher.set_spell_target(type)
+
+    def clear_spell_target(self) -> None:
+        target = SpellType.NONE
+        self._logger.info(f"Setting Wand ({self._id}) spell target to: {target.name}.")
+        self._spell_matcher.set_spell_target(target)
 
     def reset_data(self) -> None:
         self._motion_processor.reset()
@@ -109,7 +121,7 @@ class TrackedWand(WandBase):
         self.direction_changed.invoke(direction)
 
     def _on_segment_completed(self, segment: GestureSegment):
-        self._logger.info(f"Completed '{segment.direction_type.name}' ({segment.direction:.3f}): {segment.duration_s}s")
+        self._logger.debug(f"Completed '{segment.direction_type.name}' ({segment.direction:.3f}): {segment.duration_s}s")
         self._gesture_history.add(segment)
         self.gesture_detected.invoke(self._gesture_history)
 

@@ -1,0 +1,44 @@
+from logging import Logger
+
+from spells.spell_type import SpellType
+
+
+class Zone:
+    def __init__(self, logger: Logger, id: str, spell_type: SpellType) -> None:
+        self._spell_type = spell_type
+        self._logger = logger
+        self._id = id
+
+        self._wand_ids: set[str] = set()
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @property
+    def wand_ids(self) -> tuple[str, ...]:
+        return tuple(self._wand_ids)
+
+    @property
+    def wand_count(self) -> int:
+        return len(self._wand_ids)
+
+    @property
+    def spell_type(self) -> SpellType:
+        return self._spell_type
+
+    def on_wand_enter(self, wand_id: str) -> None:
+        self._logger.info(f"Wand ID ({wand_id}) has entered zone ({self._id}).")
+        if wand_id in self._wand_ids:
+            self._logger.error(f"Wand ID ({wand_id}) is already present in zone '{self._id}!'")
+            return
+
+        self._wand_ids.add(wand_id)
+
+    def on_wand_exit(self, wand_id: str) -> None:
+        if wand_id not in self._wand_ids:
+            self._logger.error(f"Wand ID ({wand_id}) not present in zone ({self._id}) to exit!")
+            return
+
+        self._wand_ids.discard(wand_id)
+        self._logger.info(f"Wand ID ({wand_id}) has exited zone ({self._id}).")
