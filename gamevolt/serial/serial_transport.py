@@ -1,4 +1,6 @@
 # gamevolt/serial/serial_receiver.py
+from __future__ import annotations
+
 import asyncio
 from collections.abc import Callable
 from contextlib import suppress
@@ -9,9 +11,10 @@ import serial_asyncio
 from gamevolt.events.event import Event
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from gamevolt.serial.line_receiver_protocol import LineReceiverProtocol
+from gamevolt.serial.line_sender_protocol import LineSenderProtocol
 
 
-class SerialReceiver(LineReceiverProtocol):
+class SerialTransport(LineReceiverProtocol, LineSenderProtocol):
     def __init__(self, logger: Logger, settings: SerialReceiverSettings) -> None:
         self._line_received: Event[Callable[[str], None]] = Event()
 
@@ -21,11 +24,24 @@ class SerialReceiver(LineReceiverProtocol):
         self._reader: asyncio.StreamReader | None = None
         self._writer: asyncio.StreamWriter | None = None
         self._read_task: asyncio.Task | None = None
+        self._write_task: asyncio.Task | None = None
         self._running: bool = False
+
+        self._tx_queue: asyncio.Queue[bytes] = asyncio.Queue(maxsize=200)
 
     @property
     def line_received(self) -> Event[Callable[[str], None]]:
         return self._line_received
+
+    async def send_line_async(self, line: str) -> None:
+        # Always newline-terminate for MCU command parser.
+        data = (line.rstrip("\r\n") + "\n").encode("utf-8")
+
+        try:
+            self._tx_queue.put_nowait(data)
+        except asyncio.QueueFull:
+            self._logger.warning("Serial TX queue full; dropping outbound command.")
+            return
 
     async def start_async(self) -> None:
         if self._read_task is not None and not self._read_task.done():
@@ -50,6 +66,12 @@ class SerialReceiver(LineReceiverProtocol):
                 await self._read_task
             self._read_task = None
 
+        if self._write_task:
+            self._write_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._write_task
+            self._write_task = None
+
         self._logger.info(f"Stopped SerialReceiver on port '{self._settings.port}'.")
 
     async def _run(self) -> None:
@@ -65,6 +87,10 @@ class SerialReceiver(LineReceiverProtocol):
                         )
 
                         self._logger.info(f"SerialReceiver connected on port '{self._settings.port}'.")
+
+                        # Start writer loop for this connection
+                        if self._write_task is None or self._write_task.done():
+                            self._write_task = asyncio.create_task(self._write_loop())
 
                     except asyncio.CancelledError:
                         raise
@@ -88,28 +114,12 @@ class SerialReceiver(LineReceiverProtocol):
                     self._logger.error(f"Error in SerialReceiver read loop on port '{self._settings.port}': {exc}")
 
                     await self._close_streams()
-
-                    if not self._running:
-                        break
-
-                    self._logger.info(
-                        f"Connection lost on '{self._settings.port}'; "
-                        f"will attempt to reconnect in {self._settings.retry_interval:.1f} seconds..."
-                    )
                     await asyncio.sleep(self._settings.retry_interval)
                     continue
 
                 if not raw:
                     self._logger.warning(f"Empty read from serial port '{self._settings.port}' - treating as disconnect.")
-
                     await self._close_streams()
-
-                    if not self._running:
-                        break
-
-                    self._logger.info(
-                        f"Connection lost on '{self._settings.port}', attempting reconnect in {self._settings.retry_interval:.1f} seconds..."
-                    )
                     await asyncio.sleep(self._settings.retry_interval)
                     continue
 
@@ -131,7 +141,42 @@ class SerialReceiver(LineReceiverProtocol):
             await self._close_streams()
             self._read_task = None
 
+    async def _write_loop(self) -> None:
+        try:
+            while self._running:
+                data = await self._tx_queue.get()
+
+                if self._writer is None:
+                    # Not connected; requeue and wait a bit
+                    try:
+                        self._tx_queue.put_nowait(data)
+                    except asyncio.QueueFull:
+                        pass
+                    await asyncio.sleep(0.05)
+                    continue
+
+                try:
+                    self._writer.write(data)
+                    await self._writer.drain()
+                    self._logger.debug(f"Sent to '{self._settings.port}': {data!r}")
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:
+                    self._logger.error(f"Error in SerialReceiver write loop on port '{self._settings.port}': {exc}")
+                    await self._close_streams()
+                    await asyncio.sleep(self._settings.retry_interval)
+
+        except asyncio.CancelledError:
+            pass
+
     async def _close_streams(self) -> None:
+        # Stop write loop for this connection
+        if self._write_task and not self._write_task.done():
+            self._write_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._write_task
+        self._write_task = None
+
         if self._writer is not None:
             self._writer.close()
             with suppress(Exception):

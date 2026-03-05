@@ -24,13 +24,13 @@ class ZoneManager:
         for id, spell_type in settings.zones:
             self._zones[id] = self._zone_factory.create(id, spell_type)
 
-    def start(self) -> None:
+    async def start(self) -> None:
         self._message_handler.subscribe(ZoneEnteredMessage, self._on_wand_entered_zone_message)
         self._message_handler.subscribe(ZoneExitedMessage, self._on_wand_exited_zone_message)
-        self._message_handler.start()
+        await self._message_handler.start_async()
 
-    def stop(self) -> None:
-        self._message_handler.stop()
+    async def stop(self) -> None:
+        await self._message_handler.stop_async()
         self._message_handler.unsubscribe(ZoneEnteredMessage, self._on_wand_entered_zone_message)
         self._message_handler.unsubscribe(ZoneExitedMessage, self._on_wand_exited_zone_message)
 

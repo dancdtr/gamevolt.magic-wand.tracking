@@ -1,6 +1,6 @@
+# gamevolt/messaging/udp/udp_tx.py
 import json
 import socket
-import time
 from logging import Logger
 from typing import Any
 
@@ -17,12 +17,6 @@ class UdpTx:
         self._sequence_id = 0
 
     def send(self, payload: dict[str, Any]) -> None:
-        # self._sequence_id += 1
-
-        # payload.setdefault("Type", "gesture")
-        # payload.setdefault("Ts", time.time())
-        # payload.setdefault("Id", self._sequence_id)
-
         data = json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
         self._logger.debug(f"Sending to 'udp://{self._settings.address}': {data}")

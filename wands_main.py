@@ -4,16 +4,20 @@ from __future__ import annotations
 
 import asyncio
 import os
+from time import sleep
 
 from gamevolt_logging import get_logger
 
 from appsettings import AppSettings
 from gamevolt.io.utils import bundled_path, install_path
 from gamevolt.messaging.events.message_handler import MessageHandler
+from gamevolt.messaging.udp.configuration.udp_tx_settings import UdpTxSettings
 from gamevolt.messaging.udp.udp_rx import UdpRx
+from gamevolt.messaging.udp.udp_tx import UdpTx
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from gamevolt.serial.multi_line_receiver import MultiLineReceiver
 from gamevolt.serial.serial_receiver import SerialReceiver
+from gamevolt.toolkit.timer import Timer
 from gamevolt.web_sockets.configuration.web_socket_server_settings import WebSocketServerSettings
 from gamevolt.web_sockets.configuration.web_socket_settings import WebSocketSettings
 from gamevolt.web_sockets.web_socket_server import WebSocketServer
@@ -37,6 +41,28 @@ from web_socket_line_receiver import WebSocketLineReceiver
 from wizards.wizard_names_provider import WizardNameProvider
 from zones.zone_factory import ZoneFactory
 from zones.zone_manager import ZoneManager
+
+
+class WandLedController:
+    def __init__(self, udp_tx: UdpTx) -> None:
+        self._udp_tx = udp_tx
+        self._timer = Timer(3)
+        self._is_led_on = False
+
+    def start(self) -> None:
+        self._timer.start()
+
+    def update(self) -> None:
+        if self._timer.is_complete:
+            self._timer.restart()
+            self._is_led_on = not self._is_led_on
+
+            if self._is_led_on:
+                # self._udp_tx.send({"tag_id": "E001", "command": "set_tx_enabled", "enabled": False})
+                self._udp_tx.send({"tag_id": "E001", "command": "set_led", "enabled": True, "sequence_id": 3})
+            else:
+                self._udp_tx.send({"tag_id": "E001", "command": "set_led", "enabled": False, "sequence_id": 3})
+
 
 application_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = bundled_path("appsettings.yml")
@@ -107,11 +133,17 @@ trail_factory = TrailFactory(logger, settings.wand_visualiser.trail)
 visualised_wand_factory = VisualisedWandFactory(logger, trail_factory)
 visualiser = WandVisualiserFactory(logger, settings.wand_visualiser, settings.input, visualised_wand_factory, tracked_wand_manager).create()
 
-udp_tx = SpellCastUdpTx(logger, settings.wands_udp.udp_transmitter, visualiser)
+udp_show_system_tx = SpellCastUdpTx(logger, settings.wands_udp.udp_transmitter, visualiser)
+
+udp_bridge_tx = UdpTx(logger, UdpTxSettings(host="127.0.0.1", port=40100))
 
 
 def on_spell(match: SpellMatch):
-    udp_tx.on_spell_detected(match)
+    udp_show_system_tx.on_spell_detected(match)
+    udp_bridge_tx.send({"tag_id": "E001", "command": "set_tx_enabled", "enabled": True})
+    sleep(2)
+    udp_bridge_tx.send({"tag_id": "E001", "command": "set_tx_enabled", "enabled": False})
+
     # tracked_wand_manager.on_spell_cast(match.wand_id)
 
 
@@ -122,15 +154,18 @@ spell_matcher.matched.subscribe(on_spell)
 visualiser.quit.subscribe(lambda: quit_event.set())
 tracked_wand_manager.wand_rotation_updated.subscribe(visualiser.add_rotation)
 
+wand_led_controller = WandLedController(udp_bridge_tx)
+
 
 async def main():
     logger.info(f"Running '{settings.name}'...")
     try:
-        spell_controller.start()
-        zone_manager.start()
+        await spell_controller.start()
+        await zone_manager.start()
         tracked_wand_manager.start()
         await server.start_async()
         visualiser.start()
+        wand_led_controller.start()
     except Exception as ex:
         raise ex
 
@@ -139,6 +174,7 @@ async def main():
             # input.update()
             tracked_wand_manager.update()
             visualiser.update()
+            wand_led_controller.update()
             await asyncio.sleep(0.01)
         return 0
     except Exception:

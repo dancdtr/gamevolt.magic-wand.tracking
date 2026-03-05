@@ -98,7 +98,7 @@ async def main() -> int:
     logger.info(f"Running '{APP_NAME}' version '{APP_VERSION}'...")
 
     try:
-        message_handler.start()
+        await message_handler.start_async()
         spell_controller.start()
         spellcasting_visualiser.start()
     except Exception as ex:

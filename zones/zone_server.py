@@ -19,10 +19,10 @@ class ZoneServer:
     def start(self) -> None:
         self._message_handler.subscribe(ZoneEnteredMessage, self._on_wand_entered_zone_message)
         self._message_handler.subscribe(ZoneExitedMessage, self._on_wand_exited_zone_message)
-        self._message_handler.start()
+        self._message_handler.start_async()
 
     def stop(self) -> None:
-        self._message_handler.stop()
+        self._message_handler.stop_async()
         self._message_handler.unsubscribe(ZoneEnteredMessage, self._on_wand_entered_zone_message)
         self._message_handler.unsubscribe(ZoneExitedMessage, self._on_wand_exited_zone_message)
 

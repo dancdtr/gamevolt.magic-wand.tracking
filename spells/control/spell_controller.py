@@ -33,17 +33,17 @@ class SpellController:
     def target_spell_updated(self) -> Event:
         return self._store.target_spell_updated
 
-    def start(self) -> None:
+    async def start(self) -> None:
         self._logger.debug("Starting UdpSpellController")
         self._udp_message_handler.subscribe(TargetSpellUpdatedMessage, self._on_target_spell_updated)
-        self._udp_message_handler.start()
+        await self._udp_message_handler.start_async()
 
         self._udp_transmitter.send(HelloMessage().to_dict())
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         self._logger.debug("Stopping UdpSpellController")
         self._udp_message_handler.unsubscribe(TargetSpellUpdatedMessage, self._on_target_spell_updated)
-        self._udp_message_handler.stop()
+        await self._udp_message_handler.stop_async()
 
     def _on_target_spell_updated(self, message: Message) -> None:
         self._logger.debug(f"Received UDP message: {message!r}")

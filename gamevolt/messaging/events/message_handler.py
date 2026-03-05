@@ -11,14 +11,15 @@ from gamevolt.messaging.message_receiver_protocol import MessageReceiverProtocol
 class MessageHandler(EventHandler[type[Message], Callable[[Message], None]]):
     def __init__(self, logger: Logger, message_receiver: MessageReceiverProtocol) -> None:
         super().__init__(logger)
+
         self._receiver = message_receiver
 
-    def start(self) -> None:
+    async def start_async(self) -> None:
         self._receiver.message_received.subscribe(self._on_data_received)
-        self._receiver.start()
+        await self._receiver.start_async()
 
-    def stop(self) -> None:
-        self._receiver.stop()
+    async def stop_async(self) -> None:
+        await self._receiver.stop_async()
         self._receiver.message_received.unsubscribe(self._on_data_received)
 
     def _key_name(self, key: Message) -> str:
