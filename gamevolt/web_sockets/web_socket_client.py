@@ -1,6 +1,7 @@
 import asyncio
 import json
 from collections.abc import Callable
+from contextlib import suppress
 from logging import Logger
 from typing import Any
 
@@ -97,22 +98,44 @@ class WebSocketClient:
             while not self._stop_event.is_set():
                 try:
                     self._logger.info(f"Connecting to {url}…")
-                    self._ws = await asyncio.wait_for(
-                        connect(
-                            url,
-                            additional_headers=self._additional_headers,
-                            ping_interval=None,
-                            open_timeout=timeout,
-                            close_timeout=timeout,
-                        ),
-                        timeout=timeout + 1,
-                    )
+
+                    # If you're unsure about websockets version, do this:
+                    try:
+                        self._ws = await asyncio.wait_for(
+                            connect(
+                                url,
+                                additional_headers=self._additional_headers,
+                                ping_interval=None,
+                                open_timeout=timeout,
+                                close_timeout=timeout,
+                            ),
+                            timeout=timeout + 1,
+                        )
+                    except TypeError:
+                        # Older websockets uses extra_headers
+                        self._ws = await asyncio.wait_for(
+                            connect(
+                                url,
+                                extra_headers=self._additional_headers,
+                                ping_interval=None,
+                                open_timeout=timeout,
+                                close_timeout=timeout,
+                            ),
+                            timeout=timeout + 1,
+                        )
+
                     self._logger.info("WebSocket connection established.")
-                    self.connected.invoke()
+                    try:
+                        self.connected.invoke()
+                    except Exception:
+                        self._logger.exception("connected handler crashed")
 
                     while not self._stop_event.is_set():
                         raw = await self._ws.recv()
-                        self.message_received.invoke(raw)
+                        try:
+                            self.message_received.invoke(raw)
+                        except Exception:
+                            self._logger.exception("message_received handler crashed")
 
                 except (ConnectionClosedOK, ConnectionClosedError):
                     self.disconnected.invoke()
@@ -123,30 +146,20 @@ class WebSocketClient:
                     self._logger.error(f"Handshake failed: {e}")
                 except OSError as e:
                     self._logger.error(f"TCP connect failed: {e}")
+                except Exception:
+                    self._logger.exception("WebSocketClient unexpected error (will reconnect)")
                 finally:
                     if self._ws and self._ws.state is not State.CLOSED:
-                        try:
+                        with suppress(Exception):
                             await self._ws.close(code=1001, reason="shutdown")
-                        except Exception:
-                            pass
                     self._ws = None
 
                 if self._stop_event.is_set():
                     break
 
                 self._logger.info(f"Reconnecting in {interval} seconds…")
-                try:
+                with suppress(asyncio.TimeoutError):
                     await asyncio.wait_for(self._stop_event.wait(), timeout=interval)
-                except asyncio.TimeoutError:
-                    pass
 
-        except asyncio.CancelledError:
-            self._logger.debug("WebSocketClient _update cancelled.")
         finally:
-            if self._ws and self._ws.state is not State.CLOSED:
-                try:
-                    await self._ws.close(code=1001, reason="shutdown")
-                except Exception:
-                    pass
-            self._ws = None
             self._logger.info("Exiting WebSocketClient background task.")

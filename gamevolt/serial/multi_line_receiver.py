@@ -16,16 +16,16 @@ class MultiLineReceiver(LineReceiverProtocol):
     def line_received(self) -> Event[Callable[[str], None]]:
         return self._line_received
 
-    async def start(self) -> None:
+    async def start_async(self) -> None:
         for serial_receiver in self._serial_receivers:
             serial_receiver.line_received.subscribe(self._on_line_received)
 
         for serial_receiver in self._serial_receivers:
-            await serial_receiver.start()
+            await serial_receiver.start_async()
 
-    async def stop(self) -> None:
+    async def stop_async(self) -> None:
         for serial_receiver in self._serial_receivers:
-            await serial_receiver.stop()
+            await serial_receiver.stop_async()
 
         for serial_receiver in self._serial_receivers:
             serial_receiver.line_received.unsubscribe(self._on_line_received)

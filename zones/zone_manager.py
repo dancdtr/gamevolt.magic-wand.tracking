@@ -41,12 +41,10 @@ class ZoneManager:
 
         return zone
 
-    def is_wand_in_zone(self, wand_id: str) -> bool:
-        for zone in self._zones:
-            if wand_id in zone:
-                return True
-
-        return False
+    def on_wand_disconnected(self, wand_id: str) -> None:
+        for zone in self._zones.values():
+            if zone.contains_wand(wand_id):
+                zone.on_wand_disconnected(wand_id)
 
     def _on_wand_entered_zone_message(self, message: Message):
         if isinstance(message, ZoneEnteredMessage):

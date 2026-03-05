@@ -67,14 +67,14 @@ class WandServer(WandServerProtocol):
     async def start_async(self) -> None:
         self._logger.info("Starting wand server...")
         self._line_receiver.line_received.subscribe(self._on_line)
-        await self._line_receiver.start()
+        await self._line_receiver.start_async()
 
         self._logger.debug(f"Started wand server. Allow list: {self._filter.snapshot()}")
 
     async def stop_async(self) -> None:
         self._logger.debug("Stopping wand server...")
         self._line_receiver.line_received.unsubscribe(self._on_line)
-        await self._line_receiver.stop()
+        await self._line_receiver.stop_async()
 
         self._registry.clear()
         self._logger.debug("WandServer stopped.")

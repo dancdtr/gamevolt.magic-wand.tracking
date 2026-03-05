@@ -14,6 +14,9 @@ from gamevolt.messaging.udp.udp_rx import UdpRx
 from gamevolt.serial.configuration.serial_receiver_settings import SerialReceiverSettings
 from gamevolt.serial.multi_line_receiver import MultiLineReceiver
 from gamevolt.serial.serial_receiver import SerialReceiver
+from gamevolt.web_sockets.configuration.web_socket_server_settings import WebSocketServerSettings
+from gamevolt.web_sockets.configuration.web_socket_settings import WebSocketSettings
+from gamevolt.web_sockets.web_socket_server import WebSocketServer
 from messaging.spell_cast_udp_tx import SpellCastUdpTx
 from motion.gesture.gesture_history import GestureHistory
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
@@ -30,6 +33,7 @@ from wand.motion_processor_factory import MotionProcessorFactory
 from wand.tracked_wand_factory import TrackedWandFactory
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_server import WandServer
+from web_socket_line_receiver import WebSocketLineReceiver
 from wizards.wizard_names_provider import WizardNameProvider
 from zones.zone_factory import ZoneFactory
 from zones.zone_manager import ZoneManager
@@ -51,17 +55,21 @@ spell_controller = SpellController(logger, settings.wands_udp, spell_list)
 spell_matcher = SpellMatcher(logger=logger, accuracy_scorer=SpellAccuracyScorer(settings=settings.accuracy))
 
 # line_receiver = SerialReceiver(logger=logger, settings=settings.input.server.serial_receiver)
+# line_receiver = MultiLineReceiver(
+#     logger=logger,
+#     line_receivers=[
+#         SerialReceiver(
+#             logger=logger,
+#             settings=receiver_settings,
+#         )
+#         for receiver_settings in settings.serial.receivers
+#     ],
+# )
 
-line_receiver = MultiLineReceiver(
-    logger=logger,
-    line_receivers=[
-        SerialReceiver(
-            logger=logger,
-            settings=receiver_settings,
-        )
-        for receiver_settings in settings.serial.receivers
-    ],
-)
+ws_settings = WebSocketServerSettings(web_socket=WebSocketSettings("127.0.0.1", 60901), select_interval=0.1)
+
+web_socket_server = WebSocketServer(logger, ws_settings)
+line_receiver = WebSocketLineReceiver(logger=logger, web_socket_server=web_socket_server)
 
 server = WandServer(logger=logger, settings=settings.input.server, line_receiver=line_receiver)
 

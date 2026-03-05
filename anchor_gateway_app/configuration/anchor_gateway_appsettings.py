@@ -9,6 +9,8 @@ from gv_logging.configuration.logging_settings import LoggingSettings
 @dataclass
 class AnchorGatewayAppSettings(AppSettingsBase):
     name: str
+    id: str
+    version: str
     logging: LoggingSettings
     serial_receiver: SerialReceiverSettings
     web_socket_client: WebSocketClientSettings

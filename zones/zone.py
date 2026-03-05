@@ -27,18 +27,25 @@ class Zone:
     def spell_type(self) -> SpellType:
         return self._spell_type
 
+    def contains_wand(self, wand_id: str) -> bool:
+        return wand_id in self._wand_ids
+
     def on_wand_enter(self, wand_id: str) -> None:
-        self._logger.info(f"Wand ID ({wand_id}) has entered zone ({self._id}).")
         if wand_id in self._wand_ids:
-            self._logger.error(f"Wand ID ({wand_id}) is already present in zone '{self._id}!'")
+            self._logger.error(f"Wand ({wand_id}) is already present in zone '{self._id}!'")
             return
 
         self._wand_ids.add(wand_id)
+        self._logger.info(f"Wand ({wand_id}) has entered zone ({self._id}).")
 
     def on_wand_exit(self, wand_id: str) -> None:
         if wand_id not in self._wand_ids:
-            self._logger.error(f"Wand ID ({wand_id}) not present in zone ({self._id}) to exit!")
+            self._logger.error(f"Wand ({wand_id}) not present in zone ({self._id}) to exit!")
             return
 
         self._wand_ids.discard(wand_id)
-        self._logger.info(f"Wand ID ({wand_id}) has exited zone ({self._id}).")
+        self._logger.info(f"Wand ({wand_id}) has exited zone ({self._id}).")
+
+    def on_wand_disconnected(self, wand_id) -> None:
+        self._wand_ids.discard(wand_id)
+        self._logger.info(f"Wand ({wand_id}) discarded from zone ({self._id}).")

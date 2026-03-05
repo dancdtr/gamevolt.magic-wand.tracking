@@ -21,18 +21,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
-    args = build_parser().parse_args()
+    a = build_parser().parse_args()
 
     logger = get_logger()
     settings = UdpTxSettings("0.0.0.0", 8053)
     udp = UdpTx(logger, settings)
 
-    if args.event == "enter":
-        msg = ZoneEnteredMessage(ZoneId=str(args.zone), WandId=str(args.wand))
-    elif args.event == "exit":
-        msg = ZoneExitedMessage(ZoneId=str(args.zone), WandId=str(args.wand))
+    if a.event == "enter":
+        msg = ZoneEnteredMessage(ZoneId=str(a.zone), WandId=str(a.wand))
+    elif a.event == "exit":
+        msg = ZoneExitedMessage(ZoneId=str(a.zone), WandId=str(a.wand))
     else:
-        raise ValueError(f"Unknown event type: '{args.event}'.")
+        raise ValueError(f"Unknown event type: '{a.event}'.")
 
     udp.send(msg.to_dict())
 
@@ -40,7 +40,7 @@ def main() -> int:
     settings = UdpTxSettings("0.0.0.0", 8053)
     udp = UdpTx(logger, settings)
 
-    logger.info(f"Sent zone event: zone_id={args.zone} wand_id={args.wand} event={args.event} -> '{settings.host}:{settings.port}'.")
+    logger.info(f"Sent zone event: zone_id={a.zone} wand_id={a.wand} event={a.event} -> '{settings.host}:{settings.port}'.")
     return 0
 
 

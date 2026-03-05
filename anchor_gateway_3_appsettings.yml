@@ -1,0 +1,21 @@
+---
+name: "potter.anchor_gateway"
+id: "Gateway3"
+version: "x.x.x"
+logging:
+  file_path: ./Logs/potter.anchor_gateway.log
+  minimum_level: "INFORMATION"
+
+serial_receiver:
+  # port: "/dev/tty.usbmodem2101" # to change
+  port: "/dev/tty.usbmodem111101"
+  baud: 115200
+  timeout: 3
+  retry_interval: 2
+
+web_socket_client:
+  web_socket:
+    host: "127.0.0.1"
+    port: 60901
+  reconnection_interval: 5
+  timeout: 3

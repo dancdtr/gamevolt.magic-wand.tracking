@@ -114,6 +114,8 @@ class TrackedWandManager:
         wand.stop()
         wand.rotation_updated.unsubscribe(self._on_wand_rotation_updated)
 
+        self._zone_manager.on_wand_disconnected(wand.id)
+
         self._logger.info(f"TrackedWand ({wand_id}) disconnected.")
 
     # ── tracked wand → manager events ────────────────────────────────────────

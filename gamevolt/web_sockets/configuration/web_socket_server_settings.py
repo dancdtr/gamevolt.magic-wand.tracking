@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from attr import field
 
-from game_volt.configuration.settings_base import SettingsBase
-from game_volt.web_sockets.configuration.web_socket_settings import WebSocketSettings
+from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.web_sockets.configuration.web_socket_settings import WebSocketSettings
 
 
 @dataclass

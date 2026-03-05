@@ -26,7 +26,7 @@ class SerialReceiver(LineReceiverProtocol):
     def line_received(self) -> Event[Callable[[str], None]]:
         return self._line_received
 
-    async def start(self) -> None:
+    async def start_async(self) -> None:
         if self._read_task is not None and not self._read_task.done():
             self._logger.warning("SerialReceiver is already started!")
             return
@@ -38,7 +38,7 @@ class SerialReceiver(LineReceiverProtocol):
 
         self._logger.info("SerialReceiver main loop started.")
 
-    async def stop(self) -> None:
+    async def stop_async(self) -> None:
         self._logger.debug(f"Stopping SerialReceiver on port '{self._settings.port}'...")
 
         self._running = False
