@@ -1,0 +1,23 @@
+from typing import Callable
+
+from gamevolt.events.event import Event
+from zones.zone import Zone
+
+
+class ZoneManagerProtocol:
+    # TODO make @event decorator
+    @property
+    def zone_entered(self) -> Event[Callable[[str, str], None]]: ...
+
+    @property
+    def zone_exited(self) -> Event[Callable[[str, str], None]]: ...
+
+    async def start_async(self) -> None: ...
+
+    async def stop_async(self) -> None: ...
+
+    def get_zone(self, id: str) -> Zone: ...
+
+    def on_wand_connected(self, wand_id: str) -> None: ...
+
+    def on_wand_disconnected(self, wand_id: str) -> None: ...

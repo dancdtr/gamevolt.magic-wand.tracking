@@ -5,12 +5,16 @@ from gamevolt_logging import get_logger
 
 from anchor_gateway_app.anchor_gateway import AnchorGateway
 from anchor_gateway_app.configuration.anchor_gateway_appsettings import AnchorGatewayAppSettings
+from gamevolt.messaging.command_bridge.udp_to_serial_command_bridge import CommandBridgeSettings, UdpToSerialCommandBridge
+from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.messaging.udp.configuration.udp_rx_settings import UdpRxSettings
 from gamevolt.messaging.udp.udp_rx import UdpRx
-from gamevolt.messaging.udp.udp_to_serial_command_bridge import CommandBridgeSettings, UdpToSerialCommandBridge
-from gamevolt.serial.serial_receiver import SerialReceiver
 from gamevolt.serial.serial_transport import SerialTransport
 from gamevolt.web_sockets.web_socket_client import WebSocketClient
+
+udp_rx_settings = UdpRxSettings(host="127.0.0.1", port=40100, max_size=4096, recv_timeout_s=1)
+command_bridge_settings = CommandBridgeSettings(repeat=2)
+gateway_id = 0
 
 
 def parse_args() -> argparse.Namespace:
@@ -24,8 +28,9 @@ def parse_args() -> argparse.Namespace:
 
 async def run() -> int:
     args = parse_args()
+    gateway_id = args.id
 
-    config_path = f"./anchor_gateway_{args.id}_appsettings.yml"
+    config_path = f"./anchor_gateway_{gateway_id}_appsettings.yml"
     settings = AnchorGatewayAppSettings.load(config_file_path=config_path, config_env_file_path=None)
 
     logger = get_logger(settings.logging.to_gamevolt_logging_settings())
@@ -35,14 +40,16 @@ async def run() -> int:
 
     udp_rx = UdpRx(
         logger=logger,
-        settings=UdpRxSettings(host="127.0.0.1", port=40100, max_size=4096, recv_timeout_s=1),
+        settings=udp_rx_settings,
     )
+
+    message_handler = MessageHandler(logger, udp_rx)
 
     bridge = UdpToSerialCommandBridge(
         logger=logger,
-        udp_rx=udp_rx,
+        message_handler=message_handler,
         serial_transport=serial_transport,
-        settings=CommandBridgeSettings(repeat=2),
+        settings=command_bridge_settings,
     )
 
     additional_headers = {"Cookie": f"GameVolt-Id={settings.id}; GameVolt-Version={settings.version}"}
@@ -58,15 +65,10 @@ async def run() -> int:
         web_socket_client=web_socket_client,
     )
 
-    # Optional: attach to keep linters happy / keep strong reference
-    gateway.command_bridge = bridge  # type: ignore[attr-defined]
-
     logger.info(f"Running '{settings.name}' ID: ({settings.id})...")
 
     try:
-        # Start UDP (threaded, non-async)
-        await udp_rx.start_async()
-
+        await bridge.start_async()
         await gateway.start_async()
 
         while True:
@@ -83,10 +85,12 @@ async def run() -> int:
 
     finally:
         logger.info(f"Stopping '{settings.name}' ID: ({settings.id})...")
+
         try:
-            await udp_rx.stop_async()
+            await bridge.stop_async()
         except Exception:
-            logger.exception("Error while stopping UdpRx")
+            logger.exception("Error while stopping CommandBridge")
+
         try:
             await gateway.stop_async()
         except Exception:

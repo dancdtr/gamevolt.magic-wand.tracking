@@ -3,6 +3,7 @@ from logging import Logger
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from spells.matching.spell_matcher_factory import SpellMatcherFactory
 from wand.configuration.wand_settings import WandSettings
+from wand.interpreters.wand_yawpitch_rmf_interpreter import YawPitchRMFInterpreter
 from wand.motion_processor_factory import MotionProcessorFactory
 from wand.tracked_wand import TrackedWand
 
@@ -31,4 +32,5 @@ class TrackedWandFactory:
             motion_processor=self._motion_processor_factory.create(),
             gesture_history=self._gesture_history_factory.create(),
             spell_matcher=self._spell_matcher_factory.create(),
+            yaw_pitch_interpreter=YawPitchRMFInterpreter(self._wand_settings.rmf),
         )

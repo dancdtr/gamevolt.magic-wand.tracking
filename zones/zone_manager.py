@@ -9,9 +9,10 @@ from zones.zone import Zone
 from zones.zone_entered_message import ZoneEnteredMessage
 from zones.zone_exited_message import ZoneExitedMessage
 from zones.zone_factory import ZoneFactory
+from zones.zone_manager_protocol import ZoneManagerProtocol
 
 
-class ZoneManager:
+class ZoneManager(ZoneManagerProtocol):
     def __init__(self, logger: Logger, settings: ZonesSettings, message_handler: MessageHandler, zone_factory: ZoneFactory) -> None:
         self.zone_entered: Event[Callable[[str, str], None]] = Event()
         self.zone_exited: Event[Callable[[str, str], None]] = Event()
@@ -24,12 +25,12 @@ class ZoneManager:
         for id, spell_type in settings.zones:
             self._zones[id] = self._zone_factory.create(id, spell_type)
 
-    async def start(self) -> None:
+    async def start_async(self) -> None:
         self._message_handler.subscribe(ZoneEnteredMessage, self._on_wand_entered_zone_message)
         self._message_handler.subscribe(ZoneExitedMessage, self._on_wand_exited_zone_message)
         await self._message_handler.start_async()
 
-    async def stop(self) -> None:
+    async def stop_async(self) -> None:
         await self._message_handler.stop_async()
         self._message_handler.unsubscribe(ZoneEnteredMessage, self._on_wand_entered_zone_message)
         self._message_handler.unsubscribe(ZoneExitedMessage, self._on_wand_exited_zone_message)
@@ -40,6 +41,9 @@ class ZoneManager:
             raise KeyError(f"No zone with ID: ({id})!")
 
         return zone
+
+    def on_wand_connected(self, wand_id: str) -> None:
+        return super().on_wand_connected(wand_id)
 
     def on_wand_disconnected(self, wand_id: str) -> None:
         for zone in self._zones.values():

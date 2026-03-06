@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 from logging import Logger
+from time import sleep
 from typing import Callable
 
 from gamevolt.events.event import Event
 from motion.motion_phase_type import MotionPhaseType
+from spells.spell_type import SpellType
 from wand.configuration.input_settings import InputSettings
 from wand.tracked_wand import TrackedWand
 from wand.tracked_wand_factory import TrackedWandFactory
 from wand.wand_client import WandClient
+from wand.wand_device_controller import WandDeviceController
 from wand.wand_rotation import WandRotation
 from wand.wand_rotation_raw import WandRotationRaw
 from wand.wand_server_protocol import WandServerProtocol
@@ -30,10 +33,12 @@ class TrackedWandManager:
         server: WandServerProtocol,
         tracked_wand_factory: TrackedWandFactory,
         zone_manager: ZoneManager,
+        wand_device_controller: WandDeviceController,
     ) -> None:
         self.wand_motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.wand_rotation_updated: Event[Callable[[WandRotation], None]] = Event()
 
+        self._wand_device_controller = wand_device_controller
         self._tracked_wand_factory = tracked_wand_factory
         self._settings = settings.tracked_wands
         self._zone_manager = zone_manager
@@ -74,16 +79,9 @@ class TrackedWandManager:
             wand.reset_forward()
             wand.reset_data()
 
-    # def on_spell_cast(self, wand_id: str) -> None:
-    #     wand_id = wand_id.upper()
-    #     wand = self._tracked_wands.get(wand_id)
-    #     if wand is None:
-    #         self._logger.warning(f"No active TrackedWand with ID ({wand_id})")
-    #         return
-
-    #     wand.clear_gesture_history()
-
-    # ── server event handlers ────────────────────────────────────────────────
+    def _on_spell_cast(self, wand: TrackedWand, spell_type: SpellType) -> None:
+        self._logger.info(f"Wand ({wand.id}) case '{spell_type.name}'!")
+        self._wand_device_controller.play_spell_cast_cue(wand)
 
     def _on_wand_connected(self, client: WandClient) -> None:
         wand_id = client.id.upper()
@@ -100,6 +98,7 @@ class TrackedWandManager:
         self._tracked_wands[wand_id] = wand
 
         wand.rotation_updated.subscribe(self._on_wand_rotation_updated)
+        wand.spell_cast.subscribe(self._on_spell_cast)
 
         wand.start()
         self._logger.info(f"TrackedWand ({wand_id}) connected.")
@@ -113,6 +112,7 @@ class TrackedWandManager:
 
         wand.stop()
         wand.rotation_updated.unsubscribe(self._on_wand_rotation_updated)
+        wand.spell_cast.unsubscribe(self._on_spell_cast)
 
         self._zone_manager.on_wand_disconnected(wand.id)
 

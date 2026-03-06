@@ -20,29 +20,23 @@ from spells.spell_type import SpellType
 
 
 class SpellMatcher:
-    def __init__(
-        self,
-        logger: Logger,
-        accuracy_scorer: SpellAccuracyScorer,
-    ) -> None:
-        self._logger = logger
-
-        self.matched: Event[Callable[[SpellMatch], None]] = Event()
+    def __init__(self, logger: Logger, accuracy_scorer: SpellAccuracyScorer) -> None:
+        # self.matched: Event[Callable[[SpellMatch], None]] = Event()
 
         self._accuracy_scorer = accuracy_scorer
-        self._rules_validator = RulesValidator()
+        self._logger = logger
 
         self._spell_definition_factory = SpellDefinitionFactory()
+        self._rules_validator = RulesValidator()
 
         self._target_spell_definition: SpellDefinition = self._spell_definition_factory.create_spell(SpellType.NONE)
 
     def set_spell_target(self, type: SpellType) -> None:
         self._target_spell_definition = self._spell_definition_factory.create_spell(type)
 
-    # ----- public entry point -----
-    def try_match(self, wand_id: str, history: Sequence[GestureSegment]) -> bool:
+    def try_match(self, wand_id: str, history: Sequence[GestureSegment]) -> SpellType | None:
         if not history:
-            return False
+            return None
 
         compressed = self._compress(history)  # oldest → newest
 
@@ -50,12 +44,9 @@ class SpellMatcher:
             match = self._match_spell(wand_id, self._target_spell_definition, compressed)
             if match:
                 self._logger.info(f"({wand_id}) cast {match.spell_name}! ✨✨{match.accuracy_score * 100:.1f}% ({match.duration_s:.3f})")
-                self.matched.invoke(match)
-                return True
+                # self.matched.invoke(match)
+                return self._target_spell_definition.spell_type
 
-        return False
-
-    # ----- helpers -----
     def _is_pause_step(self, step: SpellStep) -> bool:
         # Pause steps should match, but never count toward min_spell_steps / used_steps.
         return step.allowed == frozenset({DirectionType.PAUSE})
@@ -93,7 +84,6 @@ class SpellMatcher:
         out.append(cur)
         return out
 
-    # ----- matching implementation -----
     def _match_spell(
         self,
         wand_id: str,

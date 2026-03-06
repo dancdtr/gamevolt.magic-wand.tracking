@@ -16,7 +16,6 @@ from display.input.spell_selector import SpellSelector
 from display.spell_casting_visualiser import SpellCastingVisualiser
 from gamevolt.io.utils import bundled_path, install_path
 from gamevolt.messaging.events.message_handler import MessageHandler
-from gamevolt.messaging.message import Message
 from gamevolt.messaging.udp.udp_rx import UdpRx
 from gamevolt.messaging.udp.udp_tx import UdpTx
 from gamevolt.visualisation.configuration.canvas_settings import CanvasSettings
@@ -73,25 +72,24 @@ spellcasting_visualiser = SpellCastingVisualiser(
 quit_event = asyncio.Event()
 
 
-def on_spell_cast(message: Message) -> None:
-    if isinstance(message, SpellCastMessage):
-        spell = spell_list.get_by_name(message.SpellType)
-        if spell.type is spell_controller.target_spell.type:
-            # if spell.type is not SpellType.NONE:
-            logger.debug(f"({message.WandId}) cast {message.SpellType}! ({(message.Confidence * 100):.2f}%)")
-            spellcasting_visualiser.show_spell_cast_coloured(spell.type, message.Colour)
-            sleep(0.3)
-            spellcasting_visualiser.show_spell_instruction(spell)
+def on_spell_cast(message: SpellCastMessage) -> None:
+    spell = spell_list.get_by_name(message.SpellType)
+    if spell.type is spell_controller.target_spell.type:
+        # if spell.type is not SpellType.NONE:
+        logger.debug(f"({message.WandId}) cast {message.SpellType}! ({(message.Confidence * 100):.2f}%)")
+        spellcasting_visualiser.show_spell_cast_coloured(spell.type, message.Colour)
+        sleep(0.3)
+        spellcasting_visualiser.show_spell_instruction(spell)
 
 
-def on_hello(_: Message) -> None:
+def on_hello(_: HelloMessage) -> None:
     udp_tx.send(TargetSpellUpdatedMessage(spell_controller.target_spell.name).to_dict())
 
 
 spellcasting_visualiser.quit.subscribe(lambda: quit_event.set())
 visualiser.quit.subscribe(lambda: quit_event.set())
-message_handler.subscribe(SpellCastMessage, on_spell_cast)
-message_handler.subscribe(HelloMessage, on_hello)
+message_handler.subscribe_typed(SpellCastMessage, on_spell_cast)
+message_handler.subscribe_typed(HelloMessage, on_hello)
 
 
 async def main() -> int:
@@ -111,11 +109,9 @@ async def main() -> int:
             await asyncio.sleep(0.01)
         return 0
     except tk.TclError:
-        # Window closed -> treat as normal-ish exit (choose 0 or 1; I’d pick 0)
         logger.info("Tkinter window closed.")
         return 0
     except asyncio.CancelledError:
-        # Normal during shutdown when supervisor cancels tasks
         return 0
     except Exception as ex:
         logger.exception(f"Unhandled exception in main loop: {ex}")

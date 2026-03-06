@@ -28,23 +28,22 @@ class TrackedWand(WandBase):
         motion_processor: MotionProcessor,
         gesture_history: GestureHistory,
         spell_matcher: SpellMatcher,
+        yaw_pitch_interpreter: YawPitchRMFInterpreter,
     ) -> None:
         super().__init__(logger, motion_processor)
-        self._settings = settings
-
-        self._motion_processor = motion_processor
-        self._gesture_history = gesture_history
-        self._spell_matcher = spell_matcher
-
-        self._id = id
-
-        self._yaw_pitch_interpreter = YawPitchRMFInterpreter(settings.rmf)
-
+        self.spell_cast: Event[Callable[[TrackedWand, SpellType], None]] = Event()
         self.direction_changed: Event[Callable[[DirectionType], None]] = Event()
         self.gesture_detected: Event[Callable[[GestureHistory], None]] = Event()
         self.motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.rotation_updated: Event[Callable[[WandRotation], None]] = Event()
         self.forward_reset: Event[Callable[[], None]] = Event()
+
+        self._yaw_pitch_interpreter = yaw_pitch_interpreter
+        self._motion_processor = motion_processor
+        self._gesture_history = gesture_history
+        self._spell_matcher = spell_matcher
+        self._settings = settings
+        self._id = id
 
         self._last_rotation: WandRotation | None = None
 
@@ -125,5 +124,9 @@ class TrackedWand(WandBase):
         self._gesture_history.add(segment)
         self.gesture_detected.invoke(self._gesture_history)
 
-        if self._spell_matcher.try_match(self.id, self._gesture_history.tail()):
+        matched_type = self._spell_matcher.try_match(self.id, self._gesture_history.tail())
+        if matched_type:
+            self._logger.info(f"Wand ({self._id} matched ('{matched_type.name}')!")
+            self.spell_cast.invoke(self, matched_type)
+
             self.reset_data()
