@@ -12,6 +12,7 @@ class TrailColourSettings(SettingsBase):
 
 @dataclass
 class TrailSettings(SettingsBase):
+    scale: float
     max_points: int
     draw_points: bool
     line_width: int

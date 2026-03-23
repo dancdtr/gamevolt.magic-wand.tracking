@@ -10,7 +10,6 @@ dependencies:
   - pillow
   - pip:
       - gamevolt.python.debugging==1.1.0
-      - gamevolt.python.logging==2.1.1
       - jsonmerge
       - pyserial-asyncio
       - uvloop
@@ -23,3 +22,4 @@ dependencies:
       - ruff==0.13.0
       - vulture==2.14
       - pyyaml
+      - websockets==15.0.1

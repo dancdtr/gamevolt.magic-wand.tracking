@@ -28,7 +28,7 @@ def wingardium_leviosa() -> SpellDefinition:
                 relative_duration=1 / 4,
             ),
         ],
-        min_spell_steps=3,  # or 4
+        min_spell_steps=4,
         min_total_duration_s=0.7,
         max_total_duration_s=4.0,
         max_idle_gap_s=1.2,

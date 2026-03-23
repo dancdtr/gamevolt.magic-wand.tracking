@@ -1,5 +1,5 @@
 from motion.direction.direction_type import DirectionType
-from spells.spell_definition import SpellDefinition
+from spells.spell_definition import CORNER_PAUSE, SpellDefinition
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
@@ -13,7 +13,9 @@ def switching() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                     SpellStep(frozenset({DirectionType.MOVING_S}), required=True),
+                    CORNER_PAUSE,
                 ],
+                min_steps=1,
                 relative_distance=1 / 2,
                 relative_duration=1 / 2,
             ),
@@ -22,6 +24,7 @@ def switching() -> SpellDefinition:
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_E}), required=True),
                 ],
+                min_steps=1,
                 relative_distance=1 / 2,
                 relative_duration=1 / 2,
             ),

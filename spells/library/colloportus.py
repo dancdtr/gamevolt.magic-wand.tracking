@@ -1,5 +1,5 @@
 from motion.direction.direction_type import DirectionType
-from spells.spell_definition import SpellDefinition
+from spells.spell_definition import CORNER_PAUSE, SpellDefinition
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
@@ -11,6 +11,7 @@ def colloportus() -> SpellDefinition:
                 name="Line_E",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_E}), required=True),
+                    CORNER_PAUSE,
                 ],
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,
@@ -19,14 +20,16 @@ def colloportus() -> SpellDefinition:
                 name="Line_S",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_S})),
+                    CORNER_PAUSE,
                 ],
                 relative_distance=1 / 4,
                 relative_duration=1 / 4,
             ),
             SpellStepGroup(
-                name="Line_N",
+                name="Line_W",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_W}), required=True),
+                    CORNER_PAUSE,
                 ],
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,
@@ -40,7 +43,7 @@ def colloportus() -> SpellDefinition:
                 relative_duration=1 / 4,
             ),
         ],
-        min_spell_steps=3,
+        min_spell_steps=4,
         min_total_duration_s=0.8,
         max_total_duration_s=2,
         max_idle_gap_s=0.4,

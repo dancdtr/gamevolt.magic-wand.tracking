@@ -24,7 +24,7 @@ from spells.library.pepper_breath import pepper_breath
 from spells.library.piertotum_locomotor import piertotum_locomotor
 from spells.library.reparo import reparo
 from spells.library.revelio import revelio
-from spells.library.rictumsempra import rictumsempra
+from spells.library.rictusempra import rictusempra
 from spells.library.silencio import silencio
 from spells.library.slugulus_erecto import slugulus_erecto
 from spells.library.switching import switching
@@ -59,7 +59,7 @@ _SPELL_PROVIDERS: dict[SpellType, Callable[[], SpellDefinition]] = {
     SpellType.PIERTOTUM_LOCOMOTOR: piertotum_locomotor,
     SpellType.REPARO: reparo,
     SpellType.REVELIO: revelio,
-    SpellType.RICTUMSEMPRA: rictumsempra,
+    SpellType.RICTUSEMPRA: rictusempra,
     SpellType.SILENCIO: silencio,
     SpellType.SLUGULUS_ERECTO: slugulus_erecto,
     SpellType.SWITCHING: switching,
@@ -79,4 +79,7 @@ class SpellDefinitionFactory:
         if not provider:
             raise ValueError(f"No spell definition for type: '{spell_type.name}'!")
 
-        return provider()
+        definition = provider()
+        definition.spell_type = spell_type
+
+        return definition

@@ -10,12 +10,28 @@ def inflatus() -> SpellDefinition:
             SpellStepGroup(
                 name="ARC_180_CW_START_W",
                 steps=[
-                    SpellStep(frozenset({DirectionType.MOVING_N}), required=True),
+                    SpellStep(frozenset({DirectionType.MOVING_N})),
                     SpellStep(frozenset({DirectionType.MOVING_NE})),
+                ],
+                min_steps=1,
+                relative_distance=1 / 3,
+                relative_duration=1 / 3,
+            ),
+            SpellStepGroup(
+                name="ARC_180_CW_START_W",
+                steps=[
                     SpellStep(frozenset({DirectionType.MOVING_E})),
+                ],
+                relative_distance=1 / 3,
+                relative_duration=1 / 3,
+            ),
+            SpellStepGroup(
+                name="ARC_180_CW_START_W",
+                steps=[
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                     SpellStep(frozenset({DirectionType.MOVING_S})),
                 ],
+                min_steps=1,
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,
             ),

@@ -17,11 +17,11 @@ class UdpMessageReceiver(MessageReceiverProtocol):
     def message_received(self) -> Event[Callable[[str], None]]:
         return self._message_received
 
-    def start(self) -> None:
+    def start_async(self) -> None:
         self._udp_rx.message_received.subscribe(self._on_data_received)
         self._udp_rx.start()
 
-    def stop(self) -> None:
+    def stop_async(self) -> None:
         self._udp_rx.message_received.unsubscribe(self._on_data_received)
         self._udp_rx.stop()
 

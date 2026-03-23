@@ -42,4 +42,7 @@ def locomotor() -> SpellDefinition:
         max_idle_gap_s=1,
         max_filler_duration_s=1,
         check_duration=True,
+        check_distance=True,
+        min_total_distance=2,
+        max_total_distance=4,
     )

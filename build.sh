@@ -4,97 +4,96 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# ─── Ensure Bash ──────────────────────────────────────────────────────────────
 [[ -n "${BASH_VERSION:-}" ]] || {
   echo "ERROR: build.sh must be run under bash" >&2
   exit 1
 }
 
-source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+die()   { echo "ERROR: $*" >&2; exit 1; }
+info()  { echo "▶ $*"; }
 
-# ─── Paths ───────────────────────────────────────────────────────────────────
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APPLICATION_NAME="wand_demo"
-
 BUILD_DIR="$PROJECT_ROOT/.build"
 WORK_DIR="$BUILD_DIR/work"
 OUTPUT_DIR="$BUILD_DIR/dist"
 DIST_DIR="$PROJECT_ROOT/.dist"
 
-# ─── Version ─────────────────────────────────────────────────────────────────
-VERSION=${1:-$(git describe --tags --always 2>/dev/null || git rev-parse --abbrev-ref HEAD)}
-[[ -n "$VERSION" ]] || die "Could not determine version; pass it explicitly."
-info "Starting Build for version $VERSION"
+usage() {
+  echo "Usage: $0 <relay|wands> [version]"
+  exit 1
+}
 
-# ─── Prepare directories ───────────────────────────────────────────────────────
-info "Resetting build dirs → $WORK_DIR, $OUTPUT_DIR"
+[[ $# -ge 1 ]] || usage
+
+APP_KEY="$1"
+VERSION="${2:-$(git describe --tags --always 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo dev)}"
+
+case "$APP_KEY" in
+  relay)
+    APPLICATION_NAME="relay"
+    SPEC_FILE="$PROJECT_ROOT/relay.spec"
+    ;;
+  wands)
+    APPLICATION_NAME="wands"
+    SPEC_FILE="$PROJECT_ROOT/wands.spec"
+    ;;
+  *)
+    die "Unknown app '$APP_KEY'. Expected: relay or wands"
+    ;;
+esac
+
+[[ -f "$SPEC_FILE" ]] || die "Spec file not found: $SPEC_FILE"
+
+info "Starting build"
+info "Project root: $PROJECT_ROOT"
+info "App key: $APP_KEY"
+info "Application name: $APPLICATION_NAME"
+info "Version: $VERSION"
+
 rm -rf "$BUILD_DIR"
-mkdir -p "$WORK_DIR" "$OUTPUT_DIR"
+mkdir -p "$WORK_DIR" "$OUTPUT_DIR" "$DIST_DIR"
 
-info "Ensuring dist dir exists → $DIST_DIR (old ZIPs kept)"
-mkdir -p "$DIST_DIR"
-
-# ─── Generate build_info.py (bundled into PyInstaller) ─────────────────────────
 GIT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 BUILD_TIME_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-info "Generating build_info.py (version=$VERSION sha=$GIT_SHA time=$BUILD_TIME_UTC)"
+info "Generating build_info.py"
 cat > "$PROJECT_ROOT/build_info.py" <<EOF
 # Auto-generated at build time. Do not edit.
 VERSION = "${VERSION}"
 GIT_SHA = "${GIT_SHA}"
 BUILD_TIME_UTC = "${BUILD_TIME_UTC}"
+APPLICATION_NAME = "${APPLICATION_NAME}"
+APP_KEY = "${APP_KEY}"
 EOF
 
-# ─── Run PyInstaller ───────────────────────────────────────────────────────────
-info "Running PyInstaller → workpath=$WORK_DIR, distpath=$OUTPUT_DIR"
+info "Running PyInstaller with $SPEC_FILE"
 pyinstaller \
   --workpath "$WORK_DIR" \
   --distpath "$OUTPUT_DIR" \
   --noconfirm \
-  "$PROJECT_ROOT/$APPLICATION_NAME.spec" \
+  "$SPEC_FILE" \
   --log-level WARN
 
-# ─── Inspect what landed in OUTPUT_DIR ─────────────────────────────────────────
 info "Contents of $OUTPUT_DIR:"
-ls -l "$OUTPUT_DIR"
+ls -la "$OUTPUT_DIR"
 
-# ─── Find the actual app output (folder or single exe) ────────────────────────
-# If PyInstaller made a folder named $APPLICATION_NAME, use that; otherwise use OUTPUT_DIR directly
 if [[ -d "$OUTPUT_DIR/$APPLICATION_NAME" ]]; then
   APP_OUTPUT="$OUTPUT_DIR/$APPLICATION_NAME"
 elif [[ -f "$OUTPUT_DIR/$APPLICATION_NAME" ]]; then
   APP_OUTPUT="$OUTPUT_DIR"
 else
-  die "Cannot find built application in $OUTPUT_DIR"
+  die "Cannot find built output for '$APPLICATION_NAME' in $OUTPUT_DIR"
 fi
-info "Detected application output at → $APP_OUTPUT"
 
-# # ─── Patch version in appsettings.yml (if present) ───────────────────────────
-# APP_SETTINGS="$APP_OUTPUT/appsettings.yml"
-# if [[ -f "$APP_SETTINGS" ]]; then
-#   info "Updating version in appsettings.yml to $VERSION"
-#   jq --arg version "$VERSION" \
-#      '.version = $version' \
-#      "$APP_SETTINGS" > "$APP_SETTINGS.tmp" \
-#   && mv "$APP_SETTINGS.tmp" "$APP_SETTINGS"
-# else
-#   info "No appsettings.yml at $APP_SETTINGS; skipping version bump"
-# fi
-
-# ─── Zip up into .dist ─────────────────────────────────────────────────────────
 ZIP_FILE="${APPLICATION_NAME}-${VERSION}.zip"
 ZIP_PATH="$DIST_DIR/$ZIP_FILE"
-info "Zipping up $APP_OUTPUT → $ZIP_PATH"
+
+info "Creating zip: $ZIP_PATH"
 (
   cd "$APP_OUTPUT"
   zip -r -q "$ZIP_PATH" .
 )
 
-# rm -f "$PROJECT_ROOT/build_info.py"
+[[ -f "$ZIP_PATH" ]] || die "Failed to create zip: $ZIP_PATH"
 
-[[ -f "$ZIP_PATH" ]] \
-  && info "✅ Build ZIP created at $ZIP_PATH" \
-  || die "❌ Failed to create ZIP at $ZIP_PATH"
-
-info "Build task complete."
+info "✅ Build complete: $ZIP_PATH"

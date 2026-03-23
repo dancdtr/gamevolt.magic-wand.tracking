@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(frozen=True)
 class WandRotationRaw:
-    id: str  # tag hex, e.g. "E001"
-    yaw: float  # degrees
-    pitch: float  # degrees
-    ms: int  # synthesized per-sample timestamp (ms)
+    id: str
+    ms: int
+    fx: float
+    fy: float
+    fz: float

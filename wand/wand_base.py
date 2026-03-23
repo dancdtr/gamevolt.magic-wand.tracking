@@ -1,7 +1,7 @@
-from logging import Logger
 from typing import Callable
 
 from gamevolt.events.event import Event
+from gamevolt.logging import Logger
 from motion.motion_processor import MotionProcessor
 from wand.wand_rotation import WandRotation
 
@@ -18,3 +18,6 @@ class WandBase:
     def update(self) -> None: ...
 
     def reset(self) -> None: ...
+
+    @property
+    def is_running(self) -> bool: ...

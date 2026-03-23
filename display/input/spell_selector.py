@@ -14,28 +14,22 @@ from gamevolt.visualisation.visualiser import Visualiser
 from messaging.target_spell_updated_message import TargetSpellUpdatedMessage
 from spells.control.spell_target_store import SpellTargetStore
 from spells.spell import Spell
-from spells.spell_list import SpellList
+from spells.spell_registry import SpellRegistry
 
 
 class SpellSelector:
     def __init__(
-        self,
-        logger: Logger,
-        spell_list: SpellList,
-        visualiser: Visualiser,
-        udp_tx: UdpTx,
-        parent: tk.Misc | None = None,
+        self, logger: Logger, spell_registry: SpellRegistry, visualiser: Visualiser, udp_tx: UdpTx, parent: tk.Misc | None = None
     ) -> None:
+        self._store = SpellTargetStore(logger, spell_registry)
+        self._spell_registry = spell_registry
         self._logger = logger
-        self._spell_list = spell_list
-        self._store = SpellTargetStore(logger, spell_list)
-
         self._udp_tx = udp_tx
 
         root = visualiser.root
         dropdown_parent = parent or root
 
-        self._dropdown = DropDown(dropdown_parent, {k: v for k, v in zip(spell_list.ids, spell_list.names)})
+        self._dropdown = DropDown(dropdown_parent, {k: v for k, v in zip(spell_registry.ids, spell_registry.names)})
         self._key_input = SpellVisualiserKeyInput(root)
         self._numeric_input = NumericInput(root)
 

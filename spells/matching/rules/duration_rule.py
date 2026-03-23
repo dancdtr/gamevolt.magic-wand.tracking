@@ -1,20 +1,19 @@
-from __future__ import annotations
-
 from spells.matching.rules.spell_rule import SpellRule
 from spells.matching.spell_match_context import SpellMatchContext
 
 
 class DurationRule(SpellRule):
     def validate(self, ctx: SpellMatchContext) -> bool:
-        spell = ctx.spell
+        s = ctx.spell
         m = ctx.metrics
 
-        key_duration = m.total_duration_s - m.filler_duration_s
+        action_s = m.scorable_duration_s + m.absorbed_duration_s
 
-        if spell.min_total_duration_s is not None and key_duration < spell.min_total_duration_s:
+        if action_s < s.min_total_duration_s:
             return False
 
-        if spell.max_total_duration_s is not None and key_duration > spell.max_total_duration_s:
+        # Keep max as wall-clock window duration (prevents “wait forever then finish”)
+        if s.max_total_duration_s is not None and m.total_duration_s > s.max_total_duration_s:
             return False
 
         return True

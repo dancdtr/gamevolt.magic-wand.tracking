@@ -4,6 +4,7 @@ from visualisation.configuration.visualised_wand_factory import VisualisedWandFa
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from visualisation.headless_visualiser import HeadlessVisualiser
 from visualisation.visualiser_protocol import WandVisualiserProtocol
+from visualisation.wand_colour_registry import WandColourRegistry
 from visualisation.wand_visualiser import WandVisualiser
 from wand.configuration.input_settings import InputSettings
 from wand.tracked_wand_manager import TrackedWandManager
@@ -17,11 +18,13 @@ class WandVisualiserFactory:
         input_settings: InputSettings,
         visualised_wand_factory: VisualisedWandFactory,
         tracked_wand_manager: TrackedWandManager,
+        wand_colour_registry: WandColourRegistry,
     ) -> None:
         self._wand_visualiser_settings = wand_visualiser_settings
-        self._input_settings = input_settings
         self._visualised_wand_factory = visualised_wand_factory
         self._tracked_wand_manager = tracked_wand_manager
+        self._wand_colour_regsitry = wand_colour_registry
+        self._input_settings = input_settings
         self._logger = logger
 
     def create(self) -> WandVisualiserProtocol:
@@ -32,6 +35,7 @@ class WandVisualiserFactory:
                 input_settings=self._input_settings,
                 visualised_wand_factory=self._visualised_wand_factory,
                 tracked_wand_manager=self._tracked_wand_manager,
+                wand_colour_registry=self._wand_colour_regsitry,
             )
         else:
             return HeadlessVisualiser()

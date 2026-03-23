@@ -1,27 +1,19 @@
 from __future__ import annotations
 
+import math
 import time
 from datetime import datetime, timezone
-from logging import Logger
 from typing import Callable, Iterable
 
 from gamevolt.events.event import Event
-from wand.configuration.wand_server_settings import WandClientSettings
+from gamevolt.logging import Logger
 from wand.wand_rotation_raw import WandRotationRaw
 
 
 class WandClient:
-    """
-    Per-wand client that:
-    - tracks last-seen time (monotonic + utc) for connection status
-    - parses DATA payload into WandRotationRaw messages
-    - optionally resamples to target_hz
-    """
-
     def __init__(
         self,
         logger: Logger,
-        settings: WandClientSettings,
         id: str,
         disconnect_after_s: float = 2.0,
     ) -> None:
@@ -29,21 +21,8 @@ class WandClient:
         self._id = id.upper()
         self._disconnect_after_s = float(disconnect_after_s)
 
-        # Resample settings
-        target_hz = getattr(settings, "target_hz", None)
-        self._delay_ms: float | None = None
-        if target_hz and target_hz > 0:
-            self._delay_ms = 1000.0 / float(target_hz)
-
-        self._dt_ms = 1000.0 / float(settings.imu_hz)
-
-        # Connection tracking
         self._last_seen_monotonic: float | None = None
         self._last_seen_utc: datetime | None = None
-
-        # Resample state
-        self._prev_msg: WandRotationRaw | None = None
-        self._next_emit_ms: float | None = None
 
         self.wand_rotation_raw_updated: Event[Callable[[WandRotationRaw], None]] = Event()
 
@@ -52,7 +31,6 @@ class WandClient:
         return self._id
 
     def touch(self, now_monotonic: float | None = None) -> None:
-        """Mark the client as having received data 'now'."""
         if now_monotonic is None:
             now_monotonic = time.monotonic()
         self._last_seen_monotonic = now_monotonic
@@ -76,70 +54,61 @@ class WandClient:
     def last_seen_utc(self) -> datetime | None:
         return self._last_seen_utc
 
-    # ── data ingestion ───────────────────────────────────────────────────────
-
-    def on_wand_rotation_data(self, t_base: int, data_str: str) -> None:
-        """
-        Called per DATA line batch.
-        Updates connection timestamp, parses samples, emits (resampled) WandRotationRaw.
-        """
+    def on_wand_rotation_data(self, t0_ms: int, sample_dt_us: int, data_str: str) -> None:
         self.touch()
 
-        idx = 0
-        for y100, p100 in self._parse_items(data_str):
-            ms = int(round(t_base + idx * self._dt_ms))
+        dt_ms = sample_dt_us / 1000.0
+
+        for idx, (fx, fy, fz) in enumerate(self._parse_items(data_str)):
+            ms = int(round(t0_ms + idx * dt_ms))
             msg = WandRotationRaw(
                 id=self._id,
-                yaw=y100 / 100.0,
-                pitch=p100 / 100.0,
+                fx=fx,
+                fy=fy,
+                fz=fz,
                 ms=ms,
             )
-            self._emit_maybe_resample(msg)
-            idx += 1
+            self._emit(msg)
 
-    def _parse_items(self, s: str) -> Iterable[tuple[int, int]]:
+    def _parse_items(self, s: str) -> Iterable[tuple[float, float, float]]:
         if not s:
             return
+
         for part in s.split(";"):
             part = part.strip().strip('"')
             if not part:
                 continue
+
             toks = [t.strip() for t in part.split(",") if t.strip()]
-            if len(toks) < 2:
+            if len(toks) < 3:
                 continue
+
             try:
-                y100 = int(toks[0])
-                p100 = int(toks[1])
+                fx_q15 = int(toks[0])
+                fy_q15 = int(toks[1])
+                fz_q15 = int(toks[2])
             except ValueError:
                 continue
-            yield (y100, p100)
 
-    # ── resampling + emit ────────────────────────────────────────────────────
+            fx = self._q15_to_float(fx_q15)
+            fy = self._q15_to_float(fy_q15)
+            fz = self._q15_to_float(fz_q15)
 
-    def _emit_maybe_resample(self, msg: WandRotationRaw) -> None:
-        if self._delay_ms is None:
-            self._emit(msg)
-            return
+            fx, fy, fz = self._normalize_vector(fx, fy, fz)
 
-        if self._next_emit_ms is None:
-            self._emit(msg)
-            self._next_emit_ms = msg.ms + self._delay_ms
-            self._prev_msg = msg
-            return
+            yield (fx, fy, fz)
 
-        while msg.ms >= self._next_emit_ms:
-            if self._prev_msg is None:
-                chosen = msg
-            else:
-                prev_diff = abs(self._next_emit_ms - self._prev_msg.ms)
-                curr_diff = abs(msg.ms - self._next_emit_ms)
-                chosen = msg if curr_diff <= prev_diff else self._prev_msg
+    @staticmethod
+    def _q15_to_float(v: int) -> float:
+        return max(-1.0, min(1.0, v / 32767.0))
 
-            self._emit(chosen)
-            self._next_emit_ms += self._delay_ms
-
-        self._prev_msg = msg
+    @staticmethod
+    def _normalize_vector(fx: float, fy: float, fz: float) -> tuple[float, float, float]:
+        mag = math.sqrt(fx * fx + fy * fy + fz * fz)
+        if mag < 1e-6:
+            return (0.0, 0.0, 0.0)
+        return (fx / mag, fy / mag, fz / mag)
 
     def _emit(self, msg: WandRotationRaw) -> None:
         self.wand_rotation_raw_updated.invoke(msg)
-        self._logger.debug(f"[{self._id}] EMIT @ {msg.ms} ms  yaw={msg.yaw:.3f}  pitch={msg.pitch:.3f}")
+        self._logger.trace(f"Wand ({self._id}) EMIT @ {msg.ms} ms  fx={msg.fx:.4f}  fy={msg.fy:.4f}  fz={msg.fz:.4f}")

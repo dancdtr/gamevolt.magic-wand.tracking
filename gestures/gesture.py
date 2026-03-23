@@ -115,7 +115,6 @@ class Gesture:
         if self.extrema_events:
             return self.extrema_events[-1]
         else:
-            # print("no extrema events")
             return None
 
     # ---------- Direction helpers ----------

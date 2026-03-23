@@ -12,6 +12,7 @@ def incendio() -> SpellDefinition:
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_N}), required=True),
                 ],
+                min_steps=1,
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,
             ),
@@ -20,6 +21,7 @@ def incendio() -> SpellDefinition:
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_S}), required=True),
                 ],
+                min_steps=1,
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,
             ),
@@ -30,6 +32,7 @@ def incendio() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_NW, DirectionType.MOVING_W}), required=True),
                     SpellStep(frozenset({DirectionType.MOVING_SW})),
                 ],
+                min_steps=1,
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,
             ),

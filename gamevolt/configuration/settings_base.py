@@ -193,7 +193,6 @@ class SettingsBase:
                 raise
 
     def format_settings(self, obj: Any, indent: int = 0) -> str:
-        """Pretty-print nested SettingsBase dataclasses and simple containers."""
         indent_str = "  " * indent
         cls_name = obj.__class__.__name__
         lines: list[str] = [f"{indent_str}-> {cls_name}:"]

@@ -1,0 +1,23 @@
+---
+name: potter.anchor_relay
+id: UnknownAnchorRelay
+version: 0.1.2
+logging:
+  file_path: ./Logs/potter.anchor_relay.{timestamp}.log
+  minimum_level: INFORMATION
+
+serial_receiver:
+  port: PLEASE_SET
+  baud: 115200
+  timeout: 3
+  retry_interval: 2
+
+web_socket_client:
+  web_socket:
+    host: 127.0.0.1
+    port: 60901
+  reconnection_interval: 2
+  timeout: 3
+
+anchor_command_bridge:
+  repeat: 2

@@ -3,44 +3,64 @@
 
 FROM ubuntu:22.04 AS builder
 
-RUN apt-get update && \
-    apt-get install -y curl build-essential jq binutils zip
-
-WORKDIR /app
-
-RUN curl -Ls "https://micro.mamba.pm/api/micromamba/linux-$(uname -m)/latest" \
-    | tar -xvj -C /usr/local/bin --strip-components=1 bin/micromamba
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
 ARG CONDA_ENV_NAME
 ARG BUILD_VERSION
+ARG APP_KEY
 
-COPY . .
-
+ENV DEBIAN_FRONTEND=noninteractive
 ENV MAMBA_NO_NETLINK=1
-
-RUN micromamba create --prefix /opt/conda/envs/temp-env python=3.12 pip awscli --yes && \
-    micromamba clean --all --yes
-
-ENV PATH=/opt/conda/envs/temp-env/bin:$PATH
-
-RUN apt-get update && \
-    apt-get install -y build-essential binutils zip
 
 RUN apt-get update && \
     apt-get install -y \
+    ca-certificates \
+    curl \
+    build-essential \
+    jq \
+    binutils \
+    zip \
+    git \
+    bzip2 \
     libgl1-mesa-glx \
     libsm6 \
     libxext6 \
     libice6 \
     libglib2.0-0 \
-    libxrender1
+    libxrender1 && \
+    rm -rf /var/lib/apt/lists/*
 
+WORKDIR /app
+
+ARG MICROMAMBA_VERSION=latest
+
+RUN ARCH="$(uname -m)" && \
+    echo "Detected arch: ${ARCH}" && \
+    if [[ "${MICROMAMBA_VERSION}" == "latest" ]]; then \
+    MICROMAMBA_URL="https://github.com/mamba-org/micromamba-releases/releases/latest/download/micromamba-linux-${ARCH}"; \
+    else \
+    MICROMAMBA_URL="https://github.com/mamba-org/micromamba-releases/releases/download/${MICROMAMBA_VERSION}/micromamba-linux-${ARCH}"; \
+    fi && \
+    echo "Downloading ${MICROMAMBA_URL}" && \
+    curl -fL "${MICROMAMBA_URL}" -o /usr/local/bin/micromamba && \
+    chmod +x /usr/local/bin/micromamba
+COPY . .
+
+RUN micromamba create --prefix /opt/conda/envs/temp-env python=3.12 pip awscli --yes && \
+    micromamba clean --all --yes
+
+ENV PATH=/opt/conda/envs/temp-env/bin:$PATH
 ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 ENV AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 
-RUN export CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --domain gamevolt --domain-owner 797574014321 --region eu-north-1 --query authorizationToken --output text) && \
+RUN export CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token \
+    --domain gamevolt \
+    --domain-owner 797574014321 \
+    --region eu-north-1 \
+    --query authorizationToken \
+    --output text) && \
     pip config set global.extra-index-url "https://aws:${CODEARTIFACT_AUTH_TOKEN}@gamevolt-797574014321.d.codeartifact.eu-north-1.amazonaws.com/pypi/gamevolt.python/simple/" && \
     micromamba create --prefix /opt/conda/envs/${CONDA_ENV_NAME} -f environment.yml --yes && \
     micromamba clean --all --yes
@@ -48,7 +68,7 @@ RUN export CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token --
 ENV PATH=/opt/conda/envs/${CONDA_ENV_NAME}/bin:$PATH
 
 RUN chmod +x ./build.sh
-RUN bash ./build.sh ${BUILD_VERSION}
+RUN bash ./build.sh "${APP_KEY}" "${BUILD_VERSION}"
 
 FROM scratch AS export
 COPY --from=builder /app/.dist/. /

@@ -8,7 +8,7 @@ def reparo() -> SpellDefinition:
     return SpellDefinition(
         step_groups=[
             SpellStepGroup(
-                name="ARC_180_CCW_START_W",
+                name="FLICK_1",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_NW})),
                     SpellStep(frozenset({DirectionType.MOVING_N})),
@@ -16,20 +16,30 @@ def reparo() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_E})),
                     SpellStep(frozenset({DirectionType.MOVING_SE})),
                     SpellStep(frozenset({DirectionType.MOVING_S})),
+                ],
+                min_steps=2,
+                relative_distance=1,
+                relative_duration=1,
+            ),
+            SpellStepGroup(
+                name="FLICK_2",
+                steps=[
                     SpellStep(frozenset({DirectionType.MOVING_SW})),
                     SpellStep(frozenset({DirectionType.MOVING_W})),
                     SpellStep(frozenset({DirectionType.MOVING_NW})),
                     SpellStep(frozenset({DirectionType.MOVING_N})),
-                    SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_E}), required=True),
+                    SpellStep(frozenset({DirectionType.MOVING_NE})),
+                    SpellStep(frozenset({DirectionType.MOVING_E})),
                 ],
+                min_steps=2,
                 relative_distance=1,
                 relative_duration=1,
             ),
         ],
-        min_spell_steps=6,
+        min_spell_steps=5,
         min_total_duration_s=0.7,
         max_total_duration_s=2,
-        max_idle_gap_s=0.7,
-        max_filler_duration_s=1.2,
+        max_idle_gap_s=0.4,
+        max_filler_duration_s=0.6,
         check_duration=True,
     )

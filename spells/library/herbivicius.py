@@ -1,5 +1,5 @@
 from motion.direction.direction_type import DirectionType
-from spells.spell_definition import SpellDefinition
+from spells.spell_definition import CORNER_PAUSE, SpellDefinition
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
@@ -11,6 +11,7 @@ def herbivicius() -> SpellDefinition:
                 name="LINE_S",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SE}), required=True),
+                    CORNER_PAUSE,
                 ],
                 relative_distance=1 / 4,
                 relative_duration=1 / 4,
@@ -18,12 +19,13 @@ def herbivicius() -> SpellDefinition:
             SpellStepGroup(
                 name="ARC_180_CCW_START_W",
                 steps=[
-                    SpellStep(frozenset({DirectionType.MOVING_N, DirectionType.MOVING_NE}), required=True),
+                    SpellStep(frozenset({DirectionType.MOVING_N})),
                     SpellStep(frozenset({DirectionType.MOVING_NE})),
                     SpellStep(frozenset({DirectionType.MOVING_E})),
-                    SpellStep(frozenset({DirectionType.MOVING_SE, DirectionType.MOVING_S}), required=True),
-                    SpellStep(frozenset({DirectionType.MOVING_S})),
+                    SpellStep(frozenset({DirectionType.MOVING_SE})),
+                    SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SW}), required=True),
                 ],
+                min_steps=3,
                 relative_distance=3 / 4,
                 relative_duration=3 / 4,
             ),

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from logging import Logger
 from typing import Callable, Generic, TypeVar
 
 from gamevolt.events.event import Event
+from gamevolt.logging import Logger
 
 TEvent = TypeVar("TEvent")
 TCallable = TypeVar("TCallable", bound=Callable)

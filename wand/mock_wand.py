@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import time
 import tkinter as tk
-from logging import Logger
 
 from gamevolt_debugging import TickMonitor
 
+from gamevolt.logging import Logger
 from gamevolt.visualisation.visualiser import Visualiser
 from wand.configuration.mock_wand_settings import MockWandSettings
 from wand.wand_base import WandBase

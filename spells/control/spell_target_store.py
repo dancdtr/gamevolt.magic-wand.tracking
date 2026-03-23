@@ -7,31 +7,31 @@ from logging import Logger
 
 from gamevolt.events.event import Event
 from spells.spell import Spell
-from spells.spell_list import SpellList
+from spells.spell_registry import SpellRegistry
 from spells.spell_type import SpellType
 
 
 class SpellTargetStore:
-    def __init__(self, logger: Logger, spell_list: SpellList) -> None:
-        self._logger = logger
-        self._spell_list = spell_list
+    def __init__(self, logger: Logger, spell_registry: SpellRegistry) -> None:
+        self.target_spell_updated: Event[Callable[[Spell], None]] = Event()
 
-        self._spells: list[Spell] = sorted(self._spell_list.items, key=lambda s: s.id)
+        self._spell_registry = spell_registry
+        self._logger = logger
+
+        self._spells: list[Spell] = sorted(self._spell_registry.items, key=lambda s: s.id)
 
         self._by_id: dict[int, Spell] = {s.id: s for s in self._spells}
         self._by_type: dict[SpellType, Spell] = {s.type: s for s in self._spells}
         self._ids_sorted: list[int] = sorted(self._by_id.keys())
         self._id_to_index: dict[int, int] = {s.id: i for i, s in enumerate(self._spells)}
 
-        default = self._spell_list.get_default()
+        default = self._spell_registry.get_default()
         if default.id not in self._by_id and self._spells:
             self._logger.warning(f"Default spell {default} not in list; falling back to first spell")
             default = self._spells[0]
 
         self._target_spell: Spell = default
         self._current_index: int = self._id_to_index.get(self._target_spell.id, 0)
-
-        self.target_spell_updated: Event[Callable[[Spell], None]] = Event()
 
     @property
     def spells(self) -> list[Spell]:
@@ -73,9 +73,6 @@ class SpellTargetStore:
         self._set_target(spell)
 
     def cycle_target(self, delta: int) -> None:
-        if not self._spells:
-            return
-
         new_index = max(0, min(self._current_index + delta, len(self._spells) - 1))
         if new_index == self._current_index:
             return

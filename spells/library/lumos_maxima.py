@@ -1,5 +1,5 @@
 from motion.direction.direction_type import DirectionType
-from spells.spell_definition import SpellDefinition
+from spells.spell_definition import CORNER_PAUSE, SpellDefinition
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
@@ -11,6 +11,7 @@ def lumos_maxima() -> SpellDefinition:
                 name="Line_NE",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_N, DirectionType.MOVING_NE}), required=True),
+                    CORNER_PAUSE,
                 ],
                 relative_distance=1 / 2,
                 relative_duration=1 / 2,

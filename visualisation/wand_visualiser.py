@@ -13,7 +13,7 @@ from visualisation.configuration.wand_visualiser_settings import WandVisualiserS
 from visualisation.coordinate_mode import CoordinateMode
 from visualisation.visualised_wand import VisualisedWand
 from visualisation.visualiser_protocol import WandVisualiserProtocol
-from visualisation.wand_colour_assigner import WandColourAssigner
+from visualisation.wand_colour_registry import WandColourRegistry
 from wand.configuration.input_settings import InputSettings
 from wand.tracked_wand_manager import TrackedWandManager
 
@@ -26,6 +26,7 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
         input_settings: InputSettings,
         visualised_wand_factory: VisualisedWandFactory,
         tracked_wand_manager: TrackedWandManager,
+        wand_colour_registry: WandColourRegistry,
     ) -> None:
         super().__init__(logger, wand_visualiser_settings.visualiser)
         self._wand_visualiser_settings = wand_visualiser_settings
@@ -34,9 +35,9 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
         self._visualised_wand_factory = visualised_wand_factory
         self._tracked_wand_manager = tracked_wand_manager
 
-        self._colour_assigner = WandColourAssigner(self._wand_visualiser_settings.colours)
         self._status = LabelFactory(wand_visualiser_settings.label, self._root).create()
         self._axes = Axes(wand_visualiser_settings.axes, canvas=self.canvas)
+        self._wand_colour_registry = wand_colour_registry
 
         self._visualised_wands: dict[str, VisualisedWand] = {}
         self._is_drawing = True
@@ -56,17 +57,17 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
         self._axes.draw()
 
     def stop(self) -> None:
-        super().stop()
-
         for wand_id, vw in list(self._visualised_wands.items()):
             vw.dispose()
         self._visualised_wands.clear()
-        self._colour_assigner.reset()
+        self._wand_colour_registry.reset()
 
         self.unregister_key_callbacks("c")
         self.unregister_key_callbacks("d")
 
         self._axes.clear()
+
+        super().stop()
 
     def update(self) -> None:
         try:
@@ -206,14 +207,14 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
             if wand_id not in current_ids:
                 vw = self._visualised_wands.pop(wand_id)
                 vw.dispose()
-                self._colour_assigner.reserve(wand_id)
+                self._wand_colour_registry.reserve(wand_id)
 
         # Add new (connected)
         for wand_id, wand in current_ids.items():
             if wand_id in self._visualised_wands:
                 continue
 
-            colour = self._colour_assigner.acquire(wand_id)
+            colour = self._wand_colour_registry.acquire(wand_id)
             settings = TrailColourSettings(line_colour=colour, point_colour=colour)
             vw = self._visualised_wand_factory.create(settings, wand, self._canvas)
             vw.start()

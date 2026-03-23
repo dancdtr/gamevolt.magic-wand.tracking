@@ -1,5 +1,5 @@
 from motion.direction.direction_type import DirectionType
-from spells.spell_definition import SpellDefinition
+from spells.spell_definition import CORNER_PAUSE, SpellDefinition
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 
@@ -11,7 +11,9 @@ def immobulus() -> SpellDefinition:
                 name="Line_NW",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_W, DirectionType.MOVING_NW}), required=True),
+                    CORNER_PAUSE,
                 ],
+                min_steps=1,
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,
             ),
@@ -19,7 +21,9 @@ def immobulus() -> SpellDefinition:
                 name="Line_E",
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_E, DirectionType.MOVING_SE})),
+                    CORNER_PAUSE,
                 ],
+                min_steps=1,
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,
             ),
@@ -28,6 +32,7 @@ def immobulus() -> SpellDefinition:
                 steps=[
                     SpellStep(frozenset({DirectionType.MOVING_S, DirectionType.MOVING_SW}), required=True),
                 ],
+                min_steps=1,
                 relative_distance=1 / 3,
                 relative_duration=1 / 3,
             ),

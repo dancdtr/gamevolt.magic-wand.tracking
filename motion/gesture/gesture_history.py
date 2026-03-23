@@ -21,15 +21,9 @@ class GestureHistory:
         """Return a snapshot list (already pruned)."""
         x = list(self._buf)
 
-        # details = [(seg.direction_type.name.lower(), seg.duration_s, seg.path_length) for seg in x]
-
-        # print(f"total active s: {sum([d[1] for d in details]):.2f}")
-        # print(f"total distance: {sum([d[2] for d in details]):.2f}")
-        # print([f"{d[0]} | {d[1]} | {d[2]:.2f}" for d in details])
         return x
 
     def clear(self) -> None:
-        print("clearing history!")
         self._buf.clear()
 
     def _prune(self) -> None:

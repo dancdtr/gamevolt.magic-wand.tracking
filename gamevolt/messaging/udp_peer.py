@@ -24,11 +24,11 @@ class UdpPeer(MessageReceiverProtocol, MessageSenderProtocol):
     def message_received(self) -> Event[Callable[[str], None]]:
         return self._message_received
 
-    def start(self) -> None:
+    def start_async(self) -> None:
         self._rx.message_received.subscribe(self._on_message_received)
         self._rx.start()
 
-    def stop(self) -> None:
+    def stop_async(self) -> None:
         self._rx.message_received.unsubscribe(self._on_message_received)
         self._rx.stop()
 

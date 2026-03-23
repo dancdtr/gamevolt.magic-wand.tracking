@@ -11,7 +11,6 @@ from wand.input_type import InputType
 @dataclass
 class InputSettings(SettingsBase):
     tracked_wands: TrackedWandsSettings
-    server: WandServerSettings
     input_type: InputType
     mock: MockWandSettings
     wand: WandSettings

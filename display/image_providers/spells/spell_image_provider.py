@@ -30,7 +30,7 @@ class SpellImageProvider(PILImageProvider[SpellType]):
         for spell_type in SpellType:
             file = f"{spell_type.name.lower()}.png"
 
-            path = os.path.join(self._settings.assets_dir, file)
+            path = os.path.join(self._settings.bundled_path, file)
 
             base_image = load_image(path)
             size = (self._settings.image_size, self._settings.image_size)

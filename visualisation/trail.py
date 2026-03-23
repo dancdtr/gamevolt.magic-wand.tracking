@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Deque, Iterable, Sequence
+from typing import Deque, Sequence
 
 from visualisation.configuration.trail_settings import TrailSettings
 from wand.wand_rotation import WandRotation
@@ -9,6 +9,8 @@ from wand.wand_rotation import WandRotation
 
 class Trail:
     def __init__(self, settings: TrailSettings) -> None:
+        self._settings = settings
+
         self._points: Deque[tuple[float, float]] = deque(maxlen=settings.max_points)
 
     @property
@@ -18,19 +20,16 @@ class Trail:
     def __len__(self) -> int:
         return len(self._points)
 
-    def clear(self) -> None:
-        self._points.clear()
-
-    def add_xy(self, x: float, y: float) -> None:
-        self._points.append((x, y))
-
-    def add(self, pos: WandRotation) -> None:
-        if pos.nx and pos.ny:
-            self.add_xy(pos.nx, pos.ny)
-
-    def extend_xy(self, pts: Iterable[tuple[float, float]]) -> None:
-        for x, y in pts:
-            self._points.append((x, y))
-
     def points(self) -> Sequence[tuple[float, float]]:
         return list(self._points)
+
+    def add(self, pos: WandRotation) -> None:
+        if pos.nx is None or pos.ny is None:
+            return
+        self.add_xy(pos.nx, pos.ny)
+
+    def add_xy(self, x: float, y: float) -> None:
+        self._points.append((x * self._settings.scale, y * self._settings.scale))
+
+    def clear(self) -> None:
+        self._points.clear()

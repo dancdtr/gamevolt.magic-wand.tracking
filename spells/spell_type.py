@@ -1,7 +1,7 @@
-from enum import Enum, auto
+from enum import StrEnum, auto
 
 
-class SpellType(Enum):
+class SpellType(StrEnum):
     NONE = auto()
     REVELIO = auto()
     LOCOMOTOR = auto()
@@ -11,7 +11,7 @@ class SpellType(Enum):
     COLOVARIA = auto()
     SLUGULUS_ERECTO = auto()
     VENTUS = auto()
-    RICTUMSEMPRA = auto()
+    RICTUSEMPRA = auto()
     REPARO = auto()
     PIERTOTUM_LOCOMOTOR = auto()
     ALOHOMORA = auto()
