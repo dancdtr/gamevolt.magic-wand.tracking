@@ -19,6 +19,7 @@ zones:
     - ["Z003", "PEPPER_BREATH"]
     - ["Z004", "APARECIUM"]
     - ["Z005", "CANTIS"]
+    # - ["Z006", "CANTIS"]
 
 anchor_area_manager:
   anchor_areas:
@@ -225,6 +226,7 @@ spell_registry:
     - [28, "lumos_maxima"]
     - [29, "herbivicius"]
     - [30, "nebulus"]
+    - [31, "nox"]
 
 wand_spell_cue_controller:
   wand_levels:

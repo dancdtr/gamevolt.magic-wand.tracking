@@ -33,3 +33,4 @@ class SpellType(StrEnum):
     LUMOS_MAXIMA = auto()
     HERBIVICIUS = auto()
     NEBULUS = auto()
+    NOX = auto()

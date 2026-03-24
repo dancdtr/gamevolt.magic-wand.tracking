@@ -20,6 +20,7 @@ from spells.library.lumos_maxima import lumos_maxima
 from spells.library.meteolojinx import meteolojinx
 from spells.library.nebulus import nebulus
 from spells.library.none_spell import none_spell
+from spells.library.nox import nox
 from spells.library.pepper_breath import pepper_breath
 from spells.library.piertotum_locomotor import piertotum_locomotor
 from spells.library.reparo import reparo
@@ -66,6 +67,7 @@ _SPELL_PROVIDERS: dict[SpellType, Callable[[], SpellDefinition]] = {
     SpellType.VENTUS: ventus,
     SpellType.VERA_VERTO: vera_verto,
     SpellType.WINGARDIUM_LEVIOSA: wingardium_leviosa,
+    SpellType.NOX: nox,
 }
 
 
