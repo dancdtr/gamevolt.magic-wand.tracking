@@ -27,7 +27,7 @@ def nox() -> SpellDefinition:
                     SpellStep(frozenset({DirectionType.MOVING_W})),
                     SpellStep(frozenset({DirectionType.MOVING_SW})),
                 ],
-                min_steps=0,
+                min_steps=1,
                 relative_distance=1,
                 relative_duration=1,
             ),

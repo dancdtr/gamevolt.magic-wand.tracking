@@ -56,7 +56,7 @@ class MockZoneManager(ZoneManagerProtocol):
                 self._current_zone.on_wand_exit(wand_id)
                 self._zone_exited.invoke(self._current_zone, wand_id)
 
-        zone_id = f"Z0{'0' if 10 >spell.id > 0 else''}{spell.id}"
+        zone_id = f"Z0{'0' if 10 >spell.id >= 0 else''}{spell.id}"
         self._current_zone = Zone(self._logger, zone_id, spell_types=[spell.type])
 
         for wand_id in self._wand_ids:

@@ -76,6 +76,9 @@ class TrackedWandManager:
 
         for wand in self._tracked_wands.values():
             wand.update()
+            if wand.active_reminder_timer.is_complete:
+                self._wand_device_controller.play_active_reminder_cue(wand.id)
+                wand.active_reminder_timer.restart()
 
     def tracked_wands(self) -> list[TrackedWand]:
         return list(self._tracked_wands.values())

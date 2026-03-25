@@ -8,9 +8,9 @@ class ZoneFactory:
     def __init__(self, logger: Logger) -> None:
         self._logger = logger
 
-    def create(self, id: str, spell_types: list[str]) -> Zone:
+    def create(self, id: str, spell_types: list[SpellType]) -> Zone:
         return Zone(
             logger=self._logger,
             id=id,
-            spell_types=[SpellType[spell_type.strip().upper()] for spell_type in spell_types],
+            spell_types=spell_types,
         )

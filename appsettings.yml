@@ -1,6 +1,6 @@
 ---
 name: "potter.wand-server"
-is_dev: False
+is_dev: True
 
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
@@ -60,6 +60,7 @@ input:
     sample_frequency: 30
 
   wand:
+    active_reminder_interval: 1.3
     rmf:
       invert_x: True
       invert_y: True
@@ -253,6 +254,9 @@ wand_spell_cue_controller:
 wand_device_controller:
   command_broadcast_interval: 0.05
   disable_wand_tx: True
-  wand_chosen_haptic_cues: [93, 93, 93, 93]
+  wand_chosen_haptic_cues: []
+  # wand_chosen_haptic_cues: [93, 93]
+  # active_reminder_haptic_cues: [73, 14]
+  active_reminder_haptic_cues: [83]
   spell_cast_haptic_cues: [93, 14, 56]
   spell_under_cast_haptic_cues: [93, 14, 56]

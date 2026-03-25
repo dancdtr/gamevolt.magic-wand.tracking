@@ -42,8 +42,12 @@ class WandDeviceController:
 
     def play_spell_cast_cue(self, wand_id: str, has_sufficient_level: bool) -> None:
         self._logger.verbose(f"Playing wand ({wand_id}) {'successful cast' if has_sufficient_level else 'under cast'} haptic sequence...")
-        cues = self._settings.spell_under_cast_haptic_cues if has_sufficient_level else self._settings.spell_under_cast_haptic_cues
-        self._play_haptic_sequence(wand_id, cues)
+        # cues = self._settings.spell_cast_haptic_cues if has_sufficient_level else self._settings.spell_under_cast_haptic_cues
+        self._play_haptic_sequence(wand_id, self._settings.spell_cast_haptic_cues)
+
+    def play_active_reminder_cue(self, wand_id: str) -> None:
+        self._logger.verbose(f"Playing wand ({wand_id}) active reminder haptic sequence...")
+        self._play_haptic_sequence(wand_id, self._settings.active_reminder_haptic_cues)
 
     def _set_wand_tx(self, wand_id: str, enabled: bool) -> None:
         self._logger.verbose(f"{'Enabling' if enabled else 'Disabling'} wand ({wand_id}) TX...")

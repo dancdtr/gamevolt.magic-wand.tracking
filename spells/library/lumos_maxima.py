@@ -28,7 +28,7 @@ def lumos_maxima() -> SpellDefinition:
         min_spell_steps=2,
         min_total_duration_s=0.7,
         max_total_duration_s=2.5,
-        max_idle_gap_s=0.9,
+        max_idle_gap_s=0.7,
         max_filler_duration_s=0.6,
         check_duration=True,
         pause_speed_threshold=0.04,

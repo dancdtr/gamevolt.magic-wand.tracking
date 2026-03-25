@@ -32,8 +32,8 @@ class ZoneManager(ZoneManagerProtocol):
         self._logger = logger
 
         self._zones: dict[str, Zone] = {}
-        for zone in settings.zones:
-            self._zones[zone.id] = self._zone_factory.create(zone.id, zone.spells)
+        for zone_settings in settings.zones:
+            self._zones[zone_settings.id] = self._zone_factory.create(zone_settings.id, zone_settings.spells)
 
     @property
     def zone_entered(self) -> Event[Callable[[Zone, str], None]]:
