@@ -69,7 +69,7 @@ class VisualisedWand:
         self.reset()
 
     def _add_rotation(self, sample: WandRotation) -> None:
-        if self._tracked_wand._current_spell_target is SpellType.NONE:
+        if self._tracked_wand._current_spell_targets is SpellType.NONE:
             return
 
         self._x += sample.x_delta

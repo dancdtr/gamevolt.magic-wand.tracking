@@ -30,7 +30,7 @@ class TrackedWandManager:
     ) -> None:
         self.wand_motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.wand_rotation_updated: Event[Callable[[WandRotation], None]] = Event()
-        self.spell_cast: Event[Callable[[TrackedWand, Zone], None]] = Event()
+        self.spell_cast: Event[Callable[[TrackedWand, Zone, SpellType], None]] = Event()
 
         self._wand_device_controller = wand_device_controller
         self._tracked_wand_factory = tracked_wand_factory
@@ -114,7 +114,7 @@ class TrackedWandManager:
     def _on_zone_entered(self, zone: Zone, wand_id: str) -> None:
         wand = self._get_wand(wand_id)
 
-        wand.set_spell_target(zone.spell_type)
+        wand.set_spell_targets(zone.spell_types)
         wand.start()
 
         self._wand_device_controller.set_wand_active(wand.id)
@@ -130,8 +130,8 @@ class TrackedWandManager:
     def _on_spell_cast(self, wand: TrackedWand, spell_type: SpellType) -> None:
         zone = self._zone_manager.get_zone_containing_wand_id(wand.id)
 
-        self._logger.debug(f"Wand ({wand.id}) cast '{zone.spell_type.name}'!")
-        self.spell_cast.invoke(wand, zone)
+        self._logger.debug(f"Wand ({wand.id}) cast '{spell_type.name}'!")
+        self.spell_cast.invoke(wand, zone, spell_type)
 
     def _get_wand(self, id: str) -> TrackedWand:
         wand = self._tracked_wands.get(id)

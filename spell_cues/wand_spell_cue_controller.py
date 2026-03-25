@@ -41,16 +41,16 @@ class WandSpellCueController:
     def stop(self) -> None:
         self._tracked_wand_manager.spell_cast.unsubscribe(self._on_spell_cast)
 
-    def _on_spell_cast(self, wand: TrackedWand, zone: Zone) -> None:
+    def _on_spell_cast(self, wand: TrackedWand, zone: Zone, spell_type: SpellType) -> None:
         wizard_level = self._get_wizard_level(wand.id)
-        self._show_system_controller.play_spell(zone.spell_type, wizard_level)
+        self._show_system_controller.play_spell(spell_type, wizard_level)
 
-        spell_level = SPELL_REQUIREMENTS.get(zone.spell_type, WizardLevel.BEGINNER)
+        spell_level = SPELL_REQUIREMENTS.get(spell_type, WizardLevel.BEGINNER)
 
         has_sufficient_level = self._has_sufficient_level(wizard_level, spell_level)
         cast_message = f"{'successfully cast' if has_sufficient_level else 'under cast'}"
         self._logger.debug(
-            f"'{wizard_level.name.upper()}' wizard with wand ({wand.id}) {cast_message} '{spell_level.name}' spell '{zone.spell_type.name}'."
+            f"'{wizard_level.name.upper()}' wizard with wand ({wand.id}) {cast_message} '{spell_level.name}' spell '{spell_type.name}'."
         )
         self._wand_device_controller.play_spell_cast_cue(wand.id, has_sufficient_level)
 

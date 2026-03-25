@@ -4,8 +4,8 @@ from spells.spell_type import SpellType
 
 
 class Zone:
-    def __init__(self, logger: Logger, id: str, spell_type: SpellType) -> None:
-        self._spell_type = spell_type
+    def __init__(self, logger: Logger, id: str, spell_types: list[SpellType]) -> None:
+        self._spell_types = spell_types
         self._logger = logger
         self._id = id
 
@@ -16,16 +16,16 @@ class Zone:
         return self._id
 
     @property
-    def wand_ids(self) -> tuple[str, ...]:
-        return tuple(self._wand_ids)
+    def wand_ids(self) -> list[str]:
+        return list(self._wand_ids)
 
     @property
     def wand_count(self) -> int:
         return len(self._wand_ids)
 
     @property
-    def spell_type(self) -> SpellType:
-        return self._spell_type
+    def spell_types(self) -> list[SpellType]:
+        return list(self._spell_types)
 
     def contains_wand_id(self, wand_id: str) -> bool:
         return wand_id in self._wand_ids

@@ -14,12 +14,18 @@ zones:
     recv_timeout_s: 2
 
   zones:
-    - ["Z001", "RICTUSEMPRA"]
-    - ["Z002", "REPARO"]
-    - ["Z003", "PEPPER_BREATH"]
-    - ["Z004", "APARECIUM"]
-    - ["Z005", "CANTIS"]
-    # - ["Z006", "CANTIS"]
+    - id: Z001
+      spells: [RICTUSEMPRA]
+    - id: Z002
+      spells: [REPARO]
+    - id: Z003
+      spells: [PEPPER_BREATH]
+    - id: Z004
+      spells: [APARECIUM]
+    - id: Z005
+      spells: [CANTIS]
+    - id: Z006
+      spells: [LUMOS_MAXIMA, NOX]
 
 anchor_area_manager:
   anchor_areas:
@@ -28,11 +34,9 @@ anchor_area_manager:
     - id: A002
       zone_ids: ["Z002"]
     - id: A003
-      zone_ids: ["Z003"]
+      zone_ids: ["Z003", "Z006"]
     - id: A004
-      zone_ids: ["Z004"]
-    - id: A005
-      zone_ids: ["Z005"]
+      zone_ids: ["Z004", "Z005"]
 
 input:
   tracked_wands:
@@ -161,9 +165,13 @@ accuracy:
     required_step_bias: 0.5
 
 show_system_controller:
-  udp_transmitter:
+  show_system_udp_tx:
     host: "192.168.1.121"
     port: 6006
+
+  lamp_udp_tx:
+    host: "172.30.1.37"
+    port: 8888
 
 anchor_bridge:
   udp_transmitter:

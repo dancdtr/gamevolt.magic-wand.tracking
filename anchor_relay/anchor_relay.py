@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from logging import Logger
 
 from anchor_area.anchor_area import AnchorArea
+from gamevolt.logging import Logger
 from gamevolt.serial.line_receiver_protocol import LineReceiverProtocol
 from gamevolt.web_sockets.web_socket_client import WebSocketClient
 from wand.data.data_line import DataLine
@@ -74,7 +74,7 @@ class AnchorRelay:
 
     def _on_header(self, raw: str, header: PacketHeader) -> None:
         if not self._zone_prescence.is_present(header.tag_hex):
-            self._logger.debug(f"Dropping PKT for non-present wand: tag={header.tag_hex} seq={header.seq}")
+            self._logger.trace(f"Dropping PKT for non-present wand: tag={header.tag_hex} seq={header.seq}")
             return
 
         self._pending[header.seq] = PendingRelayPacket(

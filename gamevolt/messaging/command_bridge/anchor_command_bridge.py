@@ -4,7 +4,6 @@ import asyncio
 from typing import Any
 
 from gamevolt.logging import Logger
-from gamevolt.messaging.command_bridge.configuration.anchor_command_bridge_settings import AnchorCommandBridgeSettings
 from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.serial.line_sender_protocol import LineSenderProtocol
 from messaging.messages.wand_haptic_message import WandHapticMessage
@@ -14,12 +13,9 @@ from messaging.messages.wand_tx_message import WandTxMessage
 
 
 class AnchorCommandBridge:
-    def __init__(
-        self, logger: Logger, message_handler: MessageHandler, serial_transport: LineSenderProtocol, settings: AnchorCommandBridgeSettings
-    ) -> None:
+    def __init__(self, logger: Logger, message_handler: MessageHandler, serial_transport: LineSenderProtocol) -> None:
         self._message_handler = message_handler
         self._serial = serial_transport
-        self._settings = settings
         self._logger = logger
 
         self._send_lock = asyncio.Lock()
@@ -59,8 +55,7 @@ class AnchorCommandBridge:
     def _fire_and_forget_send(self, line: str) -> None:
         async def _run() -> None:
             async with self._send_lock:
-                for _ in range(max(1, self._settings.repeat)):
-                    await self._serial.send_line_async(line)
+                await self._serial.send_line_async(line)
 
         asyncio.create_task(_run())
 
@@ -73,13 +68,13 @@ class AnchorCommandBridge:
             return
 
         line = f"led {tag} {1 if message.enabled else 0} {seq}"
-        self._logger.verbose(f"UDP msg -> SERIAL '{line}' (repeat={self._settings.repeat})")
+        self._logger.verbose(f"UDP msg -> SERIAL '{line}'")
         self._fire_and_forget_send(line)
 
     def _on_wand_tx_message(self, message: WandTxMessage) -> None:
         tag = self._norm_tag(message.tag_id)
         line = f"tx {tag} {1 if message.enabled else 0}"
-        self._logger.verbose(f"UDP msg -> SERIAL '{line}' (repeat={self._settings.repeat})")
+        self._logger.verbose(f"UDP msg -> SERIAL '{line}'")
         self._fire_and_forget_send(line)
 
     def _on_wand_haptic_message(self, message: WandHapticMessage) -> None:
@@ -91,7 +86,7 @@ class AnchorCommandBridge:
             return
 
         line = f"hplay {tag} {pattern_id}"
-        self._logger.verbose(f"UDP msg -> SERIAL '{line}' (repeat={self._settings.repeat})")
+        self._logger.verbose(f"UDP msg -> SERIAL '{line}'")
         self._fire_and_forget_send(line)
 
     def _on_wand_haptic_sequence_message(self, message: WandHapticSequenceMessage) -> None:
@@ -112,7 +107,7 @@ class AnchorCommandBridge:
             return
 
         line = f"hseq {tag} {' '.join(str(pattern_id) for pattern_id in patterns)}"
-        self._logger.verbose(f"UDP msg -> SERIAL '{line}' (repeat={self._settings.repeat})")
+        self._logger.verbose(f"UDP msg -> SERIAL '{line}'")
         self._fire_and_forget_send(line)
 
     # def _send_line_repeating(self, line: str, repeat: int) -> None:

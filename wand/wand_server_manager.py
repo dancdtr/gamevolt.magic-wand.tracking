@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Callable, Iterable
+from typing import Callable
 
 from gamevolt.events.event import Event
 from wand.wand_client import WandClient
@@ -9,7 +9,7 @@ from wand.wand_server_protocol import WandServerProtocol
 
 
 class WandServerManager(WandServerProtocol):
-    def __init__(self, logger: Logger, servers: Iterable[WandServer]) -> None:
+    def __init__(self, logger: Logger, servers: list[WandServer]) -> None:
         self._wand_rotation_raw_updated: Event[Callable[[WandRotationRaw], None]] = Event()
         self._wand_disconnected: Event[Callable[[WandClient], None]] = Event()
         self._wand_connected: Event[Callable[[WandClient], None]] = Event()

@@ -45,7 +45,7 @@ class TrackedWand(WandBase):
         self._settings = settings
         self._id = id
 
-        self._current_spell_target: SpellType = SpellType.NONE
+        self._current_spell_targets: list[SpellType] = []
         self._last_rotation: WandRotation | None = None
 
     @property
@@ -70,7 +70,7 @@ class TrackedWand(WandBase):
 
         self._motion_processor.stop()
 
-        self._spell_matcher.set_spell_target(SpellType.NONE)
+        self._spell_matcher.clear_spell_targets()
 
         # self._motion_processor.direction_changed.unsubscribe(self._on_direction_changed)
         self._motion_processor.segment_completed.unsubscribe(self._on_segment_completed)
@@ -81,13 +81,13 @@ class TrackedWand(WandBase):
     def update(self) -> None:
         pass
 
-    def set_spell_target(self, type: SpellType) -> None:
-        self._logger.info(f"Wand ({self._id}) updating spell target to '{type.name}'.")
-        self._current_spell_target = type
-        self._spell_matcher.set_spell_target(type)
+    def set_spell_targets(self, spell_types: list[SpellType]) -> None:
+        self._logger.info(f"Wand ({self._id}) updating spell targets to '{[spell_type.name for spell_type in spell_types]}'.")
+        self._current_spell_targets = spell_types
+        self._spell_matcher.set_spell_target(spell_types)
 
     def clear_spell_target(self) -> None:
-        self.set_spell_target(SpellType.NONE)
+        self.set_spell_targets([])
 
     def reset(self) -> None:
         self._forward_interpreter.reset()
@@ -106,7 +106,6 @@ class TrackedWand(WandBase):
 
     def on_rotation_raw_updated(self, raw: WandRotationRaw) -> None:
         wand_pos = self._forward_interpreter.on_sample(raw.id, raw.ms, raw.fx, raw.fy, raw.fz)
-
         transformed = WandRotation(
             id=raw.id,
             ts_ms=wand_pos.ts_ms,

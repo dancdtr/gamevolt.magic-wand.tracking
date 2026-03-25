@@ -7,4 +7,5 @@ from show_system.wizard_level import WizardLevel
 
 @dataclass
 class ShowSystemControllerSettings(SettingsBase):
-    udp_transmitter: UdpTxSettings
+    show_system_udp_tx: UdpTxSettings
+    lamp_udp_tx: UdpTxSettings

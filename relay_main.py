@@ -52,7 +52,6 @@ async def main() -> int:
     bridge = AnchorCommandBridge(
         message_handler=web_socket_message_handler,
         serial_transport=serial_transport,
-        settings=settings.anchor_command_bridge,
         logger=logger,
     )
 

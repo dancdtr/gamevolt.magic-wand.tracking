@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from logging import Logger
-from typing import Iterable
 
 from gamevolt.events.event import Event
 from spells.spell import Spell
@@ -16,7 +15,7 @@ class MockZoneManager(ZoneManagerProtocol):
         self,
         logger: Logger,
         spell_registry: SpellRegistry,
-        wand_ids: Iterable[str],
+        wand_ids: list[str],
     ) -> None:
         self._spell_registry = spell_registry
         self._wand_ids = wand_ids
@@ -58,7 +57,7 @@ class MockZoneManager(ZoneManagerProtocol):
                 self._zone_exited.invoke(self._current_zone, wand_id)
 
         zone_id = f"Z0{'0' if 10 >spell.id > 0 else''}{spell.id}"
-        self._current_zone = Zone(self._logger, zone_id, spell_type=spell.type)
+        self._current_zone = Zone(self._logger, zone_id, spell_types=[spell.type])
 
         for wand_id in self._wand_ids:
             self._current_zone.on_wand_enter(wand_id)

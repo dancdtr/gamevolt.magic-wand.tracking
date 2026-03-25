@@ -26,18 +26,22 @@ class WandDeviceController:
         self._set_wand_tx(wand_id, True)
 
         self._delay(
-            self._settings.command_broadcast_interval, lambda: self._play_haptic_sequence(wand_id, self._settings.wand_chosen_haptic_cues)
+            self._settings.command_broadcast_interval,
+            lambda: self._play_haptic_sequence(
+                wand_id,
+                self._settings.wand_chosen_haptic_cues,
+            ),
         )
 
     def set_wand_inactive(self, wand_id: str) -> None:
         if not self._settings.disable_wand_tx:
             return
 
-        self._logger.debug(f"Setting wand ({wand_id}) setting inactive...")
+        self._logger.verbose(f"Setting wand ({wand_id}) setting inactive...")
         self._set_wand_tx(wand_id, False)
 
     def play_spell_cast_cue(self, wand_id: str, has_sufficient_level: bool) -> None:
-        self._logger.debug(f"Playing wand ({wand_id}) {'successful cast' if has_sufficient_level else 'under cast'} haptic sequence...")
+        self._logger.verbose(f"Playing wand ({wand_id}) {'successful cast' if has_sufficient_level else 'under cast'} haptic sequence...")
         cues = self._settings.spell_under_cast_haptic_cues if has_sufficient_level else self._settings.spell_under_cast_haptic_cues
         self._play_haptic_sequence(wand_id, cues)
 

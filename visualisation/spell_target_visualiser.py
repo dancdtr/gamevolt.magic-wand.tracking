@@ -82,13 +82,14 @@ class SpellTargetVisualiser(ZoneVisualiserProtocol):
         self._visualiser.update()
 
     def show_zone(self, zone: Zone | None) -> None:
-        if zone is None or zone.spell_type is SpellType.NONE:
+        if zone is None or zone.spell_types is SpellType.NONE:
             self._logger.debug("Target spell updated with None")
             self._set_base_image(None)
             return
 
-        self._logger.debug(f"Target spell updated; showing instruction for {zone.spell_type.name}")
-        self.show_spell_instruction(zone.spell_type)
+        target = zone.spell_types[0]
+        self._logger.debug(f"Target spell updated; showing instruction for {target}")
+        self.show_spell_instruction(target)
 
     def show_spell_instruction(self, spell_type: SpellType) -> None:
         image = self._spell_image_library.get_spell_instruction_image(spell_type)

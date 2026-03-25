@@ -24,7 +24,8 @@ def cantis() -> SpellDefinition:
             SpellStepGroup(
                 name="UpperArm",
                 steps=[
-                    SpellStep(frozenset({DirectionType.MOVING_NE, DirectionType.MOVING_N}), required=True),
+                    SpellStep(frozenset({DirectionType.MOVING_NE})),
+                    SpellStep(frozenset({DirectionType.MOVING_N})),
                 ],
                 min_steps=1,
                 relative_distance=2 / 5,

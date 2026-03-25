@@ -165,7 +165,7 @@ def _coerce_enum(value: Any, enum_cls: type[Enum]) -> Enum:
         return enum_cls(value)
     except Exception as e:
         allowed = ", ".join(sorted(list(enum_cls.__members__.keys()) + [str(m.value) for m in enum_cls]))
-        raise ValueError(f"{enum_cls.__name__}: {value!r} not in {{{allowed}}}") from e
+        raise ValueError(f"{enum_cls.__name__}: {value!r} not a valid enum. Valid: {{{allowed}}}") from e
 
 
 @dataclass

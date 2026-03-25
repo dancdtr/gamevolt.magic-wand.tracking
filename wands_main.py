@@ -142,9 +142,15 @@ wand_visualiser = WandVisualiserFactory(
     logger=logger,
 ).create()
 
-show_system_udp_tx = UdpTx(logger, settings.show_system_controller.udp_transmitter)
-show_system_controller = ShowSystemController(logger, settings.show_system_controller, show_system_udp_tx)
 
+show_system_udp_tx = UdpTx(logger, settings.show_system_controller.show_system_udp_tx)
+lamp_tx = UdpTx(logger, settings=settings.show_system_controller.lamp_udp_tx)
+show_system_controller = ShowSystemController(
+    settings=settings.show_system_controller,
+    show_system_tx=show_system_udp_tx,
+    lamp_tx=lamp_tx,
+    logger=logger,
+)
 
 spell_cast_presentation_controller = SpellCastPresentationController(
     zone_visualiser=zone_application._presentation_controller._visualiser,

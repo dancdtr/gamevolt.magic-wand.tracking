@@ -7,4 +7,4 @@ from spells.spell_type import SpellType
 @dataclass
 class ZoneSettings(SettingsBase):
     id: str
-    spell_type: SpellType
+    spells: tuple[SpellType, ...]
