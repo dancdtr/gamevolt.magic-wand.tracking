@@ -1,6 +1,6 @@
 ---
 name: "potter.wand-server"
-is_dev: True
+is_dev: False
 
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
