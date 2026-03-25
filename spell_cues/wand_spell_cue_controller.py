@@ -3,12 +3,12 @@ from __future__ import annotations
 from logging import Logger
 
 from show_system.show_system_controller import ShowSystemController
-from show_system.wizard_level import WizardLevel
 from spell_cues.configuration.wand_spell_cue_controller_settings import WandSpellCueControllerSettings
 from spells.spell_type import SpellType
 from wand.tracked_wand import TrackedWand
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_device_controller import WandDeviceController
+from wizards.wizard_level import WizardLevel
 from zones.zone import Zone
 
 SPELL_REQUIREMENTS: dict[SpellType, WizardLevel] = {

@@ -2,8 +2,8 @@ from logging import Logger
 
 from gamevolt.messaging.udp.udp_tx import UdpTx
 from show_system.configuration.show_system_controller_settings import ShowSystemControllerSettings
-from show_system.wizard_level import WizardLevel
 from spells.spell_type import SpellType
+from wizards.wizard_level import WizardLevel
 
 
 class ShowSystemController:
