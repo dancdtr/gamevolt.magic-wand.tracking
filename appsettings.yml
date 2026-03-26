@@ -251,6 +251,10 @@ wand_spell_cue_controller:
     - ["E009", "INTERMEDIATE"]
     - ["E010", "ADVANCED"]
 
+wizard_stats_manager:
+  intermediate_threshold: 7
+  advanced_threshold: 11
+
 wand_device_controller:
   command_broadcast_interval: 0.05
   disable_wand_tx: True

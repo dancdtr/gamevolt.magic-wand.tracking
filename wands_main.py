@@ -30,6 +30,7 @@ from wand.tracked_wand_factory import TrackedWandFactory
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_device_controller import WandDeviceController
 from wand.wand_server import WandServer
+from wizards.wizard_stats_manager import WizardStatsManager
 from zones.zone_application_builder import ZoneApplicationBuilder
 from zones.zone_factory import ZoneFactory
 from zones.zone_manager import ZoneManager
@@ -159,11 +160,13 @@ spell_cast_presentation_controller = SpellCastPresentationController(
     logger=logger,
 )
 
+wizard_stats_manager = WizardStatsManager(logger, settings.wizard_stats_manager)
 wand_spell_cue_controller = WandSpellCueController(
     show_system_controller=show_system_controller,
     wand_device_controller=wand_device_controller,
     tracked_wand_manager=tracked_wand_manager,
     settings=settings.wand_spell_cue_controller,
+    wizard_stats_manager=wizard_stats_manager,
     logger=logger,
 )
 
@@ -194,6 +197,8 @@ async def main() -> int:
 
         server.start()
         wand_visualiser.start()
+
+        wizard_stats_manager.create_wizard_stats([wand.id for wand in tracked_wand_manager.tracked_wands()])
 
         # logger.info(f"Enabling all wands...")
         # for wand in tracked_wand_manager.tracked_wands():

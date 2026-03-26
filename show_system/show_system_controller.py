@@ -3,7 +3,7 @@ from logging import Logger
 from gamevolt.messaging.udp.udp_tx import UdpTx
 from show_system.configuration.show_system_controller_settings import ShowSystemControllerSettings
 from spells.spell_type import SpellType
-from wizards.wizard_level import WizardLevel
+from wizards.wizard_level_type import WizardLevelType
 
 
 class ShowSystemController:
@@ -13,8 +13,7 @@ class ShowSystemController:
         self._lamp_tx = lamp_tx
         self._logger = logger
 
-    def play_spell(self, spell_type: SpellType, level: WizardLevel) -> None:
-
+    def play_spell(self, spell_type: SpellType, level: WizardLevelType) -> None:
         if spell_type in (SpellType.LUMOS_MAXIMA, SpellType.NOX):
             self._logger.info(f"Notifying lamp to show '{spell_type.name}' for level '{level.name}'...")
             self._lamp_tx.send_str(spell_type.name.capitalize())

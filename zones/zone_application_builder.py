@@ -11,7 +11,7 @@ from zones.visualisation.null_zone_visualiser import NullZoneVisualiser
 from zones.visualisation.zone_presentation_controller import ZonePresentationController
 from zones.zone_application import ZoneApplication
 
-WANDS_IDS = ["E007"]
+WANDS_IDS = ["E000"]
 
 
 class ZoneApplicationBuilder:

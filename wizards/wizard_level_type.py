@@ -1,7 +1,7 @@
 from enum import StrEnum, auto
 
 
-class WizardLevel(StrEnum):
+class WizardLevelType(StrEnum):
     BEGINNER = auto()
     INTERMEDIATE = auto()
     ADVANCED = auto()

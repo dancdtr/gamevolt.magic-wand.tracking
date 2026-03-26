@@ -15,6 +15,7 @@ from visualisation.configuration.wand_visualiser_settings import WandVisualiserS
 from wand.configuration.input_settings import InputSettings
 from wand.configuration.wand_device_controller_settings import WandDeviceControllerSettings
 from wand.configuration.wand_server_settings import WandServerSettings
+from wizards.configuration.wizard_stats_manager_settings import WizardStatsManagerSettings
 from zones.configuration.zones_settings import ZonesSettings
 
 
@@ -38,3 +39,4 @@ class AppSettings(AppSettingsBase):
     anchor_area_manager: AnchorAreaManagerSettings
     wand_spell_cue_controller: WandSpellCueControllerSettings
     wand_device_controller: WandDeviceControllerSettings
+    wizard_stats_manager: WizardStatsManagerSettings
