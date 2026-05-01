@@ -9,7 +9,6 @@ dependencies:
   - pyserial
   - pillow
   - pip:
-      - gamevolt.python.debugging==1.1.0
       - jsonmerge
       - pyserial-asyncio
       - uvloop

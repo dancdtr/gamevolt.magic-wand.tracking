@@ -4,8 +4,6 @@ from __future__ import annotations
 import time
 import tkinter as tk
 
-from gamevolt_debugging import TickMonitor
-
 from gamevolt.logging import Logger
 from gamevolt.visualisation.visualiser import Visualiser
 from wand.configuration.mock_wand_settings import MockWandSettings
@@ -24,13 +22,15 @@ class MockWand(WandBase):
     - Outputs centered coordinates in [-1..1] with +Y up.
     """
 
-    def __init__(self, logger: Logger, settings: MockWandSettings, visualiser: Visualiser) -> None:
+    def __init__(
+        self, logger: Logger, settings: MockWandSettings, visualiser: Visualiser
+    ) -> None:
         super().__init__(logger)
         self._logger = logger
         self._settings = settings
         self._visualiser = visualiser
 
-        self._tick_monitor = TickMonitor()
+        # self._tick_monitor = TickMonitor()
         self._interval_s = 1.0 / self._settings.sample_frequency
         self._next_t = time.perf_counter() + self._interval_s
 
@@ -57,7 +57,10 @@ class MockWand(WandBase):
 
         try:
             # Geometry should already be realised by whoever pumps the preview.
-            if self._visualiser.canvas.winfo_width() <= 1 or self._visualiser.canvas.winfo_height() <= 1:
+            if (
+                self._visualiser.canvas.winfo_width() <= 1
+                or self._visualiser.canvas.winfo_height() <= 1
+            ):
                 self._visualiser.canvas.update_idletasks()
 
             # Screen-space pointer
@@ -112,7 +115,7 @@ class MockWand(WandBase):
                 ny=cy,
             )
 
-            self._tick_monitor.tick()
+            # self._tick_monitor.tick()
             self.position_updated.invoke(sample)
 
             self._next_t += self._interval_s
