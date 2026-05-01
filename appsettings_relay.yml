@@ -7,7 +7,7 @@ logging:
   minimum_level: INFORMATION
 
 serial_receiver:
-  port: /dev/tty.usbmodem14101
+  port: /dev/serial/by-id/usb-iLabs_Challenger_2040_UWB_DF622C64176C2627-if00
   baud: 115200
   timeout: 3
   retry_interval: 2
