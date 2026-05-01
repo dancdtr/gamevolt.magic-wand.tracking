@@ -65,6 +65,15 @@ class ZoneManager(ZoneManagerProtocol):
 
         raise KeyError(f"No zone containing wand ID ({wand_id})!")
 
+    def pin_wand(self, zone_id: str, wand_id: str) -> None:
+        zone = self.get_zone(zone_id)
+        if zone.contains_wand_id(wand_id):
+            return
+
+        zone.on_wand_enter(wand_id)
+        self._logger.info(f"Wand ({wand_id}) pinned to zone ({zone_id}).")
+        self._zone_entered.invoke(zone, wand_id)
+
     @property
     def current_zone_changed(self) -> Event[Callable[[Zone | None], None]]:
         return self._current_zone_changed

@@ -40,5 +40,9 @@ class ZoneManagerProtocol(ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    def pin_wand(self, zone_id: str, wand_id: str) -> None:
+        raise NotImplementedError()
+
+    @abstractmethod
     def on_wand_disconnected(self, wand_id: str) -> None:
         raise NotImplementedError()

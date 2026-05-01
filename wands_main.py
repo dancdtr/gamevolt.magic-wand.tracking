@@ -187,6 +187,9 @@ async def main() -> int:
         await spell_cast_presentation_controller.start_async()
         tracked_wand_manager.start()
         anchor_area_manager.start()
+        for pinned in settings.input.tracked_wands.pinned_zones:
+            for wand_id in pinned.wand_ids:
+                zone_manager.pin_wand(pinned.zone_id, wand_id)
         if zone_message_handler is not None:
             zone_message_handler.start()
         wand_spell_cue_controller.start()

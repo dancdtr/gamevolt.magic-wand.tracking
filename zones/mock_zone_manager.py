@@ -74,6 +74,9 @@ class MockZoneManager(ZoneManagerProtocol):
     def get_zone_containing_wand_id(self, id: str) -> Zone:
         return self.get_zone(id)
 
+    def pin_wand(self, zone_id: str, wand_id: str) -> None:
+        self._logger.debug(f"MockZoneManager ignoring pin_wand({zone_id}, {wand_id}).")
+
     # def clear_zone(self) -> None:
     #     if self._current_zone is not None:
     #         for wand_id in self._wand_ids:
