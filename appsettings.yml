@@ -15,49 +15,20 @@ zones:
 
   zones:
     - id: Z001
-      spells: [RICTUSEMPRA]
-    - id: Z002
-      spells: [REPARO]
-    - id: Z003
-      spells: [PEPPER_BREATH]
-    - id: Z004
-      spells: [APARECIUM]
-    - id: Z005
-      spells: [CANTIS]
-    - id: Z006
-      spells: [LUMOS_MAXIMA, NOX]
-    - id: Z301
       spells: [LUMOS_MAXIMA, NOX]
 
 anchor_area_manager:
   anchor_areas:
-    - id: A001
+    - id: A007
       zone_ids: ["Z001"]
-    - id: A002
-      zone_ids: ["Z002"]
-    - id: A003
-      zone_ids: ["Z003", "Z006"]
-    - id: A004
-      zone_ids: ["Z004", "Z005"]
-    - id: A301
-      zone_ids: ["Z301"]
 
 input:
   tracked_wands:
     ids:
-      - "E000"
-      - "E001"
-      - "E002"
-      - "E003"
-      - "E004"
-      - "E005"
-      - "E006"
       - "E007"
-      - "E008"
-      - "E009"
-      - "E010"
-      - "E300"
-    pinned_zones: []
+    pinned_zones:
+      - zone_id: "Z001"
+        wand_ids: ["E007"]
 
   input_type: "wand"
   mock:

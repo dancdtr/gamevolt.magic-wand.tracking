@@ -1,13 +1,13 @@
 ---
 name: potter.anchor_relay
-id: UnknownAnchorRelay
+id: A007
 version: 0.1.2
 logging:
   file_path: ./Logs/potter.anchor_relay.{timestamp}.log
-  minimum_level: DEBUG
+  minimum_level: INFORMATION
 
 serial_receiver:
-  port: PLEASE_SET
+  port: /dev/tty.usbmodem14101
   baud: 115200
   timeout: 3
   retry_interval: 2
