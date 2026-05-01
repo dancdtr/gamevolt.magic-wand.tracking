@@ -1,13 +1,14 @@
 ---
 name: potter.anchor_relay
-id: A007
+id: A002
 version: 0.1.2
 logging:
   file_path: ./Logs/potter.anchor_relay.{timestamp}.log
   minimum_level: INFORMATION
 
 serial_receiver:
-  port: /dev/serial/by-id/usb-iLabs_Challenger_2040_UWB_DF622C64176C2627-if00
+  # port: /dev/serial/by-id/usb-iLabs_Challenger_2040_UWB_DF622C64176C2627-if00
+  port: /dev/serial/by-id/usb-iLabs_Challenger_2040_UWB_DF622C6417325E26-if00
   baud: 115200
   timeout: 3
   retry_interval: 2
