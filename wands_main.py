@@ -127,6 +127,8 @@ tracked_wand_manager = TrackedWandManager(
     server=server,
 )
 
+anchor_area_manager.anchor_connected_for_wand.subscribe(lambda _anchor_id, wand_id: wand_device_controller.set_wand_active(wand_id))
+
 trail_factory = TrailFactory(logger, settings.wand_visualiser.trail)
 visualised_wand_factory = VisualisedWandFactory(logger, trail_factory)
 
