@@ -11,7 +11,7 @@ class KeyHandler:
     def register_key_callback(self, key: str, callback: Callable[[], None]) -> None:
         func_id = self._root.bind(key, lambda e: callback())
 
-        if not key in self._key_registrations:
+        if key not in self._key_registrations:
             self._key_registrations[key] = {}
 
         key_dict = self._key_registrations[key]
