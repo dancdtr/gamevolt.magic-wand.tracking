@@ -231,7 +231,7 @@ wand_spell_cue_controller:
 wand_device_controller:
   command_broadcast_interval: 0.05
   disable_wand_tx: True
-  wand_chosen_haptic_cues: []
+  wand_chosen_haptic_cues: [83]
   # wand_chosen_haptic_cues: [93, 93]
   # active_reminder_haptic_cues: [73, 14]
   active_reminder_haptic_cues: [83]
