@@ -1,8 +1,6 @@
-
-[tool.black]
+[tool.ruff]
 line-length = 140
-target-version = ['py39']
+target-version = "py39"
 
-[tool.isort]
-profile = "black"
-line_length = 140
+[tool.ruff.format]
+line-ending = "auto"
