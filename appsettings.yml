@@ -15,7 +15,7 @@ zones:
 
   zones:
     - id: Z001
-      spells: [LUMOS_MAXIMA, NOX]
+      spells: [SILENCIO, LUMOS_MAXIMA, NOX]
 
 anchor_area_manager:
   anchor_areas:
