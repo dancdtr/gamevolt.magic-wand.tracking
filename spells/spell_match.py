@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from spells.spell_response_type import SpellResponseType
+from spells.spell_type import SpellType
 
 
 @dataclass(frozen=True)
@@ -10,6 +11,7 @@ class SpellMatch:
     wand_id: str
     spell_id: str
     spell_name: str
+    spell_type: SpellType
     start_ts_ms: int
     end_ts_ms: int
     duration_s: float

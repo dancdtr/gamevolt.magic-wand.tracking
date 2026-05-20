@@ -4,12 +4,11 @@ from logging import Logger
 
 from show_system.show_system_controller import ShowSystemController
 from spell_cues.configuration.wand_spell_cue_controller_settings import WandSpellCueControllerSettings
+from spells.spell_match import SpellMatch
 from spells.spell_type import SpellType
-from wand.tracked_wand import TrackedWand
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_device_controller import WandDeviceController
 from wizards.wizard_level import WizardLevel
-from zones.zone import Zone
 
 SPELL_REQUIREMENTS: dict[SpellType, WizardLevel] = {
     SpellType.RICTUSEMPRA: WizardLevel.BEGINNER,
@@ -41,18 +40,18 @@ class WandSpellCueController:
     def stop(self) -> None:
         self._tracked_wand_manager.spell_cast.unsubscribe(self._on_spell_cast)
 
-    def _on_spell_cast(self, wand: TrackedWand, zone: Zone, spell_type: SpellType) -> None:
-        wizard_level = self._get_wizard_level(wand.id)
-        self._show_system_controller.play_spell(spell_type, wizard_level)
+    def _on_spell_cast(self, match: SpellMatch) -> None:
+        wizard_level = self._get_wizard_level(match.wand_id)
+        self._show_system_controller.play_spell(match.spell_type, wizard_level)
 
-        spell_level = SPELL_REQUIREMENTS.get(spell_type, WizardLevel.BEGINNER)
+        spell_level = SPELL_REQUIREMENTS.get(match.spell_type, WizardLevel.BEGINNER)
 
         has_sufficient_level = self._has_sufficient_level(wizard_level, spell_level)
         cast_message = f"{'successfully cast' if has_sufficient_level else 'under cast'}"
         self._logger.debug(
-            f"'{wizard_level.name.upper()}' wizard with wand ({wand.id}) {cast_message} '{spell_level.name}' spell '{spell_type.name}'."
+            f"'{wizard_level.name.upper()}' wizard with wand ({match.wand_id}) {cast_message} '{spell_level.name}' spell '{match.spell_type.name}'."
         )
-        self._wand_device_controller.play_spell_cast_cue(wand.id, has_sufficient_level)
+        self._wand_device_controller.play_spell_cast_cue(match.wand_id, has_sufficient_level)
 
     def _get_wizard_level(self, wand_id: str) -> WizardLevel:
         return self._settings.wand_levels.get(wand_id, WizardLevel.BEGINNER)

@@ -3,12 +3,10 @@ from __future__ import annotations
 import asyncio
 from logging import Logger
 
-from spells.spell_type import SpellType
+from spells.spell_match import SpellMatch
 from visualisation.wand_colour_registry import WandColourRegistry
-from wand.tracked_wand import TrackedWand
 from wand.tracked_wand_manager import TrackedWandManager
 from zones.visualisation.zone_visualiser_protocol import ZoneVisualiserProtocol
-from zones.zone import Zone
 
 COLOUR_FLASH_DURATION = 0.3
 FALLBACK_COLOUR = "#999999"
@@ -33,13 +31,13 @@ class SpellCastPresentationController:
     async def stop_async(self) -> None:
         self._tracked_wand_manager.spell_cast.unsubscribe(self._on_spell_cast)
 
-    def _on_spell_cast(self, wand: TrackedWand, zone: Zone, spell_type: SpellType) -> None:
-        colour = self._colour_assigner.try_get_known(wand.id) or FALLBACK_COLOUR
+    def _on_spell_cast(self, match: SpellMatch) -> None:
+        colour = self._colour_assigner.try_get_known(match.wand_id) or FALLBACK_COLOUR
 
-        self._zone_visualiser.show_spell_cast_coloured(spell_type, colour)
+        self._zone_visualiser.show_spell_cast_coloured(match.spell_type, colour)
 
         async def _restore() -> None:
             await asyncio.sleep(COLOUR_FLASH_DURATION)
-            self._zone_visualiser.show_spell_instruction(spell_type)
+            self._zone_visualiser.show_spell_instruction(match.spell_type)
 
         asyncio.create_task(_restore())

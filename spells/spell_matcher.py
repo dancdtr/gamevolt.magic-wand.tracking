@@ -32,7 +32,7 @@ class SpellMatcher:
     def clear_spell_targets(self) -> None:
         self._target_spell_definitions = ()
 
-    def try_match(self, wand_id: str, history: Sequence[GestureSegment]) -> SpellType | None:
+    def try_match(self, wand_id: str, history: Sequence[GestureSegment]) -> SpellMatch | None:
         if not history:
             return None
 
@@ -42,8 +42,9 @@ class SpellMatcher:
             match = self._match_spell(wand_id, spell_definition, compressed)
             if match:
                 self._logger.info(f"({wand_id}) cast {match.spell_name}! ✨✨{match.accuracy_score * 100:.1f}% ({match.duration_s:.3f})")
-                # self.matched.invoke(match)
-                return spell_definition.spell_type
+                return match
+
+        return None
 
     def _is_pause_step(self, step: SpellStep) -> bool:
         # Pause steps should match, but never count toward min_spell_steps / used_steps.
@@ -454,6 +455,7 @@ class SpellMatcher:
             wand_id=wand_id,
             spell_id=spell_definition.name,
             spell_name=spell_definition.name,
+            spell_type=spell_definition.spell_type,
             start_ts_ms=start_ts,
             end_ts_ms=end_ts,
             duration_s=total_duration_s,

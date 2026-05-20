@@ -10,6 +10,7 @@ from motion.gesture.gesture_history import GestureHistory
 from motion.gesture.gesture_segment import GestureSegment
 from motion.motion_phase_type import MotionPhaseType
 from motion.motion_processor import MotionProcessor
+from spells.spell_match import SpellMatch
 from spells.spell_matcher import SpellMatcher
 from spells.spell_type import SpellType
 from wand.configuration.wand_settings import WandSettings
@@ -32,7 +33,7 @@ class TrackedWand(WandBase):
     ) -> None:
         super().__init__(logger, motion_processor)
 
-        self.spell_cast: Event[Callable[[TrackedWand, SpellType], None]] = Event()
+        self.spell_cast: Event[Callable[[SpellMatch], None]] = Event()
         self.direction_changed: Event[Callable[[DirectionType], None]] = Event()
         self.gesture_detected: Event[Callable[[GestureHistory], None]] = Event()
         self.motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
@@ -152,8 +153,8 @@ class TrackedWand(WandBase):
         self._gesture_history.add(segment)
         self.gesture_detected.invoke(self._gesture_history)
 
-        matched_type = self._spell_matcher.try_match(self.id, self._gesture_history.tail())
-        if matched_type:
-            self._logger.verbose(f"Wand ({self._id}) matched '{matched_type.name}'!")
-            self.spell_cast.invoke(self, matched_type)
+        match = self._spell_matcher.try_match(self.id, self._gesture_history.tail())
+        if match:
+            self._logger.verbose(f"Wand ({self._id}) matched '{match.spell_type.name}'!")
+            self.spell_cast.invoke(match)
             self.reset_data()

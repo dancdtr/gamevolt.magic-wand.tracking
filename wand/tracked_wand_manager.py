@@ -5,7 +5,7 @@ from typing import Callable
 from gamevolt.events.event import Event
 from gamevolt.logging import Logger
 from motion.motion_phase_type import MotionPhaseType
-from spells.spell_type import SpellType
+from spells.spell_match import SpellMatch
 from wand.configuration.input_settings import InputSettings
 from wand.tracked_wand import TrackedWand
 from wand.tracked_wand_factory import TrackedWandFactory
@@ -30,7 +30,7 @@ class TrackedWandManager:
     ) -> None:
         self.wand_motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.wand_rotation_updated: Event[Callable[[WandRotation], None]] = Event()
-        self.spell_cast: Event[Callable[[TrackedWand, Zone, SpellType], None]] = Event()
+        self.spell_cast: Event[Callable[[SpellMatch], None]] = Event()
 
         self._wand_device_controller = wand_device_controller
         self._tracked_wand_factory = tracked_wand_factory
@@ -130,11 +130,9 @@ class TrackedWandManager:
 
         self._wand_device_controller.set_wand_inactive(wand.id)
 
-    def _on_spell_cast(self, wand: TrackedWand, spell_type: SpellType) -> None:
-        zone = self._zone_manager.get_zone_containing_wand_id(wand.id)
-
-        self._logger.debug(f"Wand ({wand.id}) cast '{spell_type.name}'!")
-        self.spell_cast.invoke(wand, zone, spell_type)
+    def _on_spell_cast(self, match: SpellMatch) -> None:
+        self._logger.debug(f"Wand ({match.wand_id}) cast '{match.spell_type.name}'!")
+        self.spell_cast.invoke(match)
 
     def _get_wand(self, id: str) -> TrackedWand:
         wand = self._tracked_wands.get(id)
