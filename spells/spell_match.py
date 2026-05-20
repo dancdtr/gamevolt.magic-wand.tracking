@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from spells.spell_response_type import SpellResponseType
+
 
 @dataclass(frozen=True)
 class SpellMatch:
@@ -26,6 +28,7 @@ class SpellMatch:
     filler_duration_s: float
 
     accuracy_score: float
+    spell_reponse_type: SpellResponseType
 
     @property
     def accuracy(self) -> float:

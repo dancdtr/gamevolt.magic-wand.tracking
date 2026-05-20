@@ -465,4 +465,5 @@ class SpellMatcher:
             optional_total=optional_total,
             filler_duration_s=filler_duration_s,
             accuracy_score=accuracy.score,
+            spell_reponse_type=spell_definition.spell_response_thresholds.get_response_type(accuracy.score * 100),
         )

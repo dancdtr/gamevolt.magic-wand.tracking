@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import Sequence
 
 from motion.direction.direction_type import DirectionType
+from spells.matching.spell_response_thresholds import SpellResponseThresholds
+from spells.spell_response_type import SpellResponseType
 from spells.spell_step import SpellStep
 from spells.spell_step_group import SpellStepGroup
 from spells.spell_type import SpellType
@@ -58,6 +60,10 @@ class SpellDefinition:
     pause_speed_threshold: float = 0.01
 
     spell_type: SpellType = SpellType.NONE
+
+    spell_response_thresholds: SpellResponseThresholds = SpellResponseThresholds(
+        responses={SpellResponseType.OK: 50},
+    )
 
     @property
     def name(self) -> str:
