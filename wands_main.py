@@ -165,14 +165,6 @@ spell_cast_presentation_controller = SpellCastPresentationController(
     logger=logger,
 )
 
-wand_spell_cue_controller = WandSpellCueController(
-    show_system_controller=show_system_controller,
-    wand_device_controller=wand_device_controller,
-    tracked_wand_manager=tracked_wand_manager,
-    settings=settings.wand_spell_cue_controller,
-    logger=logger,
-)
-
 wizard_name_provider = WizardNameProvider(WizardSettings(names=["Merlin", "Morgana", "Gandalf", "Circe", "Nimue"]))
 profile_service = LocalProfileService(logger=logger, name_provider=wizard_name_provider)
 presence_reporter = LocalWandPresenceReporter(logger=logger)
@@ -183,6 +175,14 @@ wand_session_coordinator = WandSessionCoordinator(
     profile_service=profile_service,
     presence_reporter=presence_reporter,
     session_store=wizard_session_store,
+)
+
+wand_spell_cue_controller = WandSpellCueController(
+    show_system_controller=show_system_controller,
+    wand_device_controller=wand_device_controller,
+    tracked_wand_manager=tracked_wand_manager,
+    session_store=wizard_session_store,
+    logger=logger,
 )
 
 quit_event = asyncio.Event()

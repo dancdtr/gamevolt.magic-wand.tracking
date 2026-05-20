@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from logging import Logger
 
+from services.wizard_session_store import WizardSessionStore
 from show_system.show_system_controller import ShowSystemController
-from spell_cues.configuration.wand_spell_cue_controller_settings import WandSpellCueControllerSettings
 from spells.spell_match import SpellMatch
 from spells.spell_type import SpellType
 from wand.tracked_wand_manager import TrackedWandManager
@@ -23,15 +23,15 @@ class WandSpellCueController:
     def __init__(
         self,
         logger: Logger,
-        settings: WandSpellCueControllerSettings,
         tracked_wand_manager: TrackedWandManager,
         wand_device_controller: WandDeviceController,
         show_system_controller: ShowSystemController,
+        session_store: WizardSessionStore,
     ) -> None:
         self._show_system_controller = show_system_controller
         self._wand_device_controller = wand_device_controller
         self._tracked_wand_manager = tracked_wand_manager
-        self._settings = settings
+        self._session_store = session_store
         self._logger = logger
 
     def start(self) -> None:
@@ -54,7 +54,11 @@ class WandSpellCueController:
         self._wand_device_controller.play_spell_cast_cue(match.wand_id, has_sufficient_level)
 
     def _get_wizard_level(self, wand_id: str) -> WizardLevel:
-        return self._settings.wand_levels.get(wand_id, WizardLevel.BEGINNER)
+        profile = self._session_store.get(wand_id)
+        if profile is None:
+            self._logger.warning(f"No profile in session store for wand ({wand_id}); defaulting to BEGINNER")
+            return WizardLevel.BEGINNER
+        return profile.wizard_level
 
     def _has_sufficient_level(self, wizard_level: WizardLevel, spell_level: WizardLevel) -> bool:
         if wizard_level == WizardLevel.BEGINNER and spell_level != WizardLevel.BEGINNER:

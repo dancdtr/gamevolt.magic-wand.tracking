@@ -8,7 +8,6 @@ from gamevolt.logging.configuration.logging_settings import LoggingSettings
 from motion.configuration.motion_settings import MotionSettings
 from presentation.configuration.zone_visualiser_settings import ZoneVisualiserSettings
 from show_system.configuration.show_system_controller_settings import ShowSystemControllerSettings
-from spell_cues.configuration.wand_spell_cue_controller_settings import WandSpellCueControllerSettings
 from spells.accuracy.configuration.accuracy_scorer_settings import SpellAccuracyScorerSettings
 from spells.configuration.spell_registry_settings import SpellRegistrySettings
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
@@ -36,5 +35,4 @@ class AppSettings(AppSettingsBase):
     wand_colours: list[str]
     spell_registry: SpellRegistrySettings
     anchor_area_manager: AnchorAreaManagerSettings
-    wand_spell_cue_controller: WandSpellCueControllerSettings
     wand_device_controller: WandDeviceControllerSettings

@@ -237,20 +237,6 @@ spell_registry:
     - [30, "nebulus"]
     - [31, "nox"]
 
-wand_spell_cue_controller:
-  wand_levels:
-    - ["E000", "ADVANCED"]
-    - ["E001", "BEGINNER"]
-    - ["E002", "BEGINNER"]
-    - ["E003", "BEGINNER"]
-    - ["E004", "BEGINNER"]
-    - ["E005", "BEGINNER"]
-    - ["E006", "BEGINNER"]
-    - ["E007", "BEGINNER"]
-    - ["E008", "BEGINNER"]
-    - ["E009", "INTERMEDIATE"]
-    - ["E010", "ADVANCED"]
-
 wand_device_controller:
   command_broadcast_interval: 0.05
   disable_wand_tx: True
