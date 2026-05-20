@@ -15,6 +15,10 @@ from gamevolt.visualisation.visualiser import Visualiser
 from gamevolt.web_sockets.web_socket_server import WebSocketServer
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from receivers.web_socket_line_receiver import WebSocketLineReceiver
+from services.local_profile_service import LocalProfileService
+from services.local_wand_presence_reporter import LocalWandPresenceReporter
+from services.wand_session_coordinator import WandSessionCoordinator
+from services.wizard_session_store import WizardSessionStore
 from show_system.show_system_controller import ShowSystemController
 from spell_cues.wand_spell_cue_controller import WandSpellCueController
 from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
@@ -30,6 +34,8 @@ from wand.tracked_wand_factory import TrackedWandFactory
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_device_controller import WandDeviceController
 from wand.wand_server import WandServer
+from wizards.configuration.wizard_settings import WizardSettings
+from wizards.wizard_names_provider import WizardNameProvider
 from zones.zone_application_builder import ZoneApplicationBuilder
 from zones.zone_factory import ZoneFactory
 from zones.zone_manager import ZoneManager
@@ -167,6 +173,18 @@ wand_spell_cue_controller = WandSpellCueController(
     logger=logger,
 )
 
+wizard_name_provider = WizardNameProvider(WizardSettings(names=["Merlin", "Morgana", "Gandalf", "Circe", "Nimue"]))
+profile_service = LocalProfileService(logger=logger, name_provider=wizard_name_provider)
+presence_reporter = LocalWandPresenceReporter(logger=logger)
+wizard_session_store = WizardSessionStore()
+wand_session_coordinator = WandSessionCoordinator(
+    logger=logger,
+    zone_manager=zone_manager,
+    profile_service=profile_service,
+    presence_reporter=presence_reporter,
+    session_store=wizard_session_store,
+)
+
 quit_event = asyncio.Event()
 
 wand_visualiser.quit.subscribe(lambda: quit_event.set())
@@ -185,6 +203,7 @@ async def main() -> int:
 
         await zone_application.start_async()
         await spell_cast_presentation_controller.start_async()
+        wand_session_coordinator.start()
         tracked_wand_manager.start()
         anchor_area_manager.start()
         if zone_message_handler is not None:
@@ -232,6 +251,7 @@ async def main() -> int:
 
         await zone_application.stop_async()
         await spell_cast_presentation_controller.stop_async()
+        wand_session_coordinator.stop()
         tracked_wand_manager.stop()
         anchor_area_manager.stop()
         if zone_message_handler is not None:
