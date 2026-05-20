@@ -16,6 +16,7 @@ from gamevolt.web_sockets.web_socket_server import WebSocketServer
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from receivers.web_socket_line_receiver import WebSocketLineReceiver
 from services.local_profile_service import LocalProfileService
+from services.local_spell_cast_reporter import LocalSpellCastReporter
 from services.local_wand_presence_reporter import LocalWandPresenceReporter
 from services.wand_session_coordinator import WandSessionCoordinator
 from services.wizard_session_store import WizardSessionStore
@@ -177,11 +178,16 @@ wand_session_coordinator = WandSessionCoordinator(
     session_store=wizard_session_store,
 )
 
-wand_spell_cue_controller = WandSpellCueController(
+spell_cast_reporter = LocalSpellCastReporter(
+    logger=logger,
+    session_store=wizard_session_store,
     show_system_controller=show_system_controller,
+)
+
+wand_spell_cue_controller = WandSpellCueController(
     wand_device_controller=wand_device_controller,
     tracked_wand_manager=tracked_wand_manager,
-    session_store=wizard_session_store,
+    spell_cast_reporter=spell_cast_reporter,
     logger=logger,
 )
 

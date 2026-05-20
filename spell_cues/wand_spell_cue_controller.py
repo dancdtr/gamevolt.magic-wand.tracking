@@ -1,22 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 from logging import Logger
 
-from services.wizard_session_store import WizardSessionStore
-from show_system.show_system_controller import ShowSystemController
+from services.spell_cast_reporter_base import SpellCastReporterBase
 from spells.spell_match import SpellMatch
-from spells.spell_type import SpellType
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_device_controller import WandDeviceController
-from wizards.wizard_level import WizardLevel
-
-SPELL_REQUIREMENTS: dict[SpellType, WizardLevel] = {
-    SpellType.RICTUSEMPRA: WizardLevel.BEGINNER,
-    SpellType.REPARO: WizardLevel.BEGINNER,
-    SpellType.PEPPER_BREATH: WizardLevel.INTERMEDIATE,
-    SpellType.APARECIUM: WizardLevel.INTERMEDIATE,
-    SpellType.CANTIS: WizardLevel.ADVANCED,
-}
 
 
 class WandSpellCueController:
@@ -25,13 +15,11 @@ class WandSpellCueController:
         logger: Logger,
         tracked_wand_manager: TrackedWandManager,
         wand_device_controller: WandDeviceController,
-        show_system_controller: ShowSystemController,
-        session_store: WizardSessionStore,
+        spell_cast_reporter: SpellCastReporterBase,
     ) -> None:
-        self._show_system_controller = show_system_controller
         self._wand_device_controller = wand_device_controller
         self._tracked_wand_manager = tracked_wand_manager
-        self._session_store = session_store
+        self._spell_cast_reporter = spell_cast_reporter
         self._logger = logger
 
     def start(self) -> None:
@@ -41,30 +29,13 @@ class WandSpellCueController:
         self._tracked_wand_manager.spell_cast.unsubscribe(self._on_spell_cast)
 
     def _on_spell_cast(self, match: SpellMatch) -> None:
-        wizard_level = self._get_wizard_level(match.wand_id)
-        self._show_system_controller.play_spell(match.spell_type, wizard_level)
+        asyncio.create_task(self._handle_cast(match))
 
-        spell_level = SPELL_REQUIREMENTS.get(match.spell_type, WizardLevel.BEGINNER)
+    async def _handle_cast(self, match: SpellMatch) -> None:
+        try:
+            result = await self._spell_cast_reporter.report_spell_cast(match)
+        except Exception:
+            self._logger.exception(f"Spell cast report failed for wand ({match.wand_id})")
+            return
 
-        has_sufficient_level = self._has_sufficient_level(wizard_level, spell_level)
-        cast_message = f"{'successfully cast' if has_sufficient_level else 'under cast'}"
-        self._logger.debug(
-            f"'{wizard_level.name.upper()}' wizard with wand ({match.wand_id}) {cast_message} '{spell_level.name}' spell '{match.spell_type.name}'."
-        )
-        self._wand_device_controller.play_spell_cast_cue(match.wand_id, has_sufficient_level)
-
-    def _get_wizard_level(self, wand_id: str) -> WizardLevel:
-        profile = self._session_store.get(wand_id)
-        if profile is None:
-            self._logger.warning(f"No profile in session store for wand ({wand_id}); defaulting to BEGINNER")
-            return WizardLevel.BEGINNER
-        return profile.wizard_level
-
-    def _has_sufficient_level(self, wizard_level: WizardLevel, spell_level: WizardLevel) -> bool:
-        if wizard_level == WizardLevel.BEGINNER and spell_level != WizardLevel.BEGINNER:
-            return False
-
-        if wizard_level == WizardLevel.INTERMEDIATE and spell_level == WizardLevel.ADVANCED:
-            return False
-
-        return True
+        self._wand_device_controller.play_spell_cast_cue(match.wand_id, result.success)
