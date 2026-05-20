@@ -13,13 +13,15 @@ DATA_PIN = board.D18  # GPIO18 / physical pin 12
 PIXEL_ORDER = neopixel.GRBW
 BRIGHTNESS = 1.0
 
-FADE_ON_SECONDS = 0.75
-FADE_OFF_SECONDS = 0.75
-COLOUR_LERP_SECONDS = 1.25
+FADE_ON_SECONDS = 0.5
+FADE_OFF_SECONDS = 0.5
+COLOUR_LERP_SECONDS = 0.3
+CYCLE_ALL_LERP_SECONDS = 0.15
 
 TURN_ON_SPELL = "LUMOS"
 TURN_OFF_SPELL = "NOX"
 CHANGE_COLOUR_SPELL = "SILENCIO"
+CYCLE_ALL_SPELL = "ALOHOMORA"
 
 LERP_FPS = 60
 
@@ -51,9 +53,7 @@ def lerp(a: int, b: int, t: float) -> int:
     return round(a + (b - a) * t)
 
 
-def lerp_colour(
-    start: tuple[int, int, int, int], end: tuple[int, int, int, int], t: float
-) -> tuple[int, int, int, int]:
+def lerp_colour(start: tuple[int, int, int, int], end: tuple[int, int, int, int], t: float) -> tuple[int, int, int, int]:
     return (
         lerp(start[0], end[0], t),
         lerp(start[1], end[1], t),
@@ -186,6 +186,27 @@ class Lamp:
 
         self.colour_index = next_index
 
+    def cycle_all_colours(self, sock: socket.socket) -> None:
+        if not self.is_on:
+            print(f"Ignored {CYCLE_ALL_SPELL}: lamp is OFF")
+            return
+
+        final_index = len(COLOURS) - 1
+
+        for index in range(len(COLOURS)):
+            next_name, next_colour = COLOURS[index]
+
+            self.transition_to(
+                sock=sock,
+                target_colour=next_colour,
+                duration_seconds=CYCLE_ALL_LERP_SECONDS,
+                label=f"Cycle all: {self.current_colour_name} -> {next_name}",
+            )
+
+            self.colour_index = index
+
+        print(f"Cycle all done at: {COLOURS[final_index][0]}")
+
 
 def handle_message(sock: socket.socket, lamp: Lamp, message: str) -> None:
     text = message.strip().upper()
@@ -195,6 +216,9 @@ def handle_message(sock: socket.socket, lamp: Lamp, message: str) -> None:
 
     elif TURN_OFF_SPELL in text:
         lamp.turn_off(sock)
+
+    elif CYCLE_ALL_SPELL in text:
+        lamp.cycle_all_colours(sock)
 
     elif CHANGE_COLOUR_SPELL in text:
         lamp.cycle_colour(sock)
@@ -215,6 +239,7 @@ def main() -> None:
     print(f"Turn on spell: {TURN_ON_SPELL}")
     print(f"Turn off spell: {TURN_OFF_SPELL}")
     print(f"Change colour spell: {CHANGE_COLOUR_SPELL}")
+    print(f"Cycle all colours spell: {CYCLE_ALL_SPELL}")
     print("=========================")
 
     try:
