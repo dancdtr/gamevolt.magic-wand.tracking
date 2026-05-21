@@ -8,6 +8,11 @@ from gamevolt.logging import get_logger
 from wands.appsettings import AppSettings
 from wands.system_builder import WandsSystemBuilder
 
+try:
+    from wands.build_info import BUILD_TIME_UTC, GIT_SHA, VERSION
+except ImportError:
+    VERSION, GIT_SHA, BUILD_TIME_UTC = "dev", "unknown", ""
+
 application_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = bundled_path("appsettings.yml")
 config_env_path = install_path("appsettings.env.yml")
@@ -15,6 +20,7 @@ settings = AppSettings.load(config_file_path=config_path, config_env_file_path=c
 print(settings)
 
 logger = get_logger(settings.logging)
+logger.info(f"Build: {settings.name} v{VERSION} ({GIT_SHA}) built {BUILD_TIME_UTC or 'locally'}")
 
 system = WandsSystemBuilder(logger, settings).build()
 

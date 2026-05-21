@@ -12,6 +12,11 @@ from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.serial.serial_transport import SerialTransport
 from gamevolt.web_sockets.web_socket_client import WebSocketClient
 
+try:
+    from anchor_relay.build_info import BUILD_TIME_UTC, GIT_SHA, VERSION
+except ImportError:
+    VERSION, GIT_SHA, BUILD_TIME_UTC = "dev", "unknown", ""
+
 
 async def main() -> int:
     appsettings_path = bundled_path("appsettings.yml")
@@ -21,6 +26,7 @@ async def main() -> int:
 
     logger = get_logger(settings.logging)
     print(settings)
+    logger.info(f"Build: {settings.name} v{VERSION} ({GIT_SHA}) built {BUILD_TIME_UTC or 'locally'}")
 
     serial_transport = SerialTransport(logger=logger, settings=settings.serial_receiver)
 

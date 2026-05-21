@@ -32,10 +32,12 @@ case "$APP_KEY" in
   relay)
     APPLICATION_NAME="relay"
     SPEC_FILE="$PROJECT_ROOT/relay.spec"
+    APP_PKG_DIR="$PROJECT_ROOT/anchor_relay"
     ;;
   wands)
     APPLICATION_NAME="wands"
     SPEC_FILE="$PROJECT_ROOT/wands.spec"
+    APP_PKG_DIR="$PROJECT_ROOT/wands"
     ;;
   *)
     die "Unknown app '$APP_KEY'. Expected: relay or wands"
@@ -56,8 +58,9 @@ mkdir -p "$WORK_DIR" "$OUTPUT_DIR" "$DIST_DIR"
 GIT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 BUILD_TIME_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-info "Generating build_info.py"
-cat > "$PROJECT_ROOT/build_info.py" <<EOF
+BUILD_INFO_FILE="$APP_PKG_DIR/build_info.py"
+info "Generating $BUILD_INFO_FILE"
+cat > "$BUILD_INFO_FILE" <<EOF
 # Auto-generated at build time. Do not edit.
 VERSION = "${VERSION}"
 GIT_SHA = "${GIT_SHA}"

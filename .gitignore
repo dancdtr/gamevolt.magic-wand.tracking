@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Generated at build time
+wands/build_info.py
+anchor_relay/build_info.py
+
 # C extensions
 *.so
 
