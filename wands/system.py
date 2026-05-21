@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from recognition_app import RecognitionApp
-from tracking_app import TrackingApp
+from wands.recognition_app import RecognitionApp
+from wands.tracking_app import TrackingApp
 
 
 @dataclass

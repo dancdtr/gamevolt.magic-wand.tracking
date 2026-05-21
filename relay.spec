@@ -7,12 +7,12 @@ from PyInstaller.utils.hooks import collect_submodules
 spec_dir = os.path.abspath(os.getcwd())
 
 hiddenimports = [
-    "appsettings_relay",
+    "anchor_relay.appsettings",
     *collect_submodules("PIL"),
 ]
 
 datas = [
-    (os.path.join(spec_dir, "appsettings_relay.yml"), "."),
+    (os.path.join(spec_dir, "anchor_relay", "appsettings.yml"), "."),
 ]
 
 assets_dir = os.path.join(spec_dir, "assets")
@@ -20,7 +20,7 @@ if os.path.isdir(assets_dir):
     datas.append((assets_dir, "assets"))
 
 a = Analysis(
-    ["relay_main.py"],
+    [os.path.join("anchor_relay", "main.py")],
     pathex=[spec_dir],
     datas=datas,
     hiddenimports=hiddenimports,

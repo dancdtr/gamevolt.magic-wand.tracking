@@ -3,10 +3,10 @@ from __future__ import annotations
 import asyncio
 import os
 
-from appsettings import AppSettings
 from gamevolt.io.utils import bundled_path, install_path
 from gamevolt.logging import get_logger
-from wands_system_builder import WandsSystemBuilder
+from wands.appsettings import AppSettings
+from wands.system_builder import WandsSystemBuilder
 
 application_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = bundled_path("appsettings.yml")

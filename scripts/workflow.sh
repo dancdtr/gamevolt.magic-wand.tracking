@@ -12,7 +12,8 @@ IFS=$'\n\t'
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 load_env
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 DOCKERFILE="${DOCKERFILE:-Dockerfile.dev}"
 CONDA_ENV_NAME="${CONDA_ENV_NAME:-gamevolt.magic-wand.tracking}"
@@ -99,11 +100,11 @@ done
 case "$APP_KEY" in
   relay)
     APPLICATION_NAME="relay"
-    INSTALL_SCRIPT="${INSTALL_SCRIPT:-install.sh}"
+    INSTALL_SCRIPT="${INSTALL_SCRIPT:-$SCRIPT_DIR/install.sh}"
     ;;
   wands)
     APPLICATION_NAME="wands"
-    INSTALL_SCRIPT="${INSTALL_SCRIPT:-install.sh}"
+    INSTALL_SCRIPT="${INSTALL_SCRIPT:-$SCRIPT_DIR/install.sh}"
     ;;
   *)
     die "Unknown app '$APP_KEY'. Expected: relay or wands"
@@ -257,7 +258,7 @@ install_step() {
 
   info "Running install script on Pi..."
   ssh "${SSH_OPTS[@]}" "$PI" -t \
-      "bash '$PI_DIR/$INSTALL_SCRIPT' '$APPLICATION_NAME' '$VERSION'"
+      "bash '$PI_DIR/$(basename "$INSTALL_SCRIPT")' '$APPLICATION_NAME' '$VERSION'"
 }
 
 $run_build && build_step

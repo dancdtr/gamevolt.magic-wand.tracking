@@ -12,7 +12,7 @@ IFS=$'\n\t'
 die()   { echo "ERROR: $*" >&2; exit 1; }
 info()  { echo "▶ $*"; }
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$PROJECT_ROOT/.build"
 WORK_DIR="$BUILD_DIR/work"
 OUTPUT_DIR="$BUILD_DIR/dist"

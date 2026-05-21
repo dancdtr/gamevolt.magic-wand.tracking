@@ -25,10 +25,7 @@ CURRENT_DIR="$DEPLOY_BASE/Current"
 INSTALL_DIR="$CURRENT_DIR"
 
 case "$APPLICATION_NAME" in
-  relay)
-    ENV_FILE="appsettings_relay.env.yml"
-    ;;
-  wands)
+  relay|wands)
     ENV_FILE="appsettings.env.yml"
     ;;
   *)

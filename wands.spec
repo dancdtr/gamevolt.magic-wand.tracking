@@ -7,12 +7,12 @@ from PyInstaller.utils.hooks import collect_submodules
 spec_dir = os.path.abspath(os.getcwd())
 
 hiddenimports = [
-    "appsettings",
+    "wands.appsettings",
     *collect_submodules("PIL"),
 ]
 
 datas = [
-    (os.path.join(spec_dir, "appsettings.yml"), "."),
+    (os.path.join(spec_dir, "wands", "appsettings.yml"), "."),
 ]
 
 assets_dir = os.path.join(spec_dir, "assets")
@@ -20,7 +20,7 @@ if os.path.isdir(assets_dir):
     datas.append((assets_dir, "assets"))
 
 a = Analysis(
-    ["wands_main.py"],
+    [os.path.join("wands", "main.py")],
     pathex=[spec_dir],
     datas=datas,
     hiddenimports=hiddenimports,

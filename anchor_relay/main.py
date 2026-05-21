@@ -3,18 +3,19 @@ import asyncio
 from anchor_area.anchor_area import AnchorArea
 from anchor_area.anchor_area_controller import AnchorAreaController
 from anchor_relay.anchor_relay import AnchorRelay
-from appsettings_relay import AppSettingsRelay
+from anchor_relay.appsettings import AppSettingsRelay
+from anchor_relay.relay_app import RelayApp
+from gamevolt.io.utils import bundled_path, install_path
 from gamevolt.logging import get_logger
 from gamevolt.messaging.command_bridge.anchor_command_bridge import AnchorCommandBridge
 from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.serial.serial_transport import SerialTransport
 from gamevolt.web_sockets.web_socket_client import WebSocketClient
-from relay_app import RelayApp
 
 
 async def main() -> int:
-    appsettings_path = "appsettings_relay.yml"
-    env_path = "./appsettings_relay.env.yml"
+    appsettings_path = bundled_path("appsettings.yml")
+    env_path = install_path("appsettings.env.yml")
 
     settings = AppSettingsRelay.load(config_file_path=appsettings_path, config_env_file_path=env_path)
 

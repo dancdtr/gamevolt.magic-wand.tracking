@@ -3,7 +3,6 @@ from __future__ import annotations
 from logging import Logger
 
 from anchor_area.anchor_area_manager import AnchorAreaManager
-from appsettings import AppSettings
 from display.image_libraries.spell_image_library import SpellImageLibrary
 from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.messaging.udp.udp_rx import UdpRx
@@ -12,7 +11,6 @@ from gamevolt.visualisation.visualiser import Visualiser
 from gamevolt.web_sockets.web_socket_server import WebSocketServer
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from receivers.web_socket_line_receiver import WebSocketLineReceiver
-from recognition_app import RecognitionApp
 from services.local_profile_service import LocalProfileService
 from services.local_spell_cast_reporter import LocalSpellCastReporter
 from services.local_wand_presence_reporter import LocalWandPresenceReporter
@@ -24,7 +22,6 @@ from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.matching.spell_matcher_factory import SpellMatcherFactory
 from spells.spell_cast_presentation_controller import SpellCastPresentationController
 from spells.spell_registry import SpellRegistry
-from tracking_app import TrackingApp
 from visualisation.configuration.visualised_wand_factory import VisualisedWandFactory
 from visualisation.trail_factory import TrailFactory
 from visualisation.wand_colour_registry import WandColourRegistry
@@ -35,7 +32,10 @@ from wand.tracked_wand_factory import TrackedWandFactory
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_device_controller import WandDeviceController
 from wand.wand_server import WandServer
-from wands_system import WandsSystem
+from wands.appsettings import AppSettings
+from wands.recognition_app import RecognitionApp
+from wands.system import WandsSystem
+from wands.tracking_app import TrackingApp
 from wizards.configuration.wizard_settings import WizardSettings
 from wizards.wizard_names_provider import WizardNameProvider
 from zones.zone_application_builder import ZoneApplicationBuilder
