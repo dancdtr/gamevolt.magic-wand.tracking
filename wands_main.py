@@ -36,6 +36,7 @@ from wand.tracked_wand_manager import TrackedWandManager
 from wand.streaming.wand_sensor_stream_builder import WandSensorStreamBuilder
 from wand.wand_device_controller import WandDeviceController
 from wand.wand_server import WandServer
+from wands_app import WandsApp
 from wizards.configuration.wizard_settings import WizardSettings
 from wizards.wizard_names_provider import WizardNameProvider
 from zones.zone_application_builder import ZoneApplicationBuilder
@@ -194,49 +195,39 @@ wand_spell_cue_controller = WandSpellCueController(
     logger=logger,
 )
 
-quit_event = asyncio.Event()
+app = WandsApp(
+    logger=logger,
+    web_socket_server=web_socket_server,
+    sensor_stream=sensor_stream,
+    server=server,
+    tracked_wand_manager=tracked_wand_manager,
+    wand_device_controller=wand_device_controller,
+    wand_visualiser=wand_visualiser,
+    zone_application=zone_application,
+    spell_cast_presentation_controller=spell_cast_presentation_controller,
+    wand_session_coordinator=wand_session_coordinator,
+    anchor_area_manager=anchor_area_manager,
+    wand_spell_cue_controller=wand_spell_cue_controller,
+    zone_udp_receiver=zone_udp_receiver,
+    zone_message_handler=zone_message_handler,
+)
 
-wand_visualiser.quit.subscribe(lambda: quit_event.set())
-zone_application.quit.subscribe(lambda: quit_event.set())
-tracked_wand_manager.wand_rotation_updated.subscribe(wand_visualiser.add_rotation)
+quit_event = asyncio.Event()
+app.quit.subscribe(lambda: quit_event.set())
 
 
 async def main() -> int:
     logger.info(f"Running '{settings.name}'...")
 
     try:
-        if zone_udp_receiver is not None:
-            await zone_udp_receiver.start_async()
-
-        await web_socket_server.start_async()
-
-        await zone_application.start_async()
-        await spell_cast_presentation_controller.start_async()
-        wand_session_coordinator.start()
-        tracked_wand_manager.start()
-        anchor_area_manager.start()
-        if zone_message_handler is not None:
-            zone_message_handler.start()
-        wand_spell_cue_controller.start()
-        await sensor_stream.start_async()
-
-        server.start()
-        wand_visualiser.start()
-
-        # logger.info(f"Enabling all wands...")
-        # for wand in tracked_wand_manager.tracked_wands():
-        #     wand_device_controller.blast_wand_active(wand.id)
-
+        await app.start_async()
     except Exception:
         logger.exception("Startup failure in wands_main")
         return 1
 
     try:
         while not quit_event.is_set():
-            sensor_stream.update()
-            tracked_wand_manager.update()
-            zone_application.update()
-            wand_visualiser.update()
+            app.update()
             await asyncio.sleep(0.01)
 
         return 0
@@ -247,28 +238,8 @@ async def main() -> int:
         return 1
 
     finally:
-        logger.info(f"Disabling all wands...")
-        for wand in tracked_wand_manager.tracked_wands():
-            wand_device_controller.blast_wand_inactive(wand.id)
-
         logger.info(f"Stopping '{settings.name}'...")
-        wand_visualiser.stop()
-
-        if zone_udp_receiver is not None:
-            await zone_udp_receiver.stop_async()
-
-        await web_socket_server.stop_async()
-
-        await zone_application.stop_async()
-        await spell_cast_presentation_controller.stop_async()
-        wand_session_coordinator.stop()
-        tracked_wand_manager.stop()
-        anchor_area_manager.stop()
-        if zone_message_handler is not None:
-            zone_message_handler.stop()
-        wand_spell_cue_controller.stop()
-        server.stop()
-        await sensor_stream.stop_async()
+        await app.stop_async()
         logger.info(f"Exited '{settings.name}'.")
         return 0
 
