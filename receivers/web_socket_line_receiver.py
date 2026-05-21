@@ -17,10 +17,10 @@ class WebSocketLineReceiver(LineReceiverProtocol):
     def line_received(self) -> Event[Callable[[str], None]]:
         return self._line_received
 
-    def start(self) -> None:
+    async def start(self) -> None:
         self._web_socket_server.message_received.subscribe(self._on_line_received)
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         self._web_socket_server.message_received.unsubscribe(self._on_line_received)
 
     def _on_line_received(self, line: str) -> None:

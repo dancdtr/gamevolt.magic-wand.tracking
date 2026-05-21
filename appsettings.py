@@ -14,6 +14,7 @@ from visualisation.configuration.wand_visualiser_settings import WandVisualiserS
 from wand.configuration.input_settings import InputSettings
 from wand.configuration.wand_device_controller_settings import WandDeviceControllerSettings
 from wand.configuration.wand_server_settings import WandServerSettings
+from wand.streaming.configuration.wand_sensor_stream_settings import WandSensorStreamSettings
 from zones.configuration.zones_settings import ZonesSettings
 
 
@@ -28,6 +29,7 @@ class AppSettings(AppSettingsBase):
     accuracy: SpellAccuracyScorerSettings
     zones: ZonesSettings
     server: WandServerSettings
+    sensor_stream: WandSensorStreamSettings
     show_system_controller: ShowSystemControllerSettings
     anchor_bridge: AnchorBridgeSettings
     zone_visualisation: ZoneVisualiserSettings

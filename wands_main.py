@@ -33,6 +33,7 @@ from visualisation.wand_visualiser_factory import WandVisualiserFactory
 from wand.motion_processor_factory import MotionProcessorFactory
 from wand.tracked_wand_factory import TrackedWandFactory
 from wand.tracked_wand_manager import TrackedWandManager
+from wand.streaming.wand_sensor_stream_builder import WandSensorStreamBuilder
 from wand.wand_device_controller import WandDeviceController
 from wand.wand_server import WandServer
 from wizards.configuration.wizard_settings import WizardSettings
@@ -86,10 +87,12 @@ zone_manager = zone_application.zone_manager
 
 line_receiver = WebSocketLineReceiver(logger=logger, web_socket_server=web_socket_server)
 
+sensor_stream = WandSensorStreamBuilder(logger, settings.sensor_stream).build_line_based(line_receiver)
+
 server = WandServer(
     logger=logger,
     settings=settings.server,
-    line_receiver=line_receiver,
+    sensor_stream=sensor_stream,
 )
 
 motion_processor_factory = MotionProcessorFactory(logger, settings.motion.processor)
@@ -215,7 +218,7 @@ async def main() -> int:
         if zone_message_handler is not None:
             zone_message_handler.start()
         wand_spell_cue_controller.start()
-        line_receiver.start()
+        await sensor_stream.start_async()
 
         server.start()
         wand_visualiser.start()
@@ -230,6 +233,7 @@ async def main() -> int:
 
     try:
         while not quit_event.is_set():
+            sensor_stream.update()
             tracked_wand_manager.update()
             zone_application.update()
             wand_visualiser.update()
@@ -263,9 +267,8 @@ async def main() -> int:
         if zone_message_handler is not None:
             zone_message_handler.stop()
         wand_spell_cue_controller.stop()
-        line_receiver.stop()
-
         server.stop()
+        await sensor_stream.stop_async()
         logger.info(f"Exited '{settings.name}'.")
         return 0
 

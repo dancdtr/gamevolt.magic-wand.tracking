@@ -81,12 +81,14 @@ server:
   filter_wands: false
   filtered_wand_ids: []
   disconnect_after_s: 2.0
-  header_ttl_s: 2.0
   web_socket:
     select_interval: 0.1
     web_socket:
       host: "0.0.0.0"
       port: 60901
+
+sensor_stream:
+  header_ttl_s: 2.0
 motion:
   gesture_history:
     max_segments: 20
