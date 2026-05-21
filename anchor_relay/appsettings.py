@@ -11,6 +11,7 @@ class AppSettingsRelay(AppSettingsBase):
     name: str
     id: str
     version: str
+    is_dev: bool
     logging: LoggingSettings
     serial_receiver: SerialReceiverSettings
     web_socket_client: WebSocketClientSettings

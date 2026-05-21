@@ -4,7 +4,7 @@ is_dev: False
 
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
-  minimum_level: "DEBUG"
+  minimum_level: TRACE
 
 zones:
   udp_receiver:
@@ -29,12 +29,15 @@ zones:
 
 anchor_area_manager:
   anchor_areas:
+    - id: A000
+      zone_ids: ["Z006"]
     - id: A001
       zone_ids: ["Z001"]
     - id: A002
       zone_ids: ["Z002"]
     - id: A003
-      zone_ids: ["Z003", "Z006"]
+      # zone_ids: ["Z003", "Z006"]
+      zone_ids: ["Z003"]
     - id: A004
       zone_ids: ["Z004", "Z005"]
 

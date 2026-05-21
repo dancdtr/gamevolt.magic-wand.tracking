@@ -57,6 +57,7 @@ async def main() -> int:
         line_receiver_protocol=serial_transport,
         web_socket_client=web_socket_client,
         anchor_area=anchor_area,
+        bypass_presence=settings.is_dev,
     )
 
     app = RelayApp(

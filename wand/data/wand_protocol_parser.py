@@ -9,6 +9,7 @@ class WandProtocolParser:
         r"^PKT\s+"
         r"t_rx=(?P<t_rx>\d+)\s+"
         r"t0=(?P<t0>\d+)\s+"
+        r"(?:t_base=(?P<t_base>\d+)\s+)?"
         r"dt_us=(?P<dt_us>\d+)\s+"
         r"tag=(?P<tag>[0-9A-Fa-f]+)\s+"
         r"seq=(?P<seq>\d+)\s+"

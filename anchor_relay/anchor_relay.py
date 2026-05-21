@@ -26,10 +26,12 @@ class AnchorRelay:
         web_socket_client: WebSocketClient,
         anchor_area: AnchorArea,
         header_ttl_s: float = 2.0,
+        bypass_presence: bool = False,
     ) -> None:
         self._line_receiver_protocol = line_receiver_protocol
         self._web_socket_client = web_socket_client
         self._zone_prescence = anchor_area
+        self._bypass_presence = bypass_presence
         self._logger = logger
 
         self._parser = WandProtocolParser()
@@ -73,7 +75,7 @@ class AnchorRelay:
             return
 
     def _on_header(self, raw: str, header: PacketHeader) -> None:
-        if not self._zone_prescence.is_present(header.tag_hex):
+        if not self._bypass_presence and not self._zone_prescence.is_present(header.tag_hex):
             self._logger.trace(f"Dropping PKT for non-present wand: tag={header.tag_hex} seq={header.seq}")
             return
 
