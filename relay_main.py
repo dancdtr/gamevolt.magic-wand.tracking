@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 
 from anchor_area.anchor_area import AnchorArea
@@ -10,29 +9,12 @@ from gamevolt.messaging.command_bridge.anchor_command_bridge import AnchorComman
 from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.serial.serial_transport import SerialTransport
 from gamevolt.web_sockets.web_socket_client import WebSocketClient
-
-gateway_id: int | None = None
-
-
-def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(
-        prog="RelayMain",
-        description="Wand data relay for connected UWB anchor.",
-    )
-    p.add_argument("--id", required=False, help="Relay ID (used to select env file), e.g. 1,2,3")
-    return p.parse_args()
+from relay_app import RelayApp
 
 
 async def main() -> int:
-    args = parse_args()
-    gateway_id = args.id
-
-    appsettings_path = f"appsettings_relay.yml"
-
-    if gateway_id:
-        env_path = f"./appsettings_relay_{gateway_id}.env.yml"
-    else:
-        env_path = f"./appsettings_relay.env.yml"
+    appsettings_path = "appsettings_relay.yml"
+    env_path = "./appsettings_relay.env.yml"
 
     settings = AppSettingsRelay.load(config_file_path=appsettings_path, config_env_file_path=env_path)
 
@@ -63,24 +45,29 @@ async def main() -> int:
         logger=logger,
     )
 
-    gateway = AnchorRelay(
+    anchor_relay = AnchorRelay(
         logger=logger,
         line_receiver_protocol=serial_transport,
         web_socket_client=web_socket_client,
         anchor_area=anchor_area,
     )
 
+    app = RelayApp(
+        logger=logger,
+        web_socket_client=web_socket_client,
+        message_handler=web_socket_message_handler,
+        bridge=bridge,
+        anchor_area_controller=anchor_area_controller,
+        anchor_relay=anchor_relay,
+    )
+
     logger.info(f"Running '{settings.name}' ID: ({settings.id})...")
 
     try:
-        bridge.start()
-        web_socket_message_handler.start()
-        await web_socket_client.start_async()
-        await gateway.start_async()
-        anchor_area_controller.start()
+        await app.start_async()
 
         while True:
-            gateway.update()
+            app.update()
             await asyncio.sleep(0.01)
     except asyncio.exceptions.CancelledError:
         pass
@@ -94,11 +81,7 @@ async def main() -> int:
 
     finally:
         logger.info(f"Stopping '{settings.name}' ID: ({settings.id})...")
-        anchor_area_controller.stop()
-        await gateway.stop_async()
-        await web_socket_client.stop_async()
-        web_socket_message_handler.stop()
-        bridge.stop()
+        await app.stop_async()
         return 0
 
 
