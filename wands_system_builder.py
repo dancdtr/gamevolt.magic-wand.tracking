@@ -12,6 +12,7 @@ from gamevolt.visualisation.visualiser import Visualiser
 from gamevolt.web_sockets.web_socket_server import WebSocketServer
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from receivers.web_socket_line_receiver import WebSocketLineReceiver
+from recognition_app import RecognitionApp
 from services.local_profile_service import LocalProfileService
 from services.local_spell_cast_reporter import LocalSpellCastReporter
 from services.local_wand_presence_reporter import LocalWandPresenceReporter
@@ -23,6 +24,7 @@ from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.matching.spell_matcher_factory import SpellMatcherFactory
 from spells.spell_cast_presentation_controller import SpellCastPresentationController
 from spells.spell_registry import SpellRegistry
+from tracking_app import TrackingApp
 from visualisation.configuration.visualised_wand_factory import VisualisedWandFactory
 from visualisation.trail_factory import TrailFactory
 from visualisation.wand_colour_registry import WandColourRegistry
@@ -33,7 +35,7 @@ from wand.tracked_wand_factory import TrackedWandFactory
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_device_controller import WandDeviceController
 from wand.wand_server import WandServer
-from wands_app import WandsApp
+from wands_system import WandsSystem
 from wizards.configuration.wizard_settings import WizardSettings
 from wizards.wizard_names_provider import WizardNameProvider
 from zones.zone_application_builder import ZoneApplicationBuilder
@@ -43,12 +45,12 @@ from zones.zone_manager import ZoneManager
 WIZARD_NAMES = ["Merlin", "Morgana", "Gandalf", "Circe", "Nimue"]
 
 
-class WandsAppBuilder:
+class WandsSystemBuilder:
     def __init__(self, logger: Logger, settings: AppSettings) -> None:
         self._logger = logger
         self._settings = settings
 
-    def build(self) -> WandsApp:
+    def build(self) -> WandsSystem:
         logger = self._logger
         settings = self._settings
 
@@ -56,7 +58,7 @@ class WandsAppBuilder:
         web_socket_server = WebSocketServer(logger, settings.server.web_socket)
 
         zone_factory = ZoneFactory(logger)
-        zone_app_builder = ZoneApplicationBuilder(logger)
+        zone_application_builder = ZoneApplicationBuilder(logger)
         zone_udp_receiver: UdpRx | None = None
         zone_message_handler: MessageHandler | None = None
 
@@ -64,7 +66,7 @@ class WandsAppBuilder:
             zone_visualiser_host = Visualiser(logger, settings.zone_visualisation.visualiser)
             spell_image_library = SpellImageLibrary(settings.spell_image_library)
 
-            zone_application = zone_app_builder.build_mock(
+            zone_application = zone_application_builder.build_mock(
                 spell_image_library=spell_image_library,
                 visualiser=zone_visualiser_host,
                 spell_registry=spell_registry,
@@ -81,12 +83,42 @@ class WandsAppBuilder:
                 logger=logger,
             )
 
-            zone_application = zone_app_builder.build_production(zone_manager=production_zone_manager)
+            zone_application = zone_application_builder.build_production(zone_manager=production_zone_manager)
 
         zone_manager = zone_application.zone_manager
 
         line_receiver = WebSocketLineReceiver(logger=logger, web_socket_server=web_socket_server)
         sensor_stream = WandSensorStreamBuilder(logger, settings.sensor_stream).build_line_based(line_receiver)
+
+        anchor_area_manager = AnchorAreaManager(
+            settings=settings.anchor_area_manager,
+            web_socket_server=web_socket_server,
+            zone_manager=zone_manager,
+            logger=logger,
+        )
+
+        wizard_name_provider = WizardNameProvider(WizardSettings(names=WIZARD_NAMES))
+        profile_service = LocalProfileService(logger=logger, name_provider=wizard_name_provider)
+        presence_reporter = LocalWandPresenceReporter(logger=logger)
+        wizard_session_store = WizardSessionStore()
+        wand_session_coordinator = WandSessionCoordinator(
+            logger=logger,
+            zone_manager=zone_manager,
+            profile_service=profile_service,
+            presence_reporter=presence_reporter,
+            session_store=wizard_session_store,
+        )
+
+        tracking_app = TrackingApp(
+            logger=logger,
+            web_socket_server=web_socket_server,
+            sensor_stream=sensor_stream,
+            zone_application=zone_application,
+            anchor_area_manager=anchor_area_manager,
+            wand_session_coordinator=wand_session_coordinator,
+            zone_udp_receiver=zone_udp_receiver,
+            zone_message_handler=zone_message_handler,
+        )
 
         server = WandServer(
             logger=logger,
@@ -106,13 +138,6 @@ class WandsAppBuilder:
             gesture_history_factory=gesture_history_factory,
             spell_matcher_factory=spell_matcher_factory,
             settings=settings.input.wand,
-            logger=logger,
-        )
-
-        anchor_area_manager = AnchorAreaManager(
-            settings=settings.anchor_area_manager,
-            web_socket_server=web_socket_server,
-            zone_manager=zone_manager,
             logger=logger,
         )
 
@@ -160,18 +185,6 @@ class WandsAppBuilder:
             logger=logger,
         )
 
-        wizard_name_provider = WizardNameProvider(WizardSettings(names=WIZARD_NAMES))
-        profile_service = LocalProfileService(logger=logger, name_provider=wizard_name_provider)
-        presence_reporter = LocalWandPresenceReporter(logger=logger)
-        wizard_session_store = WizardSessionStore()
-        wand_session_coordinator = WandSessionCoordinator(
-            logger=logger,
-            zone_manager=zone_manager,
-            profile_service=profile_service,
-            presence_reporter=presence_reporter,
-            session_store=wizard_session_store,
-        )
-
         spell_cast_reporter = LocalSpellCastReporter(
             logger=logger,
             session_store=wizard_session_store,
@@ -185,19 +198,14 @@ class WandsAppBuilder:
             logger=logger,
         )
 
-        return WandsApp(
+        recognition_app = RecognitionApp(
             logger=logger,
-            web_socket_server=web_socket_server,
-            sensor_stream=sensor_stream,
             server=server,
             tracked_wand_manager=tracked_wand_manager,
             wand_device_controller=wand_device_controller,
             wand_visualiser=wand_visualiser,
-            zone_application=zone_application,
-            spell_cast_presentation_controller=spell_cast_presentation_controller,
-            wand_session_coordinator=wand_session_coordinator,
-            anchor_area_manager=anchor_area_manager,
             wand_spell_cue_controller=wand_spell_cue_controller,
-            zone_udp_receiver=zone_udp_receiver,
-            zone_message_handler=zone_message_handler,
+            spell_cast_presentation_controller=spell_cast_presentation_controller,
         )
+
+        return WandsSystem(tracking=tracking_app, recognition=recognition_app)

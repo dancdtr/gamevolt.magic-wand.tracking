@@ -6,7 +6,7 @@ import os
 from appsettings import AppSettings
 from gamevolt.io.utils import bundled_path, install_path
 from gamevolt.logging import get_logger
-from wands_app_builder import WandsAppBuilder
+from wands_system_builder import WandsSystemBuilder
 
 application_dir = os.path.dirname(os.path.abspath(__file__))
 config_path = bundled_path("appsettings.yml")
@@ -16,24 +16,27 @@ print(settings)
 
 logger = get_logger(settings.logging)
 
-app = WandsAppBuilder(logger, settings).build()
+system = WandsSystemBuilder(logger, settings).build()
 
 quit_event = asyncio.Event()
-app.quit.subscribe(lambda: quit_event.set())
+system.tracking.quit.subscribe(lambda: quit_event.set())
+system.recognition.quit.subscribe(lambda: quit_event.set())
 
 
 async def main() -> int:
     logger.info(f"Running '{settings.name}'...")
 
     try:
-        await app.start_async()
+        await system.tracking.start_async()
+        await system.recognition.start_async()
     except Exception:
         logger.exception("Startup failure in wands_main")
         return 1
 
     try:
         while not quit_event.is_set():
-            app.update()
+            system.tracking.update()
+            system.recognition.update()
             await asyncio.sleep(0.01)
 
         return 0
@@ -45,7 +48,8 @@ async def main() -> int:
 
     finally:
         logger.info(f"Stopping '{settings.name}'...")
-        await app.stop_async()
+        await system.recognition.stop_async()
+        await system.tracking.stop_async()
         logger.info(f"Exited '{settings.name}'.")
         return 0
 
