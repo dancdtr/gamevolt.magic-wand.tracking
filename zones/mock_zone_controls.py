@@ -3,9 +3,9 @@ from __future__ import annotations
 import tkinter as tk
 from collections.abc import Callable
 
-from display.input.drop_down import DropDown
-from display.input.numeric_input import NumericInput
-from display.input.spell_visualiser_key_input import SpellVisualiserKeyInput
+from zones.mock_controls.drop_down import DropDown
+from zones.mock_controls.numeric_input import NumericInput
+from zones.mock_controls.spell_visualiser_key_input import SpellVisualiserKeyInput
 from gamevolt.events.event import Event
 from gamevolt.logging import Logger
 from spells.control.spell_target_store import SpellTargetStore

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Sequence
 
 from motion.direction.direction_type import DirectionType
@@ -61,8 +61,8 @@ class SpellDefinition:
 
     spell_type: SpellType = SpellType.NONE
 
-    spell_response_thresholds: SpellResponseThresholds = SpellResponseThresholds(
-        responses={SpellResponseType.OK: 50},
+    spell_response_thresholds: SpellResponseThresholds = field(
+        default_factory=lambda: SpellResponseThresholds(responses={SpellResponseType.OK: 50})
     )
 
     @property

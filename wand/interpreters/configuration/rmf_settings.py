@@ -4,7 +4,7 @@ from typing import Any, ClassVar, Iterable, Self
 
 from gamevolt.configuration.settings_base import SettingsBase
 from gamevolt.maths.axis import Axis
-from maths.vec3 import Vec3
+from wand.interpreters._math.vec3 import Vec3
 
 
 class ClipMode(Enum):

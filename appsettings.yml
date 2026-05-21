@@ -53,12 +53,6 @@ input:
       - "E009"
       - "E010"
 
-  input_type: "wand"
-  mock:
-    invert_x: False
-    invert_y: False
-    sample_frequency: 30
-
   wand:
     active_reminder_interval: 1.3
     rmf:
@@ -175,11 +169,6 @@ show_system_controller:
   lamp_udp_tx:
     host: "192.168.1.138"
     port: 8888
-
-anchor_bridge:
-  udp_transmitter:
-    host: "127.0.0.1"
-    port: 40100
 
 zone_visualisation:
   visualiser:

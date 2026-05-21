@@ -1,6 +1,6 @@
 import math
 
-from maths.vec3 import Vec3
+from wand.interpreters._math.vec3 import Vec3
 
 
 def wrap_pi(rad: float) -> float:

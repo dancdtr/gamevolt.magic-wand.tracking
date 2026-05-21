@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import math
 
-from maths.utils import cross, dot, norm, normalize
-from maths.vec3 import Vec3
+from wand.interpreters._math.utils import cross, dot, norm, normalize
+from wand.interpreters._math.vec3 import Vec3
 from wand.interpreters.configuration.rmf_settings import ClipMode, RMFSettings
 from wand.wand_rotation import WandRotation
 
