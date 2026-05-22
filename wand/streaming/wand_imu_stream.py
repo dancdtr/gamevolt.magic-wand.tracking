@@ -7,7 +7,7 @@ from gamevolt.events.event import Event
 from wand.data.assembled_packet import AssembledPacket
 
 
-class WandSensorStream(Protocol):
+class WandImuStream(Protocol):
     @property
     def packet_received(self) -> Event[Callable[[AssembledPacket], None]]: ...
 

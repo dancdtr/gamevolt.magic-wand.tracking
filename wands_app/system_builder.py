@@ -27,7 +27,7 @@ from visualisation.trail_factory import TrailFactory
 from visualisation.wand_colour_registry import WandColourRegistry
 from visualisation.wand_visualiser_factory import WandVisualiserFactory
 from wand.motion_processor_factory import MotionProcessorFactory
-from wand.streaming.wand_sensor_stream_builder import WandSensorStreamBuilder
+from wand.streaming.wand_imu_stream_builder import WandImuStreamBuilder
 from wand.tracked_wand_factory import TrackedWandFactory
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_device_controller import WandDeviceController
@@ -88,7 +88,7 @@ class WandsSystemBuilder:
         zone_manager = zone_application.zone_manager
 
         line_receiver = WebSocketLineReceiver(logger=logger, web_socket_server=web_socket_server)
-        sensor_stream = WandSensorStreamBuilder(logger, settings.sensor_stream).build_line_based(line_receiver)
+        imu_stream = WandImuStreamBuilder(logger, settings.imu_stream).build_line_based(line_receiver)
 
         anchor_area_manager = AnchorAreaManager(
             settings=settings.anchor_area_manager,
@@ -112,7 +112,7 @@ class WandsSystemBuilder:
         tracking_app = TrackingApp(
             logger=logger,
             web_socket_server=web_socket_server,
-            sensor_stream=sensor_stream,
+            imu_stream=imu_stream,
             zone_application=zone_application,
             anchor_area_manager=anchor_area_manager,
             wand_session_coordinator=wand_session_coordinator,
@@ -123,7 +123,7 @@ class WandsSystemBuilder:
         server = WandServer(
             logger=logger,
             settings=settings.server,
-            sensor_stream=sensor_stream,
+            imu_stream=imu_stream,
         )
 
         motion_processor_factory = MotionProcessorFactory(logger, settings.motion.processor)

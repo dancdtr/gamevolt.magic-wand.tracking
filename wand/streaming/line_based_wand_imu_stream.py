@@ -14,8 +14,8 @@ from wand.packet_data_assembler import PktDataAssembler
 from wand.packet_header import PacketHeader
 
 
-class LineBasedWandSensorStream:
-    """Sensor stream backed by a LineReceiverProtocol. Parses wire lines and
+class LineBasedWandImuStream:
+    """IMU stream backed by a LineReceiverProtocol. Parses wire lines and
     assembles header+data pairs into AssembledPacket frames."""
 
     def __init__(

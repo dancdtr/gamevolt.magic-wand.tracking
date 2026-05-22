@@ -7,7 +7,7 @@ from gamevolt.events.event import Event
 from gamevolt.logging import Logger
 from wand.configuration.wand_server_settings import WandServerSettings
 from wand.data.assembled_packet import AssembledPacket
-from wand.streaming.wand_sensor_stream import WandSensorStream
+from wand.streaming.wand_imu_stream import WandImuStream
 from wand.wand_client import WandClient
 from wand.wand_client_registry import WandClientRegistry
 from wand.wand_id_filter import WandIdFilter
@@ -16,12 +16,12 @@ from wand.wand_server_protocol import WandServerProtocol
 
 
 class WandServer(WandServerProtocol):
-    def __init__(self, logger: Logger, settings: WandServerSettings, sensor_stream: WandSensorStream) -> None:
+    def __init__(self, logger: Logger, settings: WandServerSettings, imu_stream: WandImuStream) -> None:
         self._wand_rotation_raw_updated: Event[Callable[[WandRotationRaw], None]] = Event()
         self._wand_disconnected: Event[Callable[[WandClient], None]] = Event()
         self._wand_connected: Event[Callable[[WandClient], None]] = Event()
 
-        self._sensor_stream = sensor_stream
+        self._imu_stream = imu_stream
         self._settings = settings
         self._logger = logger
 
@@ -50,12 +50,12 @@ class WandServer(WandServerProtocol):
 
     def start(self) -> None:
         self._logger.info("Starting wand server...")
-        self._sensor_stream.packet_received.subscribe(self._on_packet)
+        self._imu_stream.packet_received.subscribe(self._on_packet)
         self._logger.info(f"Started wand server. Allow list: {self._filter.snapshot()}")
 
     def stop(self) -> None:
         self._logger.info("Stopping wand server...")
-        self._sensor_stream.packet_received.unsubscribe(self._on_packet)
+        self._imu_stream.packet_received.unsubscribe(self._on_packet)
         self._registry.clear()
         self._logger.info("WandServer stopped.")
 

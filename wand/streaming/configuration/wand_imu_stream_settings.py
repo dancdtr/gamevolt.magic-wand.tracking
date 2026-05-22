@@ -4,5 +4,5 @@ from gamevolt.configuration.settings_base import SettingsBase
 
 
 @dataclass
-class WandSensorStreamSettings(SettingsBase):
+class WandImuStreamSettings(SettingsBase):
     header_ttl_s: float

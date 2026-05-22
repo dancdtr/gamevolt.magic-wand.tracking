@@ -67,7 +67,7 @@ Three protocols cover all sensor I/O. Each is implementation-agnostic; multiple 
 
 ### 4.1 `WandImuStream` (inbound)
 
-Emits per-wand IMU samples (rotation, timing). Today's single implementation is `LineBasedWandSensorStream` reading WebSocket lines from the custom anchor relay. Tomorrow adds an Eliko-backed implementation. Future mock implementations (e.g. mouse-driven) are anticipated but out of spec.
+Emits per-wand IMU samples (rotation, timing). Today's single implementation is `LineBasedWandImuStream` reading WebSocket lines from the custom anchor relay. Tomorrow adds an Eliko-backed implementation. Future mock implementations (e.g. mouse-driven) are anticipated but out of spec.
 
 ### 4.2 `WandPositionStream` (inbound, new)
 
@@ -167,7 +167,7 @@ Tracked as roadmap items, not part of this spec's structural change.
 Owns:
 
 - `WebSocketServer` (relay ingress, while custom relays exist)
-- `WandSensorStream` (sensor source lifecycle)
+- `WandImuStream` (sensor source lifecycle)
 - `ZoneApplication` / `ZoneManager`
 - `AnchorAreaManager`
 - `WandSessionCoordinator` (binds wand_id → wizard session on presence enter)
@@ -188,7 +188,7 @@ Each seam is treated as a future network boundary; swapping the implementation t
 
 | Seam | Owner | Consumer | Future remote form |
 |------|-------|----------|--------------------|
-| `WandSensorStream` | Tracking | Recognition's `WandServer` | `NetworkWandSensorStream` (WebSocket client) |
+| `WandImuStream` | Tracking | Recognition's `WandServer` | `NetworkWandSensorStream` (WebSocket client) |
 | `WandPositionStream` *(planned)* | Tracking | Recognition (if needed) | network stream |
 | `AnchorAreaManager` / `WandCommandSink` | Tracking | Recognition's `WandDeviceController` | wand-command request channel |
 | `ZoneManager` events | Tracking | Recognition's `TrackedWandManager` | presence channel (MQTT, per hub plan) |

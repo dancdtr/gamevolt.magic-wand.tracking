@@ -15,14 +15,14 @@ class WandDeviceController:
         self._settings = settings
         self._logger = logger
 
-    def blast_wand_active(self, wand_id: str) -> None:
+    def broadcast_activate(self, wand_id: str) -> None:
         self._anchor_area_manager.blast_message_to_wand(wand_id, WandTxMessage(wand_id, True, sequence_id=0))
 
-    def blast_wand_inactive(self, wand_id: str) -> None:
+    def broadcast_deactivate(self, wand_id: str) -> None:
         self._anchor_area_manager.blast_message_to_wand(wand_id, WandTxMessage(wand_id, False, sequence_id=0))
 
-    def set_wand_active(self, wand_id: str) -> None:
-        self._logger.debug(f"Setting wand ({wand_id}) active..")
+    def activate_wand(self, wand_id: str) -> None:
+        self._logger.debug(f"Activating wand ({wand_id})...")
         self._set_wand_tx(wand_id, True)
 
         self._delay(
@@ -33,11 +33,11 @@ class WandDeviceController:
             ),
         )
 
-    def set_wand_inactive(self, wand_id: str) -> None:
+    def deactivate_wand(self, wand_id: str) -> None:
         if not self._settings.disable_wand_tx:
             return
 
-        self._logger.verbose(f"Setting wand ({wand_id}) setting inactive...")
+        self._logger.verbose(f"Deactivating wand ({wand_id})...")
         self._set_wand_tx(wand_id, False)
 
     def play_spell_cast_cue(self, wand_id: str, has_sufficient_level: bool) -> None:

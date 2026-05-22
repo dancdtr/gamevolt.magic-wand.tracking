@@ -9,20 +9,20 @@ from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.messaging.udp.udp_rx import UdpRx
 from gamevolt.web_sockets.web_socket_server import WebSocketServer
 from services.wand_session_coordinator import WandSessionCoordinator
-from wand.streaming.wand_sensor_stream import WandSensorStream
+from wand.streaming.wand_imu_stream import WandImuStream
 from zones.zone_application import ZoneApplication
 
 
 class TrackingApp:
     """Owns relay ingress, zone management, anchor-area mapping, and
-    presence orchestration. Produces the sensor stream and presence
+    presence orchestration. Produces the IMU stream and presence
     events consumed by the RecognitionApp."""
 
     def __init__(
         self,
         logger: Logger,
         web_socket_server: WebSocketServer,
-        sensor_stream: WandSensorStream,
+        imu_stream: WandImuStream,
         zone_application: ZoneApplication,
         anchor_area_manager: AnchorAreaManager,
         wand_session_coordinator: WandSessionCoordinator,
@@ -33,7 +33,7 @@ class TrackingApp:
 
         self._logger = logger
         self._web_socket_server = web_socket_server
-        self._sensor_stream = sensor_stream
+        self._imu_stream = imu_stream
         self._zone_application = zone_application
         self._anchor_area_manager = anchor_area_manager
         self._wand_session_coordinator = wand_session_coordinator
@@ -55,10 +55,10 @@ class TrackingApp:
         if self._zone_message_handler is not None:
             self._zone_message_handler.start()
 
-        await self._sensor_stream.start_async()
+        await self._imu_stream.start_async()
 
     async def stop_async(self) -> None:
-        await self._sensor_stream.stop_async()
+        await self._imu_stream.stop_async()
 
         if self._zone_message_handler is not None:
             self._zone_message_handler.stop()
@@ -75,7 +75,7 @@ class TrackingApp:
         self._zone_application.quit.unsubscribe(self._on_quit)
 
     def update(self) -> None:
-        self._sensor_stream.update()
+        self._imu_stream.update()
         self._zone_application.update()
 
     def _on_quit(self) -> None:

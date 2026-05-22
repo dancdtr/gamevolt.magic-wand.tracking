@@ -84,7 +84,7 @@ server:
       host: "0.0.0.0"
       port: 60901
 
-sensor_stream:
+imu_stream:
   header_ttl_s: 2.0
 motion:
   gesture_history:

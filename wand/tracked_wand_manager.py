@@ -93,8 +93,8 @@ class TrackedWandManager:
 
         # zone = self._zone_manager.get_zone_containing_wand_id(client.id)
         # if zone is not None:
-        #     self._logger.info(f"Wand ({client.id}) reconnected and was previously in zone {zone.id}. Setting wand active.")
-        #     self._wand_device_controller.set_wand_active(client.id)
+        #     self._logger.info(f"Wand ({client.id}) reconnected and was previously in zone {zone.id}. Activating wand.")
+        #     self._wand_device_controller.activate_wand(client.id)
 
         # self._wan
 
@@ -120,7 +120,7 @@ class TrackedWandManager:
         wand.set_spell_targets(zone.spell_types)
         wand.start()
 
-        self._wand_device_controller.set_wand_active(wand.id)
+        self._wand_device_controller.activate_wand(wand.id)
 
     def _on_zone_exited(self, zone: Zone, wand_id: str) -> None:
         wand = self._get_wand(wand_id)
@@ -128,7 +128,7 @@ class TrackedWandManager:
         wand.stop()
         wand.clear_spell_target()
 
-        self._wand_device_controller.set_wand_inactive(wand.id)
+        self._wand_device_controller.deactivate_wand(wand.id)
 
     def _on_spell_cast(self, match: SpellMatch) -> None:
         self._logger.debug(f"Wand ({match.wand_id}) cast '{match.spell_type.name}'!")
