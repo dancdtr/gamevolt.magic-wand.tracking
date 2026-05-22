@@ -31,15 +31,12 @@ class AnchorAreaManager:
         self._zone_manager.zone_exited.unsubscribe(self._on_zone_entered)
         self._zone_manager.zone_exited.unsubscribe(self._on_zone_exited)
 
-    def broadcast_message(self, message: Message) -> None:
-        pass
-
-    def blast_message_to_wand(self, wand_id: str, message: Message) -> None:
+    def broadcast_to_wand(self, wand_id: str, message: Message) -> None:
         anchor_ids = self._web_socket_server.connected_clients.keys()
         self._logger.verbose(f"Broadcasting {message.MessageType} to wand ({wand_id}) via all connected anchors ({anchor_ids})...")
         self._web_socket_server.broadcast(message)
 
-    def relay_message_to_wand(self, wand_id: str, message: Message) -> None:
+    def send_to_wand(self, wand_id: str, message: Message) -> None:
         anchor_id = self._get_anchor_id_handling_wand_id(wand_id)
         self._logger.verbose(f"Sending {message.MessageType} to wand ({wand_id}) via anchor ({anchor_id})...")
 

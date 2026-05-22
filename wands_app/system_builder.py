@@ -143,7 +143,7 @@ class WandsSystemBuilder:
 
         wand_device_controller = WandDeviceController(
             settings=settings.wand_device_controller,
-            anchor_area_manager=anchor_area_manager,
+            command_sink=anchor_area_manager,
             logger=logger,
         )
 

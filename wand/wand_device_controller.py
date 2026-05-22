@@ -1,25 +1,25 @@
 import asyncio
 from collections.abc import Callable
 
-from anchor_area.anchor_area_manager import AnchorAreaManager
 from gamevolt.logging._logger import Logger
 from messaging.messages.wand_haptic_sequence_message import WandHapticSequenceMessage
 from messaging.messages.wand_led_message import WandLedMessage
 from messaging.messages.wand_tx_message import WandTxMessage
 from wand.configuration.wand_device_controller_settings import WandDeviceControllerSettings
+from wand.wand_command_sink import WandCommandSink
 
 
 class WandDeviceController:
-    def __init__(self, logger: Logger, settings: WandDeviceControllerSettings, anchor_area_manager: AnchorAreaManager) -> None:
-        self._anchor_area_manager = anchor_area_manager
+    def __init__(self, logger: Logger, settings: WandDeviceControllerSettings, command_sink: WandCommandSink) -> None:
+        self._command_sink = command_sink
         self._settings = settings
         self._logger = logger
 
     def broadcast_activate(self, wand_id: str) -> None:
-        self._anchor_area_manager.blast_message_to_wand(wand_id, WandTxMessage(wand_id, True, sequence_id=0))
+        self._command_sink.broadcast_to_wand(wand_id, WandTxMessage(wand_id, True, sequence_id=0))
 
     def broadcast_deactivate(self, wand_id: str) -> None:
-        self._anchor_area_manager.blast_message_to_wand(wand_id, WandTxMessage(wand_id, False, sequence_id=0))
+        self._command_sink.broadcast_to_wand(wand_id, WandTxMessage(wand_id, False, sequence_id=0))
 
     def activate_wand(self, wand_id: str) -> None:
         self._logger.debug(f"Activating wand ({wand_id})...")
@@ -51,11 +51,11 @@ class WandDeviceController:
 
     def _set_wand_tx(self, wand_id: str, enabled: bool) -> None:
         self._logger.verbose(f"{'Enabling' if enabled else 'Disabling'} wand ({wand_id}) TX...")
-        self._anchor_area_manager.relay_message_to_wand(wand_id, WandTxMessage(wand_id, enabled, sequence_id=0))
+        self._command_sink.send_to_wand(wand_id, WandTxMessage(wand_id, enabled, sequence_id=0))
 
     def _set_wand_led(self, wand_id: str, enabled: bool) -> None:
         self._logger.verbose(f"{'Enabling' if enabled else 'Disabling'} wand ({wand_id}) LED...")
-        self._anchor_area_manager.relay_message_to_wand(wand_id, WandLedMessage(wand_id, enabled=enabled, sequence_id=0))
+        self._command_sink.send_to_wand(wand_id, WandLedMessage(wand_id, enabled=enabled, sequence_id=0))
 
     def _play_haptic_sequence(self, wand_id: str, pattern_ids: list[int]) -> None:
         def clamp_pattern_id(pattern_id: int) -> int:
@@ -64,7 +64,7 @@ class WandDeviceController:
         clamped_ids = [clamp_pattern_id(pattern_id) for pattern_id in pattern_ids[:8]]
 
         self._logger.verbose(f"Playing wand ({wand_id}) haptic sequence {clamped_ids}...")
-        self._anchor_area_manager.relay_message_to_wand(wand_id, WandHapticSequenceMessage(wand_id, pattern_ids=clamped_ids))
+        self._command_sink.send_to_wand(wand_id, WandHapticSequenceMessage(wand_id, pattern_ids=clamped_ids))
 
     def _delay(self, delay: float, func: Callable) -> None:
         asyncio.create_task(self._run_delayed(delay, func))

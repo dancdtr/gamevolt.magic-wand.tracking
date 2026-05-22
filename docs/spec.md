@@ -80,7 +80,15 @@ Accepts internal `Message`s targeted at a specific wand:
 - **Activation / deactivation** — flips wand transmit state. Activation begins the IMU stream for that wand; deactivation ends it. Replaces the older "connect/disconnect" lifecycle.
 - **Haptics / vibration**, lamp colour, IMU transmit-frequency changes, etc.
 
-Today's path is `AnchorAreaManager → WebSocketServer → anchor → wand`. To be lifted into a dedicated `WandCommandSink` protocol. Production implementation talks to Eliko; staging implementation uses the anchor-relay path; development implementation can render to a GUI or log.
+Surface:
+
+```python
+class WandCommandSink(Protocol):
+    def send_to_wand(self, wand_id: str, message: Message) -> None: ...
+    def broadcast_to_wand(self, wand_id: str, message: Message) -> None: ...
+```
+
+Today's implementation is `AnchorAreaManager`, which already owns the zone↔anchor lookup and routes via the relay's `WebSocketServer`. `WandDeviceController` depends on `WandCommandSink` (protocol), not on `AnchorAreaManager` directly. Production implementation talks to Eliko; staging implementation uses the anchor-relay path (today); development implementation can render to a GUI or log.
 
 ### 4.4 Notes
 
@@ -190,7 +198,7 @@ Each seam is treated as a future network boundary; swapping the implementation t
 |------|-------|----------|--------------------|
 | `WandImuStream` | Tracking | Recognition's `WandServer` | `NetworkWandSensorStream` (WebSocket client) |
 | `WandPositionStream` *(planned)* | Tracking | Recognition (if needed) | network stream |
-| `AnchorAreaManager` / `WandCommandSink` | Tracking | Recognition's `WandDeviceController` | wand-command request channel |
+| `WandCommandSink` (today: `AnchorAreaManager`) | Tracking | Recognition's `WandDeviceController` | wand-command request channel |
 | `ZoneManager` events | Tracking | Recognition's `TrackedWandManager` | presence channel (MQTT, per hub plan) |
 | `WizardSessionStore` | shared | both | session lookup service |
 
@@ -242,7 +250,7 @@ Two-layer YAML: `appsettings.yml` (bundled defaults) + `appsettings.env.yml` (pe
 Tracked here so they don't get lost. Order is rough priority.
 
 1. **Eliko binding.** Concrete API for position stream, IMU stream, and command channel. Build conforming implementations of `WandImuStream`, `WandPositionStream`, `WandCommandSink`.
-2. **`WandCommandSink` protocol extraction.** Lift today's `AnchorAreaManager`-driven WebSocket path into a clean protocol; activate/deactivate semantics first.
+2. **Split `AnchorAreaManager` further.** It currently implements `WandCommandSink` *and* owns anchor-area↔zone presence forwarding. Once a second `WandCommandSink` impl is needed (Eliko, mock), pull the command-routing concern out into its own class so AAM goes back to being just zone↔anchor mapping.
 3. **`WandPositionStream` protocol + staging implementation.** Stop faking position. Let `ZoneManager` derive zones from real positions.
 4. **Anchor relay rework.** Conform to the new sensor-source protocols rather than being the implicit single source.
 5. **Spell match rework.** Attempt-segmentation logic; top-N candidate payload on `SpellCastReporter`; remove tier logic from recognition.
