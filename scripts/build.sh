@@ -70,7 +70,7 @@ APP_KEY = "${APP_KEY}"
 EOF
 
 info "Running PyInstaller with $SPEC_FILE"
-pyinstaller \
+uv run --group dev pyinstaller \
   --workpath "$WORK_DIR" \
   --distpath "$OUTPUT_DIR" \
   --noconfirm \

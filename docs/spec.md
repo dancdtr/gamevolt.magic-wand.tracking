@@ -241,7 +241,17 @@ Two-layer YAML: `appsettings.yml` (bundled defaults) + `appsettings.env.yml` (pe
 
 ### 9.3 Build
 
-`scripts/build.sh` produces the bundled executables via the `.spec` files (`wands.spec`, `relay.spec`). `wands_app/build_info.py` (and `anchor_relay/build_info.py`) is generated at build time with version + SHA + timestamp; falls back to `"dev"` when running from source (the literal string in `build_info.py`, not the project's "development" environment label).
+Python environment is managed by `uv`. Dependencies live in `pyproject.toml`; `uv.lock` pins the resolved set. Local setup:
+
+```bash
+uv sync               # creates .venv/ and installs runtime deps
+uv sync --group dev   # adds dev tooling (pyinstaller, pytest, ruff, etc.)
+uv run python -m wands_app.main
+```
+
+`scripts/build.sh` produces bundled executables via `uv run pyinstaller` against the `.spec` files (`wands.spec`, `relay.spec`). `wands_app/build_info.py` (and `anchor_relay/build_info.py`) is generated at build time with version + SHA + timestamp; falls back to `"dev"` when running from source (the literal string in `build_info.py`, not the project's "development" environment label).
+
+The Docker build (`Dockerfile.dev`) still uses micromamba and `environment.yml`-style assumptions — it has not yet been migrated and will fail until reworked.
 
 ---
 
@@ -260,6 +270,7 @@ Tracked here so they don't get lost. Order is rough priority.
 9. **Mock-mouse sensor source.** Hardware-free development implementation.
 10. **Zone polygon ownership.** Still local configuration today; possibly hub-owned later.
 11. **Legacy positioning retirement.** Once `WandPositionStream` is live and proven.
+12. **Migrate `Dockerfile.dev` to uv.** Local dev is on uv as of 2026-05-22; Docker still uses micromamba + the removed `environment.yml` and needs rewriting before container builds work again.
 
 ---
 

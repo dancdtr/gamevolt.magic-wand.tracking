@@ -1,3 +1,37 @@
+[project]
+name = "gamevolt-magic-wand-tracking"
+version = "0.1.0"
+description = "Magic wand tracking runtime: ingests UWB + IMU sensor data and drives spell-cast experiences."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "jsonmerge",
+    "numpy",
+    "pillow",
+    "pyserial",
+    "pyserial-asyncio",
+    "pyyaml",
+    "scipy",
+    "uvloop",
+    "websockets==15.0.1",
+]
+
+[dependency-groups]
+dev = [
+    "black==25.1.0",
+    "isort==6.0.0",
+    "mypy==1.18.1",
+    "pyinstaller==6.18.0",
+    "pylint==3.3.8",
+    "pytest==8.3.5",
+    "ruff==0.13.0",
+    "vulture==2.14",
+]
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
 [tool.ruff]
 line-length = 140
 target-version = "py39"
