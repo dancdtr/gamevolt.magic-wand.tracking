@@ -2,7 +2,7 @@
 name: potter.anchor_relay
 id: UnknownAnchorRelay
 version: 0.1.2
-is_dev: false
+is_dev: true
 logging:
   file_path: ./Logs/potter.anchor_relay.{timestamp}.log
   minimum_level: DEBUG
