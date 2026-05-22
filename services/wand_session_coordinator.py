@@ -52,7 +52,7 @@ class WandSessionCoordinator:
 
     async def _handle_exited(self, wand_id: str) -> None:
         try:
-            await self._presence_reporter.report_exit(wand_id)
+            await self._presence_reporter.report_exited(wand_id)
         except Exception:
             self._logger.exception(f"WandSessionCoordinator failed handling exit for ({wand_id})")
         finally:

@@ -10,11 +10,8 @@ class LocalWandPresenceReporter(WandPresenceReporterBase):
     def __init__(self, logger: Logger) -> None:
         self._logger = logger
 
-    async def report_detected(self, wand_id: str) -> None:
-        self._logger.info(f"LocalWandPresenceReporter detected ({wand_id})")
-
     async def report_entered(self, wand_id: str) -> None:
         self._logger.info(f"LocalWandPresenceReporter entered ({wand_id})")
 
-    async def report_exit(self, wand_id: str) -> None:
-        self._logger.info(f"LocalWandPresenceReporter exit ({wand_id})")
+    async def report_exited(self, wand_id: str) -> None:
+        self._logger.info(f"LocalWandPresenceReporter exited ({wand_id})")

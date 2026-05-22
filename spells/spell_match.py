@@ -30,7 +30,7 @@ class SpellMatch:
     filler_duration_s: float
 
     accuracy_score: float
-    spell_reponse_type: SpellResponseType
+    spell_response_type: SpellResponseType
 
     @property
     def accuracy(self) -> float:
