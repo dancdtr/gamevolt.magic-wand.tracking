@@ -4,8 +4,8 @@ from collections.abc import Callable
 from logging import Logger
 
 from gamevolt.events.event import Event
+from spells.control.wand_spell_cue_controller import WandSpellCueController
 from spells.spell_cast_presentation_controller import SpellCastPresentationController
-from spell_cues.wand_spell_cue_controller import WandSpellCueController
 from visualisation.visualiser_protocol import WandVisualiserProtocol
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_device_controller import WandDeviceController

@@ -5,11 +5,11 @@ import os
 
 from gamevolt.io.utils import bundled_path, install_path
 from gamevolt.logging import get_logger
-from wands.appsettings import AppSettings
-from wands.system_builder import WandsSystemBuilder
+from wands_app.appsettings import AppSettings
+from wands_app.system_builder import WandsSystemBuilder
 
 try:
-    from wands.build_info import BUILD_TIME_UTC, GIT_SHA, VERSION
+    from wands_app.build_info import BUILD_TIME_UTC, GIT_SHA, VERSION
 except ImportError:
     VERSION, GIT_SHA, BUILD_TIME_UTC = "dev", "unknown", ""
 

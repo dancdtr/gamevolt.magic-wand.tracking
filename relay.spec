@@ -15,10 +15,6 @@ datas = [
     (os.path.join(spec_dir, "anchor_relay", "appsettings.yml"), "."),
 ]
 
-assets_dir = os.path.join(spec_dir, "assets")
-if os.path.isdir(assets_dir):
-    datas.append((assets_dir, "assets"))
-
 a = Analysis(
     [os.path.join("anchor_relay", "main.py")],
     pathex=[spec_dir],

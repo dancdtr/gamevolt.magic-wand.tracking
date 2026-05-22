@@ -37,7 +37,7 @@ case "$APP_KEY" in
   wands)
     APPLICATION_NAME="wands"
     SPEC_FILE="$PROJECT_ROOT/wands.spec"
-    APP_PKG_DIR="$PROJECT_ROOT/wands"
+    APP_PKG_DIR="$PROJECT_ROOT/wands_app"
     ;;
   *)
     die "Unknown app '$APP_KEY'. Expected: relay or wands"
