@@ -10,6 +10,7 @@ from gamevolt.messaging.udp.udp_tx import UdpTx
 from gamevolt.visualisation.visualiser import Visualiser
 from gamevolt.web_sockets.web_socket_server import WebSocketServer
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
+from wand.streaming.configuration.wand_imu_stream_settings import WandImuStreamMode
 from wand.streaming.web_socket_line_receiver import WebSocketLineReceiver
 from services.local_profile_service import LocalProfileService
 from services.local_spell_cast_reporter import LocalSpellCastReporter
@@ -87,8 +88,12 @@ class WandsSystemBuilder:
 
         zone_manager = zone_application.zone_manager
 
-        line_receiver = WebSocketLineReceiver(logger=logger, web_socket_server=web_socket_server)
-        imu_stream = WandImuStreamBuilder(logger, settings.imu_stream).build_line_based(line_receiver)
+        imu_stream_builder = WandImuStreamBuilder(logger, settings.imu_stream)
+        if settings.imu_stream.mode is WandImuStreamMode.ELIKO:
+            imu_stream = imu_stream_builder.build_eliko()
+        else:
+            line_receiver = WebSocketLineReceiver(logger=logger, web_socket_server=web_socket_server)
+            imu_stream = imu_stream_builder.build_line_based(line_receiver)
 
         anchor_area_manager = AnchorAreaManager(
             settings=settings.anchor_area_manager,

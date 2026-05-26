@@ -67,7 +67,12 @@ Three protocols cover all sensor I/O. Each is implementation-agnostic; multiple 
 
 ### 4.1 `WandImuStream` (inbound)
 
-Emits per-wand IMU samples (rotation, timing). Today's single implementation is `LineBasedWandImuStream` reading WebSocket lines from the custom anchor relay. Tomorrow adds an Eliko-backed implementation. Future mock implementations (e.g. mouse-driven) are anticipated but out of spec.
+Emits per-wand IMU samples (rotation, timing). Two implementations live in tree, swappable via `imu_stream.mode` in `appsettings.yml`:
+
+- `LineBasedWandImuStream` — reads WebSocket lines from the custom anchor relay (`mode: line_based`).
+- `ElikoWandImuStream` — opens a TCP connection to the Eliko RTLS Server (port 25025), requests `PR_Q` (per-tag quaternion bursts), and emits one `AssembledPacket` per `PR_Q` line (10 samples each). The wand's body-frame forward axis is +Y; each sample's forward vector is `q · (0,1,0)`, Q15-encoded into the existing `data_str` format so `WandClient` consumes both sources identically. Tag IDs are normalised to bare upper hex (e.g. `0x001D6C` → `001D6C`). Per-sample dt is fixed by IMU hardware and configured (not derived from packet timestamps).
+
+Eliko's `COORD_Z` position feed is intentionally not consumed here; position will land via the planned `WandPositionStream` (§4.2). Future mock implementations (e.g. mouse-driven) are anticipated but out of spec.
 
 ### 4.2 `WandPositionStream` (inbound, new)
 
@@ -259,7 +264,7 @@ The Docker build (`Dockerfile.dev`) still uses micromamba and `environment.yml`-
 
 Tracked here so they don't get lost. Order is rough priority.
 
-1. **Eliko binding.** Concrete API for position stream, IMU stream, and command channel. Build conforming implementations of `WandImuStream`, `WandPositionStream`, `WandCommandSink`.
+1. **Eliko binding.** Concrete API for position stream, IMU stream, and command channel. `WandImuStream` Eliko implementation landed (`ElikoWandImuStream`, PR_Q over TCP, +Y forward). Still to do: `WandPositionStream` (Eliko `COORD_Z`), `WandCommandSink` over Eliko's wand-command channel.
 2. **Split `AnchorAreaManager` further.** It currently implements `WandCommandSink` *and* owns anchor-area↔zone presence forwarding. Once a second `WandCommandSink` impl is needed (Eliko, mock), pull the command-routing concern out into its own class so AAM goes back to being just zone↔anchor mapping.
 3. **`WandPositionStream` protocol + staging implementation.** Stop faking position. Let `ZoneManager` derive zones from real positions.
 4. **Anchor relay rework.** Conform to the new sensor-source protocols rather than being the implicit single source.

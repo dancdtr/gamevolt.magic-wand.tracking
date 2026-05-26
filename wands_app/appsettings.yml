@@ -85,7 +85,13 @@ server:
       port: 60901
 
 imu_stream:
+  mode: line_based
   header_ttl_s: 2.0
+  eliko:
+    host: 10.8.4.1
+    port: 25025
+    sample_dt_us: 8333
+    reconnect_delay_s: 2.0
 motion:
   gesture_history:
     max_segments: 20
