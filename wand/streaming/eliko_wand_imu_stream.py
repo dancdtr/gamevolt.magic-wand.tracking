@@ -20,22 +20,21 @@ class ElikoWandImuStream:
     IMU's hardware rate); the packet's tag_ts_ms is used as t0.
     """
 
-    _NSAMP_PER_PACKET = 10
     _FORWARD_FMT = "forward"
     _Q15_MAX = 32767
 
-    _BODY_FORWARD_X = 0.0
-    _BODY_FORWARD_Y = 1.0
-    _BODY_FORWARD_Z = 0.0
-
-    _LINE_PREFIX = "$PEKIO,PR_Q,"
-    _REQUEST = b"$PEKIO,SET_REPORT_LIST,PR_Q\r\n"
+    # Quick + dirty: pulse the tag's onboard LED on a spell cast.
+    # _LED_PULSE_CMD = "$PEKIO,SET_TAG_LEDH,{tag_id},0x0AF0002\r\n"
+    _LED_PULSE_CMD = "$PEKIO,SET_TAG_LEDH,{tag_id},0x0A0F0001\r\n"
 
     def __init__(self, logger: Logger, settings: ElikoStreamSettings) -> None:
         self._packet_received: Event[Callable[[AssembledPacket], None]] = Event()
 
         self._logger = logger
         self._settings = settings
+
+        self._line_prefix = f"$PEKIO,{settings.report_type},"
+        self._request = f"$PEKIO,SET_REPORT_LIST,{settings.report_type}\r\n".encode("ascii")
 
         self._task: asyncio.Task[None] | None = None
         self._writer: asyncio.StreamWriter | None = None
@@ -64,6 +63,15 @@ class ElikoWandImuStream:
     def update(self) -> None:
         return
 
+    def send_led_pulse(self, tag_id: str) -> None:
+        writer = self._writer
+        if writer is None:
+            self._logger.warning(f"Eliko LED pulse dropped, no connection (tag={tag_id})")
+            return
+        command = self._LED_PULSE_CMD.format(tag_id=tag_id)
+        writer.write(command.encode("ascii"))
+        self._logger.debug(f"Eliko sent: {command.strip()}")
+
     async def _run(self) -> None:
         host = self._settings.host
         port = self._settings.port
@@ -74,9 +82,9 @@ class ElikoWandImuStream:
                 self._logger.info(f"Eliko stream connecting to {host}:{port}")
                 reader, writer = await asyncio.open_connection(host, port)
                 self._writer = writer
-                writer.write(self._REQUEST)
+                writer.write(self._request)
                 await writer.drain()
-                self._logger.info(f"Eliko stream connected, requested PR_Q reports")
+                self._logger.info(f"Eliko stream connected, requested {self._settings.report_type} reports")
                 await self._read_loop(reader)
             except asyncio.CancelledError:
                 raise
@@ -110,22 +118,23 @@ class ElikoWandImuStream:
             pass
 
     def _handle_line(self, line: str) -> None:
-        if not line.startswith(self._LINE_PREFIX):
-            self._logger.trace(f"Eliko non-PR_Q line: {line}")
+        if not line.startswith(self._line_prefix):
+            self._logger.trace(f"Eliko non-{self._settings.report_type} line: {line}")
             return
 
         try:
-            packet = self._parse_pr_q(line)
+            packet = self._parse_quat_burst(line)
         except _ParseError as e:
-            self._logger.debug(f"Eliko PR_Q parse error: {e}. line='{line}'")
+            self._logger.debug(f"Eliko {self._settings.report_type} parse error: {e}. line='{line}'")
             return
 
         self._packet_received.invoke(packet)
 
-    def _parse_pr_q(self, line: str) -> AssembledPacket:
+    def _parse_quat_burst(self, line: str) -> AssembledPacket:
         fields = line.split(",")
-        # $PEKIO,PR_Q,seq,anchor_sn,tag_sn,tag_ts_ms, q0, q1, ..., q9
-        expected = 6 + self._NSAMP_PER_PACKET
+        # $PEKIO,<report>,seq,anchor_sn,tag_sn,tag_ts_ms, q0, q1, ..., q(N-1)
+        nsamp = self._settings.nsamp_per_packet
+        expected = 6 + nsamp
         if len(fields) < expected:
             raise _ParseError(f"expected >= {expected} fields, got {len(fields)}")
 
@@ -136,9 +145,7 @@ class ElikoWandImuStream:
         except ValueError as e:
             raise _ParseError(f"header parse: {e}")
 
-        forward_q15 = [
-            self._quat_to_forward_q15(fields[6 + i]) for i in range(self._NSAMP_PER_PACKET)
-        ]
+        forward_q15 = [self._quat_to_forward_q15(fields[6 + i]) for i in range(nsamp)]
         data_str = ";".join(f"{fx},{fy},{fz}" for (fx, fy, fz) in forward_q15)
 
         return AssembledPacket(
@@ -146,7 +153,7 @@ class ElikoWandImuStream:
             t0_ms=tag_ts_ms,
             sample_dt_us=self._settings.sample_dt_us,
             tag_hex=tag_hex,
-            nsamp=self._NSAMP_PER_PACKET,
+            nsamp=nsamp,
             fmt=self._FORWARD_FMT,
             data_str=data_str,
             header_age_s=0.0,
@@ -159,8 +166,7 @@ class ElikoWandImuStream:
             s = s[2:]
         return s.upper()
 
-    @classmethod
-    def _quat_to_forward_q15(cls, quat_field: str) -> tuple[int, int, int]:
+    def _quat_to_forward_q15(self, quat_field: str) -> tuple[int, int, int]:
         parts = quat_field.split(";")
         if len(parts) != 4:
             raise _ParseError(f"quat must have 4 components, got {len(parts)}: {quat_field!r}")
@@ -172,9 +178,9 @@ class ElikoWandImuStream:
         except ValueError as e:
             raise _ParseError(f"quat parse: {e}")
 
-        vx = cls._BODY_FORWARD_X
-        vy = cls._BODY_FORWARD_Y
-        vz = cls._BODY_FORWARD_Z
+        vx = self._settings.body_forward_x
+        vy = self._settings.body_forward_y
+        vz = self._settings.body_forward_z
 
         # Algebra mirrored from firmware rotate_vec_by_quat so results match
         # the legacy path exactly when fed equivalent quats.
@@ -193,7 +199,7 @@ class ElikoWandImuStream:
             fy *= inv
             fz *= inv
 
-        return (cls._to_q15(fx), cls._to_q15(fy), cls._to_q15(fz))
+        return (self._to_q15(fx), self._to_q15(fy), self._to_q15(fz))
 
     @classmethod
     def _to_q15(cls, v: float) -> int:

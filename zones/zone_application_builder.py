@@ -11,18 +11,22 @@ from zones.visualisation.null_zone_visualiser import NullZoneVisualiser
 from zones.visualisation.zone_presentation_controller import ZonePresentationController
 from zones.zone_application import ZoneApplication
 
-WANDS_IDS = ["E000"]
-
 
 class ZoneApplicationBuilder:
     def __init__(self, logger: Logger) -> None:
         self._logger = logger
 
-    def build_mock(self, spell_registry: SpellRegistry, visualiser: Visualiser, spell_image_library: SpellImageLibrary) -> ZoneApplication:
+    def build_mock(
+        self,
+        spell_registry: SpellRegistry,
+        visualiser: Visualiser,
+        spell_image_library: SpellImageLibrary,
+        wand_ids: list[str],
+    ) -> ZoneApplication:
         zone_manager = MockZoneManager(
             logger=self._logger,
             spell_registry=spell_registry,
-            wand_ids=WANDS_IDS,
+            wand_ids=wand_ids,
         )
 
         zone_visualiser = SpellTargetVisualiser(

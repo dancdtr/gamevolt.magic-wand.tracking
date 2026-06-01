@@ -11,6 +11,7 @@ from gamevolt.visualisation.visualiser import Visualiser
 from gamevolt.web_sockets.web_socket_server import WebSocketServer
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from wand.streaming.configuration.wand_imu_stream_settings import WandImuStreamMode
+from wand.streaming.eliko_wand_imu_stream import ElikoWandImuStream
 from wand.streaming.web_socket_line_receiver import WebSocketLineReceiver
 from services.local_profile_service import LocalProfileService
 from services.local_spell_cast_reporter import LocalSpellCastReporter
@@ -71,6 +72,7 @@ class WandsSystemBuilder:
                 spell_image_library=spell_image_library,
                 visualiser=zone_visualiser_host,
                 spell_registry=spell_registry,
+                wand_ids=settings.input.tracked_wands.ids,
             )
         else:
             zone_udp_receiver = UdpRx(logger, settings.zones.udp_receiver)
@@ -202,6 +204,11 @@ class WandsSystemBuilder:
             spell_cast_reporter=spell_cast_reporter,
             logger=logger,
         )
+
+        # Quick + dirty: pulse the Eliko tag LED on each spell cast (tag id == wand id).
+        if isinstance(imu_stream, ElikoWandImuStream):
+            eliko_stream = imu_stream
+            tracked_wand_manager.spell_cast.subscribe(lambda match: eliko_stream.send_led_pulse(match.wand_id))
 
         recognition_app = RecognitionApp(
             logger=logger,
