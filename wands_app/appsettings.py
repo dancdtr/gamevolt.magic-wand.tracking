@@ -14,13 +14,15 @@ from wand.configuration.input_settings import InputSettings
 from wand.configuration.wand_device_controller_settings import WandDeviceControllerSettings
 from wand.configuration.wand_server_settings import WandServerSettings
 from wand.streaming.configuration.wand_imu_stream_settings import WandImuStreamSettings
+from wands_app.configuration.system_type import SystemType
 from zones.configuration.zones_settings import ZonesSettings
 
 
 @dataclass
 class AppSettings(AppSettingsBase):
     name: str
-    is_dev: bool
+    system_type: SystemType
+    tracked_wand_ids: list[str]
     logging: LoggingSettings
     input: InputSettings
     motion: MotionSettings

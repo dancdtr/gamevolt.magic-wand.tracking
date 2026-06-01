@@ -1,131 +1,69 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Callable
 
 from gamevolt.events.event import Event
 from gamevolt.logging import Logger
 from wand.data.assembled_packet import AssembledPacket
-from wand.streaming.configuration.eliko_stream_settings import ElikoStreamSettings
+from wand.streaming.eliko.configuration.eliko_parsing_settings import ElikoParsingSettings
+from wand.streaming.eliko.eliko_client import ElikoClient
 
 
 class ElikoWandImuStream:
     """WandImuStream backed by an Eliko RTLS Server TCP feed.
 
-    Connects to <host>:<port>, requests PR_Q (per-tag quaternion bursts), and
-    emits one AssembledPacket per PR_Q line. The wand's body-frame forward
-    axis is +Y, so each sample's forward vector is q * (0,1,0); the 10 forward
-    vectors are Q15-encoded into the existing data_str format consumed by
-    WandClient. Per-sample dt is taken as a fixed value from settings (the wand
-    IMU's hardware rate); the packet's tag_ts_ms is used as t0.
+    Consumes lines from a shared `ElikoClient`, filters to PR_Q (per-tag
+    quaternion bursts), and emits one AssembledPacket per line. The wand's
+    body-frame forward axis is +Y, so each sample's forward vector is
+    q * (0,1,0); the 10 forward vectors are Q15-encoded into the existing
+    data_str format consumed by WandClient. Per-sample dt is taken as a fixed
+    value from settings (the wand IMU's hardware rate); the packet's
+    tag_ts_ms is used as t0.
     """
 
     _FORWARD_FMT = "forward"
     _Q15_MAX = 32767
 
-    # Quick + dirty: pulse the tag's onboard LED on a spell cast.
-    # _LED_PULSE_CMD = "$PEKIO,SET_TAG_LEDH,{tag_id},0x0AF0002\r\n"
-    _LED_PULSE_CMD = "$PEKIO,SET_TAG_LEDH,{tag_id},0x0A0F0001\r\n"
-
-    def __init__(self, logger: Logger, settings: ElikoStreamSettings) -> None:
+    def __init__(
+        self,
+        logger: Logger,
+        client: ElikoClient,
+        settings: ElikoParsingSettings,
+        report_type: str,
+    ) -> None:
         self._packet_received: Event[Callable[[AssembledPacket], None]] = Event()
 
         self._logger = logger
+        self._client = client
         self._settings = settings
+        self._report_type = report_type
 
-        self._line_prefix = f"$PEKIO,{settings.report_type},"
-        self._request = f"$PEKIO,SET_REPORT_LIST,{settings.report_type}\r\n".encode("ascii")
-
-        self._task: asyncio.Task[None] | None = None
-        self._writer: asyncio.StreamWriter | None = None
+        self._line_prefix = f"$PEKIO,{report_type},"
 
     @property
     def packet_received(self) -> Event[Callable[[AssembledPacket], None]]:
         return self._packet_received
 
     async def start_async(self) -> None:
-        if self._task is not None:
-            return
-        self._task = asyncio.create_task(self._run(), name="ElikoWandImuStream")
+        self._client.line_received.subscribe(self._handle_line)
+        await self._client.start_async()
 
     async def stop_async(self) -> None:
-        task = self._task
-        self._task = None
-        if task is None:
-            return
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
-        await self._close_writer()
+        await self._client.stop_async()
+        self._client.line_received.unsubscribe(self._handle_line)
 
     def update(self) -> None:
         return
 
-    def send_led_pulse(self, tag_id: str) -> None:
-        writer = self._writer
-        if writer is None:
-            self._logger.warning(f"Eliko LED pulse dropped, no connection (tag={tag_id})")
-            return
-        command = self._LED_PULSE_CMD.format(tag_id=tag_id)
-        writer.write(command.encode("ascii"))
-        self._logger.debug(f"Eliko sent: {command.strip()}")
-
-    async def _run(self) -> None:
-        host = self._settings.host
-        port = self._settings.port
-        delay_s = self._settings.reconnect_delay_s
-
-        while True:
-            try:
-                self._logger.info(f"Eliko stream connecting to {host}:{port}")
-                reader, writer = await asyncio.open_connection(host, port)
-                self._writer = writer
-                writer.write(self._request)
-                await writer.drain()
-                self._logger.info(f"Eliko stream connected, requested {self._settings.report_type} reports")
-                await self._read_loop(reader)
-            except asyncio.CancelledError:
-                raise
-            except Exception as e:
-                self._logger.warning(f"Eliko stream connection error: {e!r}")
-            finally:
-                await self._close_writer()
-
-            await asyncio.sleep(delay_s)
-
-    async def _read_loop(self, reader: asyncio.StreamReader) -> None:
-        while True:
-            raw = await reader.readline()
-            if not raw:
-                self._logger.info("Eliko stream EOF, will reconnect")
-                return
-            line = raw.decode("ascii", errors="replace").strip()
-            if not line:
-                continue
-            self._handle_line(line)
-
-    async def _close_writer(self) -> None:
-        writer = self._writer
-        self._writer = None
-        if writer is None:
-            return
-        try:
-            writer.close()
-            await writer.wait_closed()
-        except Exception:
-            pass
-
     def _handle_line(self, line: str) -> None:
         if not line.startswith(self._line_prefix):
-            self._logger.trace(f"Eliko non-{self._settings.report_type} line: {line}")
+            self._logger.trace(f"Eliko non-{self._report_type} line: {line}")
             return
 
         try:
             packet = self._parse_quat_burst(line)
         except _ParseError as e:
-            self._logger.debug(f"Eliko {self._settings.report_type} parse error: {e}. line='{line}'")
+            self._logger.debug(f"Eliko {self._report_type} parse error: {e}. line='{line}'")
             return
 
         self._packet_received.invoke(packet)

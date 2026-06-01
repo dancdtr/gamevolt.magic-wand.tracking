@@ -7,6 +7,4 @@ from gamevolt.web_sockets.configuration.web_socket_server_settings import WebSoc
 @dataclass
 class WandServerSettings(SettingsBase):
     disconnect_after_s: float
-    filter_wands: bool
-    filtered_wand_ids: list[str]
     web_socket: WebSocketServerSettings

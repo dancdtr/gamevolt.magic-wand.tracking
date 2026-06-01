@@ -14,7 +14,6 @@ from visualisation.coordinate_mode import CoordinateMode
 from visualisation.visualised_wand import VisualisedWand
 from visualisation.visualiser_protocol import WandVisualiserProtocol
 from visualisation.wand_colour_registry import WandColourRegistry
-from wand.configuration.input_settings import InputSettings
 from wand.tracked_wand_manager import TrackedWandManager
 
 
@@ -23,14 +22,12 @@ class WandVisualiser(Visualiser, WandVisualiserProtocol):
         self,
         logger: Logger,
         wand_visualiser_settings: WandVisualiserSettings,
-        input_settings: InputSettings,
         visualised_wand_factory: VisualisedWandFactory,
         tracked_wand_manager: TrackedWandManager,
         wand_colour_registry: WandColourRegistry,
     ) -> None:
         super().__init__(logger, wand_visualiser_settings.visualiser)
         self._wand_visualiser_settings = wand_visualiser_settings
-        self._input_settings = input_settings
 
         self._visualised_wand_factory = visualised_wand_factory
         self._tracked_wand_manager = tracked_wand_manager

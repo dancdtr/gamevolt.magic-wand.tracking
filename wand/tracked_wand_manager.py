@@ -6,7 +6,6 @@ from gamevolt.events.event import Event
 from gamevolt.logging import Logger
 from motion.motion_phase_type import MotionPhaseType
 from spells.spell_match import SpellMatch
-from wand.configuration.input_settings import InputSettings
 from wand.tracked_wand import TrackedWand
 from wand.tracked_wand_factory import TrackedWandFactory
 from wand.wand_client import WandClient
@@ -22,7 +21,7 @@ class TrackedWandManager:
     def __init__(
         self,
         logger: Logger,
-        settings: InputSettings,
+        tracked_wand_ids: list[str],
         server: WandServerProtocol,
         tracked_wand_factory: TrackedWandFactory,
         zone_manager: ZoneManagerProtocol,
@@ -34,7 +33,7 @@ class TrackedWandManager:
 
         self._wand_device_controller = wand_device_controller
         self._tracked_wand_factory = tracked_wand_factory
-        self._settings = settings.tracked_wands
+        self._tracked_wand_ids = list(tracked_wand_ids)
         self._zone_manager = zone_manager
         self._server = server
         self._logger = logger
@@ -49,7 +48,7 @@ class TrackedWandManager:
         self._zone_manager.zone_entered.subscribe(self._on_zone_entered)
         self._zone_manager.zone_exited.subscribe(self._on_zone_exited)
 
-        for id in self._settings.ids:
+        for id in self._tracked_wand_ids:
             wand = self._tracked_wand_factory.create(id)
             self._tracked_wands[id] = wand
 

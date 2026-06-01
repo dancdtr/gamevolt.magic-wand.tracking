@@ -14,18 +14,22 @@ from zones.zone_application import ZoneApplication
 
 
 class TrackingApp:
-    """Owns relay ingress, zone management, anchor-area mapping, and
-    presence orchestration. Produces the IMU stream and presence
-    events consumed by the RecognitionApp."""
+    """Owns relay ingress (when present), zone management, anchor-area mapping,
+    and presence orchestration. Produces the IMU stream and presence
+    events consumed by the RecognitionApp.
+
+    Sensor sources that don't use the custom anchor relay (e.g. Eliko RTLS)
+    pass `web_socket_server=None` and `anchor_area_manager=None`.
+    """
 
     def __init__(
         self,
         logger: Logger,
-        web_socket_server: WebSocketServer,
         imu_stream: WandImuStream,
         zone_application: ZoneApplication,
-        anchor_area_manager: AnchorAreaManager,
         wand_session_coordinator: WandSessionCoordinator,
+        web_socket_server: WebSocketServer | None,
+        anchor_area_manager: AnchorAreaManager | None,
         zone_udp_receiver: UdpRx | None,
         zone_message_handler: MessageHandler | None,
     ) -> None:
@@ -46,11 +50,15 @@ class TrackingApp:
         if self._zone_udp_receiver is not None:
             await self._zone_udp_receiver.start_async()
 
-        await self._web_socket_server.start_async()
+        if self._web_socket_server is not None:
+            await self._web_socket_server.start_async()
+
         await self._zone_application.start_async()
 
         self._wand_session_coordinator.start()
-        self._anchor_area_manager.start()
+
+        if self._anchor_area_manager is not None:
+            self._anchor_area_manager.start()
 
         if self._zone_message_handler is not None:
             self._zone_message_handler.start()
@@ -63,11 +71,14 @@ class TrackingApp:
         if self._zone_message_handler is not None:
             self._zone_message_handler.stop()
 
-        self._anchor_area_manager.stop()
+        if self._anchor_area_manager is not None:
+            self._anchor_area_manager.stop()
         self._wand_session_coordinator.stop()
 
         await self._zone_application.stop_async()
-        await self._web_socket_server.stop_async()
+
+        if self._web_socket_server is not None:
+            await self._web_socket_server.stop_async()
 
         if self._zone_udp_receiver is not None:
             await self._zone_udp_receiver.stop_async()

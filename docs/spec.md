@@ -67,10 +67,12 @@ Three protocols cover all sensor I/O. Each is implementation-agnostic; multiple 
 
 ### 4.1 `WandImuStream` (inbound)
 
-Emits per-wand IMU samples (rotation, timing). Two implementations live in tree, swappable via `imu_stream.mode` in `appsettings.yml`:
+Emits per-wand IMU samples (rotation, timing). Two implementations live in tree, selected by the top-level `system_type` flag in `appsettings.yml` (see §9.2):
 
-- `LineBasedWandImuStream` — reads WebSocket lines from the custom anchor relay (`mode: line_based`).
-- `ElikoWandImuStream` — opens a TCP connection to the Eliko RTLS Server (port 25025), requests `PR_Q` (per-tag quaternion bursts), and emits one `AssembledPacket` per `PR_Q` line (10 samples each). The wand's body-frame forward axis is +Y; each sample's forward vector is `q · (0,1,0)`, Q15-encoded into the existing `data_str` format so `WandClient` consumes both sources identically. Tag IDs are normalised to bare upper hex (e.g. `0x001D6C` → `001D6C`). Per-sample dt is fixed by IMU hardware and configured (not derived from packet timestamps).
+- `LineBasedWandImuStream` — reads WebSocket lines from the custom anchor relay. Used by `system_type: anchor_relay` and `anchor_relay_live`.
+- `ElikoWandImuStream` — consumes lines from a shared `ElikoClient` (TCP to Eliko RTLS Server, default port 25025) filtered to `PR_Q` (per-tag quaternion bursts), and emits one `AssembledPacket` per line (10 samples each). The wand's body-frame forward axis is +Y; each sample's forward vector is `q · (0,1,0)`, Q15-encoded into the existing `data_str` format so `WandClient` consumes both sources identically. Tag IDs are normalised to bare upper hex (e.g. `0x001D6C` → `001D6C`). Per-sample dt is fixed by IMU hardware and configured (not derived from packet timestamps). Used by `system_type: eliko_rtls`.
+
+`ElikoClient` is the shared TCP owner so the IMU stream and `ElikoWandCommandSink` ride a single connection. The stream owns its lifecycle (`start_async` on the client when the stream starts).
 
 Eliko's `COORD_Z` position feed is intentionally not consumed here; position will land via the planned `WandPositionStream` (§4.2). Future mock implementations (e.g. mouse-driven) are anticipated but out of spec.
 
@@ -93,7 +95,12 @@ class WandCommandSink(Protocol):
     def broadcast_to_wand(self, wand_id: str, message: Message) -> None: ...
 ```
 
-Today's implementation is `AnchorAreaManager`, which already owns the zone↔anchor lookup and routes via the relay's `WebSocketServer`. `WandDeviceController` depends on `WandCommandSink` (protocol), not on `AnchorAreaManager` directly. Production implementation talks to Eliko; staging implementation uses the anchor-relay path (today); development implementation can render to a GUI or log.
+Two implementations live in tree, selected by `system_type`:
+
+- `AnchorAreaManager` (anchor relay) — owns the zone↔anchor lookup and routes via the relay's `WebSocketServer`. Used by `anchor_relay` and `anchor_relay_live`.
+- `ElikoWandCommandSink` (Eliko RTLS) — shares the `ElikoClient` TCP connection with the IMU stream. Today only maps `WandLedMessage(enabled=True)` → `SET_TAG_LEDH`; other message types log-and-noop until Eliko exposes equivalents.
+
+`WandDeviceController` depends on `WandCommandSink` (protocol), not on a specific implementation.
 
 ### 4.4 Notes
 
@@ -244,6 +251,13 @@ Don't add new cross-app coupling that isn't on this list without flagging it.
 
 Two-layer YAML: `appsettings.yml` (bundled defaults) + `appsettings.env.yml` (per-environment overrides at install path). Loaded via `gamevolt.io.utils.bundled_path` / `install_path`. Both wands_app and anchor_relay follow the same convention.
 
+`wands_app` settings consolidate the deployment shape behind two top-level fields:
+
+- `system_type` — one of `eliko_rtls`, `eliko_single_anchor` (placeholder), `anchor_relay`, `anchor_relay_live`. Drives `WandImuStream`, `WandCommandSink`, and `ZoneApplication` selection in `WandsSystemBuilder`. There is no separate `is_dev` flag and no `imu_stream.mode` knob.
+- `tracked_wand_ids` — single list of wand IDs. Doubles as the `WandServer` allowlist (empty list = allow all) and the per-id tracker spawn list in `TrackedWandManager`. Adding a wand is a one-line edit.
+
+The `imu_stream` block carries `header_ttl_s` (used by the line-based stream) and an optional `eliko` sub-block with `connection`, `parsing`, and `command_sink` sections; the sub-block is consumed only when `system_type: eliko_rtls`.
+
 ### 9.3 Build
 
 Python environment is managed by `uv`. Dependencies live in `pyproject.toml`; `uv.lock` pins the resolved set. Local setup:
@@ -264,7 +278,7 @@ The Docker build (`Dockerfile.dev`) still uses micromamba and `environment.yml`-
 
 Tracked here so they don't get lost. Order is rough priority.
 
-1. **Eliko binding.** Concrete API for position stream, IMU stream, and command channel. `WandImuStream` Eliko implementation landed (`ElikoWandImuStream`, PR_Q over TCP, +Y forward). Still to do: `WandPositionStream` (Eliko `COORD_Z`), `WandCommandSink` over Eliko's wand-command channel.
+1. **Eliko binding.** Concrete API for position stream, IMU stream, and command channel. `WandImuStream` Eliko impl landed (`ElikoWandImuStream`, PR_Q over TCP, +Y forward). `WandCommandSink` Eliko impl landed (`ElikoWandCommandSink`, currently `WandLedMessage` → `SET_TAG_LEDH` only; TX-enable and haptics still log-and-noop pending Eliko equivalents). Still to do: `WandPositionStream` (Eliko `COORD_Z`).
 2. **Split `AnchorAreaManager` further.** It currently implements `WandCommandSink` *and* owns anchor-area↔zone presence forwarding. Once a second `WandCommandSink` impl is needed (Eliko, mock), pull the command-routing concern out into its own class so AAM goes back to being just zone↔anchor mapping.
 3. **`WandPositionStream` protocol + staging implementation.** Stop faking position. Let `ZoneManager` derive zones from real positions.
 4. **Anchor relay rework.** Conform to the new sensor-source protocols rather than being the implicit single source.

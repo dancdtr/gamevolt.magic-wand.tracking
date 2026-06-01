@@ -16,7 +16,13 @@ from wand.wand_server_protocol import WandServerProtocol
 
 
 class WandServer(WandServerProtocol):
-    def __init__(self, logger: Logger, settings: WandServerSettings, imu_stream: WandImuStream) -> None:
+    def __init__(
+        self,
+        logger: Logger,
+        settings: WandServerSettings,
+        imu_stream: WandImuStream,
+        tracked_wand_ids: list[str],
+    ) -> None:
         self._wand_rotation_raw_updated: Event[Callable[[WandRotationRaw], None]] = Event()
         self._wand_disconnected: Event[Callable[[WandClient], None]] = Event()
         self._wand_connected: Event[Callable[[WandClient], None]] = Event()
@@ -25,7 +31,7 @@ class WandServer(WandServerProtocol):
         self._settings = settings
         self._logger = logger
 
-        self._filter = WandIdFilter(settings=settings)
+        self._filter = WandIdFilter(allowed_ids=tracked_wand_ids)
 
         self._registry = WandClientRegistry(
             logger=logger,

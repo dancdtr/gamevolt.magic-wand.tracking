@@ -1,6 +1,10 @@
 ---
 name: "potter.wand-server"
-is_dev: True
+system_type: eliko_rtls
+
+tracked_wand_ids:
+  - 1DAE
+  - 1DC6
 
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
@@ -42,11 +46,6 @@ anchor_area_manager:
       zone_ids: ["Z004", "Z005"]
 
 input:
-  tracked_wands:
-    ids:
-      - 1DAE
-      - 1DC6
-
   wand:
     active_reminder_interval: 1.3
     rmf:
@@ -66,9 +65,6 @@ input:
       world_up: "Z"
 
 server:
-  filter_wands: false
-  # filtered_wand_ids: [1DAE]
-  filtered_wand_ids: [1DC6]
   disconnect_after_s: 2.0
   web_socket:
     select_interval: 0.1
@@ -77,18 +73,22 @@ server:
       port: 60901
 
 imu_stream:
-  mode: eliko
   header_ttl_s: 2.0
   eliko:
-    host: 10.8.4.1
-    port: 25025
-    sample_dt_us: 8333
-    reconnect_delay_s: 2.0
-    report_type: PR_Q
-    nsamp_per_packet: 10
-    body_forward_x: 0.0
-    body_forward_y: 1.0
-    body_forward_z: 0.0
+    connection:
+      host: 10.8.4.1
+      port: 25025
+      reconnect_delay_s: 2.0
+      report_type: PR_Q
+    parsing:
+      sample_dt_us: 8333
+      nsamp_per_packet: 10
+      body_forward_x: 0.0
+      body_forward_y: 1.0
+      body_forward_z: 0.0
+    command_sink:
+      led_pulse_pattern_hex: "0A0F0001"
+
 motion:
   gesture_history:
     max_segments: 20

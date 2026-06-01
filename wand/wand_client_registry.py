@@ -43,7 +43,7 @@ class WandClientRegistry:
 
         if not self._filter.allows(client_id):
             if self._logger.isEnabledFor(logging.DEBUG):
-                self._logger.debug(f"Ignoring wand {client_id}. filter_wands=True and id not in allowlist.")
+                self._logger.debug(f"Ignoring wand {client_id}. Not in tracked_wand_ids allowlist.")
             return None
 
         self._logger.info(f"Client ({client_id}) connected.")

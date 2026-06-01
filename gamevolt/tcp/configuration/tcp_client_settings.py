@@ -4,5 +4,7 @@ from gamevolt.configuration.settings_base import SettingsBase
 
 
 @dataclass
-class TrackedWandsSettings(SettingsBase):
-    ids: list[str]
+class TcpClientSettings(SettingsBase):
+    host: str
+    port: int
+    reconnect_delay_s: float
