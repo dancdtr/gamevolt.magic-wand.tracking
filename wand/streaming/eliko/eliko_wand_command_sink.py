@@ -4,20 +4,21 @@ from gamevolt.logging import Logger
 from gamevolt.messaging.message import Message
 from messaging.messages.wand_led_message import WandLedMessage
 from wand.streaming.eliko.configuration.eliko_command_sink_settings import ElikoCommandSinkSettings
-from wand.streaming.eliko.eliko_client import ElikoClient
+from wand.streaming.eliko.eliko_command_client import ElikoCommandClient
 
 
 class ElikoWandCommandSink:
-    """Routes wand commands over an Eliko TCP connection.
+    """Routes wand commands over an Eliko PEKIO command channel.
 
     Today only `WandLedMessage(enabled=True)` is mapped (to SET_TAG_LEDH);
     other message types are debug-logged no-ops until Eliko exposes
-    equivalents for TX-enable and haptics.
+    equivalents for TX-enable and haptics. Transport-agnostic: works against
+    either `ElikoClient` (TCP) or `ElikoSingleAnchorClient` (serial).
     """
 
     _LED_PULSE_CMD = "$PEKIO,SET_TAG_LEDH,{tag_id},0x{pattern}\r\n"
 
-    def __init__(self, logger: Logger, client: ElikoClient, settings: ElikoCommandSinkSettings) -> None:
+    def __init__(self, logger: Logger, client: ElikoCommandClient, settings: ElikoCommandSinkSettings) -> None:
         self._logger = logger
         self._client = client
         self._settings = settings

@@ -1,14 +1,15 @@
 ---
 name: "potter.wand-server"
-system_type: eliko_rtls
+# system_type: eliko_rtls
+system_type: eliko_single_anchor
 
 tracked_wand_ids:
   - 1DAE
-  - 1DC6
+  # - 1DC6
 
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
-  minimum_level: TRACE
+  minimum_level: DEBUG
 
 zones:
   udp_receiver:
@@ -88,6 +89,26 @@ imu_stream:
       body_forward_z: 0.0
     command_sink:
       led_pulse_pattern_hex: "0A0F0001"
+  eliko_single_anchor:
+    serial:
+      # Set to the anchor's virtual COM port. On macOS look for /dev/tty.usbmodem*,
+      # on Linux /dev/ttyACM*, on Windows COMn. Baud is virtual (USB CDC); value ignored.
+      port: /dev/tty.usbmodem2101
+      baud: 115200
+      timeout: 1
+      retry_interval: 2.0
+    parsing:
+      sample_dt_us: 8333
+      nsamp_per_packet: 10
+      body_forward_x: 0.0
+      body_forward_y: 1.0
+      body_forward_z: 0.0
+    command_sink:
+      led_pulse_pattern_hex: "0A0F0001"
+    # SPQF subscription flag. "P" = PR (IMU) packets, "R" = RR (ranging) packets.
+    # Set to "R" as a sanity check: if RR lines appear in trace, the wand is alive
+    # and the anchor is talking to it.
+    subscribe_flag: "P"
 
 motion:
   gesture_history:

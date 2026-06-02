@@ -7,6 +7,7 @@ from gamevolt.logging import Logger
 from wand.data.assembled_packet import AssembledPacket
 from wand.streaming.eliko.configuration.eliko_parsing_settings import ElikoParsingSettings
 from wand.streaming.eliko.eliko_client import ElikoClient
+from wand.streaming.quat_forward_encoder import quat_to_forward_q15
 
 
 class ElikoWandImuStream:
@@ -22,7 +23,6 @@ class ElikoWandImuStream:
     """
 
     _FORWARD_FMT = "forward"
-    _Q15_MAX = 32767
 
     def __init__(
         self,
@@ -116,36 +116,12 @@ class ElikoWandImuStream:
         except ValueError as e:
             raise _ParseError(f"quat parse: {e}")
 
-        vx = self._settings.body_forward_x
-        vy = self._settings.body_forward_y
-        vz = self._settings.body_forward_z
-
-        # Algebra mirrored from firmware rotate_vec_by_quat so results match
-        # the legacy path exactly when fed equivalent quats.
-        tx = 2.0 * (qy * vz - qz * vy)
-        ty = 2.0 * (qz * vx - qx * vz)
-        tz = 2.0 * (qx * vy - qy * vx)
-
-        fx = vx + qw * tx + (qy * tz - qz * ty)
-        fy = vy + qw * ty + (qz * tx - qx * tz)
-        fz = vz + qw * tz + (qx * ty - qy * tx)
-
-        mag2 = fx * fx + fy * fy + fz * fz
-        if mag2 > 1e-12:
-            inv = mag2**-0.5
-            fx *= inv
-            fy *= inv
-            fz *= inv
-
-        return (self._to_q15(fx), self._to_q15(fy), self._to_q15(fz))
-
-    @classmethod
-    def _to_q15(cls, v: float) -> int:
-        if v >= 1.0:
-            return cls._Q15_MAX
-        if v <= -1.0:
-            return -cls._Q15_MAX
-        return int(round(v * cls._Q15_MAX))
+        return quat_to_forward_q15(
+            qx, qy, qz, qw,
+            self._settings.body_forward_x,
+            self._settings.body_forward_y,
+            self._settings.body_forward_z,
+        )
 
 
 class _ParseError(Exception):

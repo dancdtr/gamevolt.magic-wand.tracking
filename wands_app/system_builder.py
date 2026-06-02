@@ -25,11 +25,13 @@ from visualisation.configuration.visualised_wand_factory import VisualisedWandFa
 from visualisation.trail_factory import TrailFactory
 from visualisation.wand_colour_registry import WandColourRegistry
 from visualisation.wand_visualiser_factory import WandVisualiserFactory
+from gamevolt.serial.serial_transport import SerialTransport
 from gamevolt.tcp.configuration.tcp_client_settings import TcpClientSettings
 from gamevolt.tcp.tcp_client import TcpClient
 from wand.motion_processor_factory import MotionProcessorFactory
 from wand.streaming.eliko.eliko_client import ElikoClient
 from wand.streaming.eliko.eliko_wand_command_sink import ElikoWandCommandSink
+from wand.streaming.eliko_single_anchor.eliko_single_anchor_client import ElikoSingleAnchorClient
 from wand.streaming.wand_imu_stream import WandImuStream
 from wand.streaming.wand_imu_stream_builder import WandImuStreamBuilder
 from wand.streaming.web_socket_line_receiver import WebSocketLineReceiver
@@ -61,9 +63,6 @@ class WandsSystemBuilder:
         logger = self._logger
         settings = self._settings
         system_type = settings.system_type
-
-        if system_type is SystemType.ELIKO_SINGLE_ANCHOR:
-            raise NotImplementedError("SystemType.ELIKO_SINGLE_ANCHOR is not yet implemented.")
 
         spell_registry = SpellRegistry(logger, settings.spell_registry)
         zone_factory = ZoneFactory(logger)
@@ -126,6 +125,25 @@ class WandsSystemBuilder:
             eliko_client = ElikoClient(logger=logger, settings=eliko_settings.connection, client=tcp_client)
             imu_stream = imu_stream_builder.build_eliko(eliko_client)
             command_sink = ElikoWandCommandSink(logger=logger, client=eliko_client, settings=eliko_settings.command_sink)
+        elif system_type is SystemType.ELIKO_SINGLE_ANCHOR:
+            single_settings = settings.imu_stream.eliko_single_anchor
+            if single_settings is None:
+                raise ValueError(
+                    "system_type=eliko_single_anchor requires imu_stream.eliko_single_anchor in appsettings."
+                )
+            serial_transport = SerialTransport(logger=logger, settings=single_settings.serial)
+            single_anchor_client = ElikoSingleAnchorClient(
+                logger=logger,
+                transport=serial_transport,
+                tracked_wand_ids=settings.tracked_wand_ids,
+                subscribe_flag=single_settings.subscribe_flag,
+            )
+            imu_stream = imu_stream_builder.build_eliko_single_anchor(single_anchor_client)
+            command_sink = ElikoWandCommandSink(
+                logger=logger,
+                client=single_anchor_client,
+                settings=single_settings.command_sink,
+            )
         else:
             assert web_socket_server is not None
             line_receiver = WebSocketLineReceiver(logger=logger, web_socket_server=web_socket_server)

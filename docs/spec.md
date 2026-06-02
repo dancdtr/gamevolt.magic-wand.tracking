@@ -71,8 +71,9 @@ Emits per-wand IMU samples (rotation, timing). Two implementations live in tree,
 
 - `LineBasedWandImuStream` — reads WebSocket lines from the custom anchor relay. Used by `system_type: anchor_relay` and `anchor_relay_live`.
 - `ElikoWandImuStream` — consumes lines from a shared `ElikoClient` (TCP to Eliko RTLS Server, default port 25025) filtered to `PR_Q` (per-tag quaternion bursts), and emits one `AssembledPacket` per line (10 samples each). The wand's body-frame forward axis is +Y; each sample's forward vector is `q · (0,1,0)`, Q15-encoded into the existing `data_str` format so `WandClient` consumes both sources identically. Tag IDs are normalised to bare upper hex (e.g. `0x001D6C` → `001D6C`). Per-sample dt is fixed by IMU hardware and configured (not derived from packet timestamps). Used by `system_type: eliko_rtls`.
+- `ElikoSingleAnchorWandImuStream` — consumes raw `PR` lines from an `ElikoSingleAnchorClient` (USB-serial to a single anchor, no RTLS server). Each PR sample is a 6-byte SFLP word packing three IEEE-754 half-floats `(x, y, z)` of a unit quaternion; `w` is recovered as `sqrt(1 − x² − y² − z²)` per the STM `sflp2q` algorithm. Forward Q15 encoding (via the shared `quat_forward_encoder`) and `AssembledPacket` shape are identical to the RTLS path. On `start_async`, the client sends `$PEKIO,DC,001,CMD0,0x<TAG>,0x00000903` per tracked tag (enable IMU) + `$PEKIO,DC,001,SPQF,P` (subscribe to PR). Used by `system_type: eliko_single_anchor`.
 
-`ElikoClient` is the shared TCP owner so the IMU stream and `ElikoWandCommandSink` ride a single connection. The stream owns its lifecycle (`start_async` on the client when the stream starts).
+`ElikoClient` (TCP) and `ElikoSingleAnchorClient` (serial) both satisfy the `ElikoCommandClient` protocol, so the IMU stream and `ElikoWandCommandSink` share a single transport per deployment. Each stream owns its client's lifecycle (`start_async` on the client when the stream starts).
 
 Eliko's `COORD_Z` position feed is intentionally not consumed here; position will land via the planned `WandPositionStream` (§4.2). Future mock implementations (e.g. mouse-driven) are anticipated but out of spec.
 
@@ -98,7 +99,7 @@ class WandCommandSink(Protocol):
 Two implementations live in tree, selected by `system_type`:
 
 - `AnchorAreaManager` (anchor relay) — owns the zone↔anchor lookup and routes via the relay's `WebSocketServer`. Used by `anchor_relay` and `anchor_relay_live`.
-- `ElikoWandCommandSink` (Eliko RTLS) — shares the `ElikoClient` TCP connection with the IMU stream. Today only maps `WandLedMessage(enabled=True)` → `SET_TAG_LEDH`; other message types log-and-noop until Eliko exposes equivalents.
+- `ElikoWandCommandSink` (Eliko, both RTLS and single-anchor) — transport-agnostic; targets the `ElikoCommandClient` protocol so it can sit on either `ElikoClient` (TCP) or `ElikoSingleAnchorClient` (serial). Today only maps `WandLedMessage(enabled=True)` → `SET_TAG_LEDH`; other message types log-and-noop until Eliko exposes equivalents.
 
 `WandDeviceController` depends on `WandCommandSink` (protocol), not on a specific implementation.
 
@@ -253,7 +254,7 @@ Two-layer YAML: `appsettings.yml` (bundled defaults) + `appsettings.env.yml` (pe
 
 `wands_app` settings consolidate the deployment shape behind two top-level fields:
 
-- `system_type` — one of `eliko_rtls`, `eliko_single_anchor` (placeholder), `anchor_relay`, `anchor_relay_live`. Drives `WandImuStream`, `WandCommandSink`, and `ZoneApplication` selection in `WandsSystemBuilder`. There is no separate `is_dev` flag and no `imu_stream.mode` knob.
+- `system_type` — one of `eliko_rtls`, `eliko_single_anchor`, `anchor_relay`, `anchor_relay_live`. Drives `WandImuStream`, `WandCommandSink`, and `ZoneApplication` selection in `WandsSystemBuilder`. There is no separate `is_dev` flag and no `imu_stream.mode` knob.
 - `tracked_wand_ids` — single list of wand IDs. Doubles as the `WandServer` allowlist (empty list = allow all) and the per-id tracker spawn list in `TrackedWandManager`. Adding a wand is a one-line edit.
 
 The `imu_stream` block carries `header_ttl_s` (used by the line-based stream) and an optional `eliko` sub-block with `connection`, `parsing`, and `command_sink` sections; the sub-block is consumed only when `system_type: eliko_rtls`.
@@ -278,7 +279,7 @@ The Docker build (`Dockerfile.dev`) still uses micromamba and `environment.yml`-
 
 Tracked here so they don't get lost. Order is rough priority.
 
-1. **Eliko binding.** Concrete API for position stream, IMU stream, and command channel. `WandImuStream` Eliko impl landed (`ElikoWandImuStream`, PR_Q over TCP, +Y forward). `WandCommandSink` Eliko impl landed (`ElikoWandCommandSink`, currently `WandLedMessage` → `SET_TAG_LEDH` only; TX-enable and haptics still log-and-noop pending Eliko equivalents). Still to do: `WandPositionStream` (Eliko `COORD_Z`).
+1. **Eliko binding.** Concrete API for position stream, IMU stream, and command channel. `WandImuStream` Eliko impls landed: `ElikoWandImuStream` (PR_Q over TCP via RTLS server, +Y forward) and `ElikoSingleAnchorWandImuStream` (raw PR over USB-serial direct to a single anchor; client-side SFLP→quat decode). `WandCommandSink` Eliko impl landed (`ElikoWandCommandSink`, transport-agnostic via `ElikoCommandClient` protocol; currently `WandLedMessage` → `SET_TAG_LEDH` only; TX-enable and haptics still log-and-noop pending Eliko equivalents). Still to do: `WandPositionStream` (Eliko `COORD_Z`). Open question for single-anchor path: reconnect behaviour — init commands are sent once on start; serial reconnects currently do not re-fire them (would need a `connected` event on `SerialTransport`).
 2. **Split `AnchorAreaManager` further.** It currently implements `WandCommandSink` *and* owns anchor-area↔zone presence forwarding. Once a second `WandCommandSink` impl is needed (Eliko, mock), pull the command-routing concern out into its own class so AAM goes back to being just zone↔anchor mapping.
 3. **`WandPositionStream` protocol + staging implementation.** Stop faking position. Let `ZoneManager` derive zones from real positions.
 4. **Anchor relay rework.** Conform to the new sensor-source protocols rather than being the implicit single source.

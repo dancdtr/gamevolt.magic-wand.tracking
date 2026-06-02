@@ -20,14 +20,14 @@ class TcpClient:
 
     def __init__(self, logger: Logger, settings: TcpClientSettings) -> None:
         self.line_received: Event[Callable[[str], None]] = Event()
-        self.connected: Event[Callable[[], None]] = Event()
         self.disconnected: Event[Callable[[], None]] = Event()
+        self.connected: Event[Callable[[], None]] = Event()
 
-        self._logger = logger
         self._settings = settings
+        self._logger = logger
 
-        self._task: asyncio.Task[None] | None = None
         self._writer: asyncio.StreamWriter | None = None
+        self._task: asyncio.Task[None] | None = None
 
     @property
     def is_connected(self) -> bool:
