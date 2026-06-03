@@ -29,50 +29,54 @@ class TcpClient:
         self._writer: asyncio.StreamWriter | None = None
         self._task: asyncio.Task[None] | None = None
 
-    @property
-    def is_connected(self) -> bool:
-        return self._writer is not None
-
     async def start_async(self) -> None:
         if self._task is not None:
+            self._logger.warning("TcpClient is already running!")
             return
-        self._task = asyncio.create_task(self._run(), name=f"TcpClient[{self._settings.host}:{self._settings.port}]")
+
+        task_name = f"TcpClient[{self._settings.host}:{self._settings.port}]"
+        self._task = asyncio.create_task(self._run(), name=task_name)
 
     async def stop_async(self) -> None:
         task = self._task
         self._task = None
         if task is None:
+            self._logger.warning("TcpClient is not running!")
             return
+
         task.cancel()
+
         try:
             await task
         except asyncio.CancelledError:
             pass
+
         await self._close_writer()
 
     def send(self, data: str) -> None:
         """Fire-and-forget write. Buffers immediately; no backpressure."""
-        writer = self._writer
-        if writer is None:
+        if self._writer is None:
             self._logger.warning(f"TcpClient send dropped, no connection: {data.strip()!r}")
             return
-        writer.write(data.encode("ascii"))
+
+        self._writer.write(data.encode("ascii"))
         self._logger.debug(f"TcpClient sent: {data.strip()}")
 
     async def send_async(self, data: str) -> None:
         """Write and await drain. Use when the caller needs backpressure
-        or is producing from a non-loop thread (via
-        `asyncio.run_coroutine_threadsafe`)."""
-        writer = self._writer
-        if writer is None:
+        or is producing from a non-loop thread (via `asyncio.run_coroutine_threadsafe`)."""
+        if self._writer is None:
             self._logger.warning(f"TcpClient send dropped, no connection: {data.strip()!r}")
             return
-        writer.write(data.encode("ascii"))
+
+        self._writer.write(data.encode("ascii"))
+
         try:
-            await writer.drain()
+            await self._writer.drain()
         except Exception as e:
             self._logger.warning(f"TcpClient drain failed: {e!r}")
             return
+
         self._logger.debug(f"TcpClient sent: {data.strip()}")
 
     async def _run(self) -> None:
@@ -82,14 +86,13 @@ class TcpClient:
 
         while True:
             try:
-                self._logger.info(f"TcpClient connecting to {host}:{port}")
-                reader, writer = await asyncio.open_connection(host, port)
-                self._writer = writer
-                self._logger.info(f"TcpClient connected to {host}:{port}")
+                self._logger.info(f"TcpClient connecting to {host}:{port}. d")
+                reader, self._writer = await asyncio.open_connection(host, port)
+                self._logger.info(f"TcpClient connected to {host}:{port}.")
                 try:
                     self.connected.invoke()
                 except Exception:
-                    self._logger.exception("TcpClient connected handler crashed")
+                    self._logger.exception("TcpClient connected handler failed.")
                 await self._read_loop(reader)
             except asyncio.CancelledError:
                 raise
@@ -102,7 +105,7 @@ class TcpClient:
                     try:
                         self.disconnected.invoke()
                     except Exception:
-                        self._logger.exception("TcpClient disconnected handler crashed")
+                        self._logger.exception("TcpClient disconnected handler failed.")
 
             await asyncio.sleep(delay_s)
 
@@ -118,7 +121,7 @@ class TcpClient:
             try:
                 self.line_received.invoke(line)
             except Exception:
-                self._logger.exception("TcpClient line_received handler crashed")
+                self._logger.exception("TcpClient line_received handler failed.")
 
     async def _close_writer(self) -> None:
         writer = self._writer
