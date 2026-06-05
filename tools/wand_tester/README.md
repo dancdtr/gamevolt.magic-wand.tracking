@@ -9,7 +9,23 @@ uv run python tools/wand_tester/main.py
 uv run python tools/wand_tester/main.py --port /dev/tty.usbmodem2101 --quiet
 ```
 
-Flags: `--port`, `--baud`, `--tag` (initial wand ID), `--quiet` (suppress the PR firehose with `SPQF,R`).
+### Raspberry Pi
+
+Anchor enumerates as `/dev/ttyACM0`. Use the stable `by-id` symlink so it survives reboots / USB reorder. Add `--dark` because LXDE has no system dark mode.
+
+```bash
+uv run python tools/wand_tester/main.py \
+  --port /dev/serial/by-id/usb-Eliko_LLC_Kio_Anchor_COM_Port-if00 \
+  --dark
+```
+
+Find the device path:
+
+```bash
+ls -l /dev/serial/by-id/
+```
+
+Flags: `--port`, `--baud`, `--tag` (initial wand ID), `--quiet` (suppress the PR firehose with `SPQF,R`), `--dark` (force Fusion dark palette).
 
 ## Application Window
 
@@ -41,7 +57,7 @@ Most knobs live in [`constants.py`](constants.py):
 | `HAPTIC_PATTERNS` | Preset waveform tuples shown as quick-fill buttons on the Haptic tab. |
 | `PERIOD_MIN_MS`, `PERIOD_MAX_MS`, `PERIOD_STEP_MS` | Bounds + step for the haptic period sliders. |
 | `DEFAULT_PERIOD_MS` | Initial slider value. |
-| `DEFAULT_PORT`, `DEFAULT_BAUD` | argparse defaults. |
+| `DEFAULT_PORT`, `DEFAULT_BAUD` | argparse defaults (macOS port). Override per-host via `--port`. |
 
 Button styling (colours, borders, hover, selected-state outlines) lives in [`styles.py`](styles.py).
 
