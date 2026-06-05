@@ -7,8 +7,9 @@ from gamevolt.configuration.settings_base import SettingsBase
 class ElikoCommandSinkSettings(SettingsBase):
     """Settings for ElikoWandCommandSink.
 
-    `led_pulse_pattern_hex` is the bare hex string passed to Eliko's
-    SET_TAG_LEDH command (no `0x` prefix, no leading `$PEKIO`).
+    `led_pulse_color` names one of the `Color` enum members (RED, GREEN, BLUE,
+    WHITE, YELLOW, MAGENTA, CYAN, RGB). Multi-bit forms can be expressed by
+    pipe-joining (e.g. "RED|GREEN") — parsed in the sink.
     """
 
-    led_pulse_pattern_hex: str
+    led_pulse_color: str

@@ -9,6 +9,7 @@ dependencies = [
     "pillow",
     "pyserial",
     "pyserial-asyncio",
+    "pyside6",
     "pyyaml",
     "scipy",
     "uvloop",

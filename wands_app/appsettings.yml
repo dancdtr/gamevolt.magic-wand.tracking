@@ -88,7 +88,7 @@ imu_stream:
       body_forward_y: 1.0
       body_forward_z: 0.0
     command_sink:
-      led_pulse_pattern_hex: "0A0F0001"
+      led_pulse_color: "BLUE"
   eliko_single_anchor:
     serial:
       # Set to the anchor's virtual COM port. On macOS look for /dev/tty.usbmodem*,
@@ -104,7 +104,7 @@ imu_stream:
       body_forward_y: 1.0
       body_forward_z: 0.0
     command_sink:
-      led_pulse_pattern_hex: "0A0F0001"
+      led_pulse_color: "RED"
     # SPQF subscription flag. "P" = PR (IMU) packets, "R" = RR (ranging) packets.
     # Set to "R" as a sanity check: if RR lines appear in trace, the wand is alive
     # and the anchor is talking to it.
@@ -258,9 +258,12 @@ spell_registry:
 wand_device_controller:
   command_broadcast_interval: 0.05
   disable_wand_tx: True
-  wand_chosen_haptic_cues: []
+  wand_chosen_haptic_cues: [93]
   # wand_chosen_haptic_cues: [93, 93]
   # active_reminder_haptic_cues: [73, 14]
-  active_reminder_haptic_cues: [83]
+  # Temporarily disabled while debugging Eliko LED/haptic — repeated CMD1 sends
+  # were stomping LED state every 1.3s. Re-enable once stable.
+  active_reminder_haptic_cues: []
   spell_cast_haptic_cues: [93, 14, 56]
   spell_under_cast_haptic_cues: [93, 14, 56]
+  spell_cast_lamp_duration_s: 2.0

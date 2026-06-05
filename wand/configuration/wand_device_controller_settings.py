@@ -10,4 +10,5 @@ class WandDeviceControllerSettings(SettingsBase):
     active_reminder_haptic_cues: list[int]
     wand_chosen_haptic_cues: list[int]
     spell_cast_haptic_cues: list[int]
+    spell_cast_lamp_duration_s: float
     disable_wand_tx: bool
