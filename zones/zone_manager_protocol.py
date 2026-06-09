@@ -8,37 +8,34 @@ from zones.zone import Zone
 
 
 class ZoneManagerProtocol(ABC):
-    @property
-    @abstractmethod
-    def zone_entered(self) -> Event[Callable[[Zone, str], None]]:
-        raise NotImplementedError()
+    """Per-wand zone presence service.
+
+    Production drives enter/exit from real positioning (UDP today, position
+    stream tomorrow); mock drives them from a UI dropdown. Consumers receive
+    `(wand_id, zone_id)` and look up zone metadata (spell types, etc.) via
+    `get_zone(zone_id)` when they need it.
+    """
 
     @property
     @abstractmethod
-    def zone_exited(self) -> Event[Callable[[Zone, str], None]]:
-        raise NotImplementedError()
+    def wand_entered_zone(self) -> Event[Callable[[str, str], None]]:
+        """Fires `(wand_id, zone_id)` when a wand enters a zone."""
 
     @property
     @abstractmethod
-    def current_zone_changed(self) -> Event[Callable[[Zone | None], None]]:
-        raise NotImplementedError()
+    def wand_exited_zone(self) -> Event[Callable[[str, str], None]]:
+        """Fires `(wand_id, zone_id)` when a wand exits a zone."""
 
     @abstractmethod
-    async def start_async(self) -> None:
-        raise NotImplementedError()
+    async def start_async(self) -> None: ...
 
     @abstractmethod
-    async def stop_async(self) -> None:
-        raise NotImplementedError()
+    async def stop_async(self) -> None: ...
 
     @abstractmethod
-    def get_zone(self, id: str) -> Zone:
-        raise NotImplementedError()
+    def get_zone(self, zone_id: str) -> Zone:
+        """Look up zone metadata. Raises KeyError if unknown."""
 
     @abstractmethod
-    def get_zone_containing_wand_id(self, id: str) -> Zone:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def on_wand_disconnected(self, wand_id: str) -> None:
-        raise NotImplementedError()
+    def zones_containing_wand(self, wand_id: str) -> list[str]:
+        """Zone ids the wand currently occupies. Empty list if none."""

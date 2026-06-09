@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from logging import Logger
 
-from anchor_area.anchor_area import AnchorArea
-from anchor_area.anchor_area_entered import AnchorAreaEnteredMessage
-from anchor_area.anchor_area_exited import AnchorAreaExitedMessage
+from cdtr_rtls.anchor_area import AnchorArea
+from cdtr_rtls.anchor_area_entered import AnchorAreaEnteredMessage
+from cdtr_rtls.anchor_area_exited import AnchorAreaExitedMessage
 from gamevolt.messaging.events.message_handler import MessageHandler
 
 

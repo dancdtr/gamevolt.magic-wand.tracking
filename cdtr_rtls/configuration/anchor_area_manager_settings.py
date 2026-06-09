@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from anchor_area.configuration.anchor_area_settings import AnchorAreaSettings
+from cdtr_rtls.configuration.anchor_area_settings import AnchorAreaSettings
 from gamevolt.configuration.settings_base import SettingsBase
 
 

@@ -5,7 +5,6 @@ from PIL.ImageTk import PhotoImage
 
 from display.image_libraries.configuration.spell_image_library_settings import SpellImageLibrarySettings
 from display.image_providers.spells.spell_image_provider import SpellImageProvider
-from spells.spell import Spell
 from spells.spell_type import SpellType
 
 

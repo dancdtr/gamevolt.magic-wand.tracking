@@ -45,7 +45,3 @@ class Zone:
 
         self._wand_ids.discard(wand_id)
         self._logger.info(f"Wand ({wand_id}) has exited zone ({self._id}).")
-
-    def on_wand_disconnected(self, wand_id) -> None:
-        self._wand_ids.discard(wand_id)
-        self._logger.info(f"Wand ({wand_id}) discarded from zone ({self._id}).")

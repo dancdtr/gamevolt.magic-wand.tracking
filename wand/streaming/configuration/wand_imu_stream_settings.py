@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
 from gamevolt.configuration.settings_base import SettingsBase
-from wand.streaming.configuration.eliko_single_anchor_stream_settings import ElikoSingleAnchorStreamSettings
-from wand.streaming.configuration.eliko_stream_settings import ElikoStreamSettings
+from wand.streaming.eliko.configuration.eliko_stream_settings import ElikoStreamSettings
+from wand.streaming.eliko_single_anchor.configuration.eliko_single_anchor_stream_settings import (
+    ElikoSingleAnchorStreamSettings,
+)
 
 
 @dataclass

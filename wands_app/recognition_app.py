@@ -25,7 +25,7 @@ class RecognitionApp:
         wand_device_controller: WandDeviceController,
         wand_visualiser: WandVisualiserProtocol,
         wand_spell_cue_controller: WandSpellCueController,
-        spell_cast_presentation_controller: SpellCastPresentationController,
+        spell_cast_presentation_controller: SpellCastPresentationController | None = None,
     ) -> None:
         self.quit: Event[Callable[[], None]] = Event()
 
@@ -41,7 +41,8 @@ class RecognitionApp:
         self._wand_visualiser.quit.subscribe(self._on_quit)
 
     async def start_async(self) -> None:
-        await self._spell_cast_presentation_controller.start_async()
+        if self._spell_cast_presentation_controller is not None:
+            await self._spell_cast_presentation_controller.start_async()
         self._tracked_wand_manager.start()
         self._wand_spell_cue_controller.start()
         self._server.start()
@@ -56,7 +57,8 @@ class RecognitionApp:
         self._server.stop()
         self._wand_spell_cue_controller.stop()
         self._tracked_wand_manager.stop()
-        await self._spell_cast_presentation_controller.stop_async()
+        if self._spell_cast_presentation_controller is not None:
+            await self._spell_cast_presentation_controller.stop_async()
 
         self._wand_visualiser.quit.unsubscribe(self._on_quit)
         self._tracked_wand_manager.wand_rotation_updated.unsubscribe(self._wand_visualiser.add_rotation)

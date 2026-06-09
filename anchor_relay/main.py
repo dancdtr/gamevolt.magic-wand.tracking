@@ -1,7 +1,7 @@
 import asyncio
 
-from anchor_area.anchor_area import AnchorArea
-from anchor_area.anchor_area_controller import AnchorAreaController
+from cdtr_rtls.anchor_area import AnchorArea
+from cdtr_rtls.anchor_area_controller import AnchorAreaController
 from anchor_relay.anchor_relay import AnchorRelay
 from anchor_relay.appsettings import AppSettingsRelay
 from anchor_relay.relay_app import RelayApp

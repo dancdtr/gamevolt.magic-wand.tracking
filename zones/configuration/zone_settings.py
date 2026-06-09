@@ -7,4 +7,5 @@ from spells.spell_type import SpellType
 @dataclass
 class ZoneSettings(SettingsBase):
     id: str
+    key: int
     spells: list[SpellType]

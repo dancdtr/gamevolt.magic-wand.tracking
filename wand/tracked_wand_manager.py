@@ -13,7 +13,6 @@ from wand.wand_device_controller import WandDeviceController
 from wand.wand_rotation import WandRotation
 from wand.wand_rotation_raw import WandRotationRaw
 from wand.wand_server_protocol import WandServerProtocol
-from zones.zone import Zone
 from zones.zone_manager_protocol import ZoneManagerProtocol
 
 
@@ -45,8 +44,8 @@ class TrackedWandManager:
         self._server.wand_disconnected.subscribe(self._on_wand_disconnected)
         self._server.wand_connected.subscribe(self._on_wand_connected)
 
-        self._zone_manager.zone_entered.subscribe(self._on_zone_entered)
-        self._zone_manager.zone_exited.subscribe(self._on_zone_exited)
+        self._zone_manager.wand_entered_zone.subscribe(self._on_wand_entered_zone)
+        self._zone_manager.wand_exited_zone.subscribe(self._on_wand_exited_zone)
 
         for id in self._tracked_wand_ids:
             wand = self._tracked_wand_factory.create(id)
@@ -67,8 +66,8 @@ class TrackedWandManager:
         self._server.wand_disconnected.unsubscribe(self._on_wand_disconnected)
         self._server.wand_connected.unsubscribe(self._on_wand_connected)
 
-        self._zone_manager.zone_entered.unsubscribe(self._on_zone_entered)
-        self._zone_manager.zone_exited.unsubscribe(self._on_zone_exited)
+        self._zone_manager.wand_entered_zone.unsubscribe(self._on_wand_entered_zone)
+        self._zone_manager.wand_exited_zone.unsubscribe(self._on_wand_exited_zone)
 
     def update(self) -> None:
         self._server.update()
@@ -113,15 +112,16 @@ class TrackedWandManager:
 
         wand.on_rotation_raw_updated(raw)
 
-    def _on_zone_entered(self, zone: Zone, wand_id: str) -> None:
+    def _on_wand_entered_zone(self, wand_id: str, zone_id: str) -> None:
         wand = self._get_wand(wand_id)
+        zone = self._zone_manager.get_zone(zone_id)
 
         wand.set_spell_targets(zone.spell_types)
         wand.start()
 
         self._wand_device_controller.activate_wand(wand.id)
 
-    def _on_zone_exited(self, zone: Zone, wand_id: str) -> None:
+    def _on_wand_exited_zone(self, wand_id: str, zone_id: str) -> None:
         wand = self._get_wand(wand_id)
 
         wand.stop()

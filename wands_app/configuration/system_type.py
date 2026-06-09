@@ -11,5 +11,5 @@ class SystemType(Enum):
 
     ELIKO_RTLS = "eliko_rtls"
     ELIKO_SINGLE_ANCHOR = "eliko_single_anchor"
-    ANCHOR_RELAY = "anchor_relay"
-    ANCHOR_RELAY_LIVE = "anchor_relay_live"
+    CDTR_RTLS_MOCK = "cdtr_rtls_mock"
+    CDTR_RTLS = "cdtr_rtls"

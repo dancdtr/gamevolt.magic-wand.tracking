@@ -12,7 +12,7 @@ from wand.data.assembled_packet import AssembledPacket
 from wand.streaming.eliko.configuration.eliko_connection_settings import ElikoConnectionSettings
 from wand.streaming.eliko.configuration.eliko_parsing_settings import ElikoParsingSettings
 from wand.streaming.eliko.eliko_client import ElikoClient
-from wand.streaming.eliko_wand_imu_stream import ElikoWandImuStream
+from wand.streaming.eliko.eliko_wand_imu_stream import ElikoWandImuStream
 
 TAG = "1DC6"
 ANCHOR = "A0"

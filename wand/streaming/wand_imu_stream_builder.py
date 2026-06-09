@@ -4,9 +4,11 @@ from gamevolt.logging import Logger
 from gamevolt.serial.line_receiver_protocol import LineReceiverProtocol
 from wand.streaming.configuration.wand_imu_stream_settings import WandImuStreamSettings
 from wand.streaming.eliko.eliko_client import ElikoClient
+from wand.streaming.eliko.eliko_wand_imu_stream import ElikoWandImuStream
 from wand.streaming.eliko_single_anchor.eliko_single_anchor_client import ElikoSingleAnchorClient
-from wand.streaming.eliko_single_anchor_wand_imu_stream import ElikoSingleAnchorWandImuStream
-from wand.streaming.eliko_wand_imu_stream import ElikoWandImuStream
+from wand.streaming.eliko_single_anchor.eliko_single_anchor_wand_imu_stream import (
+    ElikoSingleAnchorWandImuStream,
+)
 from wand.streaming.line_based_wand_imu_stream import LineBasedWandImuStream
 from wand.streaming.wand_imu_stream import WandImuStream
 

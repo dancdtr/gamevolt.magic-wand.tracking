@@ -3,23 +3,21 @@ from __future__ import annotations
 from collections.abc import Callable
 from logging import Logger
 
-from anchor_area.anchor_area_manager import AnchorAreaManager
 from gamevolt.events.event import Event
 from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.messaging.udp.udp_rx import UdpRx
-from gamevolt.web_sockets.web_socket_server import WebSocketServer
 from services.wand_session_coordinator import WandSessionCoordinator
 from wand.streaming.wand_imu_stream import WandImuStream
 from zones.zone_application import ZoneApplication
 
 
 class TrackingApp:
-    """Owns relay ingress (when present), zone management, anchor-area mapping,
-    and presence orchestration. Produces the IMU stream and presence
-    events consumed by the RecognitionApp.
+    """Owns zone management, presence orchestration, and the IMU stream.
 
-    Sensor sources that don't use the custom anchor relay (e.g. Eliko RTLS)
-    pass `web_socket_server=None` and `anchor_area_manager=None`.
+    Cdtr-rtls-specific glue (relay WebSocket server, anchor-area mapping,
+    anchor-area enter/exit messaging) lives in `CdtrRtlsIntegration` and is
+    started / stopped at the `WandsSystem` level — `TrackingApp` knows
+    nothing about anchor areas.
     """
 
     def __init__(
@@ -28,18 +26,14 @@ class TrackingApp:
         imu_stream: WandImuStream,
         zone_application: ZoneApplication,
         wand_session_coordinator: WandSessionCoordinator,
-        web_socket_server: WebSocketServer | None,
-        anchor_area_manager: AnchorAreaManager | None,
         zone_udp_receiver: UdpRx | None,
         zone_message_handler: MessageHandler | None,
     ) -> None:
         self.quit: Event[Callable[[], None]] = Event()
 
         self._logger = logger
-        self._web_socket_server = web_socket_server
         self._imu_stream = imu_stream
         self._zone_application = zone_application
-        self._anchor_area_manager = anchor_area_manager
         self._wand_session_coordinator = wand_session_coordinator
         self._zone_udp_receiver = zone_udp_receiver
         self._zone_message_handler = zone_message_handler
@@ -50,15 +44,9 @@ class TrackingApp:
         if self._zone_udp_receiver is not None:
             await self._zone_udp_receiver.start_async()
 
-        if self._web_socket_server is not None:
-            await self._web_socket_server.start_async()
-
         await self._zone_application.start_async()
 
         self._wand_session_coordinator.start()
-
-        if self._anchor_area_manager is not None:
-            self._anchor_area_manager.start()
 
         if self._zone_message_handler is not None:
             self._zone_message_handler.start()
@@ -70,15 +58,9 @@ class TrackingApp:
 
         if self._zone_message_handler is not None:
             self._zone_message_handler.stop()
-
-        if self._anchor_area_manager is not None:
-            self._anchor_area_manager.stop()
         self._wand_session_coordinator.stop()
 
         await self._zone_application.stop_async()
-
-        if self._web_socket_server is not None:
-            await self._web_socket_server.stop_async()
 
         if self._zone_udp_receiver is not None:
             await self._zone_udp_receiver.stop_async()

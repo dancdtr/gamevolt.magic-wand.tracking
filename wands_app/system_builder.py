@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from logging import Logger
 
-from anchor_area.anchor_area_manager import AnchorAreaManager
+from cdtr_rtls.cdtr_rtls_integration import CdtrRtlsIntegration
 from display.image_libraries.spell_image_library import SpellImageLibrary
 from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.messaging.udp.udp_rx import UdpRx
 from gamevolt.messaging.udp.udp_tx import UdpTx
 from gamevolt.visualisation.visualiser import Visualiser
-from gamevolt.web_sockets.web_socket_server import WebSocketServer
 from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from services.local_profile_service import LocalProfileService
 from services.local_spell_cast_reporter import LocalSpellCastReporter
@@ -20,7 +19,6 @@ from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.control.wand_spell_cue_controller import WandSpellCueController
 from spells.matching.spell_matcher_factory import SpellMatcherFactory
 from spells.spell_cast_presentation_controller import SpellCastPresentationController
-from spells.spell_registry import SpellRegistry
 from visualisation.configuration.visualised_wand_factory import VisualisedWandFactory
 from visualisation.trail_factory import TrailFactory
 from visualisation.wand_colour_registry import WandColourRegistry
@@ -34,7 +32,6 @@ from wand.streaming.eliko.eliko_wand_command_sink import ElikoWandCommandSink
 from wand.streaming.eliko_single_anchor.eliko_single_anchor_client import ElikoSingleAnchorClient
 from wand.streaming.wand_imu_stream import WandImuStream
 from wand.streaming.wand_imu_stream_builder import WandImuStreamBuilder
-from wand.streaming.web_socket_line_receiver import WebSocketLineReceiver
 from wand.tracked_wand_factory import TrackedWandFactory
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_command_sink import WandCommandSink
@@ -64,28 +61,21 @@ class WandsSystemBuilder:
         settings = self._settings
         system_type = settings.system_type
 
-        spell_registry = SpellRegistry(logger, settings.spell_registry)
         zone_factory = ZoneFactory(logger)
         zone_application_builder = ZoneApplicationBuilder(logger)
 
-        use_live_zones = system_type is SystemType.ANCHOR_RELAY_LIVE
-        uses_anchor_relay = system_type in (SystemType.ANCHOR_RELAY, SystemType.ANCHOR_RELAY_LIVE)
-
-        web_socket_server: WebSocketServer | None = None
-        if uses_anchor_relay:
-            web_socket_server = WebSocketServer(logger, settings.server.web_socket)
+        use_live_zones = system_type is SystemType.CDTR_RTLS
+        uses_cdtr_rtls = system_type in (SystemType.CDTR_RTLS_MOCK, SystemType.CDTR_RTLS)
 
         zone_udp_receiver: UdpRx | None = None
         zone_message_handler: MessageHandler | None = None
 
         if use_live_zones:
-            assert web_socket_server is not None
             zone_udp_receiver = UdpRx(logger, settings.zones.udp_receiver)
             zone_message_handler = MessageHandler(logger, zone_udp_receiver)
 
             production_zone_manager = ZoneManager(
                 message_handler=zone_message_handler,
-                web_socket_server=web_socket_server,
                 zone_factory=zone_factory,
                 settings=settings.zones,
                 logger=logger,
@@ -96,19 +86,28 @@ class WandsSystemBuilder:
             spell_image_library = SpellImageLibrary(settings.spell_image_library)
 
             zone_application = zone_application_builder.build_mock(
-                spell_image_library=spell_image_library,
+                zones_settings=settings.zones,
+                zone_factory=zone_factory,
                 visualiser=zone_visualiser_host,
-                spell_registry=spell_registry,
+                spell_image_library=spell_image_library,
                 wand_ids=settings.tracked_wand_ids,
             )
 
         zone_manager = zone_application.zone_manager
 
+        cdtr_rtls_integration: CdtrRtlsIntegration | None = None
+        if uses_cdtr_rtls:
+            cdtr_rtls_integration = CdtrRtlsIntegration(
+                logger=logger,
+                anchor_area_settings=settings.anchor_area_manager,
+                web_socket_server_settings=settings.server.web_socket,
+                zone_manager=zone_manager,
+            )
+
         imu_stream_builder = WandImuStreamBuilder(logger, settings.imu_stream)
 
         imu_stream: WandImuStream
         command_sink: WandCommandSink
-        anchor_area_manager: AnchorAreaManager | None = None
 
         if system_type is SystemType.ELIKO_RTLS:
             eliko_settings = settings.imu_stream.eliko
@@ -145,16 +144,9 @@ class WandsSystemBuilder:
                 settings=single_settings.command_sink,
             )
         else:
-            assert web_socket_server is not None
-            line_receiver = WebSocketLineReceiver(logger=logger, web_socket_server=web_socket_server)
-            imu_stream = imu_stream_builder.build_line_based(line_receiver)
-            anchor_area_manager = AnchorAreaManager(
-                settings=settings.anchor_area_manager,
-                web_socket_server=web_socket_server,
-                zone_manager=zone_manager,
-                logger=logger,
-            )
-            command_sink = anchor_area_manager
+            assert cdtr_rtls_integration is not None
+            imu_stream = imu_stream_builder.build_line_based(cdtr_rtls_integration.imu_line_source)
+            command_sink = cdtr_rtls_integration.wand_command_sink
 
         wizard_name_provider = WizardNameProvider(WizardSettings(names=WIZARD_NAMES))
         profile_service = LocalProfileService(logger=logger, name_provider=wizard_name_provider)
@@ -170,10 +162,8 @@ class WandsSystemBuilder:
 
         tracking_app = TrackingApp(
             logger=logger,
-            web_socket_server=web_socket_server,
             imu_stream=imu_stream,
             zone_application=zone_application,
-            anchor_area_manager=anchor_area_manager,
             wand_session_coordinator=wand_session_coordinator,
             zone_udp_receiver=zone_udp_receiver,
             zone_message_handler=zone_message_handler,
@@ -237,11 +227,16 @@ class WandsSystemBuilder:
             logger=logger,
         )
 
-        spell_cast_presentation_controller = SpellCastPresentationController(
-            zone_visualiser=zone_application._presentation_controller._visualiser,
-            tracked_wand_manager=tracked_wand_manager,
-            colour_assigner=wand_colour_registry,
-            logger=logger,
+        zone_visualiser = zone_application.zone_visualiser
+        spell_cast_presentation_controller = (
+            SpellCastPresentationController(
+                zone_visualiser=zone_visualiser,
+                tracked_wand_manager=tracked_wand_manager,
+                colour_assigner=wand_colour_registry,
+                logger=logger,
+            )
+            if zone_visualiser is not None
+            else None
         )
 
         spell_cast_reporter = LocalSpellCastReporter(
@@ -267,4 +262,8 @@ class WandsSystemBuilder:
             spell_cast_presentation_controller=spell_cast_presentation_controller,
         )
 
-        return WandsSystem(tracking=tracking_app, recognition=recognition_app)
+        return WandsSystem(
+            tracking=tracking_app,
+            recognition=recognition_app,
+            cdtr_rtls=cdtr_rtls_integration,
+        )

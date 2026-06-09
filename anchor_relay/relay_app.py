@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from logging import Logger
 
-from anchor_area.anchor_area_controller import AnchorAreaController
+from cdtr_rtls.anchor_area_controller import AnchorAreaController
 from anchor_relay.anchor_relay import AnchorRelay
 from gamevolt.messaging.command_bridge.anchor_command_bridge import AnchorCommandBridge
 from gamevolt.messaging.events.message_handler import MessageHandler

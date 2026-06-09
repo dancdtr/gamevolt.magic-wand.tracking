@@ -4,40 +4,48 @@ from collections.abc import Callable
 from logging import Logger
 
 from gamevolt.events.event import Event
-from spells.spell import Spell
-from spells.spell_registry import SpellRegistry
+from zones.configuration.zones_settings import ZonesSettings
 from zones.zone import Zone
+from zones.zone_factory import ZoneFactory
 from zones.zone_manager_protocol import ZoneManagerProtocol
 
 
 class MockZoneManager(ZoneManagerProtocol):
+    """Mock zone presence driven by `set_current_zone` (typically from a UI).
+
+    Loads the same zone list production uses (`ZonesSettings.zones`), keeps
+    a single global "current zone" at any time, and toggles every tracked
+    wand into / out of that zone in one shot. Picks a different zone via
+    `set_current_zone(zone_id)`; clear with `set_current_zone(None)`.
+    """
+
     def __init__(
         self,
         logger: Logger,
-        spell_registry: SpellRegistry,
+        settings: ZonesSettings,
+        zone_factory: ZoneFactory,
         wand_ids: list[str],
     ) -> None:
-        self._spell_registry = spell_registry
-        self._wand_ids = wand_ids
+        self._wand_entered_zone: Event[Callable[[str, str], None]] = Event()
+        self._wand_exited_zone: Event[Callable[[str, str], None]] = Event()
+
         self._logger = logger
+        self._wand_ids = list(wand_ids)
 
-        self._current_zone_changed: Event[Callable[[Zone | None], None]] = Event()
-        self._zone_entered: Event[Callable[[Zone, str], None]] = Event()
-        self._zone_exited: Event[Callable[[Zone, str], None]] = Event()
+        self._zones: dict[str, Zone] = {
+            zone_settings.id: zone_factory.create(zone_settings.id, zone_settings.spells)
+            for zone_settings in settings.zones
+        }
 
-        self._current_zone: Zone | None = None
-
-    @property
-    def zone_entered(self) -> Event[Callable[[Zone, str], None]]:
-        return self._zone_entered
+        self._current_zone_id: str | None = None
 
     @property
-    def zone_exited(self) -> Event[Callable[[Zone, str], None]]:
-        return self._zone_exited
+    def wand_entered_zone(self) -> Event[Callable[[str, str], None]]:
+        return self._wand_entered_zone
 
     @property
-    def current_zone_changed(self) -> Event[Callable[[Zone | None], None]]:
-        return self._current_zone_changed
+    def wand_exited_zone(self) -> Event[Callable[[str, str], None]]:
+        return self._wand_exited_zone
 
     async def start_async(self) -> None:
         self._logger.info("MockZoneManager started")
@@ -45,40 +53,35 @@ class MockZoneManager(ZoneManagerProtocol):
     async def stop_async(self) -> None:
         self._logger.info("MockZoneManager stopped")
 
-    def on_wand_disconnected(self, wand_id: str) -> None:
-        pass
+    def get_zone(self, zone_id: str) -> Zone:
+        zone = self._zones.get(zone_id.upper())
+        if zone is None:
+            raise KeyError(f"No zone with ID ({zone_id})!")
+        return zone
 
-    def set_spell(self, spell: Spell) -> None:
-        self._logger.debug(f"Mock zone spell set to {spell.type.name}")
+    def zones_containing_wand(self, wand_id: str) -> list[str]:
+        return [self._current_zone_id] if self._current_zone_id is not None else []
 
-        if self._current_zone is not None:
+    def set_current_zone(self, zone_id: str | None) -> None:
+        """Swap every tracked wand out of the prior zone (if any) and into the new one."""
+        if zone_id is not None:
+            # Validate before touching state so a typo doesn't strand wands in limbo.
+            self.get_zone(zone_id)
+
+        prior_zone_id = self._current_zone_id
+        if prior_zone_id == zone_id:
+            return
+
+        if prior_zone_id is not None:
+            prior_zone = self._zones[prior_zone_id]
             for wand_id in self._wand_ids:
-                self._current_zone.on_wand_exit(wand_id)
-                self._zone_exited.invoke(self._current_zone, wand_id)
+                prior_zone.on_wand_exit(wand_id)
+                self._wand_exited_zone.invoke(wand_id, prior_zone_id)
 
-        zone_id = f"Z0{'0' if 10 >spell.id >= 0 else''}{spell.id}"
-        self._current_zone = Zone(self._logger, zone_id, spell_types=[spell.type])
+        self._current_zone_id = zone_id
 
-        for wand_id in self._wand_ids:
-            self._current_zone.on_wand_enter(wand_id)
-            self._zone_entered.invoke(self._current_zone, wand_id)
-
-        self._current_zone_changed.invoke(self._current_zone)
-
-    def get_zone(self, id: str) -> Zone:
-        if self._current_zone is None:
-            raise RuntimeError(f"NO ZONE SET!")
-
-        return self._current_zone
-
-    def get_zone_containing_wand_id(self, id: str) -> Zone:
-        return self.get_zone(id)
-
-    # def clear_zone(self) -> None:
-    #     if self._current_zone is not None:
-    #         for wand_id in self._wand_ids:
-    #             self._current_zone.on_wand_exit(wand_id)
-    #             self._zone_exited.invoke(self._current_zone, wand_id)
-
-    #     self._current_zone = None
-    #     self._current_zone_changed.invoke(None)
+        if zone_id is not None:
+            new_zone = self._zones[zone_id]
+            for wand_id in self._wand_ids:
+                new_zone.on_wand_enter(wand_id)
+                self._wand_entered_zone.invoke(wand_id, zone_id)

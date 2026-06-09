@@ -67,19 +67,48 @@ Three protocols cover all sensor I/O. Each is implementation-agnostic; multiple 
 
 ### 4.1 `WandImuStream` (inbound)
 
-Emits per-wand IMU samples (rotation, timing). Two implementations live in tree, selected by the top-level `system_type` flag in `appsettings.yml` (see §9.2):
+Emits per-wand IMU samples (rotation, timing). Implementations live in tree, selected by the top-level `system_type` flag in `appsettings.yml` (see §9.2):
 
-- `LineBasedWandImuStream` — reads WebSocket lines from the custom anchor relay. Used by `system_type: anchor_relay` and `anchor_relay_live`.
+- `LineBasedWandImuStream` — reads WebSocket lines forwarded by the `anchor_relay` deployable (today's cdtr hardware path). The wire format is `WandProtocolParser`'s PKT-header + DATA-line pair, assembled into `AssembledPacket`s by `PktDataAssembler`. Used by `system_type: cdtr_rtls` (production zones) and `cdtr_rtls_mock` (development with mock zones).
 - `ElikoWandImuStream` — consumes lines from a shared `ElikoClient` (TCP to Eliko RTLS Server, default port 25025) filtered to `PR_Q` (per-tag quaternion bursts), and emits one `AssembledPacket` per line (10 samples each). The wand's body-frame forward axis is +Y; each sample's forward vector is `q · (0,1,0)`, Q15-encoded into the existing `data_str` format so `WandClient` consumes both sources identically. Tag IDs are normalised to bare upper hex (e.g. `0x001D6C` → `001D6C`). Per-sample dt is fixed by IMU hardware and configured (not derived from packet timestamps). Used by `system_type: eliko_rtls`.
 - `ElikoSingleAnchorWandImuStream` — consumes raw `PR` lines from an `ElikoSingleAnchorClient` (USB-serial to a single anchor, no RTLS server). Each PR sample is a 6-byte SFLP word packing three IEEE-754 half-floats `(x, y, z)` of a unit quaternion; `w` is recovered as `sqrt(1 − x² − y² − z²)` per the STM `sflp2q` algorithm. Forward Q15 encoding (via the shared `quat_forward_encoder`) and `AssembledPacket` shape are identical to the RTLS path. On `start_async`, the client sends `$PEKIO,DC,001,CMD0,0x<TAG>,0x00000903` per tracked tag (enable IMU) + `$PEKIO,DC,001,SPQF,P` (subscribe to PR). Used by `system_type: eliko_single_anchor`.
 
-`ElikoClient` (TCP) and `ElikoSingleAnchorClient` (serial) both satisfy the `ElikoCommandClient` protocol, so the IMU stream and `ElikoWandCommandSink` share a single transport per deployment. Each stream owns its client's lifecycle (`start_async` on the client when the stream starts).
+Both Eliko streams inherit from `ElikoWandImuStreamBase` (`wand/streaming/eliko/`), which owns client lifecycle, prefix-based line filtering, forward-vector Q15 encoding, and `AssembledPacket` assembly. Subclasses declare line prefix, sample-field offset, header layout, and per-sample quat decode (PR_Q text vs PR SFLP word). New Eliko-format sources (mock, alternate hardware) add a subclass + a line source; they do not re-implement the parsing.
+
+The inbound line seam is the `WandLineSource` protocol (`wand/streaming/wand_line_source.py`): `line_received` event + `start_async`/`stop_async`. Both Eliko clients satisfy it structurally. The outbound command seam for the Eliko family is the parallel `ElikoCommandClient` protocol (`send_command`). The IMU stream consumes the line source, `ElikoWandCommandSink` the command client, so per-deployment one client object serves both directions. Each stream owns its client's lifecycle (`start_async` on the client when the stream starts).
 
 Eliko's `COORD_Z` position feed is intentionally not consumed here; position will land via the planned `WandPositionStream` (§4.2). Future mock implementations (e.g. mouse-driven) are anticipated but out of spec.
 
 ### 4.2 `WandPositionStream` (inbound, new)
 
 Emits per-wand position updates. Does not exist today — position arrives indirectly via legacy `ZoneEnteredMessage` / `ZoneExitedMessage` over UDP, from an older custom positioning system. Once `WandPositionStream` is in place, the `ZoneManager` derives zone enter/exit from raw position + polygon configuration, and the legacy zone-event ingress retires.
+
+#### Zone presence surface
+
+`ZoneManagerProtocol` is the single seam between presence input (UDP today, position stream tomorrow) and consumers (`TrackedWandManager`, `AnchorAreaManager`, `WandSessionCoordinator`, and optionally `ZonePresentationController` in dev):
+
+```python
+class ZoneManagerProtocol(ABC):
+    @property
+    def wand_entered_zone(self) -> Event[Callable[[str, str], None]]: ...  # (wand_id, zone_id)
+    @property
+    def wand_exited_zone(self) -> Event[Callable[[str, str], None]]: ...   # (wand_id, zone_id)
+    async def start_async(self) -> None: ...
+    async def stop_async(self) -> None: ...
+    def get_zone(self, zone_id: str) -> Zone: ...                # spell_types lookup
+    def zones_containing_wand(self, wand_id: str) -> list[str]:  # routing lookup
+```
+
+Events carry ids only — no `Zone` object in the payload. Consumers that need zone metadata call `get_zone(id)` when they need it. `zones_containing_wand` returns a list so a wand can sit in overlapping zones (production may; mock won't).
+
+Two implementations:
+
+- `ZoneManager` (production) — `wand_entered_zone` / `wand_exited_zone` are driven by UDP `ZoneEnteredMessage` / `ZoneExitedMessage`. Tracks per-zone wand sets via `Zone.wand_ids` so duplicate enters and stray exits are deduped + logged.
+- `MockZoneManager` — loads the same `ZonesSettings.zones` list as production. Exposes `set_current_zone(zone_id | None)`; calling it swaps every tracked wand out of the prior zone and into the new one in one shot, firing the events in order. The mock UI (`MockZoneControls`) is a tk dropdown + keyboard shortcuts (Up/Down cycles, digit keys 0-9 plus a short multi-digit window address `ZoneSettings.key`). No spell-picker UI; no synthetic on-the-fly zones.
+
+`ZoneApplication` bundles the manager with **optional** dev-only UI: `ZonePresentationController` (binds manager events to a `SpellTargetVisualiser` tk window) + `MockZoneControls`. Production deployments pass both as `None` — there is no spell-target window in staging/prod; downstream consumers (lamps, show system, wand LEDs) convey state.
+
+`ZoneSettings.zones` is the single source of truth for what spells exist in the system. Each zone declares `id`, `key` (int shortcut), and a `spells` list; an "all spells" dev config can be a one-zone-per-spell list. The legacy `SpellRegistry` (id↔name map) was retired with this refactor.
 
 ### 4.3 `WandCommandSink` (outbound)
 
@@ -98,7 +127,7 @@ class WandCommandSink(Protocol):
 
 Two implementations live in tree, selected by `system_type`:
 
-- `AnchorAreaManager` (anchor relay) — owns the zone↔anchor lookup and routes via the relay's `WebSocketServer`. Used by `anchor_relay` and `anchor_relay_live`.
+- `AnchorAreaManager` (cdtr anchor-relay path, exposed via `CdtrRtlsIntegration`) — owns the zone↔anchor lookup and routes via the relay's `WebSocketServer`. Used by `cdtr_rtls` and `cdtr_rtls_mock`. The main app never imports `AnchorAreaManager` directly; it sees only the `WandCommandSink` interface returned by `CdtrRtlsIntegration.wand_command_sink`.
 - `ElikoWandCommandSink` (Eliko, both RTLS and single-anchor) — transport-agnostic; targets the `ElikoCommandClient` protocol so it can sit on either `ElikoClient` (TCP) or `ElikoSingleAnchorClient` (serial). Delegates PEKIO command building to `PekioClient`. Maps `WandLedMessage(enabled=True)` → `client.blink_fast(led_pulse_color)`, `WandLedMessage(enabled=False)` → `client.stop()`, and `WandHapticSequenceMessage` → `client.hwave(*pattern_ids[:3])` (one-shot haptic waveform trigger). The `SET_TAG_LEDH` and `HWAVE,ON,...` convenience headers are RTLS-server sugar — single-anchor firmware only honours the raw `$PEKIO,DC,<seq>,CMD<n>,...` form. Firmware quirk: a plain `CMD1=0` does **not** hold the LED off — the firmware re-asserts a default green-blink indicator on top of it. `PekioClient.stop()` uses fade-mode (`0xFF000040`, step=255, no LED bits) instead, which holds the state machine and suppresses the default. Verified 2026-06-03. `WandTxMessage` still log-and-noops pending Eliko equivalent.
 
 `WandDeviceController` depends on `WandCommandSink` (protocol), not on a specific implementation.
@@ -187,11 +216,11 @@ Tracked as roadmap items, not part of this spec's structural change.
 
 Owns:
 
-- `WebSocketServer` (relay ingress, while custom relays exist)
 - `WandImuStream` (sensor source lifecycle)
 - `ZoneApplication` / `ZoneManager`
-- `AnchorAreaManager`
 - `WandSessionCoordinator` (binds wand_id → wizard session on presence enter)
+
+The cdtr-rtls-specific relay `WebSocketServer`, `AnchorAreaManager`, and WS line receiver are bundled in `CdtrRtlsIntegration` (see §8 module map) and started at `WandsSystem` level. `TrackingApp` no longer references them; it consumes a `WandLineSource` for the IMU stream and emits zone events that the integration subscribes to externally.
 
 ### 7.2 `RecognitionApp` — "what is the wand doing"
 
@@ -211,8 +240,8 @@ Each seam is treated as a future network boundary; swapping the implementation t
 |------|-------|----------|--------------------|
 | `WandImuStream` | Tracking | Recognition's `WandServer` | `NetworkWandSensorStream` (WebSocket client) |
 | `WandPositionStream` *(planned)* | Tracking | Recognition (if needed) | network stream |
-| `WandCommandSink` (today: `AnchorAreaManager`) | Tracking | Recognition's `WandDeviceController` | wand-command request channel |
-| `ZoneManager` events | Tracking | Recognition's `TrackedWandManager` | presence channel (MQTT, per hub plan) |
+| `WandCommandSink` (today via `CdtrRtlsIntegration.wand_command_sink` for cdtr; `ElikoWandCommandSink` for eliko) | constructed in `WandsSystem` | Recognition's `WandDeviceController` | wand-command request channel |
+| `ZoneManagerProtocol` events (`wand_entered_zone`, `wand_exited_zone`) | Tracking | Recognition's `TrackedWandManager` | presence channel (MQTT, per hub plan) |
 | `WizardSessionStore` | shared | both | session lookup service |
 
 Don't add new cross-app coupling that isn't on this list without flagging it.
@@ -229,7 +258,7 @@ Don't add new cross-app coupling that isn't on this list without flagging it.
 | `motion/` | Motion processing, gesture history, kinematics. |
 | `spells/` | Spell library, definitions, matcher, accuracy scoring, cue + presentation controllers. |
 | `zones/` | Zone manager, polygons, zone application, mock controls, visualisation. |
-| `anchor_area/` | Anchor-area mapping (zone-id → anchor-id) and message routing. |
+| `cdtr_rtls/` | Cdtr-rtls integration: relay-side `AnchorArea` + `AnchorAreaController`, wands-app-side `AnchorAreaManager`, wire-protocol `AnchorAreaEnteredMessage` / `AnchorAreaExitedMessage`, `WebSocketLineReceiver` (WS → `LineReceiverProtocol`), and the `CdtrRtlsIntegration` facade that bundles all of it. Imported by `wands_app` (sender side, via the facade only) and `anchor_relay` (receiver side, via `AnchorArea*`). |
 | `services/` | Profile, presence reporter, spell-cast reporter, session store, session coordinator. (These are the proto-hub implementations.) |
 | `messaging/` | Internal message types and transports (UDP TX/RX, message handlers). |
 | `show_system/` | Show-system controller and outbound message types. |
@@ -254,7 +283,7 @@ Two-layer YAML: `appsettings.yml` (bundled defaults) + `appsettings.env.yml` (pe
 
 `wands_app` settings consolidate the deployment shape behind two top-level fields:
 
-- `system_type` — one of `eliko_rtls`, `eliko_single_anchor`, `anchor_relay`, `anchor_relay_live`. Drives `WandImuStream`, `WandCommandSink`, and `ZoneApplication` selection in `WandsSystemBuilder`. There is no separate `is_dev` flag and no `imu_stream.mode` knob.
+- `system_type` — one of `eliko_rtls`, `eliko_single_anchor`, `cdtr_rtls`, `cdtr_rtls_mock`. Drives `WandImuStream`, `WandCommandSink`, and `ZoneApplication` selection in `WandsSystemBuilder`. There is no separate `is_dev` flag and no `imu_stream.mode` knob. The `cdtr_rtls_mock` value selects mock-zone development (visualiser-driven zone enter/exit); `cdtr_rtls` uses production zone manager + live UDP `ZoneEnteredMessage` / `ZoneExitedMessage` ingress.
 - `tracked_wand_ids` — single list of wand IDs. Doubles as the `WandServer` allowlist (empty list = allow all) and the per-id tracker spawn list in `TrackedWandManager`. Adding a wand is a one-line edit.
 
 The `imu_stream` block carries `header_ttl_s` (used by the line-based stream) and an optional `eliko` sub-block with `connection`, `parsing`, and `command_sink` sections; the sub-block is consumed only when `system_type: eliko_rtls`.
@@ -280,7 +309,7 @@ The Docker build (`Dockerfile.dev`) still uses micromamba and `environment.yml`-
 Tracked here so they don't get lost. Order is rough priority.
 
 1. **Eliko binding.** Concrete API for position stream, IMU stream, and command channel. `WandImuStream` Eliko impls landed: `ElikoWandImuStream` (PR_Q over TCP via RTLS server, +Y forward) and `ElikoSingleAnchorWandImuStream` (raw PR over USB-serial direct to a single anchor; client-side SFLP→quat decode). `WandCommandSink` Eliko impl landed (`ElikoWandCommandSink`, transport-agnostic via `ElikoCommandClient` protocol; delegates command building to `PekioClient`; `WandLedMessage` → fast blink in configured colour / fade-mode off; `WandHapticSequenceMessage` → hwave one-shot waveform; TX-enable still log-and-noops pending Eliko equivalent). Still to do: `WandPositionStream` (Eliko `COORD_Z`). Open question for single-anchor path: reconnect behaviour — init commands are sent once on start; serial reconnects currently do not re-fire them (would need a `connected` event on `SerialTransport`).
-2. **Split `AnchorAreaManager` further.** It currently implements `WandCommandSink` *and* owns anchor-area↔zone presence forwarding. Once a second `WandCommandSink` impl is needed (Eliko, mock), pull the command-routing concern out into its own class so AAM goes back to being just zone↔anchor mapping.
+2. **Split `AnchorAreaManager` further.** Now hidden behind `CdtrRtlsIntegration` (the main app no longer imports AAM), but the class still implements `WandCommandSink` *and* owns anchor-area↔zone presence forwarding. Pull the command-routing concern out into its own class so AAM goes back to being just zone↔anchor mapping; the integration facade composes them.
 3. **`WandPositionStream` protocol + staging implementation.** Stop faking position. Let `ZoneManager` derive zones from real positions.
 4. **Anchor relay rework.** Conform to the new sensor-source protocols rather than being the implicit single source.
 5. **Spell match rework.** Attempt-segmentation logic; top-N candidate payload on `SpellCastReporter`; remove tier logic from recognition.

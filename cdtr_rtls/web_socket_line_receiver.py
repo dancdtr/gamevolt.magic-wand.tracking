@@ -7,6 +7,10 @@ from gamevolt.web_sockets.web_socket_server import WebSocketServer
 
 
 class WebSocketLineReceiver(LineReceiverProtocol):
+    """Adapts a `WebSocketServer` to `LineReceiverProtocol` for the cdtr-rtls
+    sensor path: anchors forward serial wand lines over WS to wands_app, where
+    `LineBasedWandImuStream` consumes them."""
+
     def __init__(self, logger: Logger, web_socket_server: WebSocketServer) -> None:
         self._line_received: Event[Callable[[str], None]] = Event()
 

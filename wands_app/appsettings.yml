@@ -1,9 +1,15 @@
 ---
+imu_stream:
+  eliko_single_anchor:
+    serial:
+      port: /dev/tty.usbmodem2101
 name: "potter.wand-server"
 # system_type: eliko_rtls
 system_type: eliko_single_anchor
+# system_type: cdtr_rtls_mock
 
 tracked_wand_ids:
+  # - E000
   - 1DAE
   # - 1DC6
 
@@ -18,19 +24,102 @@ zones:
     max_size: 65556
     recv_timeout_s: 2
 
+  # One zone per spell. key = number to press in the mock UI to enter that zone.
+  # Multi-digit keys work via the timed numeric-input buffer in MockZoneControls.
   zones:
     - id: Z001
-      spells: [RICTUSEMPRA]
+      key: 1
+      spells: [REVELIO]
     - id: Z002
-      spells: [REPARO]
+      key: 2
+      spells: [LOCOMOTOR]
     - id: Z003
-      spells: [PEPPER_BREATH]
+      key: 3
+      spells: [ARRESTO_MOMENTUM]
     - id: Z004
-      spells: [APARECIUM]
+      key: 4
+      spells: [WINGARDIUM_LEVIOSA]
     - id: Z005
-      spells: [CANTIS]
+      key: 5
+      spells: [METEOLOJINX]
     - id: Z006
-      spells: [LUMOS_MAXIMA, NOX]
+      key: 6
+      spells: [COLOVARIA]
+    - id: Z007
+      key: 7
+      spells: [SLUGULUS_ERECTO]
+    - id: Z008
+      key: 8
+      spells: [VENTUS]
+    - id: Z009
+      key: 9
+      spells: [RICTUSEMPRA]
+    - id: Z010
+      key: 10
+      spells: [REPARO]
+    - id: Z011
+      key: 11
+      spells: [PIERTOTUM_LOCOMOTOR]
+    - id: Z012
+      key: 12
+      spells: [ALOHOMORA]
+    - id: Z013
+      key: 13
+      spells: [COLLOPORTUS]
+    - id: Z014
+      key: 14
+      spells: [SILENCIO]
+    - id: Z015
+      key: 15
+      spells: [INCENDIO]
+    - id: Z016
+      key: 16
+      spells: [INFLATUS]
+    - id: Z017
+      key: 17
+      spells: [IMMOBULUS]
+    - id: Z018
+      key: 18
+      spells: [APARECIUM]
+    - id: Z019
+      key: 19
+      spells: [ENGORGIO]
+    - id: Z020
+      key: 20
+      spells: [SWITCHING]
+    - id: Z021
+      key: 21
+      spells: [CANTIS]
+    - id: Z022
+      key: 22
+      spells: [PEPPER_BREATH]
+    - id: Z023
+      key: 23
+      spells: [VERA_VERTO]
+    - id: Z024
+      key: 24
+      spells: [DENSAUGEO]
+    - id: Z025
+      key: 25
+      spells: [HORN_TONGUE]
+    - id: Z026
+      key: 26
+      spells: [FLIPENDO]
+    - id: Z027
+      key: 27
+      spells: [EXPECTO_PATRONUM]
+    - id: Z028
+      key: 28
+      spells: [LUMOS_MAXIMA]
+    - id: Z029
+      key: 29
+      spells: [HERBIVICIUS]
+    - id: Z030
+      key: 30
+      spells: [NEBULUS]
+    - id: Z031
+      key: 31
+      spells: [NOX]
 
 anchor_area_manager:
   anchor_areas:
@@ -219,41 +308,6 @@ spell_image_library:
     image_size: 500
     bg_colour: [0, 255, 0]
     icon_colour: [0, 0, 0]
-
-spell_registry:
-  spells:
-    - [0, "none"]
-    - [1, "revelio"]
-    - [2, "locomotor"]
-    - [3, "arresto_momentum"]
-    - [4, "wingardium_leviosa"]
-    - [5, "meteolojinx"]
-    - [6, "colovaria"]
-    - [7, "slugulus_erecto"]
-    - [8, "ventus"]
-    - [9, "rictusempra"]
-    - [10, "reparo"]
-    - [11, "piertotum_locomotor"]
-    - [12, "alohomora"]
-    - [13, "colloportus"]
-    - [14, "silencio"]
-    - [15, "incendio"]
-    - [16, "inflatus"]
-    - [17, "immobulus"]
-    - [18, "aparecium"]
-    - [19, "engorgio"]
-    - [20, "switching"]
-    - [21, "cantis"]
-    - [22, "pepper_breath"]
-    - [23, "vera_verto"]
-    - [24, "densaugeo"]
-    - [25, "horn_tongue"]
-    - [26, "flipendo"]
-    - [27, "expecto_patronum"]
-    - [28, "lumos_maxima"]
-    - [29, "herbivicius"]
-    - [30, "nebulus"]
-    - [31, "nox"]
 
 wand_device_controller:
   command_broadcast_interval: 0.05

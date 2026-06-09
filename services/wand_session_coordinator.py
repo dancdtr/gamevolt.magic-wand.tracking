@@ -6,7 +6,6 @@ from gamevolt.logging._logger import Logger
 from services.profile_service_base import ProfileServiceBase
 from services.wand_presence_reporter_base import WandPresenceReporterBase
 from services.wizard_session_store import WizardSessionStore
-from zones.zone import Zone
 from zones.zone_manager_protocol import ZoneManagerProtocol
 
 
@@ -28,18 +27,18 @@ class WandSessionCoordinator:
         self._session_store = session_store
 
     def start(self) -> None:
-        self._zone_manager.zone_entered.subscribe(self._on_zone_entered)
-        self._zone_manager.zone_exited.subscribe(self._on_zone_exited)
+        self._zone_manager.wand_entered_zone.subscribe(self._on_wand_entered_zone)
+        self._zone_manager.wand_exited_zone.subscribe(self._on_wand_exited_zone)
 
     def stop(self) -> None:
-        self._zone_manager.zone_entered.unsubscribe(self._on_zone_entered)
-        self._zone_manager.zone_exited.unsubscribe(self._on_zone_exited)
+        self._zone_manager.wand_entered_zone.unsubscribe(self._on_wand_entered_zone)
+        self._zone_manager.wand_exited_zone.unsubscribe(self._on_wand_exited_zone)
         self._session_store.clear_all()
 
-    def _on_zone_entered(self, zone: Zone, wand_id: str) -> None:
+    def _on_wand_entered_zone(self, wand_id: str, zone_id: str) -> None:
         asyncio.create_task(self._handle_entered(wand_id))
 
-    def _on_zone_exited(self, zone: Zone, wand_id: str) -> None:
+    def _on_wand_exited_zone(self, wand_id: str, zone_id: str) -> None:
         asyncio.create_task(self._handle_exited(wand_id))
 
     async def _handle_entered(self, wand_id: str) -> None:

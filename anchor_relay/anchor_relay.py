@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from anchor_area.anchor_area import AnchorArea
+from cdtr_rtls.anchor_area import AnchorArea
 from gamevolt.logging import Logger
 from gamevolt.serial.line_receiver_protocol import LineReceiverProtocol
 from gamevolt.web_sockets.web_socket_client import WebSocketClient
