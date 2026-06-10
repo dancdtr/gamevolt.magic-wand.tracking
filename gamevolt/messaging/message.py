@@ -1,6 +1,7 @@
 from abc import ABC
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
+from enum import Enum
 from typing import Any, TypeVar
 
 T = TypeVar("T", bound="Message")
@@ -39,6 +40,8 @@ class Message(ABC):
             return val.to_dict()
         elif isinstance(val, list):
             return [self._serialize_key(v) for v in val]
+        elif isinstance(val, Enum):
+            return self._serialize_key(val.name)
         else:
             return val
 

@@ -12,7 +12,7 @@ class ElikoCommandSinkSettings(SettingsBase):
     pipe-join ("RED|GREEN") — parsed in the sink. Rendered as a slow fade
     by the sink while a wand is active (zone-present).
 
-    Pulse colours are carried per-message on `WandLedPulseMessage`.
+    Pulse colours are passed per-call to `WandCommandSink.pulse`.
     """
 
     idle_colour: str

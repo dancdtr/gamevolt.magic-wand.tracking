@@ -5,8 +5,10 @@ from services.models.spell_cast_result import SpellCastResult
 from services.spell_cast_reporter_base import SpellCastReporterBase
 from services.wizard_session_store import WizardSessionStore
 from show_system.show_system_controller import ShowSystemController
+from spells.spell_cast_quality import SpellCastQuality
 from spells.spell_match import SpellMatch
 from spells.spell_type import SpellType
+from wizards.hogwarts_house import HogwartsHouse
 from wizards.wizard_level import WizardLevel
 
 SPELL_REQUIREMENTS: dict[SpellType, WizardLevel] = {
@@ -32,26 +34,28 @@ class LocalSpellCastReporter(SpellCastReporterBase):
         self._show_system_controller = show_system_controller
 
     async def report_spell_cast(self, match: SpellMatch) -> SpellCastResult:
-        wizard_level = self._get_wizard_level(match.wand_id)
-        spell_level = SPELL_REQUIREMENTS.get(match.spell_type, WizardLevel.BEGINNER)
-        success = self._has_sufficient_level(wizard_level, spell_level)
+        house = self._get_hogwarts_house(match.wand_id)
+        bonus = self._get_wizard_bonus(match.wand_id)
+        quality = self._get_spell_cast_quality(match, bonus)
 
-        self._show_system_controller.play_spell(match.spell_type, wizard_level)
+        self._show_system_controller.play_spell(match.spell_type, quality, house)
 
-        cast_message = "successfully cast" if success else "under cast"
-        self._logger.debug(
-            f"'{wizard_level.name}' wizard with wand ({match.wand_id}) {cast_message} "
-            f"'{spell_level.name}' spell '{match.spell_type.name}'."
-        )
+        self._logger.debug(f"Wizard with wand ({match.wand_id}) cast spell '{match.spell_type.name}' with quality: {quality}.")
 
-        return SpellCastResult(wand_id=match.wand_id, spell_name=match.spell_name, success=success)
+        return SpellCastResult(wand_id=match.wand_id, spell_name=match.spell_name, quality=quality)
 
-    def _get_wizard_level(self, wand_id: str) -> WizardLevel:
+    def _get_wizard_bonus(self, wand_id: str) -> int:
         profile = self._session_store.get(wand_id)
         if profile is None:
             self._logger.warning(f"No profile in session store for wand ({wand_id}); defaulting to BEGINNER")
-            return WizardLevel.BEGINNER
-        return profile.wizard_level
+            return 0
+        return profile.spell_cast_bonus
+
+    def _get_spell_cast_quality(self, match: SpellMatch, bonus: int) -> SpellCastQuality:
+        return SpellCastQuality.SKILLED
+
+    def _get_hogwarts_house(self, wand_id: str) -> HogwartsHouse:
+        return HogwartsHouse.GRYFFINDOR
 
     @staticmethod
     def _has_sufficient_level(wizard_level: WizardLevel, spell_level: WizardLevel) -> bool:

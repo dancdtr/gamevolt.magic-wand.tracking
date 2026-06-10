@@ -289,8 +289,11 @@ spell_image_library:
     icon_colour: [0, 0, 0]
 
 wand_device_controller:
-  # Spell-cast LED cue: medium green blink for 2s, then sink restores idle fade.
-  spell_cast_pulse_colour: "GREEN"
-  spell_cast_pulse_period_ms: 500
-  spell_cast_pulse_duty_ms: 100
-  spell_cast_pulse_duration_s: 2.0
+  # Spell-cast LED cue: fade purple for a quality-tiered duration, then sink
+  # restores idle fade. step = PekioClient fade step (FADE_FAST_STEP=15).
+  spell_cast_pulse_colour: "PURPLE"
+  spell_cast_pulse_step: 15
+  rudimentary_spell_cast_pulse_duration_s: 0.5
+  skilled_spell_cast_pulse_duration_s: 1.0
+  experienced_spell_cast_pulse_duration_s: 1.5
+  mastered_spell_cast_pulse_duration_s: 2.0

@@ -38,4 +38,4 @@ class WandSpellCueController:
             self._logger.exception(f"Spell cast report failed for wand ({match.wand_id})")
             return
 
-        self._wand_device_controller.play_spell_cast_cue(match.wand_id, result.success)
+        self._wand_device_controller.play_spell_cast_cue(match.wand_id, result.quality)

@@ -64,6 +64,16 @@ class ElikoSingleAnchorClient:
     def send_command(self, command: str) -> None:
         asyncio.create_task(self._transport.send_line_async(command))
 
+    def enable_imu(self, tag: str) -> None:
+        """Send the per-tag CMD0 IMU-enable. Used to recover after a wand
+        reboot — CMD0 is volatile on the wand, so any boot drops PR until
+        we re-issue it. See `docs/spec.md` §4.5 for the firmware brown-out
+        background.
+        """
+        normalised = self._normalise_tag(tag)
+        self._logger.info(f"Re-enabling IMU on wand ({normalised}) after reboot.")
+        self.send_command(self._ENABLE_IMU_CMD.format(seq=self._alloc_seq(), tag_id=normalised))
+
     def _alloc_seq(self) -> str:
         s = f"{self._next_seq:03d}"
         self._next_seq += 1

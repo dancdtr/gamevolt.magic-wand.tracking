@@ -2,18 +2,34 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from gamevolt.messaging.message import Message
-
 
 class WandCommandSink(Protocol):
-    """Routes commands to a wand. Implementation chooses the transport
-    (anchor-relay WebSocket today; Eliko command channel later)."""
+    """LED feedback channel to a wand. Implementations own the transport
+    (PEKIO over serial/TCP today) and any per-wand state needed to render
+    cues (idle flag + pulse-restore timer for the Eliko sink).
 
-    def send_to_wand(self, wand_id: str, message: Message) -> None:
-        """Route via the single anchor currently servicing the wand."""
-        ...
+    Three cues at present:
 
-    def broadcast_to_wand(self, wand_id: str, message: Message) -> None:
-        """Send via every connected anchor so the wand receives the
-        message regardless of which anchor it is tuned to."""
-        ...
+    - `enter_idle` — slow fade in the sink's configured idle colour.
+      Used while the wand is active in a zone.
+    - `exit_idle`  — hold LEDs off (fade-mode zero). Cancels any pending
+      pulse restore.
+    - `fade_pulse` — fade in `colour` at `step` for `duration_s`. When the
+      pulse ends, the sink restores idle if the wand is still flagged
+      idle, else holds off.
+
+    Haptic is intentionally not on this surface — see
+    `docs/spec.md` §4.5 for the firmware brown-out background.
+    """
+
+    def enter_idle(self, wand_id: str) -> None: ...
+
+    def exit_idle(self, wand_id: str) -> None: ...
+
+    def fade_pulse(
+        self,
+        wand_id: str,
+        colour: str,
+        step: int,
+        duration_s: float,
+    ) -> None: ...

@@ -27,12 +27,9 @@ class LocalProfileService(ProfileServiceBase):
             profile = Profile(
                 wand_id=wand_id,
                 wizard_name=self._name_provider.get_name(),
-                wizard_level=self._default_level,
+                spell_cast_bonus=0,
             )
             self._profiles[wand_id] = profile
-            self._logger.info(
-                f"LocalProfileService minted profile for wand ({wand_id}): "
-                f"{profile.wizard_name} [{profile.wizard_level.name}]"
-            )
+            self._logger.info(f"LocalProfileService minted profile for wand ({wand_id}): {profile.wizard_name} (+0 bonus)]")
 
         return profile

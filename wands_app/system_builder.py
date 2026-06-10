@@ -28,6 +28,7 @@ from gamevolt.tcp.tcp_client import TcpClient
 from wand.motion_processor_factory import MotionProcessorFactory
 from wand.streaming.eliko.eliko_client import ElikoClient
 from wand.streaming.eliko.eliko_wand_command_sink import ElikoWandCommandSink
+from wand.streaming.eliko.wand_reboot_detector import WandRebootDetector
 from wand.streaming.eliko_single_anchor.eliko_single_anchor_client import ElikoSingleAnchorClient
 from wand.streaming.wand_imu_stream import WandImuStream
 from wand.streaming.wand_imu_stream_builder import WandImuStreamBuilder
@@ -97,6 +98,7 @@ class WandsSystemBuilder:
 
         imu_stream: WandImuStream
         command_sink: WandCommandSink
+        wand_reboot_detector: WandRebootDetector | None = None
 
         if system_type is SystemType.ELIKO_RTLS:
             eliko_settings = settings.imu_stream.eliko
@@ -132,6 +134,8 @@ class WandsSystemBuilder:
                 client=single_anchor_client,
                 settings=single_settings.command_sink,
             )
+            wand_reboot_detector = WandRebootDetector(logger=logger, line_source=single_anchor_client)
+            wand_reboot_detector.wand_rebooted.subscribe(single_anchor_client.enable_imu)
 
         wizard_name_provider = WizardNameProvider(WizardSettings(names=WIZARD_NAMES))
         profile_service = LocalProfileService(logger=logger, name_provider=wizard_name_provider)
@@ -152,6 +156,7 @@ class WandsSystemBuilder:
             wand_session_coordinator=wand_session_coordinator,
             zone_udp_receiver=zone_udp_receiver,
             zone_message_handler=zone_message_handler,
+            wand_reboot_detector=wand_reboot_detector,
         )
 
         server = WandServer(

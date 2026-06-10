@@ -1,9 +1,11 @@
 from logging import Logger
 
 from gamevolt.messaging.udp.udp_tx import UdpTx
+from messaging.show_system_spell_cast_message import ShowSystemSpellCastMessage
 from show_system.configuration.show_system_controller_settings import ShowSystemControllerSettings
+from spells.spell_cast_quality import SpellCastQuality
 from spells.spell_type import SpellType
-from wizards.wizard_level import WizardLevel
+from wizards.hogwarts_house import HogwartsHouse
 
 
 class ShowSystemController:
@@ -13,17 +15,8 @@ class ShowSystemController:
         self._lamp_tx = lamp_tx
         self._logger = logger
 
-    def play_spell(self, spell_type: SpellType, level: WizardLevel) -> None:
+    def play_spell(self, spell_type: SpellType, quality: SpellCastQuality, house: HogwartsHouse) -> None:
+        message = ShowSystemSpellCastMessage(spell_type, quality, house)
 
-        if spell_type in (SpellType.LUMOS_MAXIMA, SpellType.NOX):
-            self._logger.info(f"Notifying lamp to show '{spell_type.name}' for level '{level.name}'...")
-            self._lamp_tx.send_str(spell_type.name.capitalize())
-            return
-
-        else:
-            message = {
-                "SpellCast": f"{spell_type.name.upper()}",
-                "Level": f"{level.name.upper()}",
-            }
-            self._logger.info(f"Notifying show system to play '{spell_type.name}' for level '{level.name}'...")
-            self._show_system_tx.send(message)
+        self._logger.info(f"Notifying show system to play '{spell_type.name}' for quality '{quality.name}', house: '{house.name}'...")
+        self._show_system_tx.send(message.to_dict())
