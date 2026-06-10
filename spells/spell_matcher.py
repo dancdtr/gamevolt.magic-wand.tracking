@@ -46,6 +46,64 @@ class SpellMatcher:
 
         return None
 
+    def try_match_at_end(
+        self,
+        wand_id: str,
+        history: Sequence[GestureSegment],
+        relax: float = 1.5,
+    ) -> SpellMatch | None:
+        """
+        Pause-anchored match attempt. Fires when wand transitions to PAUSED — user signalled end-of-spell.
+
+        Differences vs `try_match`:
+          - Anchors the window endpoint at the newest non-idle segment (skips any trailing PAUSE/UNKNOWN).
+          - Relaxes filler / duration tolerances via `relax`.
+          - Tries every start index and returns the best-scoring match across windows + spells, not first-passing.
+        """
+        if not history:
+            return None
+
+        compressed = self._compress(history)
+        if not compressed:
+            return None
+
+        end_idx = self._newest_non_idle_index(compressed)
+        if end_idx is None:
+            return None
+
+        best: SpellMatch | None = None
+
+        for spell_definition in self._target_spell_definitions:
+            for repeat_counts in self._iter_repeat_combinations(spell_definition):
+                flat_steps, group_idx_of_step = self._flatten_with_group_map(spell_definition, repeat_counts)
+
+                for start_idx in range(end_idx, -1, -1):
+                    match = self._match_from_index(
+                        wand_id=wand_id,
+                        spell_definition=spell_definition,
+                        flat_steps=flat_steps,
+                        group_idx_of_step=group_idx_of_step,
+                        segs=compressed,
+                        i_start=start_idx,
+                        relax=relax,
+                    )
+                    if match and (best is None or match.accuracy_score > best.accuracy_score):
+                        best = match
+
+        if best is not None:
+            self._logger.info(
+                f"({wand_id}) cast {best.spell_name}! ✨✨{best.accuracy_score * 100:.1f}% ({best.duration_s:.3f}) [pause-anchored relax={relax:.2f}]"
+            )
+
+        return best
+
+    def _newest_non_idle_index(self, segs: Sequence[GestureSegment]) -> int | None:
+        for i in range(len(segs) - 1, -1, -1):
+            d = segs[i].direction_type
+            if d not in (DirectionType.PAUSE, DirectionType.UNKNOWN):
+                return i
+        return None
+
     def _is_pause_step(self, step: SpellStep) -> bool:
         # Pause steps should match, but never count toward min_spell_steps / used_steps.
         return step.allowed == frozenset({DirectionType.PAUSE})
@@ -92,30 +150,54 @@ class SpellMatcher:
         if not compressed:
             return None
 
-        flat_steps, group_idx_of_step = self._flatten_with_group_map(spell)
+        for repeat_counts in self._iter_repeat_combinations(spell):
+            flat_steps, group_idx_of_step = self._flatten_with_group_map(spell, repeat_counts)
 
-        for start_idx in range(len(compressed) - 1, -1, -1):
-            match = self._match_from_index(
-                wand_id=wand_id,
-                spell_definition=spell,
-                flat_steps=flat_steps,
-                group_idx_of_step=group_idx_of_step,
-                segs=compressed,
-                i_start=start_idx,
-            )
-            if match:
-                return match
+            for start_idx in range(len(compressed) - 1, -1, -1):
+                match = self._match_from_index(
+                    wand_id=wand_id,
+                    spell_definition=spell,
+                    flat_steps=flat_steps,
+                    group_idx_of_step=group_idx_of_step,
+                    segs=compressed,
+                    i_start=start_idx,
+                    relax=1.0,
+                )
+                if match:
+                    return match
 
         return None
 
-    def _flatten_with_group_map(self, spell: SpellDefinition) -> tuple[list[SpellStep], list[int]]:
+    def _flatten_with_group_map(
+        self,
+        spell: SpellDefinition,
+        repeat_counts: Sequence[int] | None = None,
+    ) -> tuple[list[SpellStep], list[int]]:
         flat: list[SpellStep] = []
         group_map: list[int] = []
         for gi, grp in enumerate(spell.step_groups):
-            for st in grp.steps:
-                flat.append(st)
-                group_map.append(gi)
+            n = repeat_counts[gi] if repeat_counts else 1
+            for _ in range(n):
+                for st in grp.steps:
+                    flat.append(st)
+                    group_map.append(gi)
         return flat, group_map
+
+    def _iter_repeat_combinations(self, spell: SpellDefinition) -> list[list[int]]:
+        """
+        Per-group repeat counts to try, ordered with the largest expansion first so the matcher
+        prefers richer windows. For spells with no repeated groups this returns a single all-ones row.
+        """
+        ranges: list[list[int]] = []
+        for grp in spell.step_groups:
+            rmin = getattr(grp, "repeat_min", 1)
+            rmax = getattr(grp, "repeat_max", 1)
+            ranges.append(list(range(rmax, rmin - 1, -1)))
+
+        combos: list[list[int]] = [[]]
+        for vals in ranges:
+            combos = [c + [v] for c in combos for v in vals]
+        return combos
 
     def _match_from_index(
         self,
@@ -125,6 +207,7 @@ class SpellMatcher:
         group_idx_of_step: Sequence[int],
         segs: Sequence[GestureSegment],
         i_start: int,
+        relax: float = 1.0,
     ) -> SpellMatch | None:
         """
         Walk newest→oldest and try to match reversed step list.
@@ -169,8 +252,20 @@ class SpellMatcher:
             return best
 
         # Tunables (safe defaults; can move into SpellDefinition later)
-        absorb_max_s = float(getattr(spell_definition, "absorb_max_duration_s", 0.15))
+        absorb_max_s = float(getattr(spell_definition, "absorb_max_duration_s", 0.15)) * relax
         absorb_adjacent_tol = int(getattr(spell_definition, "absorb_adjacent_tol", 1))
+        # Allow one extra octant of adjacency when meaningfully relaxed.
+        if relax >= 1.5:
+            absorb_adjacent_tol += 1
+
+        # Also relax the per-window idle-gap ceiling so a slightly long mid-spell pause does not nuke the window.
+        idle_gap_ceiling = spell_definition.max_idle_gap_s * relax
+
+        # Fuzzy required-step matching: spell-controlled, scaled by relax for the pause-anchored path.
+        allow_fuzzy_required = bool(spell_definition.allow_fuzzy_required)
+        fuzzy_required_max_adj = int(spell_definition.fuzzy_required_max_adj)
+        if relax >= 1.5:
+            fuzzy_required_max_adj += 1
 
         # reversed because we walk newest→oldest
         steps = list(reversed(flat_steps))
@@ -185,6 +280,7 @@ class SpellMatcher:
 
         matched_required = 0
         matched_optional = 0
+        matched_fuzzy_required = 0
 
         matched_pause = 0
         pause_duration_s = 0.0
@@ -247,7 +343,7 @@ class SpellMatcher:
             dist = seg.path_length
 
             # Long idle filler breaks the window.
-            if is_idle_dir(seg.direction_type) and dt > spell_definition.max_idle_gap_s:
+            if is_idle_dir(seg.direction_type) and dt > idle_gap_ceiling:
                 return False
 
             # Always advance wall-clock duration and window span when we consume anything.
@@ -367,6 +463,44 @@ class SpellMatcher:
                 step_idx += 1
                 continue
 
+            # REQUIRED STEP — FUZZY MATCH: seg dur is fine and seg direction is adjacent to step.allowed.
+            # Treat as a match (advance step + credit) but record so the scorer can penalise.
+            if (
+                allow_fuzzy_required
+                and dur_ok
+                and not is_idle_dir(seg.direction_type)
+                and not self._is_pause_step(step)
+            ):
+                adj = _min_adj_to_allowed(seg.direction_type, step.allowed)
+                if adj is not None and adj <= fuzzy_required_max_adj:
+                    gi = step_to_group[step_idx]
+
+                    total_duration_s += dt
+                    mark_used_index(current_idx)
+
+                    total_distance += dist
+                    group_distance[gi] += dist
+
+                    scorable_duration_s += dt
+                    group_duration[gi] += dt
+                    group_steps_matched[gi] += 1
+
+                    matched_required += 1
+                    matched_fuzzy_required += 1
+
+                    last_scorable_allowed = step.allowed
+                    last_scorable_group_idx = gi
+
+                    if self._logger.is_enabled_for_trace:
+                        self._logger.trace(
+                            f"FUZZY MATCH(req) spell={spell_definition.name} win_start={i_start} seg_win_idx={seg_idx_in_window} "
+                            f"dir={seg.direction_type.name} step_allowed={step_dirs} adj={adj} fuzzy_tol={fuzzy_required_max_adj}"
+                        )
+
+                    step_idx += 1
+                    i -= 1
+                    continue
+
             # REQUIRED STEP: treat as filler (possibly absorbed jitter). If we can't consume, window dies.
             if try_consume_as_filler(seg, current_idx, seg_idx_in_window):
                 i -= 1
@@ -417,6 +551,7 @@ class SpellMatcher:
             required_total=required_total,
             optional_matched=matched_optional,
             optional_total=optional_total,
+            fuzzy_required_matches=matched_fuzzy_required,
         )
 
         ctx = SpellMatchContext(
@@ -425,6 +560,7 @@ class SpellMatcher:
             metrics=metrics,
             window_start_index=window_start_index,
             window_end_index=window_end_index,
+            relax=relax,
         )
 
         if not self._rules_validator.validate(ctx):

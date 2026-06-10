@@ -52,6 +52,13 @@ class SpellDefinition:
     # can appear between key steps before we reject the match.
     max_filler_duration_s: float = 0.25
 
+    # Fuzzy required-step matching: lets a segment that's direction-adjacent (but not exact)
+    # to a required step's allowed set satisfy that step. Each fuzzy hit incurs a penalty in
+    # the accuracy score. Set False on spells that must be matched strictly.
+    allow_fuzzy_required: bool = True
+    fuzzy_required_max_adj: int = 1  # octants of allowed deviation (1 = one neighbour). Scaled by relax.
+    fuzzy_required_penalty: float = 0.05  # subtracted from accuracy per fuzzy required hit.
+
     # Minimum "rest" time before the spell starts, or None to disable.
     min_pre_pause_s: float = 0
     # Minimum "rest" time after the spell ends, or None to disable.

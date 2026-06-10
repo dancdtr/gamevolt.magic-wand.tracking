@@ -1,4 +1,3 @@
-import random
 from dataclasses import dataclass
 
 from spells.accuracy.configuration.accuracy_scorer_settings import SpellAccuracyScorerSettings
@@ -44,17 +43,12 @@ class SpellAccuracyScorer:
                 + weights.relative_group_duration_weight * dur_s
             ) / total_w
 
-        d = random.randrange(0, 10) / 1000
-        f = random.randrange(0, self._settings.fudge) / 100
-        sign = random.choice((-1, 1))
+        # Fuzzy required-step hits: each near-miss that satisfied a required step gets a small penalty.
+        # Strict casts outscore loose ones; loose ones still pass instead of being silently rejected.
+        if metrics.fuzzy_required_matches > 0:
+            overall -= metrics.fuzzy_required_matches * spell.fuzzy_required_penalty
 
-        overall = overall + (sign * (d + f))
-
-        if overall <= 0:
-            overall = f + d
-
-        if overall >= 100:
-            overall = 100 - (f + d)
+        overall = max(0.0, min(1.0, overall))
 
         return SpellAccuracyBreakdown(
             score=overall,

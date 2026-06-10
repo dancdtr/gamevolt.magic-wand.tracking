@@ -16,3 +16,6 @@ class SpellMatchContext:
     window_start_index: int
     # Index of newest segment used in this match
     window_end_index: int
+
+    # Tolerance multiplier. 1.0 = strict. >1 = relaxed (e.g. pause-anchored attempts).
+    relax: float = 1.0

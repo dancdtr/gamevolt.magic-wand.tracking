@@ -249,7 +249,6 @@ wand_colours:
   - "#546e7a"
 
 accuracy:
-  fudge: 10
   weights:
     step_count_weight: 0.7
     relative_group_distance_weight: 0.15

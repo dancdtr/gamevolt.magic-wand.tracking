@@ -31,3 +31,8 @@ class SpellMatchMetrics:
     required_total: int
     optional_matched: int
     optional_total: int
+
+    # Required-step matches that were "fuzzy": segment direction was adjacent (not exact) to the
+    # required step's allowed set. These count toward required_matched, but each one carries an
+    # accuracy penalty in the scorer.
+    fuzzy_required_matches: int = 0

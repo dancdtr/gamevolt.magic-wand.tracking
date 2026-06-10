@@ -10,4 +10,5 @@ class MaxFillerRule(SpellRule):
         if spell.max_filler_duration_s <= 0:
             return True
 
-        return m.filler_duration_s <= spell.max_filler_duration_s
+        budget = spell.max_filler_duration_s * ctx.relax
+        return m.filler_duration_s <= budget

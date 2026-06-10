@@ -120,15 +120,23 @@ class TrackedWand(WandBase):
         self.rotation_updated.invoke(transformed)
 
     def _on_motion_changed(self, motion_phase: MotionPhaseType) -> None:
-        if motion_phase is MotionPhaseType.HOLDING:
-            self._gesture_history.clear()
+        if motion_phase is MotionPhaseType.PAUSED:
+            self._try_match_at_pause()
 
         if motion_phase is MotionPhaseType.STOPPED:
+            self._gesture_history.clear()
             self.forward_reset.invoke()
             self.reset_forward()
 
         self._logger.verbose(f"Wand ({self._id}) motion: {motion_phase.name}")
         self.motion_changed.invoke(motion_phase)
+
+    def _try_match_at_pause(self) -> None:
+        match = self._spell_matcher.try_match_at_end(self.id, self._gesture_history.tail())
+        if match:
+            self._logger.verbose(f"Wand ({self._id}) matched '{match.spell_type.name}' at pause!")
+            self.spell_cast.invoke(match)
+            self.reset_data()
 
     def _on_direction_changed(self, direction: DirectionType) -> None:
         self.direction_changed.invoke(direction)

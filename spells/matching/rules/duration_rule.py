@@ -13,7 +13,7 @@ class DurationRule(SpellRule):
             return False
 
         # Keep max as wall-clock window duration (prevents “wait forever then finish”)
-        if s.max_total_duration_s is not None and m.total_duration_s > s.max_total_duration_s:
+        if s.max_total_duration_s is not None and m.total_duration_s > s.max_total_duration_s * ctx.relax:
             return False
 
         return True
