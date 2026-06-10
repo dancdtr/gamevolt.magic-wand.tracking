@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# workflow.sh — build, deploy, install relay/wands
+# workflow.sh — build (locally), deploy, install wands on the Pi
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -15,8 +15,6 @@ load_env
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-DOCKERFILE="${DOCKERFILE:-Dockerfile.dev}"
-CONDA_ENV_NAME="${CONDA_ENV_NAME:-gamevolt.magic-wand.tracking}"
 DIST_DIR="${DIST_DIR:-$PROJECT_ROOT/.dist}"
 
 SSH_KEY="${SSH_KEY:-}"
@@ -29,25 +27,28 @@ OPENVPN_BIN="${OPENVPN_BIN:-/Applications/OpenVPN Connect/OpenVPN Connect.app/Co
 
 VPN_STARTED_BY_SCRIPT=false
 
+APPLICATION_NAME="wands"
+BUILD_SCRIPT="${BUILD_SCRIPT:-$SCRIPT_DIR/build.sh}"
+INSTALL_SCRIPT="${INSTALL_SCRIPT:-$SCRIPT_DIR/install.sh}"
+
 usage() {
   cat <<EOF
 Usage:
-  ./workflow.sh --app <relay|wands> --version <version> [--build] [--deploy] [--install]
+  ./workflow.sh --version <version> [--build] [--deploy] [--install]
 
 Examples:
-  ./workflow.sh --app relay --version v0.1.0 --build
-  ./workflow.sh --app wands --version v0.1.0 --build
-  ./workflow.sh --app relay --version v0.1.0
-  ./workflow.sh --app relay --version v0.1.0 --deploy --install
+  ./workflow.sh --version v0.1.0 --build
+  ./workflow.sh --version v0.1.0 --deploy --install
+  ./workflow.sh --version v0.1.0
 
 Notes:
   - With no step flags, runs build, deploy, install.
+  - --build runs scripts/build.sh locally (Pi cross-build via Docker is deferred until a uv-based Dockerfile is added back).
   - Must be run with bash, not sh.
 EOF
   exit 1
 }
 
-APP_KEY=""
 VERSION=""
 run_build=false
 run_deploy=false
@@ -55,15 +56,6 @@ run_install=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --app)
-      [[ $# -ge 2 ]] || die "Missing value for --app"
-      APP_KEY="$2"
-      shift 2
-      ;;
-    --app=*)
-      APP_KEY="${1#*=}"
-      shift
-      ;;
     --version)
       [[ $# -ge 2 ]] || die "Missing value for --version"
       VERSION="$2"
@@ -94,22 +86,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -n "$APP_KEY" ]] || die "Missing required argument: --app"
 [[ -n "$VERSION" ]] || die "Missing required argument: --version"
-
-case "$APP_KEY" in
-  relay)
-    APPLICATION_NAME="relay"
-    INSTALL_SCRIPT="${INSTALL_SCRIPT:-$SCRIPT_DIR/install.sh}"
-    ;;
-  wands)
-    APPLICATION_NAME="wands"
-    INSTALL_SCRIPT="${INSTALL_SCRIPT:-$SCRIPT_DIR/install.sh}"
-    ;;
-  *)
-    die "Unknown app '$APP_KEY'. Expected: relay or wands"
-    ;;
-esac
 
 if ! $run_build && ! $run_deploy && ! $run_install; then
   run_build=true
@@ -188,12 +165,6 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-require_build_vars() {
-  for var in DOCKERFILE DIST_DIR AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
-    require_var "$var"
-  done
-}
-
 require_remote_vars() {
   for var in PI PI_DIR SSH_KEY; do
     require_var "$var"
@@ -209,25 +180,8 @@ require_commands() {
 }
 
 build_step() {
-  require_build_vars
-  require_commands docker
-
-  info "Building app=$APP_KEY version=$VERSION"
-  export DOCKER_BUILDKIT=1
-
-  docker build \
-    --platform linux/arm64 \
-    --file "$DOCKERFILE" \
-    --target export \
-    --build-arg APP_KEY="$APP_KEY" \
-    --build-arg CONDA_ENV_NAME="$CONDA_ENV_NAME" \
-    --build-arg BUILD_VERSION="$VERSION" \
-    --build-arg AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-    --build-arg AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-    --output "type=local,dest=$DIST_DIR" \
-    "$PROJECT_ROOT"
-
-  info "Artifacts exported to $DIST_DIR"
+  info "Building $APPLICATION_NAME version=$VERSION via $BUILD_SCRIPT"
+  bash "$BUILD_SCRIPT" "$VERSION"
 }
 
 deploy_step() {

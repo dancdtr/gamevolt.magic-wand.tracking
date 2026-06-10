@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install.sh — unpack relay/wands on the Pi
+# install.sh — unpack wands on the Pi
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -25,7 +25,7 @@ CURRENT_DIR="$DEPLOY_BASE/Current"
 INSTALL_DIR="$CURRENT_DIR"
 
 case "$APPLICATION_NAME" in
-  relay|wands)
+  wands)
     ENV_FILE="appsettings.env.yml"
     ;;
   *)

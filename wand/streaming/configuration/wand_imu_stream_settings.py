@@ -9,6 +9,5 @@ from wand.streaming.eliko_single_anchor.configuration.eliko_single_anchor_stream
 
 @dataclass
 class WandImuStreamSettings(SettingsBase):
-    header_ttl_s: float
     eliko: ElikoStreamSettings | None
     eliko_single_anchor: ElikoSingleAnchorStreamSettings | None

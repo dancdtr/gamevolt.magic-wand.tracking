@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from cdtr_rtls.configuration.anchor_area_manager_settings import AnchorAreaManagerSettings
 from display.image_libraries.configuration.spell_image_library_settings import SpellImageLibrarySettings
 from gamevolt.configuration.appsettings_base import AppSettingsBase
 from gamevolt.logging.configuration.logging_settings import LoggingSettings
@@ -34,5 +33,4 @@ class AppSettings(AppSettingsBase):
     zone_visualisation: ZoneVisualiserSettings
     spell_image_library: SpellImageLibrarySettings
     wand_colours: list[str]
-    anchor_area_manager: AnchorAreaManagerSettings
     wand_device_controller: WandDeviceControllerSettings

@@ -19,36 +19,20 @@ OUTPUT_DIR="$BUILD_DIR/dist"
 DIST_DIR="$PROJECT_ROOT/.dist"
 
 usage() {
-  echo "Usage: $0 <relay|wands> [version]"
+  echo "Usage: $0 [version]"
   exit 1
 }
 
-[[ $# -ge 1 ]] || usage
-
-APP_KEY="$1"
-VERSION="${2:-$(git describe --tags --always 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo dev)}"
-
-case "$APP_KEY" in
-  relay)
-    APPLICATION_NAME="relay"
-    SPEC_FILE="$PROJECT_ROOT/relay.spec"
-    APP_PKG_DIR="$PROJECT_ROOT/anchor_relay"
-    ;;
-  wands)
-    APPLICATION_NAME="wands"
-    SPEC_FILE="$PROJECT_ROOT/wands.spec"
-    APP_PKG_DIR="$PROJECT_ROOT/wands_app"
-    ;;
-  *)
-    die "Unknown app '$APP_KEY'. Expected: relay or wands"
-    ;;
-esac
+APPLICATION_NAME="wands"
+APP_KEY="wands"
+SPEC_FILE="$PROJECT_ROOT/wands.spec"
+APP_PKG_DIR="$PROJECT_ROOT/wands_app"
+VERSION="${1:-$(git describe --tags --always 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo dev)}"
 
 [[ -f "$SPEC_FILE" ]] || die "Spec file not found: $SPEC_FILE"
 
 info "Starting build"
 info "Project root: $PROJECT_ROOT"
-info "App key: $APP_KEY"
 info "Application name: $APPLICATION_NAME"
 info "Version: $VERSION"
 

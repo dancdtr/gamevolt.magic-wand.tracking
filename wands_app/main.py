@@ -33,8 +33,6 @@ async def main() -> int:
     logger.info(f"Running '{settings.name}'...")
 
     try:
-        if system.cdtr_rtls is not None:
-            await system.cdtr_rtls.start_async()
         await system.tracking.start_async()
         await system.recognition.start_async()
     except Exception:
@@ -58,8 +56,6 @@ async def main() -> int:
         logger.info(f"Stopping '{settings.name}'...")
         await system.recognition.stop_async()
         await system.tracking.stop_async()
-        if system.cdtr_rtls is not None:
-            await system.cdtr_rtls.stop_async()
         logger.info(f"Exited '{settings.name}'.")
         return 0
 

@@ -12,13 +12,7 @@ from zones.zone_application import ZoneApplication
 
 
 class TrackingApp:
-    """Owns zone management, presence orchestration, and the IMU stream.
-
-    Cdtr-rtls-specific glue (relay WebSocket server, anchor-area mapping,
-    anchor-area enter/exit messaging) lives in `CdtrRtlsIntegration` and is
-    started / stopped at the `WandsSystem` level — `TrackingApp` knows
-    nothing about anchor areas.
-    """
+    """Owns zone management, presence orchestration, and the IMU stream."""
 
     def __init__(
         self,

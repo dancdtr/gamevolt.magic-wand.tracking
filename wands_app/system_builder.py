@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from logging import Logger
 
-from cdtr_rtls.cdtr_rtls_integration import CdtrRtlsIntegration
 from display.image_libraries.spell_image_library import SpellImageLibrary
 from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.messaging.udp.udp_rx import UdpRx
@@ -64,24 +63,12 @@ class WandsSystemBuilder:
         zone_factory = ZoneFactory(logger)
         zone_application_builder = ZoneApplicationBuilder(logger)
 
-        use_live_zones = system_type is SystemType.CDTR_RTLS
-        uses_cdtr_rtls = system_type in (SystemType.CDTR_RTLS_MOCK, SystemType.CDTR_RTLS)
+        is_mock = system_type is SystemType.ELIKO_SINGLE_ANCHOR
 
         zone_udp_receiver: UdpRx | None = None
         zone_message_handler: MessageHandler | None = None
 
-        if use_live_zones:
-            zone_udp_receiver = UdpRx(logger, settings.zones.udp_receiver)
-            zone_message_handler = MessageHandler(logger, zone_udp_receiver)
-
-            production_zone_manager = ZoneManager(
-                message_handler=zone_message_handler,
-                zone_factory=zone_factory,
-                settings=settings.zones,
-                logger=logger,
-            )
-            zone_application = zone_application_builder.build_production(zone_manager=production_zone_manager)
-        else:
+        if is_mock:
             zone_visualiser_host = Visualiser(logger, settings.zone_visualisation.visualiser)
             spell_image_library = SpellImageLibrary(settings.spell_image_library)
 
@@ -92,17 +79,19 @@ class WandsSystemBuilder:
                 spell_image_library=spell_image_library,
                 wand_ids=settings.tracked_wand_ids,
             )
+        else:
+            zone_udp_receiver = UdpRx(logger, settings.zones.udp_receiver)
+            zone_message_handler = MessageHandler(logger, zone_udp_receiver)
+
+            production_zone_manager = ZoneManager(
+                message_handler=zone_message_handler,
+                zone_factory=zone_factory,
+                settings=settings.zones,
+                logger=logger,
+            )
+            zone_application = zone_application_builder.build_production(zone_manager=production_zone_manager)
 
         zone_manager = zone_application.zone_manager
-
-        cdtr_rtls_integration: CdtrRtlsIntegration | None = None
-        if uses_cdtr_rtls:
-            cdtr_rtls_integration = CdtrRtlsIntegration(
-                logger=logger,
-                anchor_area_settings=settings.anchor_area_manager,
-                web_socket_server_settings=settings.server.web_socket,
-                zone_manager=zone_manager,
-            )
 
         imu_stream_builder = WandImuStreamBuilder(logger, settings.imu_stream)
 
@@ -124,7 +113,7 @@ class WandsSystemBuilder:
             eliko_client = ElikoClient(logger=logger, settings=eliko_settings.connection, client=tcp_client)
             imu_stream = imu_stream_builder.build_eliko(eliko_client)
             command_sink = ElikoWandCommandSink(logger=logger, client=eliko_client, settings=eliko_settings.command_sink)
-        elif system_type is SystemType.ELIKO_SINGLE_ANCHOR:
+        else:
             single_settings = settings.imu_stream.eliko_single_anchor
             if single_settings is None:
                 raise ValueError(
@@ -143,10 +132,6 @@ class WandsSystemBuilder:
                 client=single_anchor_client,
                 settings=single_settings.command_sink,
             )
-        else:
-            assert cdtr_rtls_integration is not None
-            imu_stream = imu_stream_builder.build_line_based(cdtr_rtls_integration.imu_line_source)
-            command_sink = cdtr_rtls_integration.wand_command_sink
 
         wizard_name_provider = WizardNameProvider(WizardSettings(names=WIZARD_NAMES))
         profile_service = LocalProfileService(logger=logger, name_provider=wizard_name_provider)
@@ -262,8 +247,4 @@ class WandsSystemBuilder:
             spell_cast_presentation_controller=spell_cast_presentation_controller,
         )
 
-        return WandsSystem(
-            tracking=tracking_app,
-            recognition=recognition_app,
-            cdtr_rtls=cdtr_rtls_integration,
-        )
+        return WandsSystem(tracking=tracking_app, recognition=recognition_app)
