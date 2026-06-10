@@ -4,7 +4,6 @@ from typing import Callable
 
 from gamevolt.events.event import Event
 from gamevolt.logging._logger import Logger
-from gamevolt.toolkit.timer import Timer
 from motion.direction.direction_type import DirectionType
 from motion.gesture.gesture_history import GestureHistory
 from motion.gesture.gesture_segment import GestureSegment
@@ -47,8 +46,6 @@ class TrackedWand(WandBase):
         self._settings = settings
         self._id = id
 
-        self._active_reminder_timer = Timer(settings.active_reminder_interval)
-
         self._current_spell_targets: list[SpellType] = []
         self._last_rotation: WandRotation | None = None
         self._is_running = False
@@ -61,12 +58,7 @@ class TrackedWand(WandBase):
     def is_running(self) -> bool:
         return self._is_running
 
-    @property
-    def active_reminder_timer(self) -> Timer:
-        return self._active_reminder_timer
-
     def start(self) -> None:
-        # self._motion_processor.direction_changed.subscribe(self._on_direction_changed)
         self._motion_processor.segment_completed.subscribe(self._on_segment_completed)
         self._motion_processor.motion_changed.subscribe(self._on_motion_changed)
 
@@ -74,17 +66,13 @@ class TrackedWand(WandBase):
 
         self._is_running = True
 
-        self._active_reminder_timer.start()
-
     def stop(self) -> None:
-        self._active_reminder_timer.stop()
         self._is_running = False
 
         self._motion_processor.stop()
 
         self._spell_matcher.clear_spell_targets()
 
-        # self._motion_processor.direction_changed.unsubscribe(self._on_direction_changed)
         self._motion_processor.segment_completed.unsubscribe(self._on_segment_completed)
         self._motion_processor.motion_changed.unsubscribe(self._on_motion_changed)
 
@@ -92,7 +80,6 @@ class TrackedWand(WandBase):
 
     def update(self) -> None:
         pass
-        # if self._active_reminder_timer.is_complete:
 
     def set_spell_targets(self, spell_types: list[SpellType]) -> None:
         self._logger.info(f"Wand ({self._id}) updating spell targets to '{[spell_type.name for spell_type in spell_types]}'.")

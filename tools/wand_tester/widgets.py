@@ -1,6 +1,6 @@
 """Reusable widgets and builders for the wand GUI tester.
 
-`ColorPicker` and `PeriodSlider` are QGroupBox subclasses — drop straight into
+`ColourPicker` and `PeriodSlider` are QGroupBox subclasses — drop straight into
 a layout via `addWidget`. The build_* functions return a QGroupBox (or a
 small dataclass when extra handles are needed) and join their buttons into
 a shared command `QButtonGroup` so cross-section radio exclusivity holds.
@@ -24,48 +24,48 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from wand.streaming.eliko.pekio_client import Color
+from wand.streaming.eliko.pekio_client import Colour
 
 from wand_tester.constants import (
-    COLOR_OPTIONS,
+    COLOUR_OPTIONS,
     DEFAULT_BLINK_DUTY_MS,
     DEFAULT_BLINK_PERIOD_MS,
-    DEFAULT_COLOR,
+    DEFAULT_COLOUR,
     DEFAULT_PERIOD_MS,
     PERIOD_MAX_MS,
     PERIOD_MIN_MS,
     PERIOD_STEP_MS,
 )
 from wand_tester.styles import (
-    color_button_style,
+    colour_button_style,
     command_button_style,
 )
 
 
-class ColorPicker(QGroupBox):
+class ColourPicker(QGroupBox):
     """4-column LED colour grid. Tabs read `.selected` at Send time."""
 
-    def __init__(self, default_name: str = DEFAULT_COLOR, parent: QWidget | None = None) -> None:
+    def __init__(self, default_name: str = DEFAULT_COLOUR, parent: QWidget | None = None) -> None:
         super().__init__("Colour", parent)
         self._button_group = QButtonGroup(self)
         self._button_group.setExclusive(True)
-        self.selected: Color = Color.RED
+        self.selected: Colour = Colour.RED
 
         grid = QGridLayout(self)
         cols = 4
-        for idx, opt in enumerate(COLOR_OPTIONS):
+        for idx, opt in enumerate(COLOUR_OPTIONS):
             btn = QPushButton(opt.name)
             btn.setCheckable(True)
-            btn.setStyleSheet(color_button_style(opt.bg, opt.fg))
+            btn.setStyleSheet(colour_button_style(opt.bg, opt.fg))
             if opt.name == default_name:
                 btn.setChecked(True)
-                self.selected = opt.color
+                self.selected = opt.colour
             self._button_group.addButton(btn, idx)
-            btn.toggled.connect(lambda checked, c=opt.color: checked and self._set(c))
+            btn.toggled.connect(lambda checked, c=opt.colour: checked and self._set(c))
             grid.addWidget(btn, idx // cols, idx % cols)
 
-    def _set(self, color: Color) -> None:
-        self.selected = color
+    def _set(self, colour: Colour) -> None:
+        self.selected = colour
 
 
 class PeriodSlider(QGroupBox):

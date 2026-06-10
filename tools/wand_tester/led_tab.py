@@ -28,7 +28,7 @@ from wand_tester.constants import (
 )
 from wand_tester.styles import action_button_style
 from wand_tester.widgets import (
-    ColorPicker,
+    ColourPicker,
     build_blink_group,
     build_solid_group,
     make_command_button,
@@ -47,13 +47,13 @@ class LedTab(QWidget):
         # CMD1 to restore LED state the wand's firmware just clobbered.
         self._last_led_command: Callable[[], None] | None = None
 
-        self._color_picker = ColorPicker()
+        self._colour_picker = ColourPicker()
         blink = build_blink_group(self._command_group, self._set_method)
         self._blink_period_spin = blink.period_spin
         self._blink_duty_spin = blink.duty_spin
 
         layout = QVBoxLayout(self)
-        layout.addWidget(self._color_picker)
+        layout.addWidget(self._colour_picker)
         layout.addWidget(build_solid_group(self._command_group, self._set_method))
         layout.addWidget(blink.box)
         layout.addWidget(self._build_fade_group())
@@ -167,7 +167,7 @@ class LedTab(QWidget):
 
     def _on_send(self) -> None:
         method = self._selected_method
-        color = self._color_picker.selected
+        colour = self._colour_picker.selected
         cmd: Callable[[], None]
         if method == "blink_custom":
             period = self._blink_period_spin.value()
@@ -175,10 +175,10 @@ class LedTab(QWidget):
             if duty >= period:
                 print(f"[invalid] blink duty ({duty}) must be < period ({period})")
                 return
-            cmd = lambda: self._client.blink(period, duty, color)
+            cmd = lambda: self._client.blink(period, duty, colour)
         elif method == "fade_custom":
             step = self._fade_step_spin.value()
-            cmd = lambda: self._client.fade(step, color)
+            cmd = lambda: self._client.fade(step, colour)
         elif method == "blink_for_custom":
             duration = self._blink_for_duration_spin.value()
             period = self._blink_for_period_spin.value()
@@ -186,19 +186,19 @@ class LedTab(QWidget):
             if duty >= period:
                 print(f"[invalid] blink duty ({duty}) must be < period ({period})")
                 return
-            cmd = lambda: self._client.blink_for(duration, period, duty, color)
+            cmd = lambda: self._client.blink_for(duration, period, duty, colour)
         elif method in ("blink_fast_for", "blink_medium_for", "blink_slow_for"):
             duration = self._blink_for_duration_spin.value()
-            cmd = lambda m=method, d=duration: getattr(self._client, m)(d, color)
+            cmd = lambda m=method, d=duration: getattr(self._client, m)(d, colour)
         elif method == "fade_for_custom":
             duration = self._fade_for_duration_spin.value()
             step = self._fade_for_step_spin.value()
-            cmd = lambda: self._client.fade_for(duration, step, color)
+            cmd = lambda: self._client.fade_for(duration, step, colour)
         elif method in ("fade_slow_for", "fade_medium_for", "fade_fast_for"):
             duration = self._fade_for_duration_spin.value()
-            cmd = lambda m=method, d=duration: getattr(self._client, m)(d, color)
+            cmd = lambda m=method, d=duration: getattr(self._client, m)(d, colour)
         else:
-            cmd = lambda m=method: getattr(self._client, m)(color)
+            cmd = lambda m=method: getattr(self._client, m)(colour)
         cmd()
         # Timed commands re-arm their own duration on re-fire, so drop them
         # from reapply rather than chaining a Stop-All flurry.

@@ -7,9 +7,12 @@ from gamevolt.configuration.settings_base import SettingsBase
 class ElikoCommandSinkSettings(SettingsBase):
     """Settings for ElikoWandCommandSink.
 
-    `led_pulse_color` names one of the `Color` enum members (RED, GREEN, BLUE,
-    WHITE, YELLOW, MAGENTA, CYAN, RGB). Multi-bit forms can be expressed by
-    pipe-joining (e.g. "RED|GREEN") — parsed in the sink.
+    `idle_colour` names a `Colour` enum member (RED, GREEN, BLUE, WHITE,
+    YELLOW, MAGENTA, CYAN, RGB, WARM_WHITE, ...). Multi-bit forms via
+    pipe-join ("RED|GREEN") — parsed in the sink. Rendered as a slow fade
+    by the sink while a wand is active (zone-present).
+
+    Pulse colours are carried per-message on `WandLedPulseMessage`.
     """
 
-    led_pulse_color: str
+    idle_colour: str

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-def color_button_style(bg: str, fg: str) -> str:
+def colour_button_style(bg: str, fg: str) -> str:
     return f"""
         QPushButton {{
             background-color: {bg};

@@ -74,9 +74,6 @@ class TrackedWandManager:
 
         for wand in self._tracked_wands.values():
             wand.update()
-            if wand.active_reminder_timer.is_complete:
-                self._wand_device_controller.play_active_reminder_cue(wand.id)
-                wand.active_reminder_timer.restart()
 
     def tracked_wands(self) -> list[TrackedWand]:
         return list(self._tracked_wands.values())
@@ -89,12 +86,25 @@ class TrackedWandManager:
     def _on_wand_connected(self, client: WandClient) -> None:
         self._logger.debug(f"Wand ({client.id}) connected.")
 
-        # zone = self._zone_manager.get_zone_containing_wand_id(client.id)
-        # if zone is not None:
-        #     self._logger.info(f"Wand ({client.id}) reconnected and was previously in zone {zone.id}. Activating wand.")
-        #     self._wand_device_controller.activate_wand(client.id)
+        # Wand TX state lives on the wand; a disconnect (radio dropout, power
+        # cycle, OTA command burst stalling PR for > disconnect_after_s) loses
+        # it. Zone presence is held by ZoneManager and is unaware of wand
+        # connectivity, so no fresh zone_enter fires on reconnect. Re-activate
+        # here if the wand is still in a zone, and reset the forward
+        # interpreter so the integration restarts from the new orientation
+        # instead of jumping from the pre-disconnect sample.
+        wand = self._tracked_wands.get(client.id)
+        if wand is None:
+            return
 
-        # self._wan
+        wand.reset()
+
+        zone_ids = self._zone_manager.zones_containing_wand(client.id)
+        if not zone_ids:
+            return
+
+        self._logger.info(f"Wand ({client.id}) reconnected while in zones {zone_ids}. Re-activating.")
+        self._wand_device_controller.activate_wand(client.id)
 
     def _on_wand_disconnected(self, client: WandClient) -> None:
         self._logger.debug(f"Wand ({client.id}) disconnected.")

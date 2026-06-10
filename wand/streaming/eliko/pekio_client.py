@@ -76,8 +76,8 @@ DEFAULT_HWAVE_CLEAR_DELAY_S = 0.5
 Buzz = bool | int | str | None
 
 
-class Color(IntFlag):
-    """LED bit flags. Combine with `|`, e.g. `Color.RED | Color.BLUE`."""
+class Colour(IntFlag):
+    """LED bit flags. Combine with `|`, e.g. `Colour.RED | Colour.BLUE`."""
 
     OFF = 0
     RED = 0x01
@@ -126,10 +126,10 @@ def _resolve_buzz(buzz: Buzz) -> int:
     raise TypeError(f"buzz must be bool, int, str, or None; got {type(buzz).__name__}")
 
 
-def _leds_to_bits(leds: Color | str | int | None) -> int:
+def _leds_to_bits(leds: Colour | str | int | None) -> int:
     if leds is None:
         return 0
-    if isinstance(leds, Color):
+    if isinstance(leds, Colour):
         return int(leds) & 0x0F
     if isinstance(leds, int):
         return leds & 0x0F
@@ -214,7 +214,7 @@ class PekioClient:
         """
         self.buzz_hwave_stop()
         self._cancel_hwave_clear()
-        self.fade(STOP_FADE_STEP, Color.OFF)
+        self.fade(STOP_FADE_STEP, Colour.OFF)
 
     def stop_all(self) -> None:
         """Stop everything — cancels `buzz_hwave`, then CMD1=0 to kill firmware
@@ -246,16 +246,16 @@ class PekioClient:
 
     def _fire_fade_hold(self) -> None:
         self._pending_stop = None
-        self.fade(STOP_FADE_STEP, Color.OFF)
+        self.fade(STOP_FADE_STEP, Colour.OFF)
 
     # Alias — existing callers (production sink, timed-effect auto-stops, REPL).
     def stop(self) -> None:
         """Alias for `stop_all()`."""
         self.stop_all()
 
-    def solid(self, color: Color | str | int | None = None, buzz: Buzz = None) -> None:
+    def solid(self, colour: Colour | str | int | None = None, buzz: Buzz = None) -> None:
         """Solid LEDs on. `buzz` adds periodic haptic — see `_resolve_buzz`."""
-        ww = _leds_to_bits(color)
+        ww = _leds_to_bits(colour)
         buzz_ms = _resolve_buzz(buzz)
         xx = (buzz_ms // 50) & 0xFF
         if buzz_ms > 0:
@@ -266,7 +266,7 @@ class PekioClient:
         self,
         period_ms: int,
         duty_ms: int,
-        leds: Color | str | int | None = None,
+        leds: Colour | str | int | None = None,
         buzz: Buzz = None,
     ) -> None:
         """Blink mode. duty_ms must be < period_ms or firmware may reject silently."""
@@ -281,22 +281,22 @@ class PekioClient:
             ww |= _HAPTIC_BIT
         self.cmd1((zz << 24) | (yy << 16) | (xx << 8) | ww)
 
-    def blink_fast(self, leds: Color | str | int | None = None, buzz: Buzz = None) -> None:
+    def blink_fast(self, leds: Colour | str | int | None = None, buzz: Buzz = None) -> None:
         """Fast blink preset (period 100ms, duty 15ms)."""
         self.blink(BLINK_FAST_PERIOD_MS, BLINK_FAST_DUTY_MS, leds, buzz)
 
-    def blink_medium(self, leds: Color | str | int | None = None, buzz: Buzz = None) -> None:
+    def blink_medium(self, leds: Colour | str | int | None = None, buzz: Buzz = None) -> None:
         """Medium blink preset (period 500ms, duty 100ms)."""
         self.blink(BLINK_MEDIUM_PERIOD_MS, BLINK_MEDIUM_DUTY_MS, leds, buzz)
 
-    def blink_slow(self, leds: Color | str | int | None = None, buzz: Buzz = None) -> None:
+    def blink_slow(self, leds: Colour | str | int | None = None, buzz: Buzz = None) -> None:
         """Slow blink preset (period 2550ms, duty 255ms)."""
         self.blink(BLINK_SLOW_PERIOD_MS, BLINK_SLOW_DUTY_MS, leds, buzz)
 
     def fade(
         self,
         step: int,
-        leds: Color | str | int | None = None,
+        leds: Colour | str | int | None = None,
         buzz: Buzz = None,
     ) -> None:
         """Fade in/out. Lower step = slower fade, higher = faster cycle."""
@@ -308,15 +308,15 @@ class PekioClient:
             ww |= _HAPTIC_BIT
         self.cmd1((zz << 24) | (xx << 8) | ww)
 
-    def fade_slow(self, leds: Color | str | int | None = None, buzz: Buzz = None) -> None:
+    def fade_slow(self, leds: Colour | str | int | None = None, buzz: Buzz = None) -> None:
         """Slow fade preset (step=FADE_SLOW_STEP)."""
         self.fade(FADE_SLOW_STEP, leds, buzz)
 
-    def fade_medium(self, leds: Color | str | int | None = None, buzz: Buzz = None) -> None:
+    def fade_medium(self, leds: Colour | str | int | None = None, buzz: Buzz = None) -> None:
         """Medium fade preset (step=FADE_MEDIUM_STEP)."""
         self.fade(FADE_MEDIUM_STEP, leds, buzz)
 
-    def fade_fast(self, leds: Color | str | int | None = None, buzz: Buzz = None) -> None:
+    def fade_fast(self, leds: Colour | str | int | None = None, buzz: Buzz = None) -> None:
         """Fast fade preset (step=FADE_FAST_STEP)."""
         self.fade(FADE_FAST_STEP, leds, buzz)
 
@@ -365,7 +365,7 @@ class PekioClient:
         """
         self._dedupe_breaker_alt = not self._dedupe_breaker_alt
         step = STOP_FADE_STEP if self._dedupe_breaker_alt else STOP_FADE_STEP - 1
-        self.fade(step, Color.OFF)
+        self.fade(step, Colour.OFF)
 
     def hwave_oneshot(
         self,
@@ -453,12 +453,12 @@ class PekioClient:
 
     def pulse(
         self,
-        color: Color | str | int | None = None,
+        colour: Colour | str | int | None = None,
         duration_s: float = 1.0,
         buzz: Buzz = None,
     ) -> None:
         """Solid on for `duration_s`, then off. Cancels any prior timed effect."""
-        self.solid(color, buzz=buzz)
+        self.solid(colour, buzz=buzz)
         self._schedule_stop(duration_s)
 
     def blink_for(
@@ -466,7 +466,7 @@ class PekioClient:
         duration_s: float,
         period_ms: int,
         duty_ms: int,
-        leds: Color | str | int | None = None,
+        leds: Colour | str | int | None = None,
         buzz: Buzz = None,
     ) -> None:
         """Blink for `duration_s`, then stop."""
@@ -476,7 +476,7 @@ class PekioClient:
     def blink_fast_for(
         self,
         duration_s: float,
-        leds: Color | str | int | None = None,
+        leds: Colour | str | int | None = None,
         buzz: Buzz = None,
     ) -> None:
         self.blink_fast(leds, buzz)
@@ -485,7 +485,7 @@ class PekioClient:
     def blink_medium_for(
         self,
         duration_s: float,
-        leds: Color | str | int | None = None,
+        leds: Colour | str | int | None = None,
         buzz: Buzz = None,
     ) -> None:
         self.blink_medium(leds, buzz)
@@ -494,7 +494,7 @@ class PekioClient:
     def blink_slow_for(
         self,
         duration_s: float,
-        leds: Color | str | int | None = None,
+        leds: Colour | str | int | None = None,
         buzz: Buzz = None,
     ) -> None:
         self.blink_slow(leds, buzz)
@@ -504,7 +504,7 @@ class PekioClient:
         self,
         duration_s: float,
         step: int,
-        leds: Color | str | int | None = None,
+        leds: Colour | str | int | None = None,
         buzz: Buzz = None,
     ) -> None:
         self.fade(step, leds, buzz)
@@ -513,7 +513,7 @@ class PekioClient:
     def fade_slow_for(
         self,
         duration_s: float,
-        leds: Color | str | int | None = None,
+        leds: Colour | str | int | None = None,
         buzz: Buzz = None,
     ) -> None:
         self.fade_slow(leds, buzz)
@@ -522,7 +522,7 @@ class PekioClient:
     def fade_medium_for(
         self,
         duration_s: float,
-        leds: Color | str | int | None = None,
+        leds: Colour | str | int | None = None,
         buzz: Buzz = None,
     ) -> None:
         self.fade_medium(leds, buzz)
@@ -531,7 +531,7 @@ class PekioClient:
     def fade_fast_for(
         self,
         duration_s: float,
-        leds: Color | str | int | None = None,
+        leds: Colour | str | int | None = None,
         buzz: Buzz = None,
     ) -> None:
         self.fade_fast(leds, buzz)

@@ -11,7 +11,7 @@ from wand.streaming.eliko.pekio_client import (
     BUZZ_PATTERN_3,
     BUZZ_PATTERN_4,
     BUZZ_PATTERN_5,
-    Color,
+    Colour,
 )
 
 DEFAULT_PORT = "/dev/tty.usbmodem2101"
@@ -44,35 +44,35 @@ WAND_TAGS: list[str] = [
 
 
 @dataclass(frozen=True)
-class ColorOption:
+class ColourOption:
     name: str
-    color: Color
+    colour: Colour
     bg: str  # CSS hex for the button face
     fg: str  # CSS hex for label text (white on dark, black on light)
 
 
 # Approximate visual swatches — wand LED mixing is RGB+W so these are
 # indicative, not exact. Order drives grid layout.
-COLOR_OPTIONS: list[ColorOption] = [
-    ColorOption("RED", Color.RED, "#ff0000", "#ffffff"),
-    ColorOption("GREEN", Color.GREEN, "#00c800", "#ffffff"),
-    ColorOption("BLUE", Color.BLUE, "#0040ff", "#ffffff"),
-    ColorOption("WHITE", Color.WHITE, "#ffffff", "#000000"),
-    ColorOption("MAGENTA", Color.MAGENTA, "#ff00ff", "#ffffff"),
-    ColorOption("LIME", Color.LIME, "#b8ff80", "#000000"),
-    ColorOption("CYAN", Color.CYAN, "#00e0e0", "#000000"),
-    ColorOption("RGB", Color.RGB, "#d0d0d0", "#000000"),
-    ColorOption("PURPLE", Color.PURPLE, "#c080ff", "#000000"),
-    ColorOption("YELLOW", Color.YELLOW, "#ffe000", "#000000"),
-    ColorOption("SKY", Color.SKY, "#80c0ff", "#000000"),
-    ColorOption("ALL", Color.ALL, "#f0f0f0", "#000000"),
-    ColorOption("PINK", Color.PINK, "#ffb0c8", "#000000"),
-    ColorOption("WARM_WHITE", Color.WARM_WHITE, "#ffd890", "#000000"),
-    ColorOption("ICE", Color.ICE, "#c0f0ff", "#000000"),
-    ColorOption("OFF", Color.OFF, "#1a1a1a", "#cccccc"),
+COLOUR_OPTIONS: list[ColourOption] = [
+    ColourOption("RED", Colour.RED, "#ff0000", "#ffffff"),
+    ColourOption("GREEN", Colour.GREEN, "#00c800", "#ffffff"),
+    ColourOption("BLUE", Colour.BLUE, "#0040ff", "#ffffff"),
+    ColourOption("WHITE", Colour.WHITE, "#ffffff", "#000000"),
+    ColourOption("MAGENTA", Colour.MAGENTA, "#ff00ff", "#ffffff"),
+    ColourOption("LIME", Colour.LIME, "#b8ff80", "#000000"),
+    ColourOption("CYAN", Colour.CYAN, "#00e0e0", "#000000"),
+    ColourOption("RGB", Colour.RGB, "#d0d0d0", "#000000"),
+    ColourOption("PURPLE", Colour.PURPLE, "#c080ff", "#000000"),
+    ColourOption("YELLOW", Colour.YELLOW, "#ffe000", "#000000"),
+    ColourOption("SKY", Colour.SKY, "#80c0ff", "#000000"),
+    ColourOption("ALL", Colour.ALL, "#f0f0f0", "#000000"),
+    ColourOption("PINK", Colour.PINK, "#ffb0c8", "#000000"),
+    ColourOption("WARM_WHITE", Colour.WARM_WHITE, "#ffd890", "#000000"),
+    ColourOption("ICE", Colour.ICE, "#c0f0ff", "#000000"),
+    ColourOption("OFF", Colour.OFF, "#1a1a1a", "#cccccc"),
 ]
 
-DEFAULT_COLOR = "RED"
+DEFAULT_COLOUR = "RED"
 
 DEFAULT_BLINK_PERIOD_MS = 500
 DEFAULT_BLINK_DUTY_MS = 100

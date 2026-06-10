@@ -6,5 +6,4 @@ from wand.interpreters.configuration.rmf_settings import RMFSettings
 
 @dataclass
 class WandSettings(SettingsBase):
-    active_reminder_interval: float
     rmf: RMFSettings

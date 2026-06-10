@@ -14,7 +14,7 @@ from wand.streaming.eliko.pekio_client import PekioClient
 
 from wand_tester.styles import action_button_style
 from wand_tester.widgets import (
-    ColorPicker,
+    ColourPicker,
     PeriodSlider,
     build_blink_group,
     build_solid_group,
@@ -42,14 +42,14 @@ class LedHapticTab(QWidget):
         self._command_group.setExclusive(True)
         self._selected_method: str = "solid"
 
-        self._color_picker = ColorPicker()
+        self._colour_picker = ColourPicker()
         blink = build_blink_group(self._command_group, self._set_method)
         self._blink_period_spin = blink.period_spin
         self._blink_duty_spin = blink.duty_spin
         self._period = PeriodSlider("Haptic Period")
 
         layout = QVBoxLayout(self)
-        layout.addWidget(self._color_picker)
+        layout.addWidget(self._colour_picker)
         layout.addWidget(build_solid_group(self._command_group, self._set_method))
         layout.addWidget(blink.box)
         layout.addWidget(self._period)
@@ -70,7 +70,7 @@ class LedHapticTab(QWidget):
 
     def _on_send(self) -> None:
         method = self._selected_method
-        color = self._color_picker.selected
+        colour = self._colour_picker.selected
         buzz_ms = self._period.value()
         if method == "blink_custom":
             period = self._blink_period_spin.value()
@@ -78,9 +78,9 @@ class LedHapticTab(QWidget):
             if duty >= period:
                 print(f"[invalid] blink duty ({duty}) must be < period ({period})")
                 return
-            self._client.blink(period, duty, color, buzz=buzz_ms)
+            self._client.blink(period, duty, colour, buzz=buzz_ms)
         else:
-            getattr(self._client, method)(color, buzz=buzz_ms)
+            getattr(self._client, method)(colour, buzz=buzz_ms)
 
     def emergency_stop(self) -> None:
         """No widget-local timers — combined CMD1 is firmware-managed, and

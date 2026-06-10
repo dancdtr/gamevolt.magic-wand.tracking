@@ -65,7 +65,7 @@ from wand.streaming.eliko.pekio_client import (  # noqa: E402
     BUZZ_PATTERN_3,
     BUZZ_PATTERN_4,
     BUZZ_PATTERN_5,
-    Color,
+    Colour,
     PekioClient,
 )
 
@@ -103,7 +103,7 @@ def main() -> None:
     print("Timed:     pulse, blink_for, blink_fast/medium/slow_for, fade_for, fade_slow/medium/fast_for, cancel_timed.")
     print("Buzz arg:  any LED method takes buzz='fast'|'medium'|'slow'|int(ms)|True|None.")
     print("Patterns: BUZZ_PATTERN_1..5 (waveform tuples — unpack with `*`).")
-    print("Colors:  RED GREEN BLUE WHITE (single)")
+    print("Colours:  RED GREEN BLUE WHITE (single)")
     print("         YELLOW MAGENTA CYAN RGB (RGB combos)")
     print("         PINK LIME SKY WARM_WHITE PURPLE ICE ALL (W-combos — try and see)")
     print("         Combine any with `|`, e.g. RED | WHITE.")
@@ -160,28 +160,28 @@ def main() -> None:
         "tag": client.set_tag,
         # Client itself, for direct access.
         "client": client,
-        # Colors.
-        "Color": Color,
+        # Colours.
+        "Colour": Colour,
         "BUZZ_PATTERN_1": BUZZ_PATTERN_1,
         "BUZZ_PATTERN_2": BUZZ_PATTERN_2,
         "BUZZ_PATTERN_3": BUZZ_PATTERN_3,
         "BUZZ_PATTERN_4": BUZZ_PATTERN_4,
         "BUZZ_PATTERN_5": BUZZ_PATTERN_5,
-        "RED": Color.RED,
-        "GREEN": Color.GREEN,
-        "BLUE": Color.BLUE,
-        "WHITE": Color.WHITE,
-        "YELLOW": Color.YELLOW,
-        "MAGENTA": Color.MAGENTA,
-        "CYAN": Color.CYAN,
-        "RGB": Color.RGB,
-        "PINK": Color.PINK,
-        "LIME": Color.LIME,
-        "SKY": Color.SKY,
-        "WARM_WHITE": Color.WARM_WHITE,
-        "PURPLE": Color.PURPLE,
-        "ICE": Color.ICE,
-        "ALL": Color.ALL,
+        "RED": Colour.RED,
+        "GREEN": Colour.GREEN,
+        "BLUE": Colour.BLUE,
+        "WHITE": Colour.WHITE,
+        "YELLOW": Colour.YELLOW,
+        "MAGENTA": Colour.MAGENTA,
+        "CYAN": Colour.CYAN,
+        "RGB": Colour.RGB,
+        "PINK": Colour.PINK,
+        "LIME": Colour.LIME,
+        "SKY": Colour.SKY,
+        "WARM_WHITE": Colour.WARM_WHITE,
+        "PURPLE": Colour.PURPLE,
+        "ICE": Colour.ICE,
+        "ALL": Colour.ALL,
     }
     try:
         code.interact(banner="", local=namespace)

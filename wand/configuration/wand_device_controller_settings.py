@@ -5,10 +5,7 @@ from gamevolt.configuration.settings_base import SettingsBase
 
 @dataclass
 class WandDeviceControllerSettings(SettingsBase):
-    command_broadcast_interval: float
-    spell_under_cast_haptic_cues: list[int]
-    active_reminder_haptic_cues: list[int]
-    wand_chosen_haptic_cues: list[int]
-    spell_cast_haptic_cues: list[int]
-    spell_cast_lamp_duration_s: float
-    disable_wand_tx: bool
+    spell_cast_pulse_colour: str
+    spell_cast_pulse_period_ms: int
+    spell_cast_pulse_duty_ms: int
+    spell_cast_pulse_duration_s: float

@@ -51,7 +51,7 @@ class RecognitionApp:
     async def stop_async(self) -> None:
         self._logger.info("Disabling all wands...")
         for wand in self._tracked_wand_manager.tracked_wands():
-            self._wand_device_controller.broadcast_deactivate(wand.id)
+            self._wand_device_controller.deactivate_wand(wand.id)
 
         self._wand_visualiser.stop()
         self._server.stop()

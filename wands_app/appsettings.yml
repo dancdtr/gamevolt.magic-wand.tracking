@@ -1,12 +1,7 @@
 ---
-imu_stream:
-  eliko_single_anchor:
-    serial:
-      port: /dev/tty.usbmodem2101
 name: "potter.wand-server"
 # system_type: eliko_rtls
 system_type: eliko_single_anchor
-# system_type: cdtr_rtls_mock
 
 tracked_wand_ids:
   # - E000
@@ -121,23 +116,8 @@ zones:
       key: 31
       spells: [NOX]
 
-anchor_area_manager:
-  anchor_areas:
-    - id: A000
-      zone_ids: ["Z006"]
-    - id: A001
-      zone_ids: ["Z001"]
-    - id: A002
-      zone_ids: ["Z002"]
-    - id: A003
-      # zone_ids: ["Z003", "Z006"]
-      zone_ids: ["Z003"]
-    - id: A004
-      zone_ids: ["Z004", "Z005"]
-
 input:
   wand:
-    active_reminder_interval: 1.3
     rmf:
       invert_x: True
       invert_y: False
@@ -163,7 +143,6 @@ server:
       port: 60901
 
 imu_stream:
-  header_ttl_s: 2.0
   eliko:
     connection:
       host: 10.8.4.1
@@ -177,7 +156,7 @@ imu_stream:
       body_forward_y: 1.0
       body_forward_z: 0.0
     command_sink:
-      led_pulse_color: "BLUE"
+      idle_colour: "WARM_WHITE"
   eliko_single_anchor:
     serial:
       # Set to the anchor's virtual COM port. On macOS look for /dev/tty.usbmodem*,
@@ -193,7 +172,7 @@ imu_stream:
       body_forward_y: 1.0
       body_forward_z: 0.0
     command_sink:
-      led_pulse_color: "RED"
+      idle_colour: "WARM_WHITE"
     # SPQF subscription flag. "P" = PR (IMU) packets, "R" = RR (ranging) packets.
     # Set to "R" as a sanity check: if RR lines appear in trace, the wand is alive
     # and the anchor is talking to it.
@@ -310,14 +289,8 @@ spell_image_library:
     icon_colour: [0, 0, 0]
 
 wand_device_controller:
-  command_broadcast_interval: 0.05
-  disable_wand_tx: True
-  wand_chosen_haptic_cues: [93]
-  # wand_chosen_haptic_cues: [93, 93]
-  # active_reminder_haptic_cues: [73, 14]
-  # Temporarily disabled while debugging Eliko LED/haptic — repeated CMD1 sends
-  # were stomping LED state every 1.3s. Re-enable once stable.
-  active_reminder_haptic_cues: []
-  spell_cast_haptic_cues: [93, 14, 56]
-  spell_under_cast_haptic_cues: [93, 14, 56]
-  spell_cast_lamp_duration_s: 2.0
+  # Spell-cast LED cue: medium green blink for 2s, then sink restores idle fade.
+  spell_cast_pulse_colour: "GREEN"
+  spell_cast_pulse_period_ms: 500
+  spell_cast_pulse_duty_ms: 100
+  spell_cast_pulse_duration_s: 2.0
