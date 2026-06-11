@@ -120,7 +120,9 @@ class TrackedWand(WandBase):
         self.rotation_updated.invoke(transformed)
 
     def _on_motion_changed(self, motion_phase: MotionPhaseType) -> None:
-        if motion_phase is MotionPhaseType.PAUSED:
+        # Commit triggers: PAUSED is the main commit signal; HOLDING is a fallback in case the user
+        # held still long enough to skip the PAUSED handler without anything firing yet.
+        if motion_phase is MotionPhaseType.PAUSED or motion_phase is MotionPhaseType.HOLDING:
             self._try_match_at_pause()
 
         if motion_phase is MotionPhaseType.STOPPED:
@@ -148,8 +150,6 @@ class TrackedWand(WandBase):
         self._gesture_history.add(segment)
         self.gesture_detected.invoke(self._gesture_history)
 
-        match = self._spell_matcher.try_match(self.id, self._gesture_history.tail())
-        if match:
-            self._logger.verbose(f"Wand ({self._id}) matched '{match.spell_type.name}'!")
-            self.spell_cast.invoke(match)
-            self.reset_data()
+        # Spell matches commit on a motion phase transition (see _on_motion_changed) rather than
+        # firing the moment min_spell_steps is hit mid-cast. Stops early/premature matches and lets
+        # the matcher see the full window of evidence before deciding.
