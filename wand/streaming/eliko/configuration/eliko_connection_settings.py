@@ -1,10 +1,8 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 
 
-@dataclass
-class ElikoConnectionSettings(SettingsBase):
+@appsetting
+class ElikoConnectionSettings:
     host: str
     port: int
     reconnect_delay_s: float

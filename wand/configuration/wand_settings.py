@@ -1,9 +1,7 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 from wand.interpreters.configuration.rmf_settings import RMFSettings
 
 
-@dataclass
-class WandSettings(SettingsBase):
+@appsetting
+class WandSettings:
     rmf: RMFSettings

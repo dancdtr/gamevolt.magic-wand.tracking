@@ -1,9 +1,7 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 from motion.configuration.motion_processor_settings import MotionProcessorSettings
 
 
-@dataclass
-class MotionSettings(SettingsBase):
+@appsetting
+class MotionSettings:
     processor: MotionProcessorSettings

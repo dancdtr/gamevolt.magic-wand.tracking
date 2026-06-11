@@ -1,8 +1,6 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 
 
-@dataclass
-class WizardSettings(SettingsBase):
+@appsetting
+class WizardSettings:
     names: list[str]

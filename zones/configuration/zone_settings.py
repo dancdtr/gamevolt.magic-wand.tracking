@@ -1,11 +1,9 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 from spells.spell_type import SpellType
 
 
-@dataclass
-class ZoneSettings(SettingsBase):
+@appsetting
+class ZoneSettings:
     id: str
     key: int
     spells: list[SpellType]

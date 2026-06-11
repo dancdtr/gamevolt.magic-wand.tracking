@@ -1,9 +1,7 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 from wand.configuration.wand_settings import WandSettings
 
 
-@dataclass
-class InputSettings(SettingsBase):
+@appsetting
+class InputSettings:
     wand: WandSettings

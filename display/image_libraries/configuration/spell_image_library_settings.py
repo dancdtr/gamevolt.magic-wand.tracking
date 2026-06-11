@@ -1,10 +1,8 @@
-from dataclasses import dataclass
-
 from display.image_providers.configuration.image_provider_settings import ImageProviderSettings
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 
 
-@dataclass
-class SpellImageLibrarySettings(SettingsBase):
+@appsetting
+class SpellImageLibrarySettings:
     instruction: ImageProviderSettings
     success: ImageProviderSettings

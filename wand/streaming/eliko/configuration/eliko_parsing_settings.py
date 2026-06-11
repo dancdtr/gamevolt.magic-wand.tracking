@@ -1,10 +1,8 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 
 
-@dataclass
-class ElikoParsingSettings(SettingsBase):
+@appsetting
+class ElikoParsingSettings:
     sample_dt_us: int
     nsamp_per_packet: int
     body_forward_x: float

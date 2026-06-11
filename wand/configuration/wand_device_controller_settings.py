@@ -1,10 +1,8 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 
 
-@dataclass
-class WandDeviceControllerSettings(SettingsBase):
+@appsetting
+class WandDeviceControllerSettings:
     spell_cast_pulse_colour: str
     spell_cast_pulse_step: int
     rudimentary_spell_cast_pulse_duration_s: float

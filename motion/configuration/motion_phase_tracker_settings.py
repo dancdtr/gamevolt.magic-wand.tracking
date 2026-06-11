@@ -1,10 +1,8 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 
 
-@dataclass
-class MotionPhaseTrackerSettings(SettingsBase):
+@appsetting
+class MotionPhaseTrackerSettings:
     speed_start: float
     speed_stop: float
 

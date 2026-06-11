@@ -1,9 +1,7 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 from motion.configuration.motion_phase_tracker_settings import MotionPhaseTrackerSettings
 
 
-@dataclass
-class MotionProcessorSettings(SettingsBase):
+@appsetting
+class MotionProcessorSettings:
     phase_tracker: MotionPhaseTrackerSettings

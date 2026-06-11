@@ -1,10 +1,8 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 
 
-@dataclass
-class ElikoCommandSinkSettings(SettingsBase):
+@appsetting
+class ElikoCommandSinkSettings:
     """Settings for ElikoWandCommandSink.
 
     `idle_colour` names a `Colour` enum member (RED, GREEN, BLUE, WHITE,

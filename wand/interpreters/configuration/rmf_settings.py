@@ -1,9 +1,7 @@
-from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, ClassVar, Iterable, Self
+from typing import Any, ClassVar, Iterable
 
-from gamevolt.configuration.settings_base import SettingsBase
-from gamevolt.maths.axis import Axis
+from gamevolt.configuration.appsetting import appsetting
 from wand.interpreters._math.vec3 import Vec3
 
 
@@ -43,8 +41,8 @@ def _parse_world_up(x: Any) -> Vec3:
     raise ValueError(f"Unsupported world_up value: {x!r}")
 
 
-@dataclass
-class RMFSettings(SettingsBase):
+@appsetting
+class RMFSettings:
     world_up: Vec3 = (0.0, 0.0, 1.0)
 
     # Output shaping (deltas)

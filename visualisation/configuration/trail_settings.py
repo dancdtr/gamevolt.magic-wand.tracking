@@ -1,17 +1,15 @@
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 from visualisation.coordinate_mode import CoordinateMode
 
 
-@dataclass
-class TrailColourSettings(SettingsBase):
+@appsetting
+class TrailColourSettings:
     line_colour: str
     point_colour: str
 
 
-@dataclass
-class TrailSettings(SettingsBase):
+@appsetting
+class TrailSettings:
     scale: float
     max_points: int
     draw_points: bool
@@ -24,7 +22,7 @@ class TrailSettings(SettingsBase):
     pixel_margin: int  # inner padding (pixels)
 
 
-@dataclass
+@appsetting
 class VisualiserInputSettings:
     coords_mode: CoordinateMode  # "centered" = [-1..1], origin at centre
     y_up: bool  # True => +Y up (top), False => screen down
