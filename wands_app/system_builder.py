@@ -168,6 +168,7 @@ class WandsSystemBuilder:
         tracked_wand_factory = TrackedWandFactory(
             motion_processor_factory=motion_processor_factory,
             settings=settings.input.wand,
+            spell_scoring=settings.spell_scoring,
             logger=logger,
         )
 

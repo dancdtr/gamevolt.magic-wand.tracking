@@ -205,22 +205,31 @@ was **removed** and replaced by a **$1 unistroke recogniser** plus a decoupled s
 4. **Templates** are authored as **SVG paths** (`spells/templates/<spell>.svg`, label = file
    stem = `SpellType` name), sampled by arc length, y-flipped. Add a spell = drop in an SVG.
 
-### 6.2 Scoring (`spells/scoring/`)
+### 6.2 Scoring (`spells/scoring/` + `spells/settings/`)
 
-Decoupled from recognition. `gates → base + bonuses → total → SpellCastQuality`:
+Decoupled from recognition. `gates → base + bonuses → total → SpellCastQuality`. All config is
+`SpellScoringSettings` (SettingsBase) in **appsettings.yml** under `spell_scoring`: **global
+bonus magnitudes** (`bonuses`) + a per-spell `default` tuning + a list of per-spell `overrides`
+(each a partial `tuning` keyed by `SpellType`, inheriting omitted fields from `default` then code
+defaults). `SpellScoringSettings.spell_settings(label)` resolves the merged runtime `SpellSettings`
+the scorer consumes. `overrides` is a *list* (SettingsBase passes `dict` fields through as raw values
+and won't construct them into nested settings, so a `dict[str, tuning]` map can't work); `tuning.thresholds`
+is a plain `dict[str, int]` (tier name → score), which the loosened SettingsBase does support.
 
-- **Gates** (boolean veto, false-positive filter): `min_match_accuracy`, `min/max_duration`,
-  `min_path_length` ($1 is scale-blind, so absolute size lives here). A gate fail = rejected.
-- **Bonuses** (additive points; total can exceed 100): base (`accuracy×100`), XP (unique
-  spells cast, lifelong per wand), cadence (speed-uniformity), tempo (ideal duration band).
+- **Gates** (per-spell, boolean veto / false-positive filter): `min_match_accuracy`,
+  `min/max_duration` (a long glyph legitimately takes longer), `min_path_length` ($1 is
+  scale-blind, so absolute size lives here). A gate fail = rejected.
+- **Bonuses** (additive points; total can exceed 100): base (`accuracy×100×difficulty_weight`,
+  difficulty per-spell), XP (unique spells cast, lifelong per wand), cadence (speed-uniformity),
+  tempo (per-spell ideal duration band). Magnitudes (xp/cadence/tempo max) are global.
 - **Pity / streak** bonus: +N per prior consecutive fail, applied only to a gate-passing cast
-  that fell short of the lowest tier, clamped to that tier. Resets on any successful cast.
-- Per-spell config (thresholds — not all spells need 4 tiers — `difficulty_weight`, duration
-  band) is intended as an SVG sidecar; **TODO**, currently global defaults in `ScoringSettings`.
+  that fell short of the spell's **lowest** tier, clamped to that tier. Resets on any success.
+- **Quality tiers** are per-spell (`quality_thresholds`) — not every spell needs all four;
+  when a spell specifies tiers they replace the default set wholesale.
 
 The scorer is the **local dev stand-in** for hub-side grading: XP / streak / quality need
-profile + history, so they lift to the hub later. It is kept cleanly separable (no recognition
-coupling) for that move.
+profile + history, so they lift to the hub later (see §5.1). Kept cleanly separable (no
+recognition coupling) for that move.
 
 ### 6.3 Reporting
 
@@ -231,7 +240,6 @@ split per §6 remains the target; `ShowSystemReporter` not yet separated.
 
 ### 6.4 Still open
 
-- Per-spell scoring config (SVG sidecar).
 - Ambiguity margin (reject when top-1 ≈ top-2 within the active set).
 - Top-N candidate payload on `SpellCastReporter`; `ShowSystemReporter` split.
 - Persistence of per-wand XP/streak (in-memory today; lost on restart).
@@ -283,7 +291,7 @@ Don't add new cross-app coupling that isn't on this list without flagging it.
 | `wands_app/` | Entry point, app composition, settings, `TrackingApp`, `RecognitionApp`, `WandsSystem`, `WandsSystemBuilder`. |
 | `wand/` | Wand-side primitives: `WandServer`, `TrackedWandManager`, `WandClient`, sensor stream (`streaming/`), interpreters, device controller. |
 | `motion/` | Motion phase tracking (`MotionProcessor`, `MotionPhaseTracker`) + stroke windowing (`stroke/StrokeWindower`). |
-| `spells/` | $1 recogniser (`matching/dollar_one/`), SVG templates (`templates/`), scorer (`scoring/`), `SpellCast`, cue + presentation controllers. |
+| `spells/` | $1 recogniser (`matching/dollar_one/`), SVG templates (`templates/`), scorer (`scoring/`), per-spell settings (`settings/`), `SpellCast`, cue + presentation controllers. |
 | `zones/` | Zone manager, zone application, mock controls, visualisation. |
 | `services/` | Profile, presence reporter, spell-cast reporter, session store, session coordinator. (These are the proto-hub implementations.) |
 | `messaging/` | Internal message types and transports (UDP TX/RX, message handlers). |
@@ -335,7 +343,7 @@ Tracked here so they don't get lost. Order is rough priority.
 
 1. **Eliko binding.** Concrete API for position stream, IMU stream, and command channel. `WandImuStream` Eliko impls landed: `ElikoWandImuStream` (PR_Q over TCP via RTLS server, +Y forward) and `ElikoSingleAnchorWandImuStream` (raw PR over USB-serial direct to a single anchor; client-side SFLP→quat decode). `WandCommandSink` Eliko impl landed (`ElikoWandCommandSink`, transport-agnostic via `ElikoCommandClient` protocol; delegates command building to `PekioClient`; typed methods `enter_idle` / `exit_idle` / `pulse`; haptic not on surface — see [§4.5](#45-haptic-disabled)). Wand-reboot recovery landed on the single-anchor path (`WandRebootDetector` watches for `PP,VERS` boot banners and re-issues per-tag `CMD0` to restart IMU sampling). Still to do: `WandPositionStream` (Eliko `COORD_Z`). Open question for the single-anchor path: serial-transport reconnect behaviour — init commands are sent once on start; serial reconnects currently do not re-fire them (would need a `connected` event on `SerialTransport`). Wand-reboot recovery does not extend to RTLS yet — RTLS server is presumed to manage per-tag IMU state itself.
 2. **`WandPositionStream` protocol + staging implementation.** Stop faking position. Let `ZoneManager` derive zones from real positions; retire the UDP `ZoneEnteredMessage` / `ZoneExitedMessage` ingress.
-3. **Spell match rework.** Largely landed — legacy step-group matcher replaced by the $1 unistroke pipeline + decoupled scorer (see §6). Remaining: per-spell scoring config (SVG sidecar), ambiguity margin (top-1≈top-2 reject), top-N candidate payload on `SpellCastReporter`, per-wand XP/streak persistence.
+3. **Spell match rework.** Largely landed — legacy step-group matcher replaced by the $1 unistroke pipeline + decoupled scorer with per-spell settings (`spell_scoring` in appsettings.yml, `SpellScoringSettings`); see §6. Remaining: ambiguity margin (top-1≈top-2 reject), top-N candidate payload on `SpellCastReporter`, per-wand XP/streak persistence.
 4. **`ShowSystemReporter` split.** Separate from `SpellCastReporter`. Development implementation computes grade locally.
 5. **Hub implementations.** HTTP `ProfileService`, HTTP `ZoneSpellBindingService`, MQTT `WandPresenceReporter`, MQTT `SpellCastReporter`, MQTT or HTTP `ShowSystemReporter`.
 6. **Hot configuration reload.** Inbound hub→app, when needed.

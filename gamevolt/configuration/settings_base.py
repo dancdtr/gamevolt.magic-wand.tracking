@@ -1,18 +1,23 @@
 # gamevolt/configuration/settings_base.py
-from dataclasses import dataclass, fields, is_dataclass
+import logging
+import typing
+from dataclasses import MISSING, dataclass, fields, is_dataclass
 from enum import Enum
 from types import NoneType, UnionType
-from typing import Any, ClassVar, Dict, Iterable, Type, TypeVar, get_args, get_origin, get_type_hints
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Type,
+    TypeVar,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 from gamevolt.configuration.errors.appsettings_error import AppsettingsError
 
-T = TypeVar("T", bound="SettingsBase")
-
-import numbers
-import typing
-from dataclasses import dataclass, fields
-from enum import Enum
-from typing import Any, ClassVar, Dict, Iterable, Type, TypeVar, get_args, get_origin, get_type_hints
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound="SettingsBase")
 
@@ -26,7 +31,9 @@ def _issubclass_safe(t: Any, base: type) -> bool:
 
 def _ensure_settings_dataclass(tp: Any, path: str) -> None:
     if not isinstance(tp, type):
-        raise AppsettingsError(f"annotation must be a class type, got {tp!r}", path=path)
+        raise AppsettingsError(
+            f"annotation must be a class type, got {tp!r}", path=path
+        )
     if not is_dataclass(tp):
         raise AppsettingsError(f"'{tp.__name__}' must be a @dataclass.", path=path)
     if not _issubclass_safe(tp, SettingsBase):
@@ -40,14 +47,21 @@ def _type_name(tp: Any) -> str:
         return repr(tp)
 
 
+def _is_optional(tp: Any) -> bool:
+    """Return True if tp is a union that includes None (Optional[T] or T | None)."""
+    return (type(tp) is UnionType and NoneType in tp.__args__) or (
+        get_origin(tp) is not None and NoneType in get_args(tp)
+    )
+
+
 def _assert_type(value: Any, hint: Any, path: str) -> None:
     """Raise TypeError if value doesn't conform to hint. Non-destructive (no coercion)."""
     # Handle Annotated[..., meta]
     if get_origin(hint) is typing.Annotated:
         hint = get_args(hint)[0]
 
-    # Optional/Union
-    if get_origin(hint) in (typing.Union, typing.Optional):
+    # Optional/Union — handle both typing.Union and Python 3.10+ X | Y (UnionType)
+    if isinstance(hint, UnionType) or get_origin(hint) is typing.Union:
         options = get_args(hint)
         if value is None and type(None) in options:
             return
@@ -61,21 +75,26 @@ def _assert_type(value: Any, hint: Any, path: str) -> None:
                 return
             except TypeError as e:
                 last_error = e
-        raise TypeError(f"{path}: {value!r} does not match any of {_type_name(hint)}") from last_error
+        raise TypeError(
+            f"{path}: {value!r} does not match any of {_type_name(hint)}"
+        ) from last_error
 
     # Enums
     if _issubclass_safe(hint, Enum):
         if isinstance(value, hint):
             return
-        raise TypeError(f"{path}: expected {_type_name(hint)}, got {type(value).__name__}: {value!r}")
+        raise TypeError(
+            f"{path}: expected {_type_name(hint)}, got {type(value).__name__}: {value!r}"
+        )
 
     # Nested SettingsBase
     if _issubclass_safe(hint, SettingsBase):
         if isinstance(value, hint):
-            # recurse into nested
             value._validate_types(path)  # type: ignore[attr-defined]
             return
-        raise TypeError(f"{path}: expected {_type_name(hint)}, got {type(value).__name__}")
+        raise TypeError(
+            f"{path}: expected {_type_name(hint)}, got {type(value).__name__}"
+        )
 
     origin = get_origin(hint)
     args = get_args(hint)
@@ -84,9 +103,9 @@ def _assert_type(value: Any, hint: Any, path: str) -> None:
     if origin in (list, set, tuple):
         if not isinstance(value, origin if origin is not tuple else (tuple, list)):
             raise TypeError(
-                f"{path}: expected {origin.__name__}, got {type(value).__name__}."
-                f"Is the appsettings/environment file defined correctly?"
-                f" Is the FIELD_HANDLERS for {path} properly overridden?"
+                f"{path}: expected {origin.__name__}, got {type(value).__name__}. "
+                f"Is the appsettings/environment file defined correctly? "
+                f"Is the FIELD_HANDLERS for {path} properly overridden?"
             )
         elem_hint = args[0] if args else Any
 
@@ -94,7 +113,9 @@ def _assert_type(value: Any, hint: Any, path: str) -> None:
         if origin is tuple and len(args) > 1 and args[-1] is not ...:
             seq = list(value)
             if len(seq) != len(args):
-                raise TypeError(f"{path}: expected tuple of len {len(args)}, got len {len(seq)}")
+                raise TypeError(
+                    f"{path}: expected tuple of len {len(args)}, got len {len(seq)}"
+                )
             for i, (elem, eh) in enumerate(zip(seq, args)):
                 _assert_type(elem, eh, f"{path}[{i}]")
             return
@@ -144,7 +165,9 @@ def _assert_type(value: Any, hint: Any, path: str) -> None:
 
     # Last resort: callable slipped in unexpectedly?
     if callable(value):
-        raise TypeError(f"{path}: unexpected callable value {value!r} for {_type_name(hint)}")
+        raise TypeError(
+            f"{path}: unexpected callable value {value!r} for {_type_name(hint)}"
+        )
 
     raise TypeError(f"{path}: {value!r} is not of expected type {_type_name(hint)}")
 
@@ -164,8 +187,10 @@ def _coerce_enum(value: Any, enum_cls: type[Enum]) -> Enum:
     try:
         return enum_cls(value)
     except Exception as e:
-        allowed = ", ".join(sorted(list(enum_cls.__members__.keys()) + [str(m.value) for m in enum_cls]))
-        raise ValueError(f"{enum_cls.__name__}: {value!r} not a valid enum. Valid: {{{allowed}}}") from e
+        allowed = ", ".join(
+            sorted(list(enum_cls.__members__.keys()) + [str(m.value) for m in enum_cls])
+        )
+        raise ValueError(f"{enum_cls.__name__}: {value!r} not in {{{allowed}}}") from e
 
 
 @dataclass
@@ -177,7 +202,7 @@ class SettingsBase:
         self._validate_types(self.__class__.__name__)
 
     def __str__(self) -> str:
-        return self.format_settings(self, indent=0)
+        return SettingsBase.format_settings(self, indent=0)
 
     def _validate_types(self, path: str) -> None:
         hints = get_type_hints(self.__class__, include_extras=True)
@@ -185,17 +210,13 @@ class SettingsBase:
             key = f.name
             if key not in hints:
                 continue
-            val = getattr(self, key)
-            try:
-                _assert_type(val, hints[key], f"{path}.{key}")
-            except TypeError as e:
-                # Re-raise with clear message
-                raise
+            _assert_type(getattr(self, key), hints[key], f"{path}.{key}")
 
-    def format_settings(self, obj: Any, indent: int = 0) -> str:
+    @staticmethod
+    def format_settings(obj: Any, indent: int = 0) -> str:
+        """Pretty-print nested SettingsBase dataclasses and simple containers."""
         indent_str = "  " * indent
-        cls_name = obj.__class__.__name__
-        lines: list[str] = [f"{indent_str}-> {cls_name}:"]
+        lines: list[str] = [f"{indent_str}-> {obj.__class__.__name__}:"]
 
         # Only iterate declared dataclass fields so we don't show ClassVars, etc.
         for f in fields(obj.__class__):
@@ -204,7 +225,7 @@ class SettingsBase:
             pad = "  " * (indent + 1)
 
             if isinstance(value, SettingsBase):
-                lines.append(self.format_settings(value, indent + 1))
+                lines.append(SettingsBase.format_settings(value, indent + 1))
                 continue
 
             if isinstance(value, Enum):
@@ -218,9 +239,9 @@ class SettingsBase:
                     lines.append(f"{pad}-> {key}: [")
                     for item in value:
                         if isinstance(item, SettingsBase):
-                            lines.append(self.format_settings(item, indent + 2))
+                            lines.append(SettingsBase.format_settings(item, indent + 2))
                         else:
-                            lines.append(f"{'  '*(indent+2)}{item}")
+                            lines.append(f"{'  ' * (indent + 2)}{item}")
                     lines.append(f"{pad}]")
                 continue
 
@@ -234,23 +255,29 @@ class SettingsBase:
         return cls._from_json_like_impl(json, path=cls.__name__, strict=strict)
 
     @classmethod
-    def _from_json_like_impl(cls: Type[T], json: Dict[str, Any], *, path: str, strict: bool) -> T:
+    def _from_json_like_impl(
+        cls: Type[T], json: Dict[str, Any], *, path: str, strict: bool
+    ) -> T:
         cls_fields = {f.name for f in fields(cls)}
         unneeded = {k: v for k, v in (json or {}).items() if k not in cls_fields}
         if unneeded:
             if strict:
                 raise ValueError(f"[{path}] unexpected keys: {sorted(unneeded)}")
             else:
-                print(f"[SettingsBase] Warning: unexpected keys in {path}: {sorted(unneeded)}")
+                logger.warning(
+                    "[SettingsBase] unexpected keys in %s: %s", path, sorted(unneeded)
+                )
 
         filtered = {k: v for k, v in (json or {}).items() if k in cls_fields}
         hints = get_type_hints(cls)
 
-        def is_optional(tp: Any) -> bool:
-            return (type(tp) is UnionType and NoneType in tp.__args__) or (get_origin(tp) is not None and NoneType in get_args(tp))
-
-        optionals = {k for k, v in hints.items() if is_optional(v)}
-        missing = cls_fields - filtered.keys() - optionals
+        optionals = {k for k, v in hints.items() if _is_optional(v)}
+        has_default = {
+            f.name
+            for f in fields(cls)
+            if f.default is not MISSING or f.default_factory is not MISSING  # type: ignore[misc]
+        }
+        missing = cls_fields - filtered.keys() - optionals - has_default
         if missing:
             raise ValueError(f"[{path}] missing required keys: {sorted(missing)}")
 
@@ -261,7 +288,9 @@ class SettingsBase:
                 try:
                     out[key] = cls.FIELD_HANDLERS[key](value)
                 except Exception as e:
-                    raise ValueError(f"[{path}.{key}] handler failed for value={value!r}: {e}") from e
+                    raise ValueError(
+                        f"[{path}.{key}] handler failed for value={value!r}: {e}"
+                    ) from e
                 continue
 
             hint = hints.get(key)
@@ -269,23 +298,22 @@ class SettingsBase:
                 out[key] = value
                 continue
 
-            # Unwrap Optional[T] → base
+            # Unwrap Optional[T] → base type
             base = hint
-            if is_optional(base):
+            if _is_optional(base):
                 args = [a for a in get_args(base) if a is not NoneType]
                 base = args[0] if args else base
 
             # 2) Nested settings object (dict → dataclass subclass of SettingsBase)
-            if isinstance(value, dict) and isinstance(base, type):
-                _ensure_settings_dataclass(base, f"{path}.{key}")  # raises if not @dataclass or not SettingsBase
-                out[key] = base._from_json_like_impl(value, path=f"{path}.{key}", strict=strict)
-                continue
             if isinstance(value, dict):
-                # Got a dict but annotation isn’t a class type — likely a missing/incorrect annotation
-                raise TypeError(
-                    f"[{path}.{key}] got a dict but annotation is {base!r}; "
-                    "did you forget to annotate this field with SettingsBase dataclass?"
-                )
+                if _issubclass_safe(base, SettingsBase):
+                    out[key] = base._from_json_like_impl(
+                        value, path=f"{path}.{key}", strict=strict
+                    )
+                else:
+                    # dict / Dict[K, V] annotation — pass through as-is
+                    out[key] = value
+                continue
 
             # 3) Enum scalar
             try:
@@ -293,7 +321,9 @@ class SettingsBase:
                     out[key] = _coerce_enum(value, base)
                     continue
             except Exception as e:
-                raise ValueError(f"[{path}.{key}] enum parse failed for value={value!r}: {e}") from e
+                raise ValueError(
+                    f"[{path}.{key}] enum parse failed for value={value!r}: {e}"
+                ) from e
 
             # 4) Containers (list/set/tuple) of Enums or Settings
             origin = get_origin(base)
@@ -306,10 +336,17 @@ class SettingsBase:
                         out[key] = type(value)(seq) if isinstance(value, tuple) else seq
                         continue
                     except Exception as e:
-                        raise ValueError(f"[{path}.{key}] enum-seq parse failed for value={value!r}: {e}") from e
+                        raise ValueError(
+                            f"[{path}.{key}] enum-seq parse failed for value={value!r}: {e}"
+                        ) from e
                 if isinstance(elem, type) and issubclass(elem, SettingsBase):
                     try:
-                        seq = [elem._from_json_like_impl(v, path=f"{path}.{key}[{i}]", strict=strict) for i, v in enumerate(value or [])]
+                        seq = [
+                            elem._from_json_like_impl(
+                                v, path=f"{path}.{key}[{i}]", strict=strict
+                            )
+                            for i, v in enumerate(value or [])
+                        ]
                         out[key] = type(value)(seq) if isinstance(value, tuple) else seq
                         continue
                     except Exception:
@@ -317,8 +354,10 @@ class SettingsBase:
 
             # 5) Fallback
             out[key] = value
-            for k in optionals:
-                if k not in out:
-                    out[k] = None
+
+        # Fill any optional fields absent from the config with None
+        for k in optionals:
+            if k not in out:
+                out[k] = None
 
         return cls(**out)

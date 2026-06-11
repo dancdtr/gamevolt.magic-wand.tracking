@@ -188,6 +188,40 @@ motion:
       min_holding_duration: 0.8
       min_stopped_duration: 1.2
 
+# Spell scoring. `bonuses` are global magnitudes; `default` is the per-spell tuning every
+# spell inherits; each `overrides` entry is a partial tuning for one spell (omit a field to
+# inherit). `thresholds`, when set on an override, REPLACES the whole tier set (a spell need
+# not have all four). See spells/settings/spell_scoring_settings.py.
+spell_scoring:
+  bonuses:
+    xp_per_unique_spell: 0.5
+    xp_max: 19.0
+    cadence_max: 10.0
+    tempo_max: 5.0
+    streak_per_fail: 5.0
+  default:
+    difficulty_weight: 1.0
+    min_match_accuracy: 0.50
+    min_duration_s: 0.30
+    max_duration_s: 4.0
+    min_path_length: 0.0
+    tempo_ideal_min_s: 0.6
+    tempo_ideal_max_s: 2.5
+    tempo_decay_s: 1.5
+    thresholds:
+      RUDIMENTARY: 60
+      SKILLED: 75
+      EXPERIENCED: 95
+      MASTERED: 115
+  overrides:
+    - spell: REVELIO
+      tuning:
+        difficulty_weight: 1.0
+        max_duration_s: 6.0
+        thresholds:
+          RUDIMENTARY: 55
+          SKILLED: 80
+
 wand_visualiser:
   is_enabled: True
   visualiser:

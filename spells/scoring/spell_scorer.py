@@ -10,25 +10,27 @@ import math
 
 from motion.stroke.stroke_windower import Stroke
 from spells.scoring.cast_score import CastScore
-from spells.scoring.scoring_settings import ScoringSettings
 from spells.scoring.streak_tracker import StreakTracker
 from spells.scoring.xp_provider import XpProvider
+from spells.settings.spell_scoring_settings import SpellScoringSettings
+from spells.settings.spell_settings import TempoSettings
 from spells.spell_cast_quality import SpellCastQuality
 
 
 class SpellScorer:
-    def __init__(self, settings: ScoringSettings, xp_provider: XpProvider, streak_tracker: StreakTracker) -> None:
+    def __init__(
+        self,
+        settings: SpellScoringSettings,
+        xp_provider: XpProvider,
+        streak_tracker: StreakTracker,
+    ) -> None:
         self._settings = settings
         self._xp = xp_provider
         self._streak = streak_tracker
 
-        # Lowest tier + its threshold = the ceiling the pity bonus can lift a cast to.
-        self._lowest_tier, self._lowest_threshold = min(
-            settings.quality_thresholds.items(), key=lambda kv: kv[1]
-        )
-
     def score(self, player_id: str, label: str, match_accuracy: float, stroke: Stroke) -> CastScore:
-        gates = self._settings.gates
+        spell = self._settings.spell_settings(label)
+        gates = spell.gates
         bonuses = self._settings.bonuses
 
         # ── Gates ─────────────────────────────────────────────
@@ -59,27 +61,28 @@ class SpellScorer:
             )
 
         # ── Components ────────────────────────────────────────
-        difficulty = 1.0  # per-spell weight; sourced per-template later
+        difficulty = spell.difficulty_weight
         base = match_accuracy * 100.0 * difficulty
 
         xp_bonus = min(self._xp.unique_spell_count(player_id) * bonuses.xp_per_unique_spell, bonuses.xp_max)
         cadence_bonus = self._cadence_bonus(stroke) * bonuses.cadence_max
-        tempo_bonus = self._tempo_bonus(stroke.duration_s)
+        tempo_bonus = self._tempo_bonus(stroke.duration_s, spell.tempo)
 
         subtotal = base + xp_bonus + cadence_bonus + tempo_bonus
-        natural_quality = self._resolve_quality(subtotal)
+        natural_quality = self._resolve_quality(subtotal, spell.quality_thresholds)
 
-        # Pity bonus only when the cast (gate-passing) fell short of the lowest tier.
+        # Pity bonus only when the cast (gate-passing) fell short of this spell's lowest tier.
         streak_bonus = 0.0
         pity_pass = False
         total = subtotal
         quality = natural_quality
 
         if natural_quality is None:
+            lowest_tier, lowest_threshold = spell.lowest_tier
             streak_bonus = self._streak.failed_streak(player_id) * bonuses.streak_per_fail
             total = subtotal + streak_bonus
-            if total >= self._lowest_threshold:
-                quality = self._lowest_tier  # clamp: pity never awards above the lowest tier
+            if total >= lowest_threshold:
+                quality = lowest_tier  # clamp: pity never awards above the lowest tier
                 pity_pass = True
 
         return CastScore(
@@ -130,21 +133,21 @@ class SpellScorer:
         cv = math.sqrt(variance) / mean  # coefficient of variation
         return max(0.0, 1.0 - cv)
 
-    def _tempo_bonus(self, duration_s: float) -> float:
-        b = self._settings.bonuses
-        if b.tempo_ideal_min_s <= duration_s <= b.tempo_ideal_max_s:
-            return b.tempo_max
-        if duration_s < b.tempo_ideal_min_s:
-            gap = b.tempo_ideal_min_s - duration_s
+    def _tempo_bonus(self, duration_s: float, tempo: TempoSettings) -> float:
+        tempo_max = self._settings.bonuses.tempo_max
+        if tempo.ideal_min_s <= duration_s <= tempo.ideal_max_s:
+            return tempo_max
+        if duration_s < tempo.ideal_min_s:
+            gap = tempo.ideal_min_s - duration_s
         else:
-            gap = duration_s - b.tempo_ideal_max_s
-        decay = max(0.0, 1.0 - gap / b.tempo_decay_s) if b.tempo_decay_s > 0 else 0.0
-        return b.tempo_max * decay
+            gap = duration_s - tempo.ideal_max_s
+        decay = max(0.0, 1.0 - gap / tempo.decay_s) if tempo.decay_s > 0 else 0.0
+        return tempo_max * decay
 
-    def _resolve_quality(self, total: float) -> SpellCastQuality | None:
+    def _resolve_quality(self, total: float, thresholds: dict[SpellCastQuality, int]) -> SpellCastQuality | None:
         best: SpellCastQuality | None = None
         best_threshold = float("-inf")
-        for quality, threshold in self._settings.quality_thresholds.items():
+        for quality, threshold in thresholds.items():
             if total >= threshold and threshold > best_threshold:
                 best = quality
                 best_threshold = threshold
