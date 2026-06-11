@@ -179,9 +179,6 @@ imu_stream:
     subscribe_flag: "P"
 
 motion:
-  gesture_history:
-    max_segments: 20
-    max_age: 3
   processor:
     phase_tracker:
       speed_start: 0.50
@@ -190,12 +187,6 @@ motion:
       min_paused_duration: 0.15
       min_holding_duration: 0.8
       min_stopped_duration: 1.2
-    direction_quantizer:
-      speed_stop: 0.2
-      min_direction_duration: 0.01
-      axis_deadband_per_s: 0.1
-    segment_builder:
-      max_sample_count: 256
 
 wand_visualiser:
   is_enabled: True
@@ -247,13 +238,6 @@ wand_colours:
   - "#f4511e"
   - "#6d4c41"
   - "#546e7a"
-
-accuracy:
-  weights:
-    step_count_weight: 0.7
-    relative_group_distance_weight: 0.15
-    relative_group_duration_weight: 0.15
-    required_step_bias: 0.5
 
 show_system_controller:
   show_system_udp_tx:

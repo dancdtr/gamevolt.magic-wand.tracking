@@ -12,6 +12,7 @@ dependencies = [
     "pyside6",
     "pyyaml",
     "scipy",
+    "svgpathtools>=1.7.2",
     "uvloop",
     "websockets==15.0.1",
 ]

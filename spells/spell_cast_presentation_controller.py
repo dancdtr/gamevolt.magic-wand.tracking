@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from logging import Logger
 
-from spells.spell_match import SpellMatch
+from spells.spell_cast import SpellCast
 from visualisation.wand_colour_registry import WandColourRegistry
 from wand.tracked_wand_manager import TrackedWandManager
 from zones.visualisation.zone_visualiser_protocol import ZoneVisualiserProtocol
@@ -31,13 +31,13 @@ class SpellCastPresentationController:
     async def stop_async(self) -> None:
         self._tracked_wand_manager.spell_cast.unsubscribe(self._on_spell_cast)
 
-    def _on_spell_cast(self, match: SpellMatch) -> None:
-        colour = self._colour_assigner.try_get_known(match.wand_id) or FALLBACK_COLOUR
+    def _on_spell_cast(self, cast: SpellCast) -> None:
+        colour = self._colour_assigner.try_get_known(cast.wand_id) or FALLBACK_COLOUR
 
-        self._zone_visualiser.show_spell_cast_coloured(match.spell_type, colour)
+        self._zone_visualiser.show_spell_cast_coloured(cast.spell_type, colour)
 
         async def _restore() -> None:
             await asyncio.sleep(COLOUR_FLASH_DURATION)
-            self._zone_visualiser.show_spell_instruction(match.spell_type)
+            self._zone_visualiser.show_spell_instruction(cast.spell_type)
 
         asyncio.create_task(_restore())

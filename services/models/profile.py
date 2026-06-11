@@ -7,4 +7,3 @@ from dataclasses import dataclass
 class Profile:
     wand_id: str
     wizard_name: str
-    spell_cast_bonus: int

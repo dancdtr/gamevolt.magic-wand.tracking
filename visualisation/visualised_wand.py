@@ -2,7 +2,6 @@ import tkinter as tk
 from logging import Logger
 from typing import Sequence
 
-from spells.spell_type import SpellType
 from visualisation.configuration.trail_settings import TrailColourSettings
 from visualisation.trail import Trail
 from wand.tracked_wand import TrackedWand
@@ -69,9 +68,6 @@ class VisualisedWand:
         self.reset()
 
     def _add_rotation(self, sample: WandRotation) -> None:
-        if self._tracked_wand._current_spell_targets is SpellType.NONE:
-            return
-
         self._x += sample.x_delta
         self._y += sample.y_delta
         self._trail.add_xy(self._x, self._y)

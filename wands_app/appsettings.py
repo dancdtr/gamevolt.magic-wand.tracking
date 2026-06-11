@@ -6,7 +6,6 @@ from gamevolt.logging.configuration.logging_settings import LoggingSettings
 from motion.configuration.motion_settings import MotionSettings
 from zones.visualisation.configuration.zone_visualiser_settings import ZoneVisualiserSettings
 from show_system.configuration.show_system_controller_settings import ShowSystemControllerSettings
-from spells.accuracy.configuration.accuracy_scorer_settings import SpellAccuracyScorerSettings
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from wand.configuration.input_settings import InputSettings
 from wand.configuration.wand_device_controller_settings import WandDeviceControllerSettings
@@ -25,7 +24,6 @@ class AppSettings(AppSettingsBase):
     input: InputSettings
     motion: MotionSettings
     wand_visualiser: WandVisualiserSettings
-    accuracy: SpellAccuracyScorerSettings
     zones: ZonesSettings
     server: WandServerSettings
     imu_stream: WandImuStreamSettings

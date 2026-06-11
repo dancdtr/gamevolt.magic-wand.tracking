@@ -4,13 +4,12 @@ from typing import Callable
 
 from gamevolt.events.event import Event
 from gamevolt.logging._logger import Logger
-from motion.direction.direction_type import DirectionType
-from motion.gesture.gesture_history import GestureHistory
-from motion.gesture.gesture_segment import GestureSegment
 from motion.motion_phase_type import MotionPhaseType
 from motion.motion_processor import MotionProcessor
-from spells.spell_match import SpellMatch
-from spells.spell_matcher import SpellMatcher
+from motion.stroke.stroke_windower import Stroke, StrokeWindower
+from spells.matching.dollar_one.dollar_one_recognizer import DollarOneRecognizer
+from spells.scoring.spell_scorer import SpellScorer
+from spells.spell_cast import SpellCast
 from spells.spell_type import SpellType
 from wand.configuration.wand_settings import WandSettings
 from wand.interpreters.wand_forward_gravity_interpreter import ForwardGravityInterpreter
@@ -26,27 +25,28 @@ class TrackedWand(WandBase):
         settings: WandSettings,
         id: str,
         motion_processor: MotionProcessor,
-        gesture_history: GestureHistory,
-        spell_matcher: SpellMatcher,
         forward_interpreter: ForwardGravityInterpreter,
+        stroke_windower: StrokeWindower,
+        recognizer: DollarOneRecognizer,
+        scorer: SpellScorer,
     ) -> None:
         super().__init__(logger, motion_processor)
 
-        self.spell_cast: Event[Callable[[SpellMatch], None]] = Event()
-        self.direction_changed: Event[Callable[[DirectionType], None]] = Event()
-        self.gesture_detected: Event[Callable[[GestureHistory], None]] = Event()
+        self.spell_cast: Event[Callable[[SpellCast], None]] = Event()
         self.motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.rotation_updated: Event[Callable[[WandRotation], None]] = Event()
         self.forward_reset: Event[Callable[[], None]] = Event()
 
         self._forward_interpreter = forward_interpreter
         self._motion_processor = motion_processor
-        self._gesture_history = gesture_history
-        self._spell_matcher = spell_matcher
+        self._stroke_windower = stroke_windower
+        self._recognizer = recognizer
+        self._scorer = scorer
         self._settings = settings
         self._id = id
 
-        self._current_spell_targets: list[SpellType] = []
+        # Zone-active spell set, as template labels (= SpellType names). Empty = score nothing.
+        self._active_labels: set[str] = set()
         self._last_rotation: WandRotation | None = None
         self._is_running = False
 
@@ -59,8 +59,8 @@ class TrackedWand(WandBase):
         return self._is_running
 
     def start(self) -> None:
-        self._motion_processor.segment_completed.subscribe(self._on_segment_completed)
         self._motion_processor.motion_changed.subscribe(self._on_motion_changed)
+        self._stroke_windower.stroke_completed.subscribe(self._on_stroke_completed)
 
         self._motion_processor.start()
 
@@ -71,10 +71,8 @@ class TrackedWand(WandBase):
 
         self._motion_processor.stop()
 
-        self._spell_matcher.clear_spell_targets()
-
-        self._motion_processor.segment_completed.unsubscribe(self._on_segment_completed)
         self._motion_processor.motion_changed.unsubscribe(self._on_motion_changed)
+        self._stroke_windower.stroke_completed.unsubscribe(self._on_stroke_completed)
 
         self.reset()
 
@@ -83,8 +81,7 @@ class TrackedWand(WandBase):
 
     def set_spell_targets(self, spell_types: list[SpellType]) -> None:
         self._logger.info(f"Wand ({self._id}) updating spell targets to '{[spell_type.name for spell_type in spell_types]}'.")
-        self._current_spell_targets = spell_types
-        self._spell_matcher.set_spell_target(spell_types)
+        self._active_labels = {spell_type.name for spell_type in spell_types}
 
     def clear_spell_target(self) -> None:
         self.set_spell_targets([])
@@ -95,14 +92,11 @@ class TrackedWand(WandBase):
 
     def reset_data(self) -> None:
         self._motion_processor.reset()
-        self._gesture_history.clear()
+        self._stroke_windower.reset()
         self.forward_reset.invoke()
 
     def reset_forward(self) -> None:
         self._forward_interpreter.reset()
-
-    def clear_gesture_history(self) -> None:
-        self._gesture_history.clear()
 
     def on_rotation_raw_updated(self, raw: WandRotationRaw) -> None:
         wand_pos = self._forward_interpreter.on_sample(raw.id, raw.ms, raw.fx, raw.fy, raw.fz)
@@ -117,39 +111,40 @@ class TrackedWand(WandBase):
 
         self._last_rotation = transformed
         self._motion_processor.on_rotation_updated(transformed)
+        self._stroke_windower.on_rotation(transformed)
         self.rotation_updated.invoke(transformed)
 
     def _on_motion_changed(self, motion_phase: MotionPhaseType) -> None:
-        # Commit triggers: PAUSED is the main commit signal; HOLDING is a fallback in case the user
-        # held still long enough to skip the PAUSED handler without anything firing yet.
-        if motion_phase is MotionPhaseType.PAUSED or motion_phase is MotionPhaseType.HOLDING:
-            self._try_match_at_pause()
+        self._stroke_windower.on_phase(motion_phase)
 
+        # A sustained still (STOPPED) means the user has truly settled — reset the forward
+        # interpreter so the next spell integrates from the current orientation.
         if motion_phase is MotionPhaseType.STOPPED:
-            self._gesture_history.clear()
-            self.forward_reset.invoke()
             self.reset_forward()
+            self.forward_reset.invoke()
 
         self._logger.verbose(f"Wand ({self._id}) motion: {motion_phase.name}")
         self.motion_changed.invoke(motion_phase)
 
-    def _try_match_at_pause(self) -> None:
-        match = self._spell_matcher.try_match_at_end(self.id, self._gesture_history.tail())
-        if match:
-            self._logger.verbose(f"Wand ({self._id}) matched '{match.spell_type.name}' at pause!")
-            self.spell_cast.invoke(match)
-            self.reset_data()
+    def _on_stroke_completed(self, stroke: Stroke) -> None:
+        results = self._recognizer.recognize(stroke.points, allowed=self._active_labels)
+        if not results:
+            return
 
-    def _on_direction_changed(self, direction: DirectionType) -> None:
-        self.direction_changed.invoke(direction)
+        top = results[:3]
+        candidates = ", ".join(f"{r.label} {r.score * 100:.1f}%" for r in top)
 
-    def _on_segment_completed(self, segment: GestureSegment) -> None:
-        self._logger.verbose(
-            f"Wand ({self._id}) completed '{segment.direction_type.name}' ({segment.direction:.3f}): {segment.duration_s}s"
+        best = results[0]
+        cast = self._scorer.score(self._id, best.label, best.score, stroke)
+        self._scorer.apply_outcome(self._id, cast)
+
+        self._logger.info(
+            f"Wand ({self._id}) $1 [{candidates}] dur={stroke.duration_s:.2f}s "
+            f"path={stroke.path_length:.2f} pts={stroke.point_count} -> {cast.summary()}"
         )
-        self._gesture_history.add(segment)
-        self.gesture_detected.invoke(self._gesture_history)
 
-        # Spell matches commit on a motion phase transition (see _on_motion_changed) rather than
-        # firing the moment min_spell_steps is hit mid-cast. Stops early/premature matches and lets
-        # the matcher see the full window of evidence before deciding.
+        if not cast.recognized:
+            return
+
+        spell_type = SpellType[best.label]
+        self.spell_cast.invoke(SpellCast(wand_id=self._id, spell_type=spell_type, score=cast))

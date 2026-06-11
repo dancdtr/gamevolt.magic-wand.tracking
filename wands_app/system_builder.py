@@ -7,16 +7,13 @@ from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.messaging.udp.udp_rx import UdpRx
 from gamevolt.messaging.udp.udp_tx import UdpTx
 from gamevolt.visualisation.visualiser import Visualiser
-from motion.gesture.gesture_history_factory import GestureHistoryFactory
 from services.local_profile_service import LocalProfileService
 from services.local_spell_cast_reporter import LocalSpellCastReporter
 from services.local_wand_presence_reporter import LocalWandPresenceReporter
 from services.wand_session_coordinator import WandSessionCoordinator
 from services.wizard_session_store import WizardSessionStore
 from show_system.show_system_controller import ShowSystemController
-from spells.accuracy.spell_accuracy_scorer import SpellAccuracyScorer
 from spells.control.wand_spell_cue_controller import WandSpellCueController
-from spells.matching.spell_matcher_factory import SpellMatcherFactory
 from spells.spell_cast_presentation_controller import SpellCastPresentationController
 from visualisation.configuration.visualised_wand_factory import VisualisedWandFactory
 from visualisation.trail_factory import TrailFactory
@@ -167,16 +164,9 @@ class WandsSystemBuilder:
         )
 
         motion_processor_factory = MotionProcessorFactory(logger, settings.motion.processor)
-        gesture_history_factory = GestureHistoryFactory(logger, settings.motion.gesture_history)
-        spell_matcher_factory = SpellMatcherFactory(
-            spell_accuracy_scorer=SpellAccuracyScorer(settings.accuracy),
-            logger=logger,
-        )
 
         tracked_wand_factory = TrackedWandFactory(
             motion_processor_factory=motion_processor_factory,
-            gesture_history_factory=gesture_history_factory,
-            spell_matcher_factory=spell_matcher_factory,
             settings=settings.input.wand,
             logger=logger,
         )

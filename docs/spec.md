@@ -157,6 +157,12 @@ Recognition and tracking depend on per-service protocols. No `HubClient` facade 
 
 The spell **library** (definitions of each spell) stays local in `spells/`. The hub only owns which spell is active where.
 
+`ProfileService.get_profile(wand_id)` is the future single hub call that feeds the scorer: it
+should return wizard name, **XP bonus** (lifelong unique-spell count), **accessibility / kids
+settings** (threshold-scale + gate relaxation — see §6.2), and house. Today `Profile` carries
+only name; XP/streak live in the in-process scorer stubs and the scorer's accessibility levers
+are unbuilt. When the hub call lands, those move behind this protocol.
+
 ### 5.2 Async events (would be MQTT in production)
 
 | Protocol | Purpose | Today |
@@ -179,37 +185,56 @@ Hub down ⇒ experience down. The app makes no attempt to degrade gracefully —
 
 ## 6. Spell matching and reporting
 
-Match grading and recognition floors live in the **hub**, not in recognition. Recognition is a signal processor; it does not decide what counts as "good enough" or which show response level to play.
+Recognition turns wand motion into a recognised spell + quality. The legacy step-group
+matcher (`SpellMatcher` / `SpellDefinition` / 8-way `DirectionQuantizer` / `SegmentBuilder`)
+was **removed** and replaced by a **$1 unistroke recogniser** plus a decoupled scorer.
 
-### 6.1 Recognition's job
+### 6.1 The $1 pipeline
 
-- Segment wand motion into **attempts** (e.g. pause → gesture segments → pause).
-- For each attempt, score against every candidate spell that might be active.
-- Emit one `SpellCastReporter` event per attempt, carrying the full top-N candidates with raw accuracy scores.
+1. **Point path.** The forward interpreter's per-sample `(x_delta, y_delta)` are integrated
+   into a 2D path (the same stream the trail renders).
+2. **Windowing** (`motion/stroke/StrokeWindower`). A stroke opens on `MOVING` and finalises
+   only on a *sustained* still phase (`HOLDING` / `STOPPED`). A transient `PAUSED` (corner /
+   mid-spell hesitation) is left to ride, so a multi-segment glyph arrives as one stroke. The
+   phase tiers (`min_paused_duration` < `min_holding_duration`) already encode this.
+3. **Recognition** (`spells/matching/dollar_one/DollarOneRecognizer`). Resample (N=64) →
+   normalise (centroid + **uniform** scale, **no rotation** — wand gestures are orientation-
+   meaningful) → mean point-distance to each candidate template → `0..1` score. Direction is
+   preserved (so $1, not $P/$Q). Candidates are restricted to the **zone-active spell set**
+   (`set_spell_targets`); scoring all 38 would cross-match.
+4. **Templates** are authored as **SVG paths** (`spells/templates/<spell>.svg`, label = file
+   stem = `SpellType` name), sampled by arc length, y-flipped. Add a spell = drop in an SVG.
 
-No tier labels, no threshold filtering, no decision to fire or not fire a show response.
+### 6.2 Scoring (`spells/scoring/`)
 
-### 6.2 Hub's job
+Decoupled from recognition. `gates → base + bonuses → total → SpellCastQuality`:
 
-- Pick the intended spell from the candidate list (considers zone binding, player profile, expected spell).
-- Decide tier — failed attempt, recognised-weak, recognised-strong, or more — using configurable thresholds.
-- Trigger `ShowSystemReporter` to play the matching response level.
-- Record for metrics; future feature uses metrics to simplify the model for struggling players in real time.
+- **Gates** (boolean veto, false-positive filter): `min_match_accuracy`, `min/max_duration`,
+  `min_path_length` ($1 is scale-blind, so absolute size lives here). A gate fail = rejected.
+- **Bonuses** (additive points; total can exceed 100): base (`accuracy×100`), XP (unique
+  spells cast, lifelong per wand), cadence (speed-uniformity), tempo (ideal duration band).
+- **Pity / streak** bonus: +N per prior consecutive fail, applied only to a gate-passing cast
+  that fell short of the lowest tier, clamped to that tier. Resets on any successful cast.
+- Per-spell config (thresholds — not all spells need 4 tiers — `difficulty_weight`, duration
+  band) is intended as an SVG sidecar; **TODO**, currently global defaults in `ScoringSettings`.
 
-### 6.3 Reporter split
+The scorer is the **local dev stand-in** for hub-side grading: XP / streak / quality need
+profile + history, so they lift to the hub later. It is kept cleanly separable (no recognition
+coupling) for that move.
 
-`SpellCastReporter` and `ShowSystemReporter` are separate protocols. Same data may flow through both, but the consumers differ:
+### 6.3 Reporting
 
-- `SpellCastReporter`: raw candidates + scores. Multiple sinks (UDP, file, hub-MQTT) typical.
-- `ShowSystemReporter`: graded outcome. Development implementation computes the grade locally (so recognition still sees no show-system concept); production implementation is a thin wrapper that the hub drives.
+`TrackedWand` emits a `SpellCast` (wand_id, spell_type, `CastScore`) only for a recognised
+cast. `LocalSpellCastReporter` (hub stand-in) no longer grades — it plays the show with the
+quality the scorer already decided, and returns it. `SpellCastReporter` / `ShowSystemReporter`
+split per §6 remains the target; `ShowSystemReporter` not yet separated.
 
-### 6.4 Code rework implied
+### 6.4 Still open
 
-- Current `spell_response_type.py` and any threshold logic inside `SpellMatcher` move out of recognition.
-- `SpellCastReporter` event payload becomes top-N candidates rather than single-match.
-- New attempt-segmentation logic to define attempt boundaries.
-
-Tracked as roadmap items, not part of this spec's structural change.
+- Per-spell scoring config (SVG sidecar).
+- Ambiguity margin (reject when top-1 ≈ top-2 within the active set).
+- Top-N candidate payload on `SpellCastReporter`; `ShowSystemReporter` split.
+- Persistence of per-wand XP/streak (in-memory today; lost on restart).
 
 ---
 
@@ -230,7 +255,7 @@ Owns:
 Owns:
 
 - `WandServer` (subscribes to sensor stream packets)
-- `TrackedWandManager` (per-wand motion processors, gesture history, spell matchers)
+- `TrackedWandManager` (per-wand motion phase, stroke windowing, $1 recogniser + scorer)
 - `WandDeviceController` (sends wand commands)
 - `WandSpellCueController`, `SpellCastPresentationController` (`SpellCastPresentationController` only constructed in mock — needs the visualiser)
 - `WandVisualiser`
@@ -257,8 +282,8 @@ Don't add new cross-app coupling that isn't on this list without flagging it.
 |------|---------|
 | `wands_app/` | Entry point, app composition, settings, `TrackingApp`, `RecognitionApp`, `WandsSystem`, `WandsSystemBuilder`. |
 | `wand/` | Wand-side primitives: `WandServer`, `TrackedWandManager`, `WandClient`, sensor stream (`streaming/`), interpreters, device controller. |
-| `motion/` | Motion processing, gesture history, kinematics. |
-| `spells/` | Spell library, definitions, matcher, accuracy scoring, cue + presentation controllers. |
+| `motion/` | Motion phase tracking (`MotionProcessor`, `MotionPhaseTracker`) + stroke windowing (`stroke/StrokeWindower`). |
+| `spells/` | $1 recogniser (`matching/dollar_one/`), SVG templates (`templates/`), scorer (`scoring/`), `SpellCast`, cue + presentation controllers. |
 | `zones/` | Zone manager, zone application, mock controls, visualisation. |
 | `services/` | Profile, presence reporter, spell-cast reporter, session store, session coordinator. (These are the proto-hub implementations.) |
 | `messaging/` | Internal message types and transports (UDP TX/RX, message handlers). |
@@ -310,7 +335,7 @@ Tracked here so they don't get lost. Order is rough priority.
 
 1. **Eliko binding.** Concrete API for position stream, IMU stream, and command channel. `WandImuStream` Eliko impls landed: `ElikoWandImuStream` (PR_Q over TCP via RTLS server, +Y forward) and `ElikoSingleAnchorWandImuStream` (raw PR over USB-serial direct to a single anchor; client-side SFLP→quat decode). `WandCommandSink` Eliko impl landed (`ElikoWandCommandSink`, transport-agnostic via `ElikoCommandClient` protocol; delegates command building to `PekioClient`; typed methods `enter_idle` / `exit_idle` / `pulse`; haptic not on surface — see [§4.5](#45-haptic-disabled)). Wand-reboot recovery landed on the single-anchor path (`WandRebootDetector` watches for `PP,VERS` boot banners and re-issues per-tag `CMD0` to restart IMU sampling). Still to do: `WandPositionStream` (Eliko `COORD_Z`). Open question for the single-anchor path: serial-transport reconnect behaviour — init commands are sent once on start; serial reconnects currently do not re-fire them (would need a `connected` event on `SerialTransport`). Wand-reboot recovery does not extend to RTLS yet — RTLS server is presumed to manage per-tag IMU state itself.
 2. **`WandPositionStream` protocol + staging implementation.** Stop faking position. Let `ZoneManager` derive zones from real positions; retire the UDP `ZoneEnteredMessage` / `ZoneExitedMessage` ingress.
-3. **Spell match rework.** Attempt-segmentation logic; top-N candidate payload on `SpellCastReporter`; remove tier logic from recognition.
+3. **Spell match rework.** Largely landed — legacy step-group matcher replaced by the $1 unistroke pipeline + decoupled scorer (see §6). Remaining: per-spell scoring config (SVG sidecar), ambiguity margin (top-1≈top-2 reject), top-N candidate payload on `SpellCastReporter`, per-wand XP/streak persistence.
 4. **`ShowSystemReporter` split.** Separate from `SpellCastReporter`. Development implementation computes grade locally.
 5. **Hub implementations.** HTTP `ProfileService`, HTTP `ZoneSpellBindingService`, MQTT `WandPresenceReporter`, MQTT `SpellCastReporter`, MQTT or HTTP `ShowSystemReporter`.
 6. **Hot configuration reload.** Inbound hub→app, when needed.

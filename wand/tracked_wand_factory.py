@@ -1,6 +1,10 @@
 from gamevolt.logging import Logger
-from motion.gesture.gesture_history_factory import GestureHistoryFactory
-from spells.matching.spell_matcher_factory import SpellMatcherFactory
+from motion.stroke.stroke_windower import StrokeWindower
+from spells.matching.dollar_one.template_library import load_default_library
+from spells.scoring.scoring_settings import ScoringSettings
+from spells.scoring.spell_scorer import SpellScorer
+from spells.scoring.streak_tracker import InMemoryStreakTracker
+from spells.scoring.xp_provider import InMemoryXpProvider
 from wand.configuration.wand_settings import WandSettings
 from wand.interpreters.wand_forward_gravity_interpreter import ForwardGravityInterpreter
 from wand.motion_processor_factory import MotionProcessorFactory
@@ -13,15 +17,16 @@ class TrackedWandFactory:
         logger: Logger,
         settings: WandSettings,
         motion_processor_factory: MotionProcessorFactory,
-        gesture_history_factory: GestureHistoryFactory,
-        spell_matcher_factory: SpellMatcherFactory,
     ) -> None:
         self._motion_processor_factory = motion_processor_factory
-        self._gesture_history_factory = gesture_history_factory
-        self._spell_matcher_factory = spell_matcher_factory
 
         self._wand_settings = settings
         self._logger = logger
+
+        # One shared recognizer (templates are immutable) across all wands.
+        self._recognizer = load_default_library(logger)
+        # Shared scorer + per-player state. Keyed by wand id (wands are owned for life).
+        self._scorer = SpellScorer(ScoringSettings(), InMemoryXpProvider(), InMemoryStreakTracker())
 
     def create(self, id: str) -> TrackedWand:
         return TrackedWand(
@@ -29,7 +34,8 @@ class TrackedWandFactory:
             settings=self._wand_settings,
             id=id,
             motion_processor=self._motion_processor_factory.create(),
-            gesture_history=self._gesture_history_factory.create(),
-            spell_matcher=self._spell_matcher_factory.create(),
             forward_interpreter=ForwardGravityInterpreter(self._wand_settings.rmf),
+            stroke_windower=StrokeWindower(),
+            recognizer=self._recognizer,
+            scorer=self._scorer,
         )
