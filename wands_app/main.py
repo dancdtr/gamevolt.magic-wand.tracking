@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 
-from gamevolt.io.utils import bundled_path, install_path
+from gamevolt.io import bundled_path, runtime_path
 from gamevolt.logging import get_logger
 from wands_app.appsettings import AppSettings
 from wands_app.system_builder import WandsSystemBuilder
@@ -14,8 +14,8 @@ except ImportError:
     VERSION, GIT_SHA, BUILD_TIME_UTC = "dev", "unknown", ""
 
 application_dir = os.path.dirname(os.path.abspath(__file__))
-config_path = bundled_path("appsettings.yml")
-config_env_path = install_path("appsettings.env.yml")
+config_path = str(bundled_path("appsettings.yml"))
+config_env_path = str(runtime_path("appsettings.env.yml"))
 settings = AppSettings.load(config_file_path=config_path, config_env_file_path=config_env_path)
 print(settings)
 

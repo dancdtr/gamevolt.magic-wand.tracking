@@ -1,14 +1,13 @@
+from __future__ import annotations
+
 from gamevolt.io.file_handlers.file_handler import FileHandler
-from gamevolt.io.typing import YamlLike
-from gamevolt.io.utils import load_yaml, save_yaml, try_load_yaml
+from gamevolt.io.types import PathLike, YamlObject
+from gamevolt.io.utils.yaml import load_yaml, save_yaml
 
 
-class YamlFileHandler(FileHandler):
-    def load(self, path: str) -> YamlLike:
+class YamlFileHandler(FileHandler[YamlObject]):
+    def load(self, path: PathLike) -> YamlObject:
         return load_yaml(path)
 
-    def try_load(self, path: str) -> YamlLike:
-        return try_load_yaml(path)
-
-    def save(self, data: YamlLike, path: str) -> None:
+    def save(self, data: YamlObject, path: PathLike) -> None:
         save_yaml(data, path)

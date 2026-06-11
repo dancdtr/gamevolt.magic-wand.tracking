@@ -1,7 +1,5 @@
-from dataclasses import dataclass
-
 from display.image_libraries.configuration.spell_image_library_settings import SpellImageLibrarySettings
-from gamevolt.configuration.appsettings_base import AppSettingsBase
+from gamevolt.configuration.appsettings import appsettings
 from gamevolt.logging.configuration.logging_settings import LoggingSettings
 from motion.configuration.motion_settings import MotionSettings
 from zones.visualisation.configuration.zone_visualiser_settings import ZoneVisualiserSettings
@@ -16,8 +14,8 @@ from wands_app.configuration.system_type import SystemType
 from zones.configuration.zones_settings import ZonesSettings
 
 
-@dataclass
-class AppSettings(AppSettingsBase):
+@appsettings
+class AppSettings:
     name: str
     system_type: SystemType
     tracked_wand_ids: list[str]

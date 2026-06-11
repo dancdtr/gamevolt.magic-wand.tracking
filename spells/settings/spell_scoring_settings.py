@@ -14,9 +14,7 @@ this replaces the old SpellSettingsLibrary.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-from gamevolt.configuration.settings_base import SettingsBase
+from gamevolt.configuration.appsetting import appsetting
 from spells.settings.spell_settings import GateSettings, SpellSettings, TempoSettings
 from spells.spell_cast_quality import SpellCastQuality
 from spells.spell_type import SpellType
@@ -25,8 +23,8 @@ from spells.spell_type import SpellType
 _CODE_DEFAULT = SpellSettings()
 
 
-@dataclass
-class BonusSettings(SettingsBase):
+@appsetting
+class BonusSettings:
     """Global bonus magnitudes (shared across all spells)."""
 
     xp_per_unique_spell: float
@@ -36,8 +34,8 @@ class BonusSettings(SettingsBase):
     streak_per_fail: float
 
 
-@dataclass
-class SpellTuningSettings(SettingsBase):
+@appsetting
+class SpellTuningSettings:
     """Per-spell tuning. All Optional so a `default` or an override `tuning` may be partial;
     a missing field inherits (override → default → code default)."""
 
@@ -54,14 +52,14 @@ class SpellTuningSettings(SettingsBase):
     thresholds: dict[str, int] | None = None
 
 
-@dataclass
-class SpellOverrideSettings(SettingsBase):
+@appsetting
+class SpellOverrideSettings:
     spell: SpellType
     tuning: SpellTuningSettings
 
 
-@dataclass
-class SpellScoringSettings(SettingsBase):
+@appsetting
+class SpellScoringSettings:
     bonuses: BonusSettings
     default: SpellTuningSettings
     overrides: list[SpellOverrideSettings]

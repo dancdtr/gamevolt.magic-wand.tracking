@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="v1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: 10px;
+      }
+    </style>
+  </defs>
+  <g id="gestures">
+    <path class="cls-1" d="M248.81,74.18c-7.05,4.01-44.75-.63-61.58-29.95l-51.44,186.48c-18.86,30.9-49.89,31.22-66.8,23.72-25.17-11.15-36.53-29.86-36.53-54.47,0-32.5,26.34-58.84,58.84-58.84,0,0,23.29,1.94,23.29,8.11"/>
+  </g>
+</svg>
