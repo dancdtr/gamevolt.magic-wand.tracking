@@ -2,11 +2,9 @@ from __future__ import annotations
 
 from logging import Logger
 
-from display.image_libraries.spell_image_library import SpellImageLibrary
 from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.messaging.udp.udp_rx import UdpRx
 from gamevolt.messaging.udp.udp_tx import UdpTx
-from gamevolt.visualisation.visualiser import Visualiser
 from services.local_profile_service import LocalProfileService
 from services.local_spell_cast_reporter import LocalSpellCastReporter
 from services.local_wand_presence_reporter import LocalWandPresenceReporter
@@ -14,10 +12,6 @@ from services.wand_session_coordinator import WandSessionCoordinator
 from services.wizard_session_store import WizardSessionStore
 from show_system.show_system_controller import ShowSystemController
 from spells.control.wand_spell_cue_controller import WandSpellCueController
-from spells.spell_cast_presentation_controller import SpellCastPresentationController
-from visualisation.configuration.visualised_wand_factory import VisualisedWandFactory
-from visualisation.trail_factory import TrailFactory
-from visualisation.wand_colour_registry import WandColourRegistry
 from visualisation.wand_visualiser_factory import WandVisualiserFactory
 from gamevolt.serial.serial_transport import SerialTransport
 from gamevolt.tcp.configuration.tcp_client_settings import TcpClientSettings
@@ -66,15 +60,19 @@ class WandsSystemBuilder:
         zone_udp_receiver: UdpRx | None = None
         zone_message_handler: MessageHandler | None = None
 
-        if is_mock:
-            zone_visualiser_host = Visualiser(logger, settings.zone_visualisation.visualiser)
-            spell_image_library = SpellImageLibrary(settings.spell_image_library)
+        # The single dev window: wand trail + cast snapshot + (mock) spell targets & zone controls.
+        # Built up-front so the mock zone application can share it as its zone visualiser.
+        # Spell target images are rendered from the layered SVG templates (see spell_svg_renderer).
+        wand_visualiser = WandVisualiserFactory(
+            logger=logger,
+            wand_visualiser_settings=settings.wand_visualiser,
+        ).create()
 
+        if is_mock:
             zone_application = zone_application_builder.build_mock(
                 zones_settings=settings.zones,
                 zone_factory=zone_factory,
-                visualiser=zone_visualiser_host,
-                spell_image_library=spell_image_library,
+                visualiser=wand_visualiser,
                 wand_ids=settings.tracked_wand_ids,
             )
         else:
@@ -187,18 +185,6 @@ class WandsSystemBuilder:
             server=server,
         )
 
-        trail_factory = TrailFactory(logger, settings.wand_visualiser.trail)
-        visualised_wand_factory = VisualisedWandFactory(logger, trail_factory)
-        wand_colour_registry = WandColourRegistry(settings.wand_colours)
-
-        wand_visualiser = WandVisualiserFactory(
-            wand_visualiser_settings=settings.wand_visualiser,
-            visualised_wand_factory=visualised_wand_factory,
-            tracked_wand_manager=tracked_wand_manager,
-            wand_colour_registry=wand_colour_registry,
-            logger=logger,
-        ).create()
-
         show_system_udp_tx = UdpTx(logger, settings.show_system_controller.show_system_udp_tx)
         lamp_tx = UdpTx(logger, settings=settings.show_system_controller.lamp_udp_tx)
         show_system_controller = ShowSystemController(
@@ -206,18 +192,6 @@ class WandsSystemBuilder:
             show_system_tx=show_system_udp_tx,
             lamp_tx=lamp_tx,
             logger=logger,
-        )
-
-        zone_visualiser = zone_application.zone_visualiser
-        spell_cast_presentation_controller = (
-            SpellCastPresentationController(
-                zone_visualiser=zone_visualiser,
-                tracked_wand_manager=tracked_wand_manager,
-                colour_assigner=wand_colour_registry,
-                logger=logger,
-            )
-            if zone_visualiser is not None
-            else None
         )
 
         spell_cast_reporter = LocalSpellCastReporter(
@@ -240,7 +214,6 @@ class WandsSystemBuilder:
             wand_device_controller=wand_device_controller,
             wand_visualiser=wand_visualiser,
             wand_spell_cue_controller=wand_spell_cue_controller,
-            spell_cast_presentation_controller=spell_cast_presentation_controller,
         )
 
         return WandsSystem(tracking=tracking_app, recognition=recognition_app)

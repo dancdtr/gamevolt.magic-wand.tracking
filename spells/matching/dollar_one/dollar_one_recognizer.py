@@ -82,9 +82,49 @@ def _path_distance(a: list[Point], b: list[Point]) -> float:
     return sum(math.dist(a[i], b[i]) for i in range(len(a))) / len(a)
 
 
+# Direction is sampled over an n/8 spacing (not adjacent points): wide enough to
+# suppress per-sample jitter, short enough to keep local shape (loop vs line).
+_DIRECTION_STRIDE_FRAC = 8
+
+
+def _direction_angles(points: list[Point], stride: int) -> list[float]:
+    return [
+        math.atan2(points[i + stride][1] - points[i][1], points[i + stride][0] - points[i][0])
+        for i in range(len(points) - stride)
+    ]
+
+
+def _angular_distance(a: float, b: float) -> float:
+    """Smallest absolute angle between two headings, handling wraparound. 0..pi."""
+    return abs((a - b + math.pi) % (2.0 * math.pi) - math.pi)
+
+
+def _direction_score(a: list[Point], b: list[Point]) -> float:
+    """0..1 heading similarity. Separates loop-vs-line that positional distance misses."""
+    stride = max(1, len(a) // _DIRECTION_STRIDE_FRAC)
+    da = _direction_angles(a, stride)
+    db = _direction_angles(b, stride)
+    if not da:
+        return 1.0
+    mean = sum(_angular_distance(x, y) for x, y in zip(da, db)) / len(da)
+    return max(0.0, 1.0 - mean / math.pi)
+
+
+def _position_score(a: list[Point], b: list[Point]) -> float:
+    return max(0.0, 1.0 - _path_distance(a, b) / _HALF_DIAGONAL)
+
+
 def match_score(candidate_prepared: list[Point], template_prepared: list[Point]) -> float:
-    """0..1 similarity. Both inputs must already be `prepare`d to the same point count."""
-    return max(0.0, 1.0 - _path_distance(candidate_prepared, template_prepared) / _HALF_DIAGONAL)
+    """0..1 similarity. Both inputs must already be `prepare`d to the same point count.
+
+    Product of a positional term (point-by-point distance) and a direction term
+    (heading agreement). Positional distance alone is too forgiving — a straight
+    swipe scores ~0.6 against a looped glyph. Multiplying by heading agreement
+    collapses such shape-mismatches while leaving accurate traces high.
+    """
+    return _position_score(candidate_prepared, template_prepared) * _direction_score(
+        candidate_prepared, template_prepared
+    )
 
 
 @dataclass(frozen=True)
@@ -107,6 +147,19 @@ class DollarOneRecognizer:
     @property
     def template_count(self) -> int:
         return len(self._templates)
+
+    def template_points(self, label: str) -> list[Point]:
+        """Prepared (resampled + normalised) points for a template label; [] if unknown."""
+        for t in self._templates:
+            if t.label == label:
+                return list(t.points)
+        return []
+
+    def prepare_points(self, points: list[Point]) -> list[Point]:
+        """Prepare raw candidate points the same way `recognize` does (resample + normalise)."""
+        if len(points) < 2:
+            return []
+        return prepare(points, self._n)
 
     def recognize(self, points: list[Point], allowed: set[str] | None = None) -> list[Recognition]:
         """Score raw candidate points against templates, best first.

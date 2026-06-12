@@ -5,6 +5,7 @@ from typing import Callable
 from gamevolt.events.event import Event
 from gamevolt.logging import Logger
 from motion.motion_phase_type import MotionPhaseType
+from spells.scoring.cast_attempt import CastAttempt
 from spells.spell_cast import SpellCast
 from wand.tracked_wand import TrackedWand
 from wand.tracked_wand_factory import TrackedWandFactory
@@ -28,7 +29,9 @@ class TrackedWandManager:
     ) -> None:
         self.wand_motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.wand_rotation_updated: Event[Callable[[WandRotation], None]] = Event()
+        self.wand_forward_reset: Event[Callable[[str], None]] = Event()
         self.spell_cast: Event[Callable[[SpellCast], None]] = Event()
+        self.cast_attempted: Event[Callable[[CastAttempt], None]] = Event()
 
         self._wand_device_controller = wand_device_controller
         self._tracked_wand_factory = tracked_wand_factory
@@ -53,6 +56,8 @@ class TrackedWandManager:
 
             wand.rotation_updated.subscribe(self._on_wand_rotation_updated)
             wand.spell_cast.subscribe(self._on_spell_cast)
+            wand.cast_attempted.subscribe(self._on_cast_attempted)
+            wand.forward_reset.subscribe(lambda wand_id=id: self._on_wand_forward_reset(wand_id))
 
             self._logger.info(f"TrackedWand ({id}) created.")
 
@@ -142,6 +147,12 @@ class TrackedWandManager:
     def _on_spell_cast(self, cast: SpellCast) -> None:
         self._logger.debug(f"Wand ({cast.wand_id}) cast '{cast.spell_type.name}' ({cast.quality.name})!")
         self.spell_cast.invoke(cast)
+
+    def _on_cast_attempted(self, attempt: CastAttempt) -> None:
+        self.cast_attempted.invoke(attempt)
+
+    def _on_wand_forward_reset(self, wand_id: str) -> None:
+        self.wand_forward_reset.invoke(wand_id)
 
     def _get_wand(self, id: str) -> TrackedWand:
         wand = self._tracked_wands.get(id)

@@ -105,19 +105,24 @@ zones:
       spells: [EXPECTO_PATRONUM]
     - id: Z028
       key: 28
-      spells: [LUMOS_MAXIMA]
+      spells: [LUMOS_MAXIMA, NOX]
     - id: Z029
       key: 29
       spells: [HERBIVICIUS]
     - id: Z030
       key: 30
       spells: [NEBULUS]
-    - id: Z031
-      key: 31
-      spells: [NOX]
 
 input:
   wand:
+    # Trim the straight 'approach' run from rest/centre to the glyph start (e.g. the
+    # diagonal into the base of an R) before matching + overlay. See lead_in_trimmer.py.
+    lead_in_trim:
+      enabled: True
+      angle_deg: 40.0
+      min_trim_fraction: 0.08
+      max_trim_fraction: 0.5
+      resample_count: 48
     rmf:
       invert_x: True
       invert_y: False
@@ -185,7 +190,7 @@ motion:
       speed_stop: 0.20
       min_state_duration: 0.03
       min_paused_duration: 0.15
-      min_holding_duration: 0.8
+      min_holding_duration: 0.5
       min_stopped_duration: 1.2
 
 # Spell scoring. `bonuses` are global magnitudes; `default` is the per-spell tuning every
@@ -203,75 +208,63 @@ spell_scoring:
     difficulty_weight: 1.0
     min_match_accuracy: 0.50
     min_duration_s: 0.30
-    max_duration_s: 4.0
+    max_duration_s: 5.0
     min_path_length: 0.0
     tempo_ideal_min_s: 0.6
     tempo_ideal_max_s: 2.5
     tempo_decay_s: 1.5
     thresholds:
       RUDIMENTARY: 60
-      SKILLED: 75
-      EXPERIENCED: 95
-      MASTERED: 115
+      SKILLED: 70
+      EXPERIENCED: 80
+      MASTERED: 90
+  # overrides: []
   overrides:
-    - spell: REVELIO
+    - spell: LUMOS_MAXIMA
       tuning:
-        difficulty_weight: 1.0
-        max_duration_s: 6.0
         thresholds:
-          RUDIMENTARY: 55
-          SKILLED: 80
-
+          RUDIMENTARY: 75
+          SKILLED: 85
+          EXPERIENCED: 90
+          MASTERED: 100
+    - spell: REPARO
+      tuning:
+        min_match_accuracy: 0.40
+        thresholds:
+          RUDIMENTARY: 30
+          SKILLED: 40
+          EXPERIENCED: 55
+          MASTERED: 70
 wand_visualiser:
   is_enabled: True
-  visualiser:
-    root:
-      title: "Wand Input"
-      width: 500
-      height: 500
-      buffer: 100
-    canvas:
-      background_colour: "#222"
-      highlight_thickness: 0
-  label:
-    text: ""
-    foreground_colour: "#ddd"
-    background_colour: "#111"
-    side: "bottom"
-    fill: "x"
-  axes:
-    show_axes: True
-    colour: "#9ca3af"
-    width: 1
+  # The single wand this visualiser follows. Other (multi-wand) modes run headless.
+  wand_id: "1DAE"
+  window:
+    title: "Wand Visualiser"
+    width: 1600
+    height: 640
+    background_colour: "#1a1a1a"
+    panel_colour: "#161616"
+    text_colour: "#dddddd"
   trail:
     scale: 0.2
+    render_scale: 2.0
     line_width: 3
-    point_radius: 3
-    max_points: 64
+    point_radius: 2
+    max_points: 256
     draw_points: True
     smooth: False
+    line_colour: "#ff6f61"
+    point_colour: "#ff6f61"
     coords_mode: "centred"
     y_up: True
     clip_to_bounds: True
     pixel_margin: 0
-
-wand_colours:
-  - "#00acc1"
-  - "#fdd835"
-  - "#e65c59"
-  - "#7cb342"
-  - "#fb8c00"
-  - "#ca537f"
-  - "#994aae"
-  - "#888fbe"
-  - "#1e88e5"
-  - "#5e35b1"
-  - "#039be5"
-  - "#00897b"
-  - "#43a047"
-  - "#f4511e"
-  - "#6d4c41"
-  - "#546e7a"
+  snapshot:
+    # Min raw $1 match accuracy for an attempt to replace the held snapshot (noise gate).
+    min_match_accuracy: 0.4
+    stroke_colour: "#00acc1"
+    template_colour: "#cccccc"
 
 show_system_controller:
   show_system_udp_tx:
@@ -281,29 +274,6 @@ show_system_controller:
   lamp_udp_tx:
     host: "192.168.1.138"
     port: 8888
-
-zone_visualisation:
-  visualiser:
-    root:
-      title: "Spell"
-      width: 800
-      height: 800
-      buffer: 100
-    canvas:
-      background_colour: "#222"
-      highlight_thickness: 0
-
-spell_image_library:
-  instruction:
-    assets_dir: ["assets", "spells"]
-    image_size: 500
-    bg_colour: [255, 255, 255]
-    icon_colour: [0, 0, 0]
-  success:
-    assets_dir: ["assets", "spells"]
-    image_size: 500
-    bg_colour: [0, 255, 0]
-    icon_colour: [0, 0, 0]
 
 wand_device_controller:
   # Spell-cast LED cue: fade purple for a quality-tiered duration, then sink

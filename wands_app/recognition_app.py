@@ -5,7 +5,6 @@ from logging import Logger
 
 from gamevolt.events.event import Event
 from spells.control.wand_spell_cue_controller import WandSpellCueController
-from spells.spell_cast_presentation_controller import SpellCastPresentationController
 from visualisation.visualiser_protocol import WandVisualiserProtocol
 from wand.tracked_wand_manager import TrackedWandManager
 from wand.wand_device_controller import WandDeviceController
@@ -25,7 +24,6 @@ class RecognitionApp:
         wand_device_controller: WandDeviceController,
         wand_visualiser: WandVisualiserProtocol,
         wand_spell_cue_controller: WandSpellCueController,
-        spell_cast_presentation_controller: SpellCastPresentationController | None = None,
     ) -> None:
         self.quit: Event[Callable[[], None]] = Event()
 
@@ -35,14 +33,13 @@ class RecognitionApp:
         self._wand_device_controller = wand_device_controller
         self._wand_visualiser = wand_visualiser
         self._wand_spell_cue_controller = wand_spell_cue_controller
-        self._spell_cast_presentation_controller = spell_cast_presentation_controller
 
         self._tracked_wand_manager.wand_rotation_updated.subscribe(self._wand_visualiser.add_rotation)
+        self._tracked_wand_manager.wand_forward_reset.subscribe(self._wand_visualiser.reset_trail)
+        self._tracked_wand_manager.cast_attempted.subscribe(self._wand_visualiser.show_cast_attempt)
         self._wand_visualiser.quit.subscribe(self._on_quit)
 
     async def start_async(self) -> None:
-        if self._spell_cast_presentation_controller is not None:
-            await self._spell_cast_presentation_controller.start_async()
         self._tracked_wand_manager.start()
         self._wand_spell_cue_controller.start()
         self._server.start()
@@ -57,10 +54,10 @@ class RecognitionApp:
         self._server.stop()
         self._wand_spell_cue_controller.stop()
         self._tracked_wand_manager.stop()
-        if self._spell_cast_presentation_controller is not None:
-            await self._spell_cast_presentation_controller.stop_async()
 
         self._wand_visualiser.quit.unsubscribe(self._on_quit)
+        self._tracked_wand_manager.cast_attempted.unsubscribe(self._wand_visualiser.show_cast_attempt)
+        self._tracked_wand_manager.wand_forward_reset.unsubscribe(self._wand_visualiser.reset_trail)
         self._tracked_wand_manager.wand_rotation_updated.unsubscribe(self._wand_visualiser.add_rotation)
 
     def update(self) -> None:

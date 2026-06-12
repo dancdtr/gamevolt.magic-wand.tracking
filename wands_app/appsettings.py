@@ -1,8 +1,6 @@
-from display.image_libraries.configuration.spell_image_library_settings import SpellImageLibrarySettings
 from gamevolt.configuration.appsettings import appsettings
 from gamevolt.logging.configuration.logging_settings import LoggingSettings
 from motion.configuration.motion_settings import MotionSettings
-from zones.visualisation.configuration.zone_visualiser_settings import ZoneVisualiserSettings
 from show_system.configuration.show_system_controller_settings import ShowSystemControllerSettings
 from spells.settings.spell_scoring_settings import SpellScoringSettings
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
@@ -28,7 +26,4 @@ class AppSettings:
     server: WandServerSettings
     imu_stream: WandImuStreamSettings
     show_system_controller: ShowSystemControllerSettings
-    zone_visualisation: ZoneVisualiserSettings
-    spell_image_library: SpellImageLibrarySettings
-    wand_colours: list[str]
     wand_device_controller: WandDeviceControllerSettings

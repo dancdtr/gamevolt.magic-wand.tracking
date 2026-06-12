@@ -101,9 +101,9 @@ Events carry ids only — no `Zone` object in the payload. Consumers that need z
 Two implementations:
 
 - `ZoneManager` (production, used by `eliko_rtls`) — `wand_entered_zone` / `wand_exited_zone` are driven by UDP `ZoneEnteredMessage` / `ZoneExitedMessage` from an external positioning service. Tracks per-zone wand sets via `Zone.wand_ids` so duplicate enters and stray exits are deduped + logged.
-- `MockZoneManager` (mock, used by `eliko_single_anchor`) — loads the same `ZonesSettings.zones` list as production. Exposes `set_current_zone(zone_id | None)`; calling it swaps every tracked wand out of the prior zone and into the new one in one shot, firing the events in order. The mock UI (`MockZoneControls`) is a tk dropdown + keyboard shortcuts (Up/Down cycles, digit keys 0-9 plus a short multi-digit window address `ZoneSettings.key`). No spell-picker UI; no synthetic on-the-fly zones.
+- `MockZoneManager` (mock, used by `eliko_single_anchor`) — loads the same `ZonesSettings.zones` list as production. Exposes `set_current_zone(zone_id | None)`; calling it swaps every tracked wand out of the prior zone and into the new one in one shot, firing the events in order. Zone selection happens inside the unified Qt window via `QtZoneControls`, fed by two window event streams: `key_pressed` (Up/Down cycles, digit keys 0-9 plus a short multi-digit window address `ZoneSettings.key`) and `zone_selected` (a top-bar dropdown whose options read `Z001 - SPELL1, SPELL2`). All three input paths route through `set_current_zone`; the dropdown stays in sync because `show_zone` (driven by the manager's enter/exit events) sets the combo index regardless of which input caused the change. No synthetic on-the-fly zones.
 
-`ZoneApplication` bundles the manager with **optional** dev-only UI: `ZonePresentationController` (binds manager events to a `SpellTargetVisualiser` tk window) + `MockZoneControls`. Production (`eliko_rtls`) passes both as `None` — there is no spell-target window in staging/prod; downstream consumers (lamps, show system, wand LEDs) convey state.
+`ZoneApplication` bundles the manager with **optional** dev-only UI: `ZonePresentationController` (binds manager enter/exit events to `ZoneVisualiserProtocol.show_zone`) + zone controls. In mock the visualiser is the **shared unified Qt window** (the same object that is the wand visualiser — see §7.2), so spell targets, the wand trail, and the cast snapshot all live in one window. Production (`eliko_rtls`) passes both as `None` — no window in staging/prod; downstream consumers (lamps, show system, wand LEDs) convey state.
 
 `ZoneSettings.zones` is the single source of truth for what spells exist in the system. Each zone declares `id`, `key` (int shortcut), and a `spells` list; an "all spells" dev config is a one-zone-per-spell list.
 
@@ -197,13 +197,36 @@ was **removed** and replaced by a **$1 unistroke recogniser** plus a decoupled s
    only on a *sustained* still phase (`HOLDING` / `STOPPED`). A transient `PAUSED` (corner /
    mid-spell hesitation) is left to ride, so a multi-segment glyph arrives as one stroke. The
    phase tiers (`min_paused_duration` < `min_holding_duration`) already encode this.
+2b. **Lead-in trim** (`motion/stroke/lead_in_trimmer`, config `input.wand.lead_in_trim`). People
+   move in a straight line from their rest/centre orientation to where the glyph starts; that
+   approach run pollutes matching + the template overlay. The trimmer finds the first *sharp
+   corner* (a per-step turning spike on the resampled path) and cuts everything before it —
+   a smoothly-curving glyph has no sharp corner so nothing is trimmed, and a `min_trim_fraction`
+   guard ignores corners right at the start. Rather than commit to the trim, recognition runs on
+   **both** the raw stroke and the trimmed variant (each a full `Stroke` — points + times +
+   recomputed path length) and keeps whichever scores higher (`_recognise_best_variant`). This
+   removes the trade-off: a glyph that genuinely begins with a straight run matches better
+   untrimmed and wins; a real approach-into-glyph matches better trimmed. The winning variant
+   feeds scoring, the candidate list, and the snapshot overlay. The **live trail is not trimmed**
+   (it shows raw motion).
 3. **Recognition** (`spells/matching/dollar_one/DollarOneRecognizer`). Resample (N=64) →
    normalise (centroid + **uniform** scale, **no rotation** — wand gestures are orientation-
-   meaningful) → mean point-distance to each candidate template → `0..1` score. Direction is
-   preserved (so $1, not $P/$Q). Candidates are restricted to the **zone-active spell set**
-   (`set_spell_targets`); scoring all 38 would cross-match.
-4. **Templates** are authored as **SVG paths** (`spells/templates/<spell>.svg`, label = file
-   stem = `SpellType` name), sampled by arc length, y-flipped. Add a spell = drop in an SVG.
+   meaningful). Score = **product of two terms**: a positional term (mean point-distance) and a
+   **direction term** (mean heading agreement, sampled over an N/8 stride so per-sample jitter
+   is suppressed but loop-vs-line survives). Positional distance alone is too forgiving — a
+   straight swipe scores ~0.6 against a looped glyph; the direction factor collapses such
+   shape-mismatches while leaving accurate traces high, so the `min_match_accuracy` gate finally
+   bites. Direction is preserved (so $1, not $P/$Q). Candidates are restricted to the
+   **zone-active spell set** (`set_spell_targets`); scoring all 38 would cross-match.
+4. **Templates** are authored as **layered SVGs** (`spells/templates/<spell>.svg`, filename =
+   `SpellType` name lowercased). Layers by `id`: `gesture` (the template path — sampled by arc
+   length, y-flipped), `origin` (a circle marking the canonical cast **start**), `arrows`
+   (UI-only direction art). The loader (`svg_template_loader`) orients sampled points to start at
+   the endpoint nearest the `origin` marker, so a path exported in reverse self-corrects — no
+   per-file fixing. The same SVG is the **single source of truth for the UI target image** too:
+   `spell_svg_renderer` renders gesture+arrows+origin (ink forced black, white background) to a
+   QPixmap at any resolution. The old per-spell PNGs + `SpellImageProvider` are **retired**. Add
+   a spell = drop in one layered SVG.
 
 ### 6.2 Scoring (`spells/scoring/` + `spells/settings/`)
 
@@ -265,8 +288,8 @@ Owns:
 - `WandServer` (subscribes to sensor stream packets)
 - `TrackedWandManager` (per-wand motion phase, stroke windowing, $1 recogniser + scorer)
 - `WandDeviceController` (sends wand commands)
-- `WandSpellCueController`, `SpellCastPresentationController` (`SpellCastPresentationController` only constructed in mock — needs the visualiser)
-- `WandVisualiser`
+- `WandSpellCueController`
+- Wand visualiser (`WandVisualiserProtocol`) — a **single-wand** Qt (PySide6) window pinned to `wand_visualiser.wand_id` in appsettings; multi-wand modes run `HeadlessVisualiser`. Three panes left→right: **spell targets** (the active zone's spells, tiled — each tile rendered from the spell's layered SVG via `spell_svg_renderer`, no PNGs) | **live rolling trail** | **frozen snapshot** of the last qualifying cast attempt (shape-vs-template overlay + full scoring breakdown). Driven cooperatively via `processEvents()` in `update()` — no separate Qt mainloop. Fed by three `TrackedWandManager` events: `wand_rotation_updated` (trail), `wand_forward_reset` (trail reset), and `cast_attempted` (snapshot + target flash). `cast_attempted` carries a `CastAttempt` (full `CastScore` + stroke points + $1-normalised candidate + matched template points) and fires for **every** scored stroke — recognised or rejected — unlike `spell_cast` which fires only for recognised casts. On each attempt the matched spell's target tile flashes its quality colour (reject-red / rudimentary-yellow / skilled-light-blue / experienced-green / mastered-light-purple); the snapshot only swaps when an attempt clears `snapshot.min_match_accuracy` (or passes gates), so noise flicks don't clobber the last real attempt. Changing zone (`show_zone`) clears the snapshot — the previous cast result is stale. In **mock** this same window object also serves as the zone visualiser (`show_zone`) and hosts `QtZoneControls` (see §6), so one window does everything; the old separate tkinter spell-target window + `SpellCastPresentationController` are gone.
 
 ### 7.3 Seams between Tracking and Recognition
 
@@ -290,14 +313,13 @@ Don't add new cross-app coupling that isn't on this list without flagging it.
 |------|---------|
 | `wands_app/` | Entry point, app composition, settings, `TrackingApp`, `RecognitionApp`, `WandsSystem`, `WandsSystemBuilder`. |
 | `wand/` | Wand-side primitives: `WandServer`, `TrackedWandManager`, `WandClient`, sensor stream (`streaming/`), interpreters, device controller. |
-| `motion/` | Motion phase tracking (`MotionProcessor`, `MotionPhaseTracker`) + stroke windowing (`stroke/StrokeWindower`). |
-| `spells/` | $1 recogniser (`matching/dollar_one/`), SVG templates (`templates/`), scorer (`scoring/`), per-spell settings (`settings/`), `SpellCast`, cue + presentation controllers. |
+| `motion/` | Motion phase tracking (`MotionProcessor`, `MotionPhaseTracker`) + stroke windowing (`stroke/StrokeWindower`) + lead-in trimming (`stroke/lead_in_trimmer`). |
+| `spells/` | $1 recogniser (`matching/dollar_one/`, incl. `svg_template_loader`), layered SVG templates (`templates/` — `gesture`/`origin`/`arrows` layers), scorer (`scoring/`), per-spell settings (`settings/`), `SpellCast`, cue + presentation controllers. |
 | `zones/` | Zone manager, zone application, mock controls, visualisation. |
 | `services/` | Profile, presence reporter, spell-cast reporter, session store, session coordinator. (These are the proto-hub implementations.) |
 | `messaging/` | Internal message types and transports (UDP TX/RX, message handlers). |
 | `show_system/` | Show-system controller and outbound message types. |
-| `display/` | Image libraries, visual assets handling. |
-| `visualisation/` | Wand visualiser, trail rendering, colour registry. |
+| `visualisation/` | Unified single-wand Qt window (`qt/`: window, spell targets, live trail, snapshot panel, zone controls, quality colours, `spell_svg_renderer` for SVG→QPixmap target art), `WandVisualiserProtocol`, `HeadlessVisualiser`. |
 | `wizards/` | Wizard name/profile primitives. |
 | `gamevolt/` | Shared infra: logging, events, web sockets, messaging plumbing, IO utils. |
 | `scripts/` | Build, install, workflow shell scripts and development helpers. |
@@ -316,7 +338,7 @@ Two-layer YAML: `appsettings.yml` (bundled defaults) + `appsettings.env.yml` (pe
 
 `wands_app` settings consolidate the deployment shape behind two top-level fields:
 
-- `system_type` — one of `eliko_rtls` or `eliko_single_anchor`. Drives `WandImuStream`, `WandCommandSink`, and `ZoneApplication` selection in `WandsSystemBuilder`. The pairing is **hardcoded**: `eliko_rtls` = production (`ZoneManager` driven by external UDP positioning, no visualiser, no UI controls); `eliko_single_anchor` = mock / dev (`MockZoneManager` driven by `MockZoneControls`, spell-target visualiser window).
+- `system_type` — one of `eliko_rtls` or `eliko_single_anchor`. Drives `WandImuStream`, `WandCommandSink`, and `ZoneApplication` selection in `WandsSystemBuilder`. The pairing is **hardcoded**: `eliko_rtls` = production (`ZoneManager` driven by external UDP positioning, no visualiser, no UI controls); `eliko_single_anchor` = mock / dev (`MockZoneManager` driven by `QtZoneControls` inside the unified Qt window, which also shows spell targets + wand trail + cast snapshot).
 - `tracked_wand_ids` — single list of wand IDs. Doubles as the `WandServer` allowlist (empty list = allow all) and the per-id tracker spawn list in `TrackedWandManager`. Adding a wand is a one-line edit.
 
 The `imu_stream` block carries one or both of the `eliko` / `eliko_single_anchor` sub-blocks. Each sub-block is consumed only when its matching `system_type` is selected.

@@ -1,6 +1,7 @@
 from collections.abc import Callable
 
 from gamevolt.events.event import Event
+from spells.scoring.cast_attempt import CastAttempt
 from wand.wand_rotation import WandRotation
 
 
@@ -18,6 +19,10 @@ class WandVisualiserProtocol:
     def unregister_key_callbacks(self, key: str) -> None: ...
 
     def add_rotation(self, wand_position: WandRotation) -> None: ...
+
+    def reset_trail(self, wand_id: str) -> None: ...
+
+    def show_cast_attempt(self, attempt: CastAttempt) -> None: ...
 
     @property
     def quit(self) -> Event[Callable[[], None]]: ...

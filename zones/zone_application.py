@@ -4,7 +4,6 @@ from collections.abc import Callable
 from logging import Logger
 
 from gamevolt.events.event import Event
-from zones.mock_zone_controls import MockZoneControls
 from zones.visualisation.zone_presentation_controller import ZonePresentationController
 from zones.visualisation.zone_visualiser_protocol import ZoneVisualiserProtocol
 from zones.zone_manager_protocol import ZoneManagerProtocol
@@ -16,8 +15,8 @@ class ZoneApplication:
     Production deployments pass `presentation_controller=None` and
     `controls=None` — they just want the manager, driven by real positioning
     input, with downstream consumers reacting to its events. Dev / mock
-    deployments add a `MockZoneControls` (keyboard + dropdown) and a
-    `ZonePresentationController` bound to a spell-target visualiser window.
+    deployments add zone controls (keyboard zone select) and a
+    `ZonePresentationController` bound to the spell-target visualiser.
     Quit is propagated only by the presentation controller (visualiser
     window close), so controls without a visualiser cannot trigger quit.
     """
@@ -27,7 +26,7 @@ class ZoneApplication:
         logger: Logger,
         zone_manager: ZoneManagerProtocol,
         presentation_controller: ZonePresentationController | None = None,
-        controls: MockZoneControls | None = None,
+        controls: object | None = None,
     ) -> None:
         self.quit: Event[Callable[[], None]] = Event()
 

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from display.image_libraries.spell_image_library import SpellImageLibrary
+from typing import cast
+
 from gamevolt.logging import Logger
-from gamevolt.visualisation.visualiser import Visualiser
-from visualisation.spell_target_visualiser import SpellTargetVisualiser
+from visualisation.qt.qt_zone_controls import QtZoneControls
+from visualisation.visualiser_protocol import WandVisualiserProtocol
 from zones.configuration.zones_settings import ZonesSettings
-from zones.mock_zone_controls import MockZoneControls
 from zones.mock_zone_manager import MockZoneManager
 from zones.visualisation.zone_presentation_controller import ZonePresentationController
+from zones.visualisation.zone_visualiser_protocol import ZoneVisualiserProtocol
 from zones.zone_application import ZoneApplication
 from zones.zone_factory import ZoneFactory
 from zones.zone_manager_protocol import ZoneManagerProtocol
@@ -21,8 +22,7 @@ class ZoneApplicationBuilder:
         self,
         zones_settings: ZonesSettings,
         zone_factory: ZoneFactory,
-        visualiser: Visualiser,
-        spell_image_library: SpellImageLibrary,
+        visualiser: WandVisualiserProtocol,
         wand_ids: list[str],
     ) -> ZoneApplication:
         zone_manager = MockZoneManager(
@@ -32,25 +32,26 @@ class ZoneApplicationBuilder:
             wand_ids=wand_ids,
         )
 
-        zone_visualiser = SpellTargetVisualiser(
-            logger=self._logger,
-            spell_image_library=spell_image_library,
-            visualiser=visualiser,
-        )
-
-        key_map = self._build_zone_key_map(zones_settings)
-        controls = MockZoneControls(
-            logger=self._logger,
-            zone_manager=zone_manager,
-            zone_ids=[zone.id for zone in zones_settings.zones],
-            key_map=key_map,
-            root=visualiser.root,
-        )
+        # The unified Qt window doubles as the zone visualiser + key source. When the
+        # visualiser is headless it lacks these, so the mock simply runs without UI.
+        if not (hasattr(visualiser, "show_zone") and hasattr(visualiser, "key_pressed")):
+            return ZoneApplication(logger=self._logger, zone_manager=zone_manager)
 
         presentation = ZonePresentationController(
             logger=self._logger,
             zone_manager=zone_manager,
-            visualiser=zone_visualiser,
+            visualiser=cast(ZoneVisualiserProtocol, visualiser),
+        )
+
+        visualiser.set_zone_options(self._build_zone_options(zones_settings))  # type: ignore[attr-defined]
+
+        controls = QtZoneControls(
+            logger=self._logger,
+            zone_manager=zone_manager,
+            zone_ids=[zone.id for zone in zones_settings.zones],
+            key_map=self._build_zone_key_map(zones_settings),
+            key_pressed=visualiser.key_pressed,  # type: ignore[attr-defined]
+            zone_selected=visualiser.zone_selected,  # type: ignore[attr-defined]
         )
 
         return ZoneApplication(
@@ -70,6 +71,15 @@ class ZoneApplicationBuilder:
             presentation_controller=None,
             controls=None,
         )
+
+    @staticmethod
+    def _build_zone_options(zones_settings: ZonesSettings) -> list[tuple[str | None, str]]:
+        """Dropdown options: '(none)' plus each zone as 'Z001 - SPELL1, SPELL2'."""
+        options: list[tuple[str | None, str]] = [(None, "(none)")]
+        for zone in zones_settings.zones:
+            spells = ", ".join(spell.name for spell in zone.spells)
+            options.append((zone.id, f"{zone.id} - {spells}" if spells else zone.id))
+        return options
 
     @staticmethod
     def _build_zone_key_map(zones_settings: ZonesSettings) -> dict[int, str]:

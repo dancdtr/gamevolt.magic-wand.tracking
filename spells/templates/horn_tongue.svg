@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="v1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #231f20;
+      }
+
+      .cls-2 {
+        fill: none;
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: 10px;
+      }
+    </style>
+  </defs>
+  <g id="gesture">
+    <path class="cls-2" d="M80.645,51.016c82.08-1.158,45.877,92.571,45.877,92.571,0,0,38.597-20.637,48-28.569,21.643-18.259,43.757-48.552,43.757-48.552,0,0,39.381,92.393-89.054,187.008"/>
+  </g>
+  <g id="arrows">
+    <polygon class="cls-1" points="149.945 113.651 190.744 97.472 180.012 140.032 173.567 117.049 149.945 113.651"/>
+    <polygon class="cls-1" points="127.704 215.52 109.548 273.399 167.121 254.282 134.787 247.733 127.704 215.52"/>
+  </g>
+  <g id="origin">
+    <circle cx="75.139" cy="51.005" r="12.5"/>
+  </g>
+</svg>

@@ -4,10 +4,14 @@ from typing import Callable
 
 from gamevolt.events.event import Event
 from gamevolt.logging._logger import Logger
+import math
+
 from motion.motion_phase_type import MotionPhaseType
 from motion.motion_processor import MotionProcessor
+from motion.stroke.lead_in_trimmer import lead_in_cut_index
 from motion.stroke.stroke_windower import Stroke, StrokeWindower
-from spells.matching.dollar_one.dollar_one_recognizer import DollarOneRecognizer
+from spells.matching.dollar_one.dollar_one_recognizer import DollarOneRecognizer, Recognition
+from spells.scoring.cast_attempt import CastAttempt
 from spells.scoring.spell_scorer import SpellScorer
 from spells.spell_cast import SpellCast
 from spells.spell_type import SpellType
@@ -33,6 +37,7 @@ class TrackedWand(WandBase):
         super().__init__(logger, motion_processor)
 
         self.spell_cast: Event[Callable[[SpellCast], None]] = Event()
+        self.cast_attempted: Event[Callable[[CastAttempt], None]] = Event()
         self.motion_changed: Event[Callable[[MotionPhaseType], None]] = Event()
         self.rotation_updated: Event[Callable[[WandRotation], None]] = Event()
         self.forward_reset: Event[Callable[[], None]] = Event()
@@ -126,10 +131,52 @@ class TrackedWand(WandBase):
         self._logger.verbose(f"Wand ({self._id}) motion: {motion_phase.name}")
         self.motion_changed.invoke(motion_phase)
 
+    def _trim_lead_in(self, stroke: Stroke) -> Stroke:
+        cut = lead_in_cut_index(stroke.points, self._settings.lead_in_trim)
+        if cut <= 0:
+            return stroke
+
+        points = stroke.points[cut:]
+        times = stroke.times_ms[cut:]
+        if len(points) < 2:
+            return stroke
+
+        path_length = sum(math.dist(points[i - 1], points[i]) for i in range(1, len(points)))
+        return Stroke(points=points, times_ms=times, path_length=path_length)
+
+    def _recognise_best_variant(self, stroke: Stroke) -> tuple[Stroke, list[Recognition]] | None:
+        """Recognise both the raw stroke and a lead-in-trimmed variant and keep whichever
+        scores higher. Avoids the trade-off of always trimming: a glyph that genuinely
+        starts with a straight run matches better untrimmed and wins, while a real
+        approach-into-glyph matches better trimmed."""
+        trimmed = self._trim_lead_in(stroke)
+        variants = [stroke] if trimmed is stroke else [stroke, trimmed]
+
+        scored: list[tuple[Stroke, list[Recognition]]] = []
+        for variant in variants:
+            results = self._recognizer.recognize(variant.points, allowed=self._active_labels)
+            if results:
+                scored.append((variant, results))
+        if not scored:
+            return None
+
+        scored.sort(key=lambda vr: vr[1][0].score, reverse=True)
+        best = scored[0]
+        if len(scored) == 2:
+            chosen = "trimmed" if best[0] is trimmed else "untrimmed"
+            self._logger.debug(
+                f"Wand ({self._id}) lead-in match: chose {chosen} "
+                f"({best[1][0].label} {best[1][0].score * 100:.1f}% vs {scored[1][1][0].score * 100:.1f}%; "
+                f"{stroke.point_count} -> {trimmed.point_count} pts)."
+            )
+        return best
+
     def _on_stroke_completed(self, stroke: Stroke) -> None:
-        results = self._recognizer.recognize(stroke.points, allowed=self._active_labels)
-        if not results:
+        recognition = self._recognise_best_variant(stroke)
+        if recognition is None:
             return
+
+        stroke, results = recognition
 
         top = results[:3]
         candidates = ", ".join(f"{r.label} {r.score * 100:.1f}%" for r in top)
@@ -141,6 +188,21 @@ class TrackedWand(WandBase):
         self._logger.info(
             f"Wand ({self._id}) $1 [{candidates}] dur={stroke.duration_s:.2f}s "
             f"path={stroke.path_length:.2f} pts={stroke.point_count} -> {cast.summary()}"
+        )
+
+        # Fire for every attempt (recognised or not) so the visualiser can show rejects + breakdown.
+        self.cast_attempted.invoke(
+            CastAttempt(
+                wand_id=self._id,
+                score=cast,
+                candidates=tuple(results),
+                stroke_points=tuple(stroke.points),
+                normalized_points=tuple(self._recognizer.prepare_points(stroke.points)),
+                template_points=tuple(self._recognizer.template_points(best.label)),
+                duration_s=stroke.duration_s,
+                path_length=stroke.path_length,
+                point_count=stroke.point_count,
+            )
         )
 
         if not cast.recognized:
