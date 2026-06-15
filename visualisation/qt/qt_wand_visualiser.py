@@ -196,15 +196,6 @@ class QtWandVisualiser(WandVisualiserProtocol):
         if index is not None and index != self._zone_combo.currentIndex():
             self._zone_combo.setCurrentIndex(index)  # programmatic: does not fire `activated`
 
-    def show_spell_instruction(self, spell_type: SpellType) -> None:  # unused; flashing is internal now
-        pass
-
-    def show_spell_cast(self, spell_type: SpellType) -> None:
-        pass
-
-    def show_spell_cast_coloured(self, spell_type: SpellType, colour: str) -> None:
-        pass
-
     # ── internals ───────────────────────────────────────────────
     def _passes_threshold(self, attempt: CastAttempt) -> bool:
         score = attempt.score

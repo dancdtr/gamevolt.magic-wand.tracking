@@ -248,14 +248,19 @@ wand_visualiser:
     text_colour: "#dddddd"
   trail:
     scale: 0.2
-    render_scale: 2.0
+    render_scale: 4.0
     line_width: 3
     point_radius: 2
     max_points: 256
     draw_points: True
-    smooth: False
+    smooth: True
     line_colour: "#ff6f61"
-    point_colour: "#ff6f61"
+    fade: True
+    tail_alpha: 0.0
+    glow: True
+    glow_width: 8
+    gradient: True
+    head_colour: "#ffd166"
     coords_mode: "centred"
     y_up: True
     clip_to_bounds: True
@@ -263,7 +268,6 @@ wand_visualiser:
   snapshot:
     # Min raw $1 match accuracy for an attempt to replace the held snapshot (noise gate).
     min_match_accuracy: 0.4
-    stroke_colour: "#00acc1"
     template_colour: "#cccccc"
 
 show_system_controller:

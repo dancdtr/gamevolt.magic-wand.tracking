@@ -17,7 +17,6 @@ class SnapshotSettings:
     # Minimum raw $1 match accuracy for an attempt to replace the held snapshot.
     # Keeps noise flicks from clobbering the last real attempt.
     min_match_accuracy: float
-    stroke_colour: str
     template_colour: str
 
 

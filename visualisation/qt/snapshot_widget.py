@@ -56,8 +56,8 @@ class SnapshotWidget(QWidget):
 
         # template (the "ideal" shape) underneath
         self._draw_path(painter, attempt.template_points, self._snapshot.template_colour, w, h, margin, width=2, dashed=True)
-        # the player's normalised stroke on top
-        self._draw_path(painter, attempt.normalized_points, self._snapshot.stroke_colour, w, h, margin, width=3)
+        # the player's normalised stroke on top, coloured by the cast's quality tier
+        self._draw_path(painter, attempt.normalized_points, colour_for_score(attempt.score), w, h, margin, width=3)
         painter.restore()
 
     def _draw_path(
@@ -150,7 +150,7 @@ class SnapshotWidget(QWidget):
         bar_x = x + 70
         bar_w = w - bar_x - 60
         for name, value in components:
-            self._draw_bar(painter, name, value, x, bar_x, y, bar_w, bar_max, "#60a5fa")
+            self._draw_bar(painter, name, value, x, bar_x, y, bar_w, bar_max, quality_colour)
             y += 20
 
         # candidates (one per line)
