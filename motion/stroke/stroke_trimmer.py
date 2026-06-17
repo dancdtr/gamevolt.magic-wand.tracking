@@ -1,26 +1,30 @@
-"""Detects and trims the straight lead-in (approach) run at the start of a stroke.
+"""Detects and trims the straight run at either end of a stroke.
 
 People hold the wand out (that orientation becomes the path origin) then move in a
-straight line to where the glyph actually starts before drawing it. That approach run
-pollutes $1 matching and the template overlay.
+straight line to where the glyph actually starts before drawing it — the lead-in
+(approach). They often also run straight back toward rest/centre afterwards before
+pausing — the tail (reset). Both pollute $1 matching and the template overlay.
 
-A lead-in is a *straight* segment ending in a *sharp corner* (the glyph start). We find
+Such a run is a *straight* segment ending in a *sharp corner* (the glyph edge). We find
 the first corner — a local spike in per-step turning angle — and cut there. A smoothly
 curving glyph (e.g. a circle) has only gentle, continuous turning and no sharp corner, so
 nothing is trimmed. The `min_trim_fraction` guard also ignores corners that sit right at
-the start (a glyph that simply begins with a corner, no approach).
+the edge (a glyph that simply begins or ends with a corner, no approach/reset).
+
+`lead_in_cut_index` works from the start; `tail_cut_index` is its mirror, finding the
+reset run from the end by running the same detector over the reversed path.
 """
 
 from __future__ import annotations
 
 import math
 
-from motion.stroke.configuration.lead_in_trim_settings import LeadInTrimSettings
+from motion.stroke.configuration.stroke_trim_settings import StrokeTrimSettings
 
 Point = tuple[float, float]
 
 
-def lead_in_cut_index(points: list[Point], settings: LeadInTrimSettings) -> int:
+def lead_in_cut_index(points: list[Point], settings: StrokeTrimSettings) -> int:
     """Index into `points` where the glyph begins; 0 means trim nothing."""
     n = len(points)
     if not settings.enabled or n < 12:
@@ -49,6 +53,22 @@ def lead_in_cut_index(points: list[Point], settings: LeadInTrimSettings) -> int:
     frac = min(frac, settings.max_trim_fraction)
 
     return _index_at_arc_fraction(points, frac)
+
+
+def tail_cut_index(points: list[Point], settings: StrokeTrimSettings) -> int:
+    """Index into `points` (exclusive end) where the glyph ends; len(points) trims nothing.
+
+    Mirror of `lead_in_cut_index`. After drawing, people often run the wand back toward
+    their rest/centre orientation before pausing — a straight 'reset' tail that pollutes
+    matching exactly like an approach lead-in, only at the other end. It has the same
+    shape reversed (straight run ending in a sharp corner = the glyph's last point), so we
+    detect it by running the lead-in finder over the reversed path and mapping the cut back.
+    """
+    n = len(points)
+    cut = lead_in_cut_index(list(reversed(points)), settings)
+    if cut <= 0:
+        return n
+    return n - cut
 
 
 def _resample(points: list[Point], n: int) -> list[Point]:

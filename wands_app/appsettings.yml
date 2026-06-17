@@ -122,6 +122,14 @@ input:
       min_trim_fraction: 0.08
       max_trim_fraction: 0.5
       resample_count: 48
+    # Trim the straight 'reset' run people make returning toward rest/centre after the
+    # glyph, before pausing. Mirror of lead_in_trim, applied at the stroke tail.
+    tail_trim:
+      enabled: True
+      angle_deg: 40.0
+      min_trim_fraction: 0.08
+      max_trim_fraction: 0.5
+      resample_count: 48
     rmf:
       invert_x: True
       invert_y: False

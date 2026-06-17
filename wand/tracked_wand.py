@@ -8,7 +8,7 @@ import math
 
 from motion.motion_phase_type import MotionPhaseType
 from motion.motion_processor import MotionProcessor
-from motion.stroke.lead_in_trimmer import lead_in_cut_index
+from motion.stroke.stroke_trimmer import lead_in_cut_index, tail_cut_index
 from motion.stroke.stroke_windower import Stroke, StrokeWindower
 from spells.matching.dollar_one.dollar_one_recognizer import DollarOneRecognizer, Recognition
 from spells.scoring.cast_attempt import CastAttempt
@@ -131,45 +131,57 @@ class TrackedWand(WandBase):
         self._logger.verbose(f"Wand ({self._id}) motion: {motion_phase.name}")
         self.motion_changed.invoke(motion_phase)
 
-    def _trim_lead_in(self, stroke: Stroke) -> Stroke:
-        cut = lead_in_cut_index(stroke.points, self._settings.lead_in_trim)
-        if cut <= 0:
-            return stroke
-
-        points = stroke.points[cut:]
-        times = stroke.times_ms[cut:]
+    def _slice_stroke(self, stroke: Stroke, start: int, end: int) -> Stroke | None:
+        points = stroke.points[start:end]
+        times = stroke.times_ms[start:end]
         if len(points) < 2:
-            return stroke
+            return None
 
         path_length = sum(math.dist(points[i - 1], points[i]) for i in range(1, len(points)))
         return Stroke(points=points, times_ms=times, path_length=path_length)
 
     def _recognise_best_variant(self, stroke: Stroke) -> tuple[Stroke, list[Recognition]] | None:
-        """Recognise both the raw stroke and a lead-in-trimmed variant and keep whichever
-        scores higher. Avoids the trade-off of always trimming: a glyph that genuinely
-        starts with a straight run matches better untrimmed and wins, while a real
-        approach-into-glyph matches better trimmed."""
-        trimmed = self._trim_lead_in(stroke)
-        variants = [stroke] if trimmed is stroke else [stroke, trimmed]
+        """Recognise the raw stroke plus head-, tail-, and both-trimmed variants and keep
+        whichever scores highest. People draw a straight 'approach' run into the glyph and/or
+        a straight 'reset' run back toward centre after it; trimming each end lets a clean
+        glyph win, while a glyph that genuinely starts or ends straight matches best untrimmed
+        and still wins. The combined variant covers an approach *and* a reset in one stroke."""
+        n = len(stroke.points)
+        head = lead_in_cut_index(stroke.points, self._settings.lead_in_trim)
+        tail = tail_cut_index(stroke.points, self._settings.tail_trim)
 
-        scored: list[tuple[Stroke, list[Recognition]]] = []
-        for variant in variants:
+        # Deduped (start, exclusive-end) -> label spans. The full stroke is always tried;
+        # head/tail/both are added only when their trim is non-trivial and non-overlapping.
+        spans: dict[tuple[int, int], str] = {(0, n): "raw"}
+        if head > 0:
+            spans[(head, n)] = "head"
+        if tail < n:
+            spans[(0, tail)] = "tail"
+        if head > 0 and tail < n and head < tail:
+            spans[(head, tail)] = "head+tail"
+
+        scored: list[tuple[str, Stroke, list[Recognition]]] = []
+        for (start, end), label in spans.items():
+            variant = self._slice_stroke(stroke, start, end)
+            if variant is None:
+                continue
             results = self._recognizer.recognize(variant.points, allowed=self._active_labels)
             if results:
-                scored.append((variant, results))
+                scored.append((label, variant, results))
         if not scored:
             return None
 
-        scored.sort(key=lambda vr: vr[1][0].score, reverse=True)
-        best = scored[0]
-        if len(scored) == 2:
-            chosen = "trimmed" if best[0] is trimmed else "untrimmed"
-            self._logger.debug(
-                f"Wand ({self._id}) lead-in match: chose {chosen} "
-                f"({best[1][0].label} {best[1][0].score * 100:.1f}% vs {scored[1][1][0].score * 100:.1f}%; "
-                f"{stroke.point_count} -> {trimmed.point_count} pts)."
+        scored.sort(key=lambda lvr: lvr[2][0].score, reverse=True)
+        best_label, best_stroke, best_results = scored[0]
+        if len(scored) > 1:
+            summary = ", ".join(
+                f"{label}:{results[0].label} {results[0].score * 100:.1f}%" for label, _, results in scored
             )
-        return best
+            self._logger.debug(
+                f"Wand ({self._id}) trim match: chose '{best_label}' "
+                f"({best_stroke.point_count}/{n} pts) [{summary}]."
+            )
+        return best_stroke, best_results
 
     def _on_stroke_completed(self, stroke: Stroke) -> None:
         recognition = self._recognise_best_variant(stroke)
