@@ -10,6 +10,6 @@ class MotionPhaseTrackerSettings:
     min_state_duration: float
 
     # still-episode thresholds (total time since still began)
-    min_paused_duration: float  # eg 0.3
-    min_holding_duration: float  # eg 0.8
-    min_stopped_duration: float  # eg 1.3
+    min_paused_duration: float
+    min_holding_duration: float
+    min_stopped_duration: float

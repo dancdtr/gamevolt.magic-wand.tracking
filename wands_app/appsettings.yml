@@ -4,13 +4,12 @@ name: "potter.wand-server"
 system_type: eliko_single_anchor
 
 tracked_wand_ids:
-  # - E000
-  - 1DAE
-  # - 1DC6
+  # - 1DAE
+  - 1DAC
 
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
-  minimum_level: DEBUG
+  minimum_level: TRACE
 
 zones:
   udp_receiver:
@@ -185,12 +184,16 @@ imu_stream:
 
 motion:
   processor:
+    speed_smoothing_alpha: 0.15
+    # Spatial deadzone — needs tuning against logged path values (see $1 log line `path=`).
+    stillness_radius: 0.05
+    stillness_window_ms: 200
     phase_tracker:
       speed_start: 0.50
-      speed_stop: 0.20
+      speed_stop: 0.30
       min_state_duration: 0.03
       min_paused_duration: 0.15
-      min_holding_duration: 0.5
+      min_holding_duration: 0.3
       min_stopped_duration: 1.2
 
 # Spell scoring. `bonuses` are global magnitudes; `default` is the per-spell tuning every
@@ -238,7 +241,9 @@ spell_scoring:
 wand_visualiser:
   is_enabled: True
   # The single wand this visualiser follows. Other (multi-wand) modes run headless.
-  wand_id: "1DAE"
+  # wand_id: "1DAE"
+  wand_id: 1DAC
+
   window:
     title: "Wand Visualiser"
     width: 1600
