@@ -24,10 +24,7 @@ from wand_tester.constants import (
     HAPTIC_MODE_SEQUENCE,
     HAPTIC_PATTERNS,
 )
-from wand_tester.styles import (
-    action_button_style,
-    preset_button_style,
-)
+from wand_tester.styles import preset_button_style
 from wand_tester.widgets import (
     PeriodSlider,
     make_command_button,
@@ -72,7 +69,6 @@ class HapticTab(QWidget):
         layout.addWidget(self._build_mode_group())
         layout.addWidget(self._build_sequence_group())
         layout.addWidget(self._period)
-        layout.addLayout(self._build_action_row())
         layout.addStretch(1)
 
     def _build_mode_group(self) -> QGroupBox:
@@ -136,15 +132,6 @@ class HapticTab(QWidget):
         self._w2_spin.setValue(pattern[1] if len(pattern) > 1 else 0)
         self._w3_spin.setValue(pattern[2] if len(pattern) > 2 else 0)
 
-    def _build_action_row(self) -> QHBoxLayout:
-        row = QHBoxLayout()
-        row.addStretch(1)
-        send_btn = QPushButton("Send")
-        send_btn.setStyleSheet(action_button_style("#208040"))
-        send_btn.clicked.connect(self._on_send)
-        row.addWidget(send_btn)
-        return row
-
     def _waveforms(self) -> list[int]:
         return [w for w in (self._w1_spin.value(), self._w2_spin.value(), self._w3_spin.value()) if w > 0]
 
@@ -156,7 +143,7 @@ class HapticTab(QWidget):
         if self._restore_led is not None:
             self._restore_led()
 
-    def _on_send(self) -> None:
+    def send(self) -> None:
         # Any Send cancels a running sequence loop — caller picks a new command.
         self._sequence_timer.stop()
         if self._mode == HAPTIC_MODE_ONESHOT:

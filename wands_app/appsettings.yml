@@ -3,11 +3,30 @@ name: "potter.wand-server"
 system_type: eliko_rtls
 # system_type: eliko_single_anchor
 
+# - 1DAC
+# - 1DA9
+# - 1DB1
+
 tracked_wand_ids:
-  # - 1DAE
-  - 1DAC
+  - 1DAE
+  - 1DC6
+  - 1DA5
+  - 1DB0
+  - 1DBA
+  - 1DA7
+  - 1DBF
+  - 1DB6
+  - 1DB7
+  - 1DC3
+  - 1DC5
+  - 1DA8
+  - 1DC9
+  - 1DAA
+  - 1DAB
+  - 1D65
+  - 1DAD
   - 1DB2
-  # - 1DB1
+  - 1DB4
 
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log

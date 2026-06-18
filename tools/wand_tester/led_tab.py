@@ -26,7 +26,6 @@ from wand_tester.constants import (
     DEFAULT_FADE_STEP,
     LED_TIMED_METHODS,
 )
-from wand_tester.styles import action_button_style
 from wand_tester.widgets import (
     ColourPicker,
     build_blink_group,
@@ -58,7 +57,6 @@ class LedTab(QWidget):
         layout.addWidget(blink.box)
         layout.addWidget(self._build_fade_group())
         layout.addWidget(self._build_timed_group())
-        layout.addLayout(self._build_action_row())
         layout.addStretch(1)
 
     def _cmd_btn(self, label: str, method: str) -> QPushButton:
@@ -142,19 +140,6 @@ class LedTab(QWidget):
         row.addStretch(1)
         return box
 
-    def _build_action_row(self) -> QHBoxLayout:
-        row = QHBoxLayout()
-        row.addStretch(1)
-        stop_btn = QPushButton("Stop LED")
-        stop_btn.setStyleSheet(action_button_style("#d97718"))
-        stop_btn.clicked.connect(self._on_stop)
-        send_btn = QPushButton("Send")
-        send_btn.setStyleSheet(action_button_style("#208040"))
-        send_btn.clicked.connect(self._on_send)
-        row.addWidget(stop_btn)
-        row.addWidget(send_btn)
-        return row
-
     def emergency_stop(self) -> None:
         """Called by top-level Stop All. LED tab has no widget-local timers —
         the client's _cancel_pending_stop (invoked by client.stop_all) handles
@@ -165,7 +150,7 @@ class LedTab(QWidget):
     def _set_method(self, method: str) -> None:
         self._selected_method = method
 
-    def _on_send(self) -> None:
+    def send(self) -> None:
         method = self._selected_method
         colour = self._colour_picker.selected
         cmd: Callable[[], None]
@@ -210,6 +195,6 @@ class LedTab(QWidget):
         if self._last_led_command is not None:
             self._last_led_command()
 
-    def _on_stop(self) -> None:
+    def stop(self) -> None:
         self._last_led_command = None
         self._client.stop_led()

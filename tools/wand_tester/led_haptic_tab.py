@@ -4,15 +4,12 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import (
     QButtonGroup,
-    QHBoxLayout,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from wand.streaming.eliko.pekio_client import PekioClient
 
-from wand_tester.styles import action_button_style
 from wand_tester.widgets import (
     ColourPicker,
     PeriodSlider,
@@ -53,22 +50,12 @@ class LedHapticTab(QWidget):
         layout.addWidget(build_solid_group(self._command_group, self._set_method))
         layout.addWidget(blink.box)
         layout.addWidget(self._period)
-        layout.addLayout(self._build_action_row())
         layout.addStretch(1)
-
-    def _build_action_row(self) -> QHBoxLayout:
-        row = QHBoxLayout()
-        row.addStretch(1)
-        send_btn = QPushButton("Send")
-        send_btn.setStyleSheet(action_button_style("#208040"))
-        send_btn.clicked.connect(self._on_send)
-        row.addWidget(send_btn)
-        return row
 
     def _set_method(self, method: str) -> None:
         self._selected_method = method
 
-    def _on_send(self) -> None:
+    def send(self) -> None:
         method = self._selected_method
         colour = self._colour_picker.selected
         buzz_ms = self._period.value()

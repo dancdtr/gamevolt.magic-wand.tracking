@@ -41,11 +41,11 @@ class MainWindow(QMainWindow):
 
         outer.addLayout(self._build_tag_row())
 
-        tabs = QTabWidget()
-        tabs.addTab(self._led_tab, "LED")
-        tabs.addTab(self._haptic_tab, "Haptic")
-        tabs.addTab(self._led_haptic_tab, "LED + Haptic")
-        outer.addWidget(tabs, 1)
+        self._tabs = QTabWidget()
+        self._tabs.addTab(self._led_tab, "LED")
+        self._tabs.addTab(self._haptic_tab, "Haptic")
+        self._tabs.addTab(self._led_haptic_tab, "LED + Haptic")
+        outer.addWidget(self._tabs, 1)
 
     def _build_tag_row(self) -> QHBoxLayout:
         row = QHBoxLayout()
@@ -66,11 +66,24 @@ class MainWindow(QMainWindow):
         enable_imu_btn.clicked.connect(self._client.enable_imu)
         row.addWidget(enable_imu_btn)
         row.addStretch(1)
+        # Send/Stop live up here (not at the bottom of each tab) so they stay
+        # reachable on short laptop screens. Send dispatches to the active tab.
         stop_all_btn = QPushButton("Stop All")
         stop_all_btn.setStyleSheet(action_button_style("#a02020"))
         stop_all_btn.clicked.connect(self._on_stop_all)
         row.addWidget(stop_all_btn)
+        stop_led_btn = QPushButton("Stop LED")
+        stop_led_btn.setStyleSheet(action_button_style("#d97718"))
+        stop_led_btn.clicked.connect(self._led_tab.stop)
+        row.addWidget(stop_led_btn)
+        send_btn = QPushButton("Send")
+        send_btn.setStyleSheet(action_button_style("#208040"))
+        send_btn.clicked.connect(self._on_send)
+        row.addWidget(send_btn)
         return row
+
+    def _on_send(self) -> None:
+        self._tabs.currentWidget().send()
 
     def _on_stop_all(self) -> None:
         # Cancel each tab's widget-local timers, then full firmware stop.
