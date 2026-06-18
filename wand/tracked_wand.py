@@ -184,6 +184,23 @@ class TrackedWand(WandBase):
             )
         return best_stroke, best_results
 
+    def _confusion_guard_usurper(self, stroke: Stroke, chosen: Recognition) -> Recognition | None:
+        """The top template (scored across ALL templates, not just the active set) that beats the
+        chosen spell by more than the guard margin, or None if the chosen match holds up.
+
+        $1 absolute scores are forgiving, so a loose match can clear the gate when its true shape
+        isn't an active candidate. Comparing against every template restores $1's ranking-based
+        discrimination: if some inactive glyph fits the drawn shape better, the cast is a miscast."""
+        guard = self._settings.confusion_guard
+        if not guard.enabled:
+            return None
+
+        for r in self._recognizer.recognize(stroke.points, allowed=None):
+            if r.label == chosen.label:
+                continue  # the chosen spell is (one of) the global best — it holds up
+            return r if r.score > chosen.score + guard.margin else None
+        return None
+
     def _on_stroke_completed(self, stroke: Stroke) -> None:
         recognition = self._recognise_best_variant(stroke)
         if recognition is None:
@@ -195,7 +212,16 @@ class TrackedWand(WandBase):
         candidates = ", ".join(f"{r.label} {r.score * 100:.1f}%" for r in top)
 
         best = results[0]
-        cast = self._scorer.score(self._id, best.label, best.score, stroke)
+        usurper = self._confusion_guard_usurper(stroke, best)
+        gate_failures = (f"confused~{usurper.label}",) if usurper is not None else ()
+        if usurper is not None:
+            self._logger.info(
+                f"Wand ({self._id}) confusion guard rejected '{best.label}' "
+                f"({best.score * 100:.1f}%): out-ranked by inactive "
+                f"'{usurper.label}' ({usurper.score * 100:.1f}%)."
+            )
+
+        cast = self._scorer.score(self._id, best.label, best.score, stroke, gate_failures=gate_failures)
         self._scorer.apply_outcome(self._id, cast)
 
         self._logger.info(

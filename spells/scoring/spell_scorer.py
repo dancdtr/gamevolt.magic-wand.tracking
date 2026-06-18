@@ -28,13 +28,22 @@ class SpellScorer:
         self._xp = xp_provider
         self._streak = streak_tracker
 
-    def score(self, player_id: str, label: str, match_accuracy: float, stroke: Stroke) -> CastScore:
+    def score(
+        self,
+        player_id: str,
+        label: str,
+        match_accuracy: float,
+        stroke: Stroke,
+        gate_failures: tuple[str, ...] = (),
+    ) -> CastScore:
         spell = self._settings.spell_settings(label)
         gates = spell.gates
         bonuses = self._settings.bonuses
 
         # ── Gates ─────────────────────────────────────────────
-        failures: list[str] = []
+        # Seeded with any externally-detected failures (e.g. the confusion guard), then the
+        # per-spell gates below append to them. Any entry => rejected cast.
+        failures: list[str] = list(gate_failures)
         if match_accuracy < gates.min_match_accuracy:
             failures.append(f"accuracy<{gates.min_match_accuracy:.2f}")
         if stroke.duration_s < gates.min_duration_s:

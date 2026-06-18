@@ -15,8 +15,19 @@ class ShowSystemController:
         self._lamp_tx = lamp_tx
         self._logger = logger
 
-    def play_spell(self, spell_type: SpellType, quality: SpellCastQuality, house: HogwartsHouse) -> None:
-        message = ShowSystemSpellCastMessage(spell_type, quality, house)
+    def play_spell(self, wand_id: str, spell_type: SpellType, quality: SpellCastQuality, house: HogwartsHouse) -> None:
+        message = ShowSystemSpellCastMessage(
+            wand_id=self._format_wand_id(wand_id),
+            spell_type=spell_type,
+            quality=quality,
+            house=house,
+        )
 
         self._logger.info(f"Notifying show system to play '{spell_type.name}' for quality '{quality.name}', house: '{house.name}'...")
         self._show_system_tx.send(message.to_dict())
+
+    @staticmethod
+    def _format_wand_id(wand_id: str) -> str:
+        """Wand ids are bare upper hex internally; the show system / RTLS wire
+        form keeps the `0x` prefix so downstream consumers handle it directly."""
+        return wand_id if wand_id.lower().startswith("0x") else f"0x00{wand_id}"

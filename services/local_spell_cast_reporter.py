@@ -30,7 +30,7 @@ class LocalSpellCastReporter(SpellCastReporterBase):
         house = self._get_hogwarts_house(cast.wand_id)
         quality = cast.quality
 
-        self._show_system_controller.play_spell(cast.spell_type, quality, house)
+        self._show_system_controller.play_spell(cast.wand_id, cast.spell_type, quality, house)
 
         self._logger.debug(f"Wizard with wand ({cast.wand_id}) cast spell '{cast.spell_name}' with quality: {quality.name}.")
 

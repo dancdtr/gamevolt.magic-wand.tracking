@@ -11,3 +11,4 @@ class ShowSystemSpellCastMessage(Message):
     spell_type: SpellType
     quality: SpellCastQuality
     house: HogwartsHouse
+    wand_id: str

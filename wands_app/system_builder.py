@@ -21,6 +21,7 @@ from wand.streaming.eliko.eliko_client import ElikoClient
 from wand.streaming.eliko.eliko_wand_command_sink import ElikoWandCommandSink
 from wand.streaming.eliko.wand_reboot_detector import WandRebootDetector
 from wand.streaming.eliko_single_anchor.eliko_single_anchor_client import ElikoSingleAnchorClient
+from wand.null_wand_command_sink import NullWandCommandSink
 from wand.streaming.wand_imu_stream import WandImuStream
 from wand.streaming.wand_imu_stream_builder import WandImuStreamBuilder
 from wand.tracked_wand_factory import TrackedWandFactory
@@ -35,9 +36,9 @@ from wands_app.system import WandsSystem
 from wands_app.tracking_app import TrackingApp
 from wizards.configuration.wizard_settings import WizardSettings
 from wizards.wizard_names_provider import WizardNameProvider
+from zones.active_wand_zone_manager import ActiveWandZoneManager
 from zones.zone_application_builder import ZoneApplicationBuilder
 from zones.zone_factory import ZoneFactory
-from zones.zone_manager import ZoneManager
 
 WIZARD_NAMES = ["Merlin", "Morgana", "Gandalf", "Circe", "Nimue"]
 
@@ -79,7 +80,7 @@ class WandsSystemBuilder:
             zone_udp_receiver = UdpRx(logger, settings.zones.udp_receiver)
             zone_message_handler = MessageHandler(logger, zone_udp_receiver)
 
-            production_zone_manager = ZoneManager(
+            production_zone_manager = ActiveWandZoneManager(
                 message_handler=zone_message_handler,
                 zone_factory=zone_factory,
                 settings=settings.zones,
@@ -109,7 +110,8 @@ class WandsSystemBuilder:
             )
             eliko_client = ElikoClient(logger=logger, settings=eliko_settings.connection, client=tcp_client)
             imu_stream = imu_stream_builder.build_eliko(eliko_client)
-            command_sink = ElikoWandCommandSink(logger=logger, client=eliko_client, settings=eliko_settings.command_sink)
+            # RTLS owns wand IMU + command state; the app stays read-only on the wand.
+            command_sink = NullWandCommandSink(logger=logger)
         else:
             single_settings = settings.imu_stream.eliko_single_anchor
             if single_settings is None:

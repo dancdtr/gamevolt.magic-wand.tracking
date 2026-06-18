@@ -115,4 +115,7 @@ class ElikoWandImuStreamBase(ABC):
         s = raw.strip()
         if s.lower().startswith("0x"):
             s = s[2:]
+        # RTLS pads the tag serial with leading zeros (e.g. 0x001DAC) while the
+        # app's canonical ids are bare short hex (1DAC). Trim so the two match.
+        s = s.lstrip("0") or s
         return s.upper()
