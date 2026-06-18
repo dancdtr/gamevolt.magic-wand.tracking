@@ -30,7 +30,7 @@ tracked_wand_ids:
 
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
-  minimum_level: TRACE
+  minimum_level: DEBUG
 
 zones:
   # RTLS path: inbound ActiveWandChanged presence events from the RTLS system.
@@ -176,7 +176,7 @@ input:
     # spell (by > margin). $1 absolute scores are forgiving (a perfect LUMOS_MAXIMA scores ~67%
     # on REVELIO), so this restores $1's ranking-based discrimination. Toggle for A/B testing.
     confusion_guard:
-      enabled: True
+      enabled: False
       margin: 0.05
     rmf:
       invert_x: True
@@ -240,7 +240,7 @@ imu_stream:
     # False = this app issues NO IMU-enable traffic and wires no reboot detector;
     # the RTLS network owns wand IMU state. True = legacy behaviour (anchor enables
     # IMU on tracked wands + re-enables them after reboot).
-    manage_imu: True
+    manage_imu: False
 
 motion:
   processor:
