@@ -1,6 +1,6 @@
 """Per-player consecutive-failure counter, feeding the pity (struggle) bonus.
 
-Each failed/unrecognised attempt increments the streak; any successful cast resets it.
+Each failed attempt increments the streak; any successful cast resets it.
 The scorer reads the streak to lift a struggling guest up to (but no higher than) the
 lowest quality tier. Conceptually hub-side per-player state; in-memory stub for now.
 """

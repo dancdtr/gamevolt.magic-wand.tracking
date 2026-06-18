@@ -19,7 +19,7 @@ class CastScore:
     difficulty_weight: float
 
     total: float
-    quality: SpellCastQuality | None  # None = below RUDIMENTARY (not recognized)
+    quality: SpellCastQuality | None  # None = below lowest tier (a failed attempt)
 
     # Boolean veto outcome. When a gate fails, the cast is rejected and no quality is awarded.
     passed_gates: bool
@@ -35,7 +35,7 @@ class CastScore:
     def summary(self) -> str:
         if not self.passed_gates:
             return f"{self.label} REJECTED ({', '.join(self.gate_failures)})"
-        tier = self.quality.name if self.quality else "UNRECOGNISED"
+        tier = self.quality.name if self.quality else "FAILED"
         pity = " [pity]" if self.pity_pass else ""
         return (
             f"{self.label} {tier}{pity} total={self.total:.1f} "
