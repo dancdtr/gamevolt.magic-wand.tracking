@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._client = client
         self.setWindowTitle("CONDUCTR v3 Wand Tester")
-        self.resize(720, 520)
+        self.resize(720, 470)
 
         self._led_tab = LedTab(client)
         self._haptic_tab = HapticTab(client, restore_led=self._led_tab.reapply_last)
@@ -61,6 +61,10 @@ class MainWindow(QMainWindow):
         combo.currentTextChanged.connect(self._client.set_tag)
         combo.setMinimumWidth(140)
         row.addWidget(combo)
+        enable_imu_btn = QPushButton("Enable IMU")
+        enable_imu_btn.setStyleSheet(action_button_style("#2060a0"))
+        enable_imu_btn.clicked.connect(self._client.enable_imu)
+        row.addWidget(enable_imu_btn)
         row.addStretch(1)
         stop_all_btn = QPushButton("Stop All")
         stop_all_btn.setStyleSheet(action_button_style("#a02020"))

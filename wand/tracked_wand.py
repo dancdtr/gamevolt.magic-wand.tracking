@@ -90,6 +90,7 @@ class TrackedWand(WandBase):
 
     def clear_spell_target(self) -> None:
         self.set_spell_targets([])
+        self._scorer.reset_streak(self._id)
 
     def reset(self) -> None:
         self._forward_interpreter.reset()

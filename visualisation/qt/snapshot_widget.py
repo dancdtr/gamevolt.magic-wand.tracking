@@ -5,9 +5,15 @@ from PySide6.QtGui import QColor, QFont, QPainter, QPaintEvent, QPen, QPolygonF
 from PySide6.QtWidgets import QWidget
 
 from spells.scoring.cast_attempt import CastAttempt
+from spells.scoring.cast_score import CastScore
+from spells.spell_cast_quality import SpellCastQuality
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from visualisation.qt.coord_mapper import map_normalized_point
 from visualisation.qt.quality_colours import REJECT_COLOUR, colour_for_score
+
+_MAX_STARS = len(SpellCastQuality)  # quality tiers map 1:1 onto filled stars
+_MUTED_COLOUR = "#6b7280"
+_DIM_STAR_COLOUR = "#3a3a3a"
 
 
 class SnapshotWidget(QWidget):
@@ -41,7 +47,7 @@ class SnapshotWidget(QWidget):
             self._draw_placeholder(painter, w, h)
             return
 
-        shape_h = int(h * 0.5)
+        shape_h = int(h * 0.45)
         self._draw_shape(painter, self._attempt, QRectF(0, 0, w, shape_h))
         self._draw_breakdown(painter, self._attempt, QRectF(0, shape_h, w, h - shape_h))
 
@@ -92,8 +98,8 @@ class SnapshotWidget(QWidget):
         painter.save()
         painter.translate(rect.topLeft())
         score = attempt.score
-        x = 14.0
-        y = 22.0
+        x = 18.0
+        y = 30.0
         w = rect.width()
 
         # header: spell label + tier on the left, big quality-coloured total on the right
@@ -101,67 +107,124 @@ class SnapshotWidget(QWidget):
         if not score.passed_gates:
             tier = "REJECTED"
         elif score.quality is not None:
-            tier = score.quality.name + ("  [pity]" if score.pity_pass else "")
+            tier = score.quality.name + ("  ✦ pity" if score.pity_pass else "")
         else:
-            tier = "UNRECOGNISED"
+            tier = "FAILED"
 
         header_font = QFont("Menlo")
-        header_font.setPointSize(15)
+        header_font.setPointSize(19)
         header_font.setBold(True)
         painter.setFont(header_font)
         painter.setPen(QColor(quality_colour))
-        painter.drawText(QPointF(x, y), f"{score.label}  {tier}")
+        painter.drawText(QPointF(x, y), score.label.upper())
 
+        tier_font = QFont("Menlo")
+        tier_font.setPointSize(12)
+        tier_font.setBold(True)
+        painter.setFont(tier_font)
+        painter.drawText(QPointF(x, y + 22), tier)
+
+        # big quality-coloured total, right-aligned, with a small "points" caption
         total_font = QFont("Menlo")
-        total_font.setPointSize(22)
+        total_font.setPointSize(40)
         total_font.setBold(True)
         painter.setFont(total_font)
+        painter.setPen(QColor(quality_colour))
         total_text = f"{score.total:.0f}"
         total_w = painter.fontMetrics().horizontalAdvance(total_text)
-        painter.drawText(QPointF(w - total_w - 16, y + 6), total_text)
+        painter.drawText(QPointF(w - total_w - 18, y + 18), total_text)
+        caption = QFont("Menlo")
+        caption.setPointSize(10)
+        painter.setFont(caption)
+        painter.setPen(QColor(_MUTED_COLOUR))
+        pts_w = painter.fontMetrics().horizontalAdvance("points")
+        painter.drawText(QPointF(w - pts_w - 18, y + 34), "points")
 
-        body = QFont("Menlo")
-        body.setPointSize(10)
-        painter.setFont(body)
-        painter.setPen(self._text_colour)
+        # star rating (quality out of _MAX_STARS)
+        y += 50
+        self._draw_stars(painter, score, x, y, quality_colour)
 
+        # one-line stroke metrics
         y += 30
-        painter.drawText(QPointF(x, y), f"match {score.match_accuracy * 100:.1f}%   "
-                                        f"dur {attempt.duration_s:.2f}s   "
-                                        f"path {attempt.path_length:.2f}   samples {attempt.point_count}")
+        metrics_font = QFont("Menlo")
+        metrics_font.setPointSize(12)
+        painter.setFont(metrics_font)
+        painter.setPen(self._text_colour)
+        painter.drawText(QPointF(x, y), f"match {score.match_accuracy * 100:.1f}%    "
+                                        f"dur {attempt.duration_s:.2f}s    "
+                                        f"path {attempt.path_length:.2f}    samples {attempt.point_count}")
 
         # gate failures (only when rejected)
         if score.gate_failures:
-            y += 18
+            y += 22
             painter.setPen(QColor(REJECT_COLOUR))
             painter.drawText(QPointF(x, y), "gates: " + ", ".join(score.gate_failures))
             painter.setPen(self._text_colour)
 
-        # component bars
-        y += 26
+        # ── SCORING section ──────────────────────────────────
+        y += 34
+        self._draw_section_title(painter, "SCORING", x, y, w)
+
+        y += 28
         components = [
             ("base", score.base),
-            ("xp", score.xp_bonus),
+            ("xp bonus", score.xp_bonus),
             ("cadence", score.cadence_bonus),
             ("tempo", score.tempo_bonus),
-            ("streak", score.streak_bonus),
+            ("failure bonus", score.streak_bonus),
         ]
         bar_max = max(score.total, 120.0)
-        bar_x = x + 70
-        bar_w = w - bar_x - 60
+        bar_x = x + 130
+        bar_w = w - bar_x - 64
         for name, value in components:
             self._draw_bar(painter, name, value, x, bar_x, y, bar_w, bar_max, quality_colour)
-            y += 20
+            y += 26
 
         # candidates (one per line)
-        y += 18
-        painter.setFont(body)
+        y += 14
+        self._draw_section_title(painter, "CANDIDATES", x, y, w)
+        cand_font = QFont("Menlo")
+        cand_font.setPointSize(12)
+        painter.setFont(cand_font)
         painter.setPen(QColor("#9ca3af"))
-        painter.drawText(QPointF(x, y), "candidates:")
         for c in attempt.candidates[:3]:
-            y += 16
-            painter.drawText(QPointF(x + 12, y), f"{c.label} {c.score * 100:.0f}%")
+            y += 20
+            painter.drawText(QPointF(x + 12, y), f"{c.label}  {c.score * 100:.0f}%")
         painter.restore()
+
+    def _draw_stars(self, painter: QPainter, score: CastScore, x: float, y: float, colour: str) -> None:
+        filled = self._star_count(score)
+        star_font = QFont()
+        star_font.setPointSize(26)
+        painter.setFont(star_font)
+        step = painter.fontMetrics().horizontalAdvance("★") + 4
+        for i in range(_MAX_STARS):
+            if i < filled:
+                painter.setPen(QColor(colour))
+                glyph = "★"
+            else:
+                painter.setPen(QColor(_DIM_STAR_COLOUR))
+                glyph = "☆"
+            painter.drawText(QPointF(x + i * step, y), glyph)
+
+    @staticmethod
+    def _star_count(score: CastScore) -> int:
+        if not score.passed_gates or score.quality is None:
+            return 0
+        return list(SpellCastQuality).index(score.quality) + 1
+
+    def _draw_section_title(self, painter: QPainter, text: str, x: float, y: float, w: float) -> None:
+        title_font = QFont("Menlo")
+        title_font.setPointSize(12)
+        title_font.setBold(True)
+        painter.setFont(title_font)
+        painter.setPen(QColor(_MUTED_COLOUR))
+        painter.drawText(QPointF(x, y), text)
+        text_w = painter.fontMetrics().horizontalAdvance(text)
+        rule_pen = QPen(QColor(_DIM_STAR_COLOUR))
+        rule_pen.setWidth(1)
+        painter.setPen(rule_pen)
+        painter.drawLine(QPointF(x + text_w + 10, y - 4), QPointF(w - 18, y - 4))
 
     def _draw_bar(
         self,
@@ -175,26 +238,29 @@ class SnapshotWidget(QWidget):
         bar_max: float,
         colour: str,
     ) -> None:
+        label_font = QFont("Menlo")
+        label_font.setPointSize(12)
+        painter.setFont(label_font)
         painter.setPen(self._text_colour)
-        painter.drawText(QPointF(label_x, y + 4), name)
+        painter.drawText(QPointF(label_x, y + 5), name)
 
-        track = QRectF(bar_x, y - 8, bar_w, 12)
+        track = QRectF(bar_x, y - 8, bar_w, 14)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor("#2b2b2b"))
-        painter.drawRoundedRect(track, 3, 3)
+        painter.drawRoundedRect(track, 4, 4)
 
         frac = 0.0 if bar_max <= 0 else max(0.0, min(1.0, value / bar_max))
         if frac > 0:
-            fill = QRectF(bar_x, y - 8, bar_w * frac, 12)
+            fill = QRectF(bar_x, y - 8, bar_w * frac, 14)
             painter.setBrush(QColor(colour))
-            painter.drawRoundedRect(fill, 3, 3)
+            painter.drawRoundedRect(fill, 4, 4)
 
         painter.setPen(self._text_colour)
-        painter.drawText(QPointF(bar_x + bar_w + 6, y + 4), f"{value:.1f}")
+        painter.drawText(QPointF(bar_x + bar_w + 8, y + 5), f"{value:.1f}")
 
     def _draw_placeholder(self, painter: QPainter, w: int, h: int) -> None:
         painter.setPen(QColor("#555"))
         font = QFont("Menlo")
-        font.setPointSize(13)
+        font.setPointSize(16)
         painter.setFont(font)
         painter.drawText(QRectF(0, 0, w, h), Qt.AlignmentFlag.AlignCenter, "awaiting first spell cast…")

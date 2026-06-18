@@ -44,23 +44,8 @@ class SpellScorer:
         if gates.min_path_length > 0.0 and stroke.path_length < gates.min_path_length:
             failures.append(f"path<{gates.min_path_length:.2f}")
 
-        if failures:
-            return CastScore(
-                label=label,
-                match_accuracy=match_accuracy,
-                base=0.0,
-                xp_bonus=0.0,
-                cadence_bonus=0.0,
-                tempo_bonus=0.0,
-                streak_bonus=0.0,
-                difficulty_weight=1.0,
-                total=0.0,
-                quality=None,
-                passed_gates=False,
-                gate_failures=tuple(failures),
-            )
-
         # ── Components ────────────────────────────────────────
+        # Computed even when gates fail so the visualiser shows real scores on a rejected cast.
         difficulty = spell.difficulty_weight
         base = match_accuracy * 100.0 * difficulty
 
@@ -69,6 +54,23 @@ class SpellScorer:
         tempo_bonus = self._tempo_bonus(stroke.duration_s, spell.tempo)
 
         subtotal = base + xp_bonus + cadence_bonus + tempo_bonus
+
+        if failures:
+            return CastScore(
+                label=label,
+                match_accuracy=match_accuracy,
+                base=base,
+                xp_bonus=xp_bonus,
+                cadence_bonus=cadence_bonus,
+                tempo_bonus=tempo_bonus,
+                streak_bonus=0.0,
+                difficulty_weight=difficulty,
+                total=subtotal,
+                quality=None,
+                passed_gates=False,
+                gate_failures=tuple(failures),
+            )
+
         natural_quality = self._resolve_quality(subtotal, spell.quality_thresholds)
 
         # Pity bonus only when the cast (gate-passing) fell short of this spell's lowest tier.
@@ -108,6 +110,10 @@ class SpellScorer:
             self._xp.record_cast(player_id, cast.label)
         else:
             self._streak.record_fail(player_id)
+
+    def reset_streak(self, player_id: str) -> None:
+        """Clear a player's fail streak — e.g. on zone exit."""
+        self._streak.reset(player_id)
 
     def _cadence_bonus(self, stroke: Stroke) -> float:
         """0..1 smoothness: low coefficient of variation of per-sample speed = even draw."""

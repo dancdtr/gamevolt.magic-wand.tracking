@@ -185,6 +185,13 @@ class PekioClient:
         param = ((preset & 0xFF) << 16) | 0x0903
         self._send_line(f"$PEKIO,DC,{self._next_seq()},CMD0,{self._tag},0x{param & 0xFFFFFFFF:08X}")
 
+    def enable_imu(self) -> None:
+        """Enable IMU sampling on the current tag — CMD0 with PR data type
+        (0x00000903). CMD0 is volatile on the wand, so this must be re-issued
+        after any reboot to restart PR output.
+        """
+        self.cmd0(0)
+
     def _cancel_pending_stop(self) -> None:
         if self._pending_stop is not None:
             self._pending_stop.cancel()

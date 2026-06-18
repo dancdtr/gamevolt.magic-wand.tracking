@@ -80,7 +80,7 @@ class WandServer(WandServerProtocol):
     def _on_packet(self, packet: AssembledPacket) -> None:
         client = self._registry.get_or_create(packet.tag_hex)
         if client is None:
-            self._logger.debug(f"DATA dropped (client filtered): tag={packet.tag_hex} seq={packet.seq}")
+            self._logger.trace(f"DATA dropped (client filtered): tag={packet.tag_hex} seq={packet.seq}")
             return
 
         try:
