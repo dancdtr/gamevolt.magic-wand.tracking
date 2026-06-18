@@ -20,6 +20,10 @@ class ElikoSingleAnchorClient:
     they will be drained once the writer is up. The transport currently has no
     `connected` event, so commands are sent once at start; reconnects will not
     re-fire the init sequence today.
+
+    `manage_imu` gates all IMU-enable traffic (init CMD0s + post-reboot
+    re-enable). Set False when another system (e.g. the RTLS network) owns
+    wand IMU state; the anchor then only subscribes and listens.
     """
 
     _ENABLE_IMU_CMD = "$PEKIO,DC,{seq},CMD0,0x{tag_id},0x00000903\r\n"
@@ -32,11 +36,13 @@ class ElikoSingleAnchorClient:
         transport: SerialTransport,
         tracked_wand_ids: Iterable[str],
         subscribe_flag: str = "P",
+        manage_imu: bool = True,
     ) -> None:
         self._logger = logger
         self._transport = transport
         self._tracked_wand_ids = [self._normalise_tag(t) for t in tracked_wand_ids]
         self._subscribe_flag = subscribe_flag
+        self._manage_imu = manage_imu
         self._next_seq = 1
 
     @property
@@ -45,15 +51,18 @@ class ElikoSingleAnchorClient:
 
     async def start_async(self) -> None:
         await self._transport.start()
-        self._logger.info(
-            f"ElikoSingleAnchorClient sending init sequence for tags: {self._tracked_wand_ids}"
-        )
-        # Anchor processes commands serially with ~10-20ms OTA-store latency per
-        # CMD0; flooding causes silent drops (only the first CMD0 gets acked).
-        # Space inits out so each completes before the next arrives.
-        for tag in self._tracked_wand_ids:
-            self.send_command(self._ENABLE_IMU_CMD.format(seq=self._alloc_seq(), tag_id=tag))
-            await asyncio.sleep(self._INIT_CMD_GAP_S)
+        if self._manage_imu:
+            self._logger.info(
+                f"ElikoSingleAnchorClient sending init sequence for tags: {self._tracked_wand_ids}"
+            )
+            # Anchor processes commands serially with ~10-20ms OTA-store latency per
+            # CMD0; flooding causes silent drops (only the first CMD0 gets acked).
+            # Space inits out so each completes before the next arrives.
+            for tag in self._tracked_wand_ids:
+                self.send_command(self._ENABLE_IMU_CMD.format(seq=self._alloc_seq(), tag_id=tag))
+                await asyncio.sleep(self._INIT_CMD_GAP_S)
+        else:
+            self._logger.info("ElikoSingleAnchorClient IMU management disabled; skipping CMD0 init.")
         self.send_command(
             self._SUBSCRIBE_CMD.format(seq=self._alloc_seq(), flag=self._subscribe_flag)
         )
@@ -70,7 +79,16 @@ class ElikoSingleAnchorClient:
         we re-issue it. See `docs/spec.md` §4.5 for the firmware brown-out
         background.
         """
+        if not self._manage_imu:
+            return
+
         normalised = self._normalise_tag(tag)
+        if normalised not in self._tracked_wand_ids:
+            self._logger.verbose(
+                f"Ignoring reboot of untracked wand ({normalised}); not re-enabling IMU."
+            )
+            return
+
         self._logger.info(f"Re-enabling IMU on wand ({normalised}) after reboot.")
         self.send_command(self._ENABLE_IMU_CMD.format(seq=self._alloc_seq(), tag_id=normalised))
 

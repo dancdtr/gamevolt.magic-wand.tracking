@@ -169,8 +169,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
             self._snapshot.set_attempt(attempt)
         else:
             self._logger.debug(
-                f"Snapshot ignoring low attempt '{attempt.score.label}' "
-                f"(match {attempt.score.match_accuracy * 100:.0f}% < threshold)."
+                f"Snapshot ignoring low attempt '{attempt.score.label}' (match {attempt.score.match_accuracy * 100:.0f}% < threshold)."
             )
 
     # ── zone selection dropdown ─────────────────────────────────

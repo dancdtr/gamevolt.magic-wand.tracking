@@ -122,6 +122,7 @@ class WandsSystemBuilder:
                 transport=serial_transport,
                 tracked_wand_ids=settings.tracked_wand_ids,
                 subscribe_flag=single_settings.subscribe_flag,
+                manage_imu=single_settings.manage_imu,
             )
             imu_stream = imu_stream_builder.build_eliko_single_anchor(single_anchor_client)
             command_sink = ElikoWandCommandSink(
@@ -129,8 +130,9 @@ class WandsSystemBuilder:
                 client=single_anchor_client,
                 settings=single_settings.command_sink,
             )
-            wand_reboot_detector = WandRebootDetector(logger=logger, line_source=single_anchor_client)
-            wand_reboot_detector.wand_rebooted.subscribe(single_anchor_client.enable_imu)
+            if single_settings.manage_imu:
+                wand_reboot_detector = WandRebootDetector(logger=logger, line_source=single_anchor_client)
+                wand_reboot_detector.wand_rebooted.subscribe(single_anchor_client.enable_imu)
 
         wizard_name_provider = WizardNameProvider(WizardSettings(names=WIZARD_NAMES))
         profile_service = LocalProfileService(logger=logger, name_provider=wizard_name_provider)

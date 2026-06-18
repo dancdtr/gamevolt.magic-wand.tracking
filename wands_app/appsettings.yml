@@ -6,6 +6,7 @@ system_type: eliko_single_anchor
 tracked_wand_ids:
   # - 1DAE
   - 1DAC
+  # - 1DB1
 
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
@@ -189,20 +190,24 @@ imu_stream:
     # Set to "R" as a sanity check: if RR lines appear in trace, the wand is alive
     # and the anchor is talking to it.
     subscribe_flag: "P"
+    # False = this app issues NO IMU-enable traffic and wires no reboot detector;
+    # the RTLS network owns wand IMU state. True = legacy behaviour (anchor enables
+    # IMU on tracked wands + re-enables them after reboot).
+    manage_imu: False
 
 motion:
   processor:
     speed_smoothing_alpha: 0.15
     # Spatial deadzone — needs tuning against logged path values (see $1 log line `path=`).
-    stillness_radius: 0.05
-    stillness_window_ms: 200
+    stillness_radius: 0.18
+    stillness_window_ms: 130
     phase_tracker:
       speed_start: 0.50
-      speed_stop: 0.30
+      speed_stop: 0.35
       min_state_duration: 0.03
-      min_paused_duration: 0.15
-      min_holding_duration: 0.3
-      min_stopped_duration: 1.2
+      min_paused_duration: 0.11
+      min_holding_duration: 0.22
+      min_stopped_duration: 0.9
 
 # Spell scoring. `bonuses` are global magnitudes; `default` is the per-spell tuning every
 # spell inherits; each `overrides` entry is a partial tuning for one spell (omit a field to
@@ -210,15 +215,15 @@ motion:
 # not have all four). See spells/settings/spell_scoring_settings.py.
 spell_scoring:
   bonuses:
-    xp_per_unique_spell: 0.5
+    xp_per_unique_spell: 1
     xp_max: 19.0
     cadence_max: 10.0
     tempo_max: 5.0
     streak_per_fail: 5.0
   default:
     difficulty_weight: 1.0
-    min_match_accuracy: 0.50
-    min_duration_s: 0.30
+    min_match_accuracy: 0.40
+    min_duration_s: 0.50
     max_duration_s: 5.0
     min_path_length: 0.0
     tempo_ideal_min_s: 0.6
@@ -251,6 +256,7 @@ wand_visualiser:
   # The single wand this visualiser follows. Other (multi-wand) modes run headless.
   # wand_id: "1DAE"
   wand_id: 1DAC
+  # wand_id: 1DB1
 
   window:
     title: "Wand Visualiser"
