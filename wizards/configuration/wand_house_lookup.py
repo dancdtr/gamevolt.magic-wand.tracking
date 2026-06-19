@@ -32,4 +32,4 @@ class WandHouseLookup:
     }
 
     def get_house(self, wand_id: str) -> HogwartsHouse:
-        return self.houses.get(wand_id.upper(), HogwartsHouse.UNASSIGNED)
+        return self.houses.get(wand_id.upper(), HogwartsHouse.GRYFFINDOR)
