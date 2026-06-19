@@ -52,6 +52,9 @@ zones:
     - id: Z003
       key: 3
       spells: [ALOHOMORA, COLLOPORTUS]
+    - id: Z004
+      key: 4
+      spells: [] #spellbook
     - id: Z005
       key: 5
       spells: [PEPPER_BREATH]
