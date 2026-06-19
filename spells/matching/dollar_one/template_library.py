@@ -18,12 +18,22 @@ def templates_dir() -> Path:
     return Path(__file__).resolve().parents[2] / "templates"
 
 
-def load_default_library(logger: Logger, n: int = 64) -> DollarOneRecognizer:
+def load_default_library(
+    logger: Logger, allowed_labels: set[str] | None = None, n: int = 64
+) -> DollarOneRecognizer:
+    """Build a recognizer from the template SVGs.
+
+    `allowed_labels` (upper-cased spell labels) restricts the library to those templates —
+    pass the union of zone-mapped spells to skip glyphs no zone can ever cast. None = load all.
+    """
     directory = templates_dir()
     templates: list[PathTemplate] = []
 
     for svg in sorted(directory.glob("*.svg")):
         label = svg.stem.upper()
+        if allowed_labels is not None and label not in allowed_labels:
+            logger.info(f"$1 template skipped (no zone): {label} ({svg.name})")
+            continue
         try:
             points = load_svg_points(svg)
         except Exception as exc:  # malformed SVG should not kill startup

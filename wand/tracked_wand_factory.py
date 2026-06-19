@@ -18,6 +18,7 @@ class TrackedWandFactory:
         settings: WandSettings,
         motion_processor_factory: MotionProcessorFactory,
         spell_scoring: SpellScoringSettings,
+        zone_spell_labels: set[str] | None = None,
     ) -> None:
         self._motion_processor_factory = motion_processor_factory
 
@@ -25,7 +26,8 @@ class TrackedWandFactory:
         self._logger = logger
 
         # One shared recognizer (templates are immutable) across all wands.
-        self._recognizer = load_default_library(logger)
+        # Restricted to zone-mapped spells so unused glyphs never load.
+        self._recognizer = load_default_library(logger, zone_spell_labels)
         # Shared scorer + per-player state. Keyed by wand id (wands are owned for life).
         self._scorer = SpellScorer(spell_scoring, InMemoryXpProvider(), InMemoryStreakTracker())
 

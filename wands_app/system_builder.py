@@ -188,10 +188,13 @@ class WandsSystemBuilder:
 
         motion_processor_factory = MotionProcessorFactory(logger, settings.motion.processor)
 
+        zone_spell_labels = {str(spell).upper() for zone in settings.zones.zones for spell in zone.spells}
+
         tracked_wand_factory = TrackedWandFactory(
             motion_processor_factory=motion_processor_factory,
             settings=settings.input.wand,
             spell_scoring=settings.spell_scoring,
+            zone_spell_labels=zone_spell_labels,
             logger=logger,
         )
 

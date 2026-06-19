@@ -193,6 +193,14 @@ spell_scoring:
           SKILLED: 40
           EXPERIENCED: 55
           MASTERED: 70
+    - spell: ALOHOMORA
+      tuning:
+        min_match_accuracy: 0.35
+        thresholds:
+          RUDIMENTARY: 40
+          SKILLED: 50
+          EXPERIENCED: 60
+          MASTERED: 70
 wand_visualiser:
   is_enabled: True
   wand_id: 1DAC
