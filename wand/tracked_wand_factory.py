@@ -31,6 +31,11 @@ class TrackedWandFactory:
         # Shared scorer + per-player state. Keyed by wand id (wands are owned for life).
         self._scorer = SpellScorer(spell_scoring, InMemoryXpProvider(), InMemoryStreakTracker())
 
+    @property
+    def loaded_spell_count(self) -> int:
+        """Number of spell templates loaded into the shared recogniser (the castable set)."""
+        return self._recognizer.template_count
+
     def reset_xp(self) -> None:
         """Wipe accrued XP for all wands — shared scorer state."""
         self._scorer.reset_xp()

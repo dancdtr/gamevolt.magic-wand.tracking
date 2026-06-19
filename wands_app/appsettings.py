@@ -1,6 +1,7 @@
 from gamevolt.configuration.appsettings import appsettings
 from gamevolt.logging.configuration.logging_settings import LoggingSettings
 from motion.configuration.motion_settings import MotionSettings
+from recording.configuration.session_recorder_settings import SessionRecorderSettings
 from show_system.configuration.show_system_controller_settings import ShowSystemControllerSettings
 from spells.settings.spell_scoring_settings import SpellScoringSettings
 from visualisation.configuration.multi_wand_visualiser_settings import MultiWandVisualiserSettings
@@ -31,3 +32,4 @@ class AppSettings:
     imu_stream: WandImuStreamSettings
     show_system_controller: ShowSystemControllerSettings
     wand_device_controller: WandDeviceControllerSettings
+    session_recorder: SessionRecorderSettings

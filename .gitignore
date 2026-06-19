@@ -147,6 +147,9 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+# Session recordings
+wands_app/recordings/
+
 # Manual debugging
 debug.py
 x_*

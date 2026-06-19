@@ -10,6 +10,7 @@ QUALITY_COLOURS: dict[SpellCastQuality, str] = {
     SpellCastQuality.MASTERED: "#c4b5fd",  # light purple
 }
 REJECT_COLOUR = "#ef4444"
+NOISE_COLOUR = "#6b7280"  # grey: sub-threshold attempt (noise), not a real rejection
 
 
 def colour_for_score(score: CastScore) -> str:

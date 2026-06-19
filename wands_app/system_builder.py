@@ -8,6 +8,8 @@ from gamevolt.messaging.udp.udp_tx import UdpTx
 from services.local_profile_service import LocalProfileService
 from services.local_spell_cast_reporter import LocalSpellCastReporter
 from services.local_wand_presence_reporter import LocalWandPresenceReporter
+from recording.cast_image_renderer import CastImageRenderer
+from recording.session_recorder import SessionRecorder
 from services.wand_session_coordinator import WandSessionCoordinator
 from services.wizard_session_store import WizardSessionStore
 from show_system.configuration.show_system_controller_settings import ShowSystemControllerSettings
@@ -216,6 +218,15 @@ class WandsSystemBuilder:
         # Visualiser dev controls: reset-XP button wipes the shared scorer's XP state.
         wand_visualiser.reset_xp_requested.subscribe(tracked_wand_factory.reset_xp)
 
+        # Single-anchor dev viewer: arming a recording starts a clean run, so reset XP
+        # when the session toggles on (no-op on record-off).
+        if is_mock:
+            def _reset_xp_on_record(active: bool, _name: str) -> None:
+                if active:
+                    tracked_wand_factory.reset_xp()
+
+            wand_visualiser.record_session_changed.subscribe(_reset_xp_on_record)
+
         show_system_controller = self._build_show_system(settings.show_system_controller)
 
         spell_cast_reporter = LocalSpellCastReporter(
@@ -232,6 +243,17 @@ class WandsSystemBuilder:
             logger=logger,
         )
 
+        session_recorder = SessionRecorder(
+            logger=logger,
+            settings=settings.session_recorder,
+            record_session_changed=wand_visualiser.record_session_changed,
+            cast_attempted=tracked_wand_manager.cast_attempted,
+            wand_rotation_updated=tracked_wand_manager.wand_rotation_updated,
+            min_match_accuracy=settings.wand_visualiser.snapshot.min_match_accuracy,
+            total_spells=tracked_wand_factory.loaded_spell_count,
+            image_renderer=self._build_cast_image_renderer(),
+        )
+
         recognition_app = RecognitionApp(
             logger=logger,
             server=server,
@@ -239,9 +261,25 @@ class WandsSystemBuilder:
             wand_device_controller=wand_device_controller,
             wand_visualiser=wand_visualiser,
             wand_spell_cue_controller=wand_spell_cue_controller,
+            session_recorder=session_recorder,
         )
 
         return WandsSystem(tracking=tracking_app, recognition=recognition_app)
+
+    def _build_cast_image_renderer(self) -> CastImageRenderer | None:
+        recorder = self._settings.session_recorder
+        # Image rendering reuses the Qt single-wand snapshot view, so it needs the Qt
+        # visualiser. Skip on headless / disabled runs — casts + points still record.
+        if not (recorder.is_enabled and recorder.save_images and self._settings.wand_visualiser.is_enabled):
+            return None
+
+        from visualisation.qt.qt_cast_image_renderer import QtCastImageRenderer
+
+        return QtCastImageRenderer(
+            settings=self._settings.wand_visualiser,
+            width=recorder.image_width,
+            height=recorder.image_height,
+        )
 
     def _build_show_system(self, settings: ShowSystemControllerSettings) -> ShowSystem:
         if not settings.enabled:

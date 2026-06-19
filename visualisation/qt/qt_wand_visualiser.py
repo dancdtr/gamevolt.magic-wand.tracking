@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from logging import Logger
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QCloseEvent, QColor, QKeyEvent, QPalette
 from PySide6.QtWidgets import (
     QApplication,
@@ -23,7 +23,7 @@ from spells.scoring.cast_attempt import CastAttempt
 from spells.spell_type import SpellType
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from visualisation.qt.live_trail_widget import LiveTrailWidget
-from visualisation.qt.quality_colours import colour_for_score
+from visualisation.qt.quality_colours import NOISE_COLOUR, colour_for_score
 from visualisation.qt.snapshot_widget import SnapshotWidget
 from visualisation.qt.spell_svg_renderer import render_spell_library
 from visualisation.qt.spell_targets_widget import SpellTargetsWidget
@@ -31,6 +31,18 @@ from visualisation.qt.spell_targets_widget import SpellTargetsWidget
 # Render size for SVG target art; SpellTargetsWidget scales down per tile.
 # Generous so retina / large windows still scale *down* (stays crisp) not up.
 _SPELL_IMAGE_SIZE = 512
+
+# Record button: green when armed, grey when no name yet, pulsing red while recording.
+_RECORD_IDLE_STYLE = (
+    "QPushButton { background:#16a34a; color:#ffffff; font-weight:bold;"
+    " border:none; border-radius:6px; padding:6px 16px; }"
+    "QPushButton:hover:enabled { background:#22c55e; }"
+    "QPushButton:disabled { background:#2b2b2b; color:#666666; }"
+)
+_RECORD_ACTIVE_STYLE = (
+    "QPushButton {{ background:{bg}; color:#ffffff; font-weight:bold;"
+    " border:none; border-radius:6px; padding:6px 16px; }}"
+)
 from visualisation.visualiser_protocol import WandVisualiserProtocol
 from wand.wand_rotation import WandRotation
 from zones.zone import Zone
@@ -167,13 +179,21 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._reset_xp_button.clicked.connect(self._reset_xp_requested.invoke)
 
         self._name_field = _NameField()
-        self._name_field.setPlaceholderText("Wizard name")
         self._name_field.textChanged.connect(self._on_name_changed)
 
-        self._record_toggle = QPushButton("Record Session")
+        self._record_toggle = QPushButton("⏺  Record")
         self._record_toggle.setCheckable(True)
         self._record_toggle.setEnabled(False)  # needs a name first
+        self._record_toggle.setStyleSheet(_RECORD_IDLE_STYLE)
+        # Fix the width so the button doesn't jump size between Record / Stop states.
+        self._record_toggle.setFixedWidth(self._record_toggle.fontMetrics().horizontalAdvance("⏹  Stop — REC") + 48)
         self._record_toggle.toggled.connect(self._on_record_toggled)
+
+        # Pulses the record button between two reds while a session is recording.
+        self._record_blink_on = False
+        self._record_blink = QTimer()
+        self._record_blink.setInterval(600)
+        self._record_blink.timeout.connect(self._pulse_record_button)
 
         row.addWidget(self._trail_toggle)
         row.addWidget(self._reset_xp_button)
@@ -192,9 +212,29 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._record_toggle.setEnabled(bool(text.strip()))
 
     def _on_record_toggled(self, checked: bool) -> None:
-        self._record_toggle.setText("Recording…" if checked else "Record Session")
+        name = self._name_field.text().strip()
         self._name_field.setReadOnly(checked)
-        self._record_session_changed.invoke(checked, self._name_field.text().strip())
+
+        if checked:
+            self._record_toggle.setText("⏹  Stop — REC")
+            self._record_blink_on = True
+            self._pulse_record_button()
+            self._record_blink.start()
+        else:
+            self._record_blink.stop()
+            self._record_toggle.setText("⏺  Record")
+            self._record_toggle.setStyleSheet(_RECORD_IDLE_STYLE)
+
+        self._record_session_changed.invoke(checked, name)
+        if not checked:
+            # Clear the name on stop so the next session needs a name entered intentionally
+            # (this also disables the record button until a fresh name is typed).
+            self._name_field.clear()
+
+    def _pulse_record_button(self) -> None:
+        self._record_blink_on = not self._record_blink_on
+        bg = "#dc2626" if self._record_blink_on else "#7f1d1d"
+        self._record_toggle.setStyleSheet(_RECORD_ACTIVE_STYLE.format(bg=bg))
 
     # ── WandVisualiserProtocol ──────────────────────────────────
     def start(self) -> None:
@@ -208,6 +248,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
         if not self._is_running:
             return
         self._is_running = False
+        self._record_blink.stop()
         self._window.close()
         self._app.processEvents()
 
@@ -239,13 +280,15 @@ class QtWandVisualiser(WandVisualiserProtocol):
         if attempt.wand_id.upper() != self._wand_id:
             return
 
-        # Flash the matched spell tile on every attempt (red when rejected).
+        # Flash the matched spell tile on every attempt: quality colour when it clears the
+        # noise gate (red if rejected), grey for sub-threshold noise flicks.
+        passes = self._passes_threshold(attempt)
         spell = self._spell_for_label(attempt.score.label)
         if spell is not None:
-            self._targets.flash(spell, colour_for_score(attempt.score))
+            self._targets.flash(spell, colour_for_score(attempt.score) if passes else NOISE_COLOUR)
 
         # Snapshot only swaps for attempts clearing the noise gate.
-        if self._passes_threshold(attempt):
+        if passes:
             self._snapshot.set_attempt(attempt)
         else:
             self._logger.debug(

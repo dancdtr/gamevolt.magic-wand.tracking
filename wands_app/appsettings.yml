@@ -325,3 +325,12 @@ wand_device_controller:
   skilled_spell_cast_pulse_duration_s: 1.0
   experienced_spell_cast_pulse_duration_s: 1.5
   mastered_spell_cast_pulse_duration_s: 2.0
+
+session_recorder:
+  is_enabled: True
+  # Relative paths resolve against the runtime root; absolute paths used as-is.
+  # Each record toggle creates <output_dir>/<timestamp>_<name>/.
+  output_dir: ./recordings
+  save_images: True
+  image_width: 600
+  image_height: 800
