@@ -113,5 +113,6 @@ class WandLegendWidget(QFrame):
         if row is None:
             return
         self._layout.removeWidget(row)
+        row.hide()  # drop it now; deleteLater only runs on the next event-loop pump
         row.deleteLater()
         self._empty.setVisible(not self._rows)

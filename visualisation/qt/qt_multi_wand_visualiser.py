@@ -174,21 +174,31 @@ class QtMultiWandVisualiser(WandVisualiserProtocol):
         pct = attempt.score.match_accuracy * 100
         text = f"{attempt.score.label} {pct:.0f}%"
         self._legend.set_last_cast(attempt.wand_id.upper(), text, colour_for_score(attempt.score))
+        self._repaint_under_legend()
 
     # ── zone hooks (wired from the zone manager by the builder) ──
     def wand_entered_zone(self, wand_id: str, zone_id: str, spell_labels: list[str]) -> None:
         wand_id = wand_id.upper()
         self._canvas.set_colour(wand_id, self._colour_for(wand_id))
         self._legend.upsert(wand_id, self._colour_for(wand_id), zone_id, spell_labels)
+        self._repaint_under_legend()
 
     def wand_exited_zone(self, wand_id: str) -> None:
         wand_id = wand_id.upper()
         self._canvas.remove(wand_id)
         self._legend.remove(wand_id)
+        self._repaint_under_legend()
 
     # ── internals ───────────────────────────────────────────────
     def _colour_for(self, wand_id: str) -> str:
         return self._colours.get(wand_id, self._settings.trail.line_colour)
+
+    def _repaint_under_legend(self) -> None:
+        # The legend is a translucent child over the canvas, which only repaints on wand
+        # motion. When the legend grows/shrinks (rows added/removed) the canvas must repaint
+        # the vacated area too, or stale rows linger — looking like the legend is stacking.
+        self._legend.adjustSize()
+        self._canvas.update()
 
     def _on_key(self, token: str) -> None:
         callback = self._key_callbacks.get(token)
