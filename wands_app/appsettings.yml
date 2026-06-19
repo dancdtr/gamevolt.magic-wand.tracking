@@ -74,7 +74,7 @@ input:
       max_trim_fraction: 0.5
       resample_count: 48
     confusion_guard:
-      enabled: True
+      enabled: False
       margin: 0.05
     rmf:
       invert_x: True
