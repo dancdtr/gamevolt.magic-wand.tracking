@@ -76,7 +76,7 @@ input:
       max_trim_fraction: 0.5
       resample_count: 48
     confusion_guard:
-      enabled: True
+      enabled: False
       margin: 0.05
     rmf:
       invert_x: True
@@ -226,20 +226,17 @@ wand_visualiser:
     min_match_accuracy: 0.4
     template_colour: "#cccccc"
 
-# RTLS visualiser: every active wand on one shared canvas, colour-keyed by id (palette assigned
-# to tracked_wand_ids in order). Per-wand line/head colour comes from the palette; the trail
-# block's line_colour/head_colour are only a fallback for wands beyond the palette length.
 multi_wand_visualiser:
   is_enabled: True
-  palette:                # distinct hues; only one yellow, kept last
-    - "#ff3b30"  # red
-    - "#00e5ff"  # cyan
-    - "#34c759"  # green
-    - "#ff2d95"  # magenta
-    - "#ff9500"  # orange
-    - "#0a84ff"  # blue
-    - "#bf5af2"  # purple
-    - "#ffd60a"  # yellow
+  palette:
+    - "#ff3b30" # red
+    - "#ffd60a" # yellow
+    - "#34c759" # green
+    - "#ff2d95" # magenta
+    - "#00e5ff" # cyan
+    - "#ff9500" # orange
+    - "#0a84ff" # blue
+    - "#bf5af2" # purple
   window:
     title: "RTLS Wand Visualiser"
     width: 1280
@@ -247,7 +244,7 @@ multi_wand_visualiser:
     background_colour: "#1a1a1a"
     panel_colour: "#161616"
     text_colour: "#dddddd"
-  trail:                   # comet effect off: plain polylines, cheap on the pi with many wands
+  trail:
     scale: 0.2
     render_scale: 2.0
     line_width: 3
