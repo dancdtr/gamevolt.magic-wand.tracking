@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 from PySide6.QtWidgets import (
     QButtonGroup,
+    QCheckBox,
     QDoubleSpinBox,
     QGroupBox,
     QHBoxLayout,
@@ -19,22 +20,39 @@ from PySide6.QtWidgets import (
 from wand.streaming.eliko.pekio_client import PekioClient
 
 from wand_tester.constants import (
+    BLINK_PREFIX,
+    BLINK_PRESETS,
+    BLINK_PRESETS_BY_NAME,
     DEFAULT_BLINK_DUTY_MS,
     DEFAULT_BLINK_FOR_DURATION_S,
     DEFAULT_BLINK_PERIOD_MS,
     DEFAULT_FADE_FOR_DURATION_S,
     DEFAULT_FADE_STEP,
-    LED_TIMED_METHODS,
+    FADE_PREFIX,
+    FADE_PRESETS,
+    FADE_PRESETS_BY_NAME,
 )
+from wand_tester.styles import AMBER, ROSE, TEAL, VIOLET, group_title_style
 from wand_tester.widgets import (
     ColourPicker,
-    build_blink_group,
     build_solid_group,
     make_command_button,
 )
 
 
+def _accent(box: QGroupBox, name: str, accent: str) -> QGroupBox:
+    """Tag a groupbox with a section colour (title chip + border)."""
+    box.setObjectName(name)
+    box.setStyleSheet(group_title_style(name, accent))
+    return box
+
+
 class LedTab(QWidget):
+    """Solid / Blink / Fade. Blink and Fade each carry a Loop checkbox:
+    checked = continuous command (runs until stopped), unchecked = timed
+    `*_for` command that auto-stops after the section's Duration. The Duration
+    field greys out while Loop is on."""
+
     def __init__(self, client: PekioClient) -> None:
         super().__init__()
         self._client = client
@@ -47,36 +65,17 @@ class LedTab(QWidget):
         self._last_led_command: Callable[[], None] | None = None
 
         self._colour_picker = ColourPicker()
-        blink = build_blink_group(self._command_group, self._set_method)
-        self._blink_period_spin = blink.period_spin
-        self._blink_duty_spin = blink.duty_spin
 
         layout = QVBoxLayout(self)
-        layout.addWidget(self._colour_picker)
-        layout.addWidget(build_solid_group(self._command_group, self._set_method))
-        layout.addWidget(blink.box)
-        layout.addWidget(self._build_fade_group())
-        layout.addWidget(self._build_timed_group())
+        layout.setSpacing(6)
+        layout.addWidget(_accent(self._colour_picker, "ledColour", VIOLET))
+        layout.addWidget(_accent(build_solid_group(self._command_group, self._set_method), "ledSolid", TEAL))
+        layout.addWidget(self._build_blink_section())
+        layout.addWidget(self._build_fade_section())
         layout.addStretch(1)
 
     def _cmd_btn(self, label: str, method: str) -> QPushButton:
         return make_command_button(self._command_group, label, method, self._set_method)
-
-    def _build_fade_group(self) -> QGroupBox:
-        box = QGroupBox("Fade")
-        row = QHBoxLayout(box)
-        row.addWidget(self._cmd_btn("Slow", "fade_slow"))
-        row.addWidget(self._cmd_btn("Medium", "fade_medium"))
-        row.addWidget(self._cmd_btn("Fast", "fade_fast"))
-        row.addSpacing(16)
-        row.addWidget(self._cmd_btn("Custom", "fade_custom"))
-        row.addWidget(QLabel("Step:"))
-        self._fade_step_spin = QSpinBox()
-        self._fade_step_spin.setRange(1, 255)
-        self._fade_step_spin.setValue(DEFAULT_FADE_STEP)
-        row.addWidget(self._fade_step_spin)
-        row.addStretch(1)
-        return box
 
     def _make_duration_spin(self, default_s: float) -> QDoubleSpinBox:
         spin = QDoubleSpinBox()
@@ -86,115 +85,148 @@ class LedTab(QWidget):
         spin.setValue(default_s)
         return spin
 
-    def _build_timed_group(self) -> QGroupBox:
-        box = QGroupBox("Timed (auto-stop)")
-        layout = QVBoxLayout(box)
-        layout.addWidget(self._build_blink_for_group())
-        layout.addWidget(self._build_fade_for_group())
+    def _wire_loop(self, loop: QCheckBox, duration_spin: QDoubleSpinBox, duration_label: QLabel) -> None:
+        """Duration only applies in timed mode — hide it entirely while Loop is
+        on so the section isn't cluttered with a dead field, reveal it on
+        un-check."""
+
+        def update(checked: bool) -> None:
+            duration_label.setVisible(not checked)
+            duration_spin.setVisible(not checked)
+
+        loop.toggled.connect(update)
+        update(loop.isChecked())
+
+    def _build_blink_section(self) -> QGroupBox:
+        box = _accent(QGroupBox("Blink"), "ledBlink", AMBER)
+        outer = QVBoxLayout(box)
+
+        top = QHBoxLayout()
+        self._blink_loop = QCheckBox("Loop")
+        self._blink_loop.setChecked(True)
+        top.addWidget(self._blink_loop)
+        top.addSpacing(8)
+        for label, _p, _d in BLINK_PRESETS:
+            top.addWidget(self._cmd_btn(label, f"{BLINK_PREFIX}:{label}"))
+        top.addStretch(1)
+        self._blink_duration_label = QLabel("Duration (s):")
+        top.addWidget(self._blink_duration_label)
+        self._blink_duration_spin = self._make_duration_spin(DEFAULT_BLINK_FOR_DURATION_S)
+        top.addWidget(self._blink_duration_spin)
+        outer.addLayout(top)
+
+        # Custom button + the inputs it controls, grouped together.
+        custom = QHBoxLayout()
+        custom.addWidget(self._cmd_btn("Custom", "blink_custom"))
+        custom.addWidget(QLabel("Period (ms):"))
+        self._blink_period_spin = QSpinBox()
+        self._blink_period_spin.setRange(10, 65535)
+        self._blink_period_spin.setSingleStep(50)
+        self._blink_period_spin.setValue(DEFAULT_BLINK_PERIOD_MS)
+        custom.addWidget(self._blink_period_spin)
+        custom.addWidget(QLabel("Duty (ms):"))
+        self._blink_duty_spin = QSpinBox()
+        self._blink_duty_spin.setRange(0, 65535)
+        self._blink_duty_spin.setSingleStep(10)
+        self._blink_duty_spin.setValue(DEFAULT_BLINK_DUTY_MS)
+        custom.addWidget(self._blink_duty_spin)
+        custom.addStretch(1)
+        outer.addLayout(custom)
+
+        self._wire_loop(self._blink_loop, self._blink_duration_spin, self._blink_duration_label)
         return box
 
-    def _build_blink_for_group(self) -> QGroupBox:
-        box = QGroupBox("Blink")
-        row = QHBoxLayout(box)
-        row.addWidget(self._cmd_btn("Fast", "blink_fast_for"))
-        row.addWidget(self._cmd_btn("Medium", "blink_medium_for"))
-        row.addWidget(self._cmd_btn("Slow", "blink_slow_for"))
-        row.addSpacing(12)
-        row.addWidget(QLabel("Duration (s):"))
-        self._blink_for_duration_spin = self._make_duration_spin(DEFAULT_BLINK_FOR_DURATION_S)
-        row.addWidget(self._blink_for_duration_spin)
-        row.addSpacing(12)
-        row.addWidget(self._cmd_btn("Custom", "blink_for_custom"))
-        row.addWidget(QLabel("Period (ms):"))
-        self._blink_for_period_spin = QSpinBox()
-        self._blink_for_period_spin.setRange(10, 65535)
-        self._blink_for_period_spin.setSingleStep(50)
-        self._blink_for_period_spin.setValue(DEFAULT_BLINK_PERIOD_MS)
-        row.addWidget(self._blink_for_period_spin)
-        row.addWidget(QLabel("Duty (ms):"))
-        self._blink_for_duty_spin = QSpinBox()
-        self._blink_for_duty_spin.setRange(0, 65535)
-        self._blink_for_duty_spin.setSingleStep(10)
-        self._blink_for_duty_spin.setValue(DEFAULT_BLINK_DUTY_MS)
-        row.addWidget(self._blink_for_duty_spin)
-        row.addStretch(1)
-        return box
+    def _build_fade_section(self) -> QGroupBox:
+        box = _accent(QGroupBox("Fade"), "ledFade", ROSE)
+        outer = QVBoxLayout(box)
 
-    def _build_fade_for_group(self) -> QGroupBox:
-        box = QGroupBox("Fade")
-        row = QHBoxLayout(box)
-        row.addWidget(self._cmd_btn("Slow", "fade_slow_for"))
-        row.addWidget(self._cmd_btn("Medium", "fade_medium_for"))
-        row.addWidget(self._cmd_btn("Fast", "fade_fast_for"))
-        row.addSpacing(12)
-        row.addWidget(QLabel("Duration (s):"))
-        self._fade_for_duration_spin = self._make_duration_spin(DEFAULT_FADE_FOR_DURATION_S)
-        row.addWidget(self._fade_for_duration_spin)
-        row.addSpacing(12)
-        row.addWidget(self._cmd_btn("Custom", "fade_for_custom"))
-        row.addWidget(QLabel("Step:"))
-        self._fade_for_step_spin = QSpinBox()
-        self._fade_for_step_spin.setRange(1, 255)
-        self._fade_for_step_spin.setValue(DEFAULT_FADE_STEP)
-        row.addWidget(self._fade_for_step_spin)
-        row.addStretch(1)
+        top = QHBoxLayout()
+        self._fade_loop = QCheckBox("Loop")
+        self._fade_loop.setChecked(True)
+        top.addWidget(self._fade_loop)
+        top.addSpacing(8)
+        for label, _step in FADE_PRESETS:
+            top.addWidget(self._cmd_btn(label, f"{FADE_PREFIX}:{label}"))
+        top.addStretch(1)
+        self._fade_duration_label = QLabel("Duration (s):")
+        top.addWidget(self._fade_duration_label)
+        self._fade_duration_spin = self._make_duration_spin(DEFAULT_FADE_FOR_DURATION_S)
+        top.addWidget(self._fade_duration_spin)
+        outer.addLayout(top)
+
+        # Custom button + the input it controls, grouped together.
+        custom = QHBoxLayout()
+        custom.addWidget(self._cmd_btn("Custom", "fade_custom"))
+        custom.addWidget(QLabel("Step:"))
+        self._fade_step_spin = QSpinBox()
+        self._fade_step_spin.setRange(1, 255)
+        self._fade_step_spin.setValue(DEFAULT_FADE_STEP)
+        custom.addWidget(self._fade_step_spin)
+        custom.addStretch(1)
+        outer.addLayout(custom)
+
+        self._wire_loop(self._fade_loop, self._fade_duration_spin, self._fade_duration_label)
         return box
 
     def emergency_stop(self) -> None:
-        """Called by top-level Stop All. LED tab has no widget-local timers —
-        the client's _cancel_pending_stop (invoked by client.stop_all) handles
-        the pulse/*_for auto-stops. Also drops the reapply lambda so the next
-        haptic tick doesn't resurrect what Stop All just killed."""
+        """Called by the top-level Stop button. LED tab has no widget-local
+        timers — the client's _cancel_pending_stop (invoked by client.stop_all)
+        handles the timed `*_for` auto-stops. Also drops the reapply lambda so
+        the next haptic tick doesn't resurrect what Stop just killed."""
         self._last_led_command = None
 
     def _set_method(self, method: str) -> None:
         self._selected_method = method
 
+    @staticmethod
+    def _is_blink(method: str) -> bool:
+        return method == "blink_custom" or method.startswith(f"{BLINK_PREFIX}:")
+
+    @staticmethod
+    def _is_fade(method: str) -> bool:
+        return method == "fade_custom" or method.startswith(f"{FADE_PREFIX}:")
+
     def send(self) -> None:
         method = self._selected_method
         colour = self._colour_picker.selected
         cmd: Callable[[], None]
-        if method == "blink_custom":
-            period = self._blink_period_spin.value()
-            duty = self._blink_duty_spin.value()
+        timed = False
+
+        if self._is_blink(method):
+            if method == "blink_custom":
+                period, duty = self._blink_period_spin.value(), self._blink_duty_spin.value()
+            else:
+                period, duty = BLINK_PRESETS_BY_NAME[method.split(":", 1)[1]]
             if duty >= period:
                 print(f"[invalid] blink duty ({duty}) must be < period ({period})")
                 return
-            cmd = lambda: self._client.blink(period, duty, colour)
-        elif method == "fade_custom":
-            step = self._fade_step_spin.value()
-            cmd = lambda: self._client.fade(step, colour)
-        elif method == "blink_for_custom":
-            duration = self._blink_for_duration_spin.value()
-            period = self._blink_for_period_spin.value()
-            duty = self._blink_for_duty_spin.value()
-            if duty >= period:
-                print(f"[invalid] blink duty ({duty}) must be < period ({period})")
-                return
-            cmd = lambda: self._client.blink_for(duration, period, duty, colour)
-        elif method in ("blink_fast_for", "blink_medium_for", "blink_slow_for"):
-            duration = self._blink_for_duration_spin.value()
-            cmd = lambda m=method, d=duration: getattr(self._client, m)(d, colour)
-        elif method == "fade_for_custom":
-            duration = self._fade_for_duration_spin.value()
-            step = self._fade_for_step_spin.value()
-            cmd = lambda: self._client.fade_for(duration, step, colour)
-        elif method in ("fade_slow_for", "fade_medium_for", "fade_fast_for"):
-            duration = self._fade_for_duration_spin.value()
-            cmd = lambda m=method, d=duration: getattr(self._client, m)(d, colour)
-        else:
-            cmd = lambda m=method: getattr(self._client, m)(colour)
+            if self._blink_loop.isChecked():
+                cmd = lambda: self._client.blink(period, duty, colour)
+            else:
+                duration = self._blink_duration_spin.value()
+                cmd = lambda: self._client.blink_for(duration, period, duty, colour)
+                timed = True
+        elif self._is_fade(method):
+            if method == "fade_custom":
+                step = self._fade_step_spin.value()
+            else:
+                step = FADE_PRESETS_BY_NAME[method.split(":", 1)[1]]
+            if self._fade_loop.isChecked():
+                cmd = lambda: self._client.fade(step, colour)
+            else:
+                duration = self._fade_duration_spin.value()
+                cmd = lambda: self._client.fade_for(duration, step, colour)
+                timed = True
+        else:  # solid
+            cmd = lambda: self._client.solid(colour)
+
         cmd()
         # Timed commands re-arm their own duration on re-fire, so drop them
         # from reapply rather than chaining a Stop-All flurry.
-        self._last_led_command = None if method in LED_TIMED_METHODS else cmd
+        self._last_led_command = None if timed else cmd
 
     def reapply_last(self) -> None:
         """Re-issue the most recent non-timed LED command. Called by HapticTab
         after each haptic CMD1 to restore LED state on this firmware."""
         if self._last_led_command is not None:
             self._last_led_command()
-
-    def stop(self) -> None:
-        self._last_led_command = None
-        self._client.stop_led()

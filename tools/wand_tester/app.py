@@ -14,6 +14,7 @@ from wand.streaming.eliko.pekio_client import PekioClient
 
 from wand_tester.constants import DEFAULT_BAUD, DEFAULT_PORT, WAND_TAGS
 from wand_tester.main_window import MainWindow
+from wand_tester.styles import app_stylesheet
 
 
 def _apply_dark_palette(app: QApplication) -> None:
@@ -89,6 +90,9 @@ def main() -> None:
     app = QApplication(sys.argv)
     if args.dark:
         _apply_dark_palette(app)
+    # Arcane-theme skin sits on top of the palette so the look is consistent
+    # across hosts (macOS native, Pi Fusion) regardless of --dark.
+    app.setStyleSheet(app_stylesheet())
     window = MainWindow(client)
     window.show()
     try:

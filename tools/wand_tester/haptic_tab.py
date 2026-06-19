@@ -6,7 +6,8 @@ from collections.abc import Callable
 
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (
-    QButtonGroup,
+    QCheckBox,
+    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -18,26 +19,18 @@ from PySide6.QtWidgets import (
 
 from wand.streaming.eliko.pekio_client import BUZZ_PATTERN_1, PekioClient
 
-from wand_tester.constants import (
-    HAPTIC_MODE_ALARM,
-    HAPTIC_MODE_ONESHOT,
-    HAPTIC_MODE_SEQUENCE,
-    HAPTIC_PATTERNS,
-)
-from wand_tester.styles import preset_button_style
-from wand_tester.widgets import (
-    PeriodSlider,
-    make_command_button,
-)
+from wand_tester.constants import HAPTIC_EFFECTS
+from wand_tester.styles import TEAL, group_title_style, preset_button_style
+from wand_tester.widgets import PeriodSlider
 
 
 class HapticTab(QWidget):
-    """Haptic-only commands: one-shot waveform, repeating sequence, periodic buzz.
-
-    Mode (exclusive radio) picks which client method fires on Send.
-        One-shot → hwave_oneshot(*waveforms)
-        Sequence → buzz_hwave-like loop using hwave_oneshot
-        Alarm    → buzz(period_ms)
+    """Haptic-only commands. A Loop checkbox mirrors the LED tab:
+        unchecked → hwave_oneshot(*waveforms) once
+        checked   → repeats it every "Repeat every" interval (Qt-main-thread
+                    loop of hwave_oneshot, which the firmware handles more
+                    reliably than the buzz_hwave Timer-thread path).
+    The Repeat-interval control shows only while Loop is on.
     """
 
     def __init__(
@@ -49,62 +42,53 @@ class HapticTab(QWidget):
         self._client = client
         # Every haptic CMD1 clobbers LED state (firmware bundles them). Call
         # this after each haptic CMD1 to re-issue the user's last LED command.
-        # Not used for Alarm mode — re-firing LED would overwrite firmware's
-        # periodic buzz state and silence the alarm.
         self._restore_led = restore_led
-        self._mode_group = QButtonGroup(self)
-        self._mode_group.setExclusive(True)
-        self._mode: str = HAPTIC_MODE_ONESHOT
 
-        # Sequence mode drives a Qt-main-thread loop of hwave_oneshot — avoids
-        # the buzz_hwave Timer-thread + dedupe-breaker path which the firmware
-        # handles unreliably. Snapshot of waveforms taken at Send time.
+        # Snapshot of waveforms taken at Send time, replayed each loop tick.
         self._sequence_waveforms: tuple[int, ...] = ()
         self._sequence_timer = QTimer(self)
         self._sequence_timer.timeout.connect(self._fire_sequence_tick)
 
-        self._period = PeriodSlider("Period")
+        self._period = PeriodSlider("Repeat every")
+        # Keep the slider's footprint reserved while hidden so toggling Loop
+        # doesn't shift the surrounding content.
+        period_policy = self._period.sizePolicy()
+        period_policy.setRetainSizeWhenHidden(True)
+        self._period.setSizePolicy(period_policy)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(self._build_mode_group())
-        layout.addWidget(self._build_sequence_group())
-        layout.addWidget(self._period)
+        layout.setSpacing(6)
+        layout.addWidget(self._build_effect_group())
         layout.addStretch(1)
 
-    def _build_mode_group(self) -> QGroupBox:
-        box = QGroupBox("Mode")
-        row = QHBoxLayout(box)
-        for label, mode in [
-            ("One-shot", HAPTIC_MODE_ONESHOT),
-            ("Sequence", HAPTIC_MODE_SEQUENCE),
-            ("Alarm", HAPTIC_MODE_ALARM),
-        ]:
-            btn = make_command_button(self._mode_group, label, mode, self._set_mode)
-            if mode == HAPTIC_MODE_ONESHOT:
-                btn.setChecked(True)
-            row.addWidget(btn)
-        row.addStretch(1)
-        return box
+        # Repeat interval only applies when looping — hidden otherwise.
+        self._period.setVisible(self._loop.isChecked())
 
-    def _set_mode(self, mode: str) -> None:
-        self._mode = mode
-        # Switching modes cancels any active sequence loop.
-        self._sequence_timer.stop()
-
-    def _build_sequence_group(self) -> QGroupBox:
-        box = QGroupBox("Sequence")
+    def _build_effect_group(self) -> QGroupBox:
+        box = QGroupBox("Effect")
+        box.setObjectName("hapticEffect")
+        box.setStyleSheet(group_title_style("hapticEffect", TEAL))
         layout = QVBoxLayout(box)
 
-        preset_row = QHBoxLayout()
-        preset_row.addWidget(QLabel("Preset:"))
-        for label, pattern in HAPTIC_PATTERNS:
+        top = QHBoxLayout()
+        self._loop = QCheckBox("Loop")
+        self._loop.toggled.connect(self._on_loop_toggled)
+        top.addWidget(self._loop)
+        top.addSpacing(8)
+        top.addWidget(self._period)
+        top.addStretch(1)
+        layout.addLayout(top)
+
+        layout.addWidget(QLabel("Effect (fills the waveforms below):"))
+        grid = QGridLayout()
+        cols = 5
+        for idx, (label, pattern) in enumerate(HAPTIC_EFFECTS):
             btn = QPushButton(label)
             btn.setStyleSheet(preset_button_style())
             btn.setToolTip(f"Waveforms: {', '.join(str(w) for w in pattern)}")
             btn.clicked.connect(lambda _checked=False, p=pattern: self._fill_waveforms(p))
-            preset_row.addWidget(btn)
-        preset_row.addStretch(1)
-        layout.addLayout(preset_row)
+            grid.addWidget(btn, idx // cols, idx % cols)
+        layout.addLayout(grid)
 
         spin_row = QHBoxLayout()
         spin_row.addWidget(QLabel("Waveform 1:"))
@@ -120,6 +104,12 @@ class HapticTab(QWidget):
         spin_row.addStretch(1)
         layout.addLayout(spin_row)
         return box
+
+    def _on_loop_toggled(self, checked: bool) -> None:
+        # Turning Loop off cancels any running repeat; show the interval only
+        # while looping.
+        self._sequence_timer.stop()
+        self._period.setVisible(checked)
 
     def _make_waveform_spin(self, default: int) -> QSpinBox:
         spin = QSpinBox()
@@ -144,31 +134,22 @@ class HapticTab(QWidget):
             self._restore_led()
 
     def send(self) -> None:
-        # Any Send cancels a running sequence loop — caller picks a new command.
+        # Any Send cancels a running loop — it restarts below if Loop is on.
         self._sequence_timer.stop()
-        if self._mode == HAPTIC_MODE_ONESHOT:
-            waveforms = self._waveforms()
-            if not waveforms:
-                print("[invalid] one-shot requires at least one waveform > 0")
-                return
+        waveforms = self._waveforms()
+        if not waveforms:
+            print("[invalid] haptic requires at least one waveform > 0")
+            return
+        if self._loop.isChecked():
+            self._sequence_waveforms = tuple(waveforms)
+            self._fire_sequence_tick()
+            self._sequence_timer.start(self._period.value())
+        else:
             self._client.hwave_oneshot(*waveforms)
             if self._restore_led is not None:
                 self._restore_led()
-        elif self._mode == HAPTIC_MODE_SEQUENCE:
-            waveforms = self._waveforms()
-            if not waveforms:
-                print("[invalid] sequence requires at least one waveform > 0")
-                return
-            period_ms = self._period.value()
-            self._sequence_waveforms = tuple(waveforms)
-            self._fire_sequence_tick()
-            self._sequence_timer.start(period_ms)
-        elif self._mode == HAPTIC_MODE_ALARM:
-            # No LED restore: would overwrite firmware-managed periodic buzz
-            # state and kill the alarm. Use LED+Haptic tab to combine.
-            self._client.buzz(self._period.value())
 
     def emergency_stop(self) -> None:
-        """Called by top-level Stop All. Cancels the local sequence-loop timer
-        so the next click of Send starts fresh."""
+        """Called by the top-level Stop button. Cancels the local loop timer so
+        the next click of Send starts fresh."""
         self._sequence_timer.stop()
