@@ -2,11 +2,6 @@
 name: "potter.wand-server"
 system_type: eliko_rtls
 
-# - 1DAD
-# - 1DAC
-# - 1DA9
-# - 1DB1
-
 tracked_wand_ids:
   - 1DAE
   - 1DC6
@@ -29,11 +24,7 @@ tracked_wand_ids:
   - 1DB4
 
 wand_houses:
-  houses:
-    1DAE: GRYFFINDOR
-    1DC6: RAVENCLAW
-    1DA5: HUFFLEPUFF
-    1DB0: SLYTHERIN
+  houses: []
 
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
@@ -83,7 +74,7 @@ input:
       max_trim_fraction: 0.5
       resample_count: 48
     confusion_guard:
-      enabled: False
+      enabled: True
       margin: 0.05
     rmf:
       invert_x: True
