@@ -4,7 +4,7 @@ from gamevolt.logging._logger import Logger
 from services.models.spell_cast_result import SpellCastResult
 from services.spell_cast_reporter_base import SpellCastReporterBase
 from services.wizard_session_store import WizardSessionStore
-from show_system.show_system_controller import ShowSystemController
+from show_system.show_system import ShowSystem
 from spells.spell_cast import SpellCast
 from wizards.configuration.wand_house_lookup import WandHouseLookup
 
@@ -20,7 +20,7 @@ class LocalSpellCastReporter(SpellCastReporterBase):
         self,
         logger: Logger,
         session_store: WizardSessionStore,
-        show_system_controller: ShowSystemController,
+        show_system_controller: ShowSystem,
         wand_houses: WandHouseLookup,
     ) -> None:
         self._logger = logger

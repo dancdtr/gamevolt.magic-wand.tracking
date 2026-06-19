@@ -3,7 +3,7 @@
 
 The app's ShowSystemController sends one JSON datagram per recognised cast
 (`ShowSystemSpellCastMessage`: spell_type / quality / house, enums as names) to the
-show-system host:port configured under `show_system_controller.show_system_udp_tx`
+host:port of a destination configured under `show_system_controller.destinations`
 in appsettings.yml. Run this to prove the right data is going out.
 
 Local use: point that `host` at this machine (e.g. 127.0.0.1) and run:

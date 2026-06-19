@@ -10,7 +10,10 @@ from services.local_spell_cast_reporter import LocalSpellCastReporter
 from services.local_wand_presence_reporter import LocalWandPresenceReporter
 from services.wand_session_coordinator import WandSessionCoordinator
 from services.wizard_session_store import WizardSessionStore
-from show_system.show_system_controller import ShowSystemController
+from show_system.configuration.show_system_controller_settings import ShowSystemControllerSettings
+from show_system.no_op_show_system import NoOpShowSystem
+from show_system.show_system import ShowSystem
+from show_system.show_system_controller import ShowControlDestination, ShowSystemController
 from spells.control.wand_spell_cue_controller import WandSpellCueController
 from visualisation.wand_visualiser_factory import WandVisualiserFactory
 from gamevolt.serial.serial_transport import SerialTransport
@@ -189,14 +192,7 @@ class WandsSystemBuilder:
             server=server,
         )
 
-        show_system_udp_tx = UdpTx(logger, settings.show_system_controller.show_system_udp_tx)
-        lamp_tx = UdpTx(logger, settings=settings.show_system_controller.lamp_udp_tx)
-        show_system_controller = ShowSystemController(
-            settings=settings.show_system_controller,
-            show_system_tx=show_system_udp_tx,
-            lamp_tx=lamp_tx,
-            logger=logger,
-        )
+        show_system_controller = self._build_show_system(settings.show_system_controller)
 
         spell_cast_reporter = LocalSpellCastReporter(
             logger=logger,
@@ -222,3 +218,21 @@ class WandsSystemBuilder:
         )
 
         return WandsSystem(tracking=tracking_app, recognition=recognition_app)
+
+    def _build_show_system(self, settings: ShowSystemControllerSettings) -> ShowSystem:
+        if not settings.enabled:
+            self._logger.info("Show system disabled; spell casts will not be routed.")
+            return NoOpShowSystem()
+
+        destinations = [
+            ShowControlDestination(
+                name=dest.name,
+                tx=UdpTx(self._logger, dest.udp_tx),
+                spells=set(dest.spells),
+            )
+            for dest in settings.destinations
+        ]
+        if not destinations:
+            self._logger.warning("Show system enabled but no destinations configured; spell casts will not be routed.")
+
+        return ShowSystemController(logger=self._logger, destinations=destinations)

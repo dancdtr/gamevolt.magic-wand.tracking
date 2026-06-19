@@ -54,7 +54,7 @@ Three planes:
 | `wands_app/` | active | Main runtime. Hosts `TrackingApp` + `RecognitionApp` in one process. |
 | Eliko RTLS | external (planned) | Production sensor source. Provides position stream, IMU stream, and wand-command channel. |
 | Hub | external (planned) | Single venue-local instance. Source of truth for profiles, zone-spell bindings, scoring. Republishes events upstream and to show system. Always-on; if it's down, the experience is down. |
-| Show system | external | Lights, sound, effects. In production, fed by the hub. In development, fed directly via UDP from a development implementation of `ShowSystemReporter`. |
+| Show system | external | Lights, sound, effects. In production, fed by the hub. In development, fed directly via UDP from `ShowSystemController`, which routes each cast to the destinations (configured under `show_system_controller.destinations`) that subscribe to the spell. Set `enabled: false` to build a `NoOpShowSystem`. Spells listed under no destination warn when they fire. |
 | Cloud | external | Out of scope for this app. Hub's concern. |
 
 ---

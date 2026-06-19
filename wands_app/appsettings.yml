@@ -1,8 +1,8 @@
 ---
 name: "potter.wand-server"
 system_type: eliko_rtls
-# system_type: eliko_single_anchor
 
+# - 1DAD
 # - 1DAC
 # - 1DA9
 # - 1DB1
@@ -40,15 +40,11 @@ logging:
   minimum_level: DEBUG
 
 zones:
-  # RTLS path: inbound ActiveWandChanged presence events from the RTLS system.
   udp_receiver:
     host: "0.0.0.0"
     port: 5006
     max_size: 65556
     recv_timeout_s: 2
-
-  # One zone per spell. key = number to press in the mock UI to enter that zone.
-  # Multi-digit keys work via the timed numeric-input buffer in MockZoneControls.
   zones:
     - id: Z001
       key: 1
@@ -70,121 +66,22 @@ zones:
       spells: [LUMOS_MAXIMA, NOX]
     - id: Z007
       key: 7
-      spells: [INCENDIO, DENSAUGEO]
-
-  # zones:
-  #   - id: Z001
-  #     key: 1
-  #     spells: [REVELIO]
-  #   - id: Z002
-  #     key: 2
-  #     spells: [LOCOMOTOR]
-  #   - id: Z003
-  #     key: 3
-  #     spells: [ARRESTO_MOMENTUM]
-  #   - id: Z004
-  #     key: 4
-  #     spells: [WINGARDIUM_LEVIOSA]
-  #   - id: Z005
-  #     key: 5
-  #     spells: [METEOLOJINX]
-  #   - id: Z006
-  #     key: 6
-  #     spells: [COLOVARIA]
-  #   - id: Z007
-  #     key: 7
-  #     spells: [SLUGULUS_ERECTO]
-  #   - id: Z008
-  #     key: 8
-  #     spells: [VENTUS]
-  #   - id: Z009
-  #     key: 9
-  #     spells: [RICTUSEMPRA]
-  #   - id: Z010
-  #     key: 10
-  #     spells: [REPARO]
-  #   - id: Z011
-  #     key: 11
-  #     spells: [PIERTOTUM_LOCOMOTOR]
-  #   - id: Z012
-  #     key: 12
-  #     spells: [ALOHOMORA]
-  #   - id: Z013
-  #     key: 13
-  #     spells: [COLLOPORTUS]
-  #   - id: Z014
-  #     key: 14
-  #     spells: [SILENCIO]
-  #   - id: Z015
-  #     key: 15
-  #     spells: [INCENDIO]
-  #   - id: Z016
-  #     key: 16
-  #     spells: [INFLATUS]
-  #   - id: Z017
-  #     key: 17
-  #     spells: [IMMOBULUS]
-  #   - id: Z018
-  #     key: 18
-  #     spells: [APARECIUM]
-  #   - id: Z019
-  #     key: 19
-  #     spells: [ENGORGIO]
-  #   - id: Z020
-  #     key: 20
-  #     spells: [SWITCHING]
-  #   - id: Z021
-  #     key: 21
-  #     spells: [CANTIS]
-  #   - id: Z022
-  #     key: 22
-  #     spells: [PEPPER_BREATH]
-  #   - id: Z023
-  #     key: 23
-  #     spells: [VERA_VERTO]
-  #   - id: Z024
-  #     key: 24
-  #     spells: [DENSAUGEO]
-  #   - id: Z025
-  #     key: 25
-  #     spells: [HORN_TONGUE]
-  #   - id: Z026
-  #     key: 26
-  #     spells: [FLIPENDO]
-  #   - id: Z027
-  #     key: 27
-  #     spells: [EXPECTO_PATRONUM]
-  #   - id: Z028
-  #     key: 28
-  #     spells: [LUMOS_MAXIMA, NOX]
-  #   - id: Z029
-  #     key: 29
-  #     spells: [HERBIVICIUS]
-  #   - id: Z030
-  #     key: 30
-  #     spells: [NEBULUS]
+      spells: [INCENDIO, EXTINGUISHING]
 
 input:
   wand:
-    # Trim the straight 'approach' run from rest/centre to the glyph start (e.g. the
-    # diagonal into the base of an R) before matching + overlay. See lead_in_trimmer.py.
     lead_in_trim:
       enabled: True
       angle_deg: 40.0
       min_trim_fraction: 0.08
       max_trim_fraction: 0.5
       resample_count: 48
-    # Trim the straight 'reset' run people make returning toward rest/centre after the
-    # glyph, before pausing. Mirror of lead_in_trim, applied at the stroke tail.
     tail_trim:
       enabled: True
       angle_deg: 40.0
       min_trim_fraction: 0.08
       max_trim_fraction: 0.5
       resample_count: 48
-    # Reject a cast when an INACTIVE template matches the drawn shape better than the chosen
-    # spell (by > margin). $1 absolute scores are forgiving (a perfect LUMOS_MAXIMA scores ~67%
-    # on REVELIO), so this restores $1's ranking-based discrimination. Toggle for A/B testing.
     confusion_guard:
       enabled: False
       margin: 0.05
@@ -231,7 +128,7 @@ imu_stream:
     serial:
       # Set to the anchor's virtual COM port. On macOS look for /dev/tty.usbmodem*,
       # on Linux /dev/ttyACM*, on Windows COMn. Baud is virtual (USB CDC); value ignored.
-      port: /dev/tty.usbmodem2101
+      port: /dev/serial/by-id/usb-Eliko_LLC_Kio_Anchor_COM_Port-if00
       baud: 115200
       timeout: 1
       retry_interval: 2.0
@@ -255,7 +152,6 @@ imu_stream:
 motion:
   processor:
     speed_smoothing_alpha: 0.15
-    # Spatial deadzone — needs tuning against logged path values (see $1 log line `path=`).
     stillness_radius: 0.18
     stillness_window_ms: 130
     phase_tracker:
@@ -266,10 +162,6 @@ motion:
       min_holding_duration: 0.22
       min_stopped_duration: 0.9
 
-# Spell scoring. `bonuses` are global magnitudes; `default` is the per-spell tuning every
-# spell inherits; each `overrides` entry is a partial tuning for one spell (omit a field to
-# inherit). `thresholds`, when set on an override, REPLACES the whole tier set (a spell need
-# not have all four). See spells/settings/spell_scoring_settings.py.
 spell_scoring:
   bonuses:
     xp_per_unique_spell: 1
@@ -310,11 +202,7 @@ spell_scoring:
           MASTERED: 70
 wand_visualiser:
   is_enabled: True
-  # The single wand this visualiser follows. Other (multi-wand) modes run headless.
-  # wand_id: "1DAE"
   wand_id: 1DAC
-  # wand_id: 1DB1
-
   window:
     title: "Wand Visualiser"
     width: 1600
@@ -342,18 +230,32 @@ wand_visualiser:
     clip_to_bounds: True
     pixel_margin: 0
   snapshot:
-    # Min raw $1 match accuracy for an attempt to replace the held snapshot (noise gate).
     min_match_accuracy: 0.4
     template_colour: "#cccccc"
 
 show_system_controller:
-  show_system_udp_tx:
-    host: "192.168.1.118"
-    port: 6006
+  enabled: true
+  destinations:
+    - name: forshaw_show_system
+      udp_tx:
+        host: "192.168.1.118"
+        port: 6006
+      spells:
+        - RICTUSEMPRA
+        - ALOHOMORA
+        - COLLOPORTUS
+        - CANTIS
+        - PEPPER_BREATH
+        - INCENDIO
+        - EXTINGUISHING
 
-  lamp_udp_tx:
-    host: "192.168.1.138"
-    port: 8888
+    - name: common_room_lights
+      udp_tx:
+        host: 172.30.1.37
+        port: 6006
+      spells:
+        - LUMOS_MAXIMA
+        - NOX
 
 wand_device_controller:
   # Spell-cast LED cue: fade purple for a quality-tiered duration, then sink

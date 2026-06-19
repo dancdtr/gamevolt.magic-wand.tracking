@@ -34,3 +34,4 @@ class SpellType(StrEnum):
     HERBIVICIUS = auto()
     NEBULUS = auto()
     NOX = auto()
+    EXTINGUISHING = auto()
