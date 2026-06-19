@@ -3,7 +3,7 @@ Type=Application
 Version=1.0
 Name=Wand Tester
 Comment=Launch the wand LED/haptic GUI tester from source (uv run)
-Exec=env WANDS_ENTRY=tools/wand_tester/main.py /home/cdtr/Code/gamevolt.magic-wand.tracking/scripts/run.sh --hold
+Exec=env WANDS_ENTRY=tools/wand_tester/main.py /home/cdtr/Code/gamevolt.magic-wand.tracking/scripts/run.sh --hold --port /dev/serial/by-id/usb-Eliko_LLC_Kio_Anchor_COM_Port-if00 --dark
 Path=/home/cdtr/Code/gamevolt.magic-wand.tracking
 Terminal=true
 Categories=Utility;
