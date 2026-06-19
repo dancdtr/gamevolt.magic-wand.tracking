@@ -64,6 +64,9 @@ class TrackedWand(WandBase):
         return self._is_running
 
     def start(self) -> None:
+        if self._is_running:
+            return
+
         self._motion_processor.motion_changed.subscribe(self._on_motion_changed)
         self._stroke_windower.stroke_completed.subscribe(self._on_stroke_completed)
 

@@ -229,7 +229,7 @@ show_system_controller:
   destinations:
     - name: forshaw_show_system
       udp_tx:
-        host: "192.168.1.118"
+        host: 192.168.1.118
         port: 6006
       spells:
         - RICTUSEMPRA
