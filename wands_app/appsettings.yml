@@ -242,7 +242,7 @@ show_system_controller:
 
     - name: common_room_lights
       udp_tx:
-        host: 172.30.1.37
+        host: 172.30.3.201
         port: 6006
       spells:
         - LUMOS_MAXIMA
