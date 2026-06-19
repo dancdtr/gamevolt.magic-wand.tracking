@@ -145,7 +145,7 @@ imu_stream:
 motion:
   processor:
     speed_smoothing_alpha: 0.15
-    stillness_radius: 0.18
+    stillness_radius: 0.25
     stillness_window_ms: 130
     phase_tracker:
       speed_start: 0.50
