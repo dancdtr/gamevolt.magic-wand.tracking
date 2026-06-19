@@ -5,7 +5,17 @@ from logging import Logger
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCloseEvent, QColor, QKeyEvent, QPalette
-from PySide6.QtWidgets import QApplication, QComboBox, QHBoxLayout, QMainWindow, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from gamevolt.events.event import Event
 from spells.matching.dollar_one.template_library import templates_dir
@@ -32,7 +42,20 @@ def _key_token(event: QKeyEvent) -> str:
         return "Up"
     if event.key() == Qt.Key.Key_Down:
         return "Down"
+    if event.key() == Qt.Key.Key_Escape:
+        return "Escape"
     return event.text()
+
+
+class _NameField(QLineEdit):
+    """Name entry that lets the zone-cycle keys (Up/Down) and Escape bubble to the
+    window instead of being consumed by the line edit."""
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802 (Qt override)
+        if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Escape):
+            event.ignore()
+            return
+        super().keyPressEvent(event)
 
 
 class _MainWindow(QMainWindow):
@@ -68,6 +91,8 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._settings = settings
         self._wand_id = settings.wand_id.upper()
         self._quit: Event[Callable[[], None]] = Event()
+        self._reset_xp_requested: Event[Callable[[], None]] = Event()
+        self._record_session_changed: Event[Callable[[bool, str], None]] = Event()
         self.key_pressed: Event[Callable[[str], None]] = Event()
         self.zone_selected: Event[Callable[[str | None], None]] = Event()
         self._key_callbacks: dict[str, Callable[[], None]] = {}
@@ -85,6 +110,8 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._zone_combo = QComboBox()
         self._zone_combo.activated.connect(self._on_zone_combo_activated)
 
+        toolbar = self._build_toolbar()
+
         panes = QWidget()
         pane_layout = QHBoxLayout(panes)
         pane_layout.setContentsMargins(0, 0, 0, 0)
@@ -97,6 +124,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
         layout = QVBoxLayout(central)
         layout.setContentsMargins(6, 6, 6, 0)
         layout.setSpacing(4)
+        layout.addWidget(toolbar)
         layout.addWidget(self._zone_combo)
         layout.addWidget(panes, stretch=1)
 
@@ -115,13 +143,65 @@ class QtWandVisualiser(WandVisualiserProtocol):
     def quit(self) -> Event[Callable[[], None]]:
         return self._quit
 
+    @property
+    def reset_xp_requested(self) -> Event[Callable[[], None]]:
+        return self._reset_xp_requested
+
+    @property
+    def record_session_changed(self) -> Event[Callable[[bool, str], None]]:
+        return self._record_session_changed
+
+    # ── top toolbar ─────────────────────────────────────────────
+    def _build_toolbar(self) -> QWidget:
+        bar = QWidget()
+        row = QHBoxLayout(bar)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(6)
+
+        self._trail_toggle = QPushButton("Trail: On")
+        self._trail_toggle.setCheckable(True)
+        self._trail_toggle.setChecked(True)
+        self._trail_toggle.toggled.connect(self._on_trail_toggled)
+
+        self._reset_xp_button = QPushButton("Reset XP")
+        self._reset_xp_button.clicked.connect(self._reset_xp_requested.invoke)
+
+        self._name_field = _NameField()
+        self._name_field.setPlaceholderText("Wizard name")
+        self._name_field.textChanged.connect(self._on_name_changed)
+
+        self._record_toggle = QPushButton("Record Session")
+        self._record_toggle.setCheckable(True)
+        self._record_toggle.setEnabled(False)  # needs a name first
+        self._record_toggle.toggled.connect(self._on_record_toggled)
+
+        row.addWidget(self._trail_toggle)
+        row.addWidget(self._reset_xp_button)
+        row.addStretch(1)
+        row.addWidget(QLabel("Name:"))
+        row.addWidget(self._name_field, stretch=1)
+        row.addWidget(self._record_toggle)
+        return bar
+
+    def _on_trail_toggled(self, checked: bool) -> None:
+        self._trail_toggle.setText("Trail: On" if checked else "Trail: Off")
+        self._live.set_enabled(checked)
+
+    def _on_name_changed(self, text: str) -> None:
+        # Record can only arm once a name is present; the field locks while recording.
+        self._record_toggle.setEnabled(bool(text.strip()))
+
+    def _on_record_toggled(self, checked: bool) -> None:
+        self._record_toggle.setText("Recording…" if checked else "Record Session")
+        self._name_field.setReadOnly(checked)
+        self._record_session_changed.invoke(checked, self._name_field.text().strip())
+
     # ── WandVisualiserProtocol ──────────────────────────────────
     def start(self) -> None:
         if self._is_running:
             return
         self._is_running = True
-        self.register_key_callback("c", self.clear)
-        self.register_key_callback("q", self._on_window_closed)
+        self.register_key_callback("Escape", self._on_window_closed)
         self._window.show()
 
     def stop(self) -> None:

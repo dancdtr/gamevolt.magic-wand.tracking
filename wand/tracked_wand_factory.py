@@ -29,6 +29,10 @@ class TrackedWandFactory:
         # Shared scorer + per-player state. Keyed by wand id (wands are owned for life).
         self._scorer = SpellScorer(spell_scoring, InMemoryXpProvider(), InMemoryStreakTracker())
 
+    def reset_xp(self) -> None:
+        """Wipe accrued XP for all wands — shared scorer state."""
+        self._scorer.reset_xp()
+
     def create(self, id: str) -> TrackedWand:
         return TrackedWand(
             logger=self._logger,

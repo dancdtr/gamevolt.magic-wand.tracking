@@ -3,6 +3,7 @@ from gamevolt.logging.configuration.logging_settings import LoggingSettings
 from motion.configuration.motion_settings import MotionSettings
 from show_system.configuration.show_system_controller_settings import ShowSystemControllerSettings
 from spells.settings.spell_scoring_settings import SpellScoringSettings
+from visualisation.configuration.multi_wand_visualiser_settings import MultiWandVisualiserSettings
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from wand.configuration.input_settings import InputSettings
 from wand.configuration.wand_device_controller_settings import WandDeviceControllerSettings
@@ -23,6 +24,7 @@ class AppSettings:
     input: InputSettings
     motion: MotionSettings
     wand_visualiser: WandVisualiserSettings
+    multi_wand_visualiser: MultiWandVisualiserSettings
     spell_scoring: SpellScoringSettings
     zones: ZonesSettings
     server: WandServerSettings

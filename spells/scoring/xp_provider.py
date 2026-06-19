@@ -15,6 +15,8 @@ class XpProvider(Protocol):
 
     def record_cast(self, player_id: str, spell_label: str) -> None: ...
 
+    def reset(self) -> None: ...
+
 
 class InMemoryXpProvider:
     def __init__(self) -> None:
@@ -25,3 +27,7 @@ class InMemoryXpProvider:
 
     def record_cast(self, player_id: str, spell_label: str) -> None:
         self._cast.setdefault(player_id, set()).add(spell_label)
+
+    def reset(self) -> None:
+        """Wipe all accrued XP — dev tool, e.g. the visualiser's reset button."""
+        self._cast.clear()

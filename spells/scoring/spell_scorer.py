@@ -124,6 +124,10 @@ class SpellScorer:
         """Clear a player's fail streak — e.g. on zone exit."""
         self._streak.reset(player_id)
 
+    def reset_xp(self) -> None:
+        """Wipe all accrued XP across players — dev tool (visualiser reset button)."""
+        self._xp.reset()
+
     def _cadence_bonus(self, stroke: Stroke) -> float:
         """0..1 smoothness: low coefficient of variation of per-sample speed = even draw."""
         points = stroke.points

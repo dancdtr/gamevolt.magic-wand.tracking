@@ -15,6 +15,7 @@ from show_system.no_op_show_system import NoOpShowSystem
 from show_system.show_system import ShowSystem
 from show_system.show_system_controller import ShowControlDestination, ShowSystemController
 from spells.control.wand_spell_cue_controller import WandSpellCueController
+from visualisation.multi_wand_visualiser_factory import MultiWandVisualiserFactory
 from visualisation.wand_visualiser_factory import WandVisualiserFactory
 from gamevolt.serial.serial_transport import SerialTransport
 from gamevolt.tcp.configuration.tcp_client_settings import TcpClientSettings
@@ -64,13 +65,21 @@ class WandsSystemBuilder:
         zone_udp_receiver: UdpRx | None = None
         zone_message_handler: MessageHandler | None = None
 
-        # The single dev window: wand trail + cast snapshot + (mock) spell targets & zone controls.
-        # Built up-front so the mock zone application can share it as its zone visualiser.
-        # Spell target images are rendered from the layered SVG templates (see spell_svg_renderer).
-        wand_visualiser = WandVisualiserFactory(
-            logger=logger,
-            wand_visualiser_settings=settings.wand_visualiser,
-        ).create()
+        # RTLS shows every active wand on one shared canvas (colour-keyed by id, corner legend);
+        # the single-anchor / mock dev path keeps the single-wand window (trail + cast snapshot +
+        # spell targets & zone controls), built up-front so the mock zone app can share it as its
+        # zone visualiser. Spell target images render from the layered SVG templates.
+        if system_type is SystemType.ELIKO_RTLS:
+            wand_visualiser = MultiWandVisualiserFactory(
+                logger=logger,
+                settings=settings.multi_wand_visualiser,
+                tracked_wand_ids=settings.tracked_wand_ids,
+            ).create()
+        else:
+            wand_visualiser = WandVisualiserFactory(
+                logger=logger,
+                wand_visualiser_settings=settings.wand_visualiser,
+            ).create()
 
         if is_mock:
             zone_application = zone_application_builder.build_mock(
@@ -92,6 +101,15 @@ class WandsSystemBuilder:
             zone_application = zone_application_builder.build_production(zone_manager=production_zone_manager)
 
         zone_manager = zone_application.zone_manager
+
+        # Feed zone presence to the visualiser so it can add/remove a wand's trail + legend row.
+        # No-op on the single-wand / headless visualisers (default protocol methods).
+        def _on_visualiser_zone_enter(wand_id: str, zone_id: str) -> None:
+            zone = zone_manager.get_zone(zone_id)
+            wand_visualiser.wand_entered_zone(wand_id, zone_id, [spell.name for spell in zone.spell_types])
+
+        zone_manager.wand_entered_zone.subscribe(_on_visualiser_zone_enter)
+        zone_manager.wand_exited_zone.subscribe(lambda wand_id, zone_id: wand_visualiser.wand_exited_zone(wand_id))
 
         imu_stream_builder = WandImuStreamBuilder(logger, settings.imu_stream)
 
@@ -191,6 +209,9 @@ class WandsSystemBuilder:
             logger=logger,
             server=server,
         )
+
+        # Visualiser dev controls: reset-XP button wipes the shared scorer's XP state.
+        wand_visualiser.reset_xp_requested.subscribe(tracked_wand_factory.reset_xp)
 
         show_system_controller = self._build_show_system(settings.show_system_controller)
 
