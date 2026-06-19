@@ -9,6 +9,7 @@ from wand.configuration.wand_device_controller_settings import WandDeviceControl
 from wand.configuration.wand_server_settings import WandServerSettings
 from wand.streaming.configuration.wand_imu_stream_settings import WandImuStreamSettings
 from wands_app.configuration.system_type import SystemType
+from wizards.configuration.wand_house_lookup import WandHouseLookup
 from zones.configuration.zones_settings import ZonesSettings
 
 
@@ -17,6 +18,7 @@ class AppSettings:
     name: str
     system_type: SystemType
     tracked_wand_ids: list[str]
+    wand_houses: WandHouseLookup
     logging: LoggingSettings
     input: InputSettings
     motion: MotionSettings

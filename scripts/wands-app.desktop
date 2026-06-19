@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Magic Wand Tracking
+Comment=Launch wands_app from source (uv run)
+Exec=/home/cdtr/Code/gamevolt.magic-wand.tracking/scripts/run.sh --hold
+Path=/home/cdtr/Code/gamevolt.magic-wand.tracking
+Terminal=true
+Categories=Utility;

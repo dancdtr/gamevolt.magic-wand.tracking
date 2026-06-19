@@ -28,6 +28,13 @@ tracked_wand_ids:
   - 1DB2
   - 1DB4
 
+wand_houses:
+  houses:
+    1DAE: GRYFFINDOR
+    1DC6: RAVENCLAW
+    1DA5: HUFFLEPUFF
+    1DB0: SLYTHERIN
+
 logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
   minimum_level: DEBUG

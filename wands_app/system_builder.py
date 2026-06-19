@@ -202,6 +202,7 @@ class WandsSystemBuilder:
             logger=logger,
             session_store=wizard_session_store,
             show_system_controller=show_system_controller,
+            wand_houses=settings.wand_houses,
         )
 
         wand_spell_cue_controller = WandSpellCueController(
