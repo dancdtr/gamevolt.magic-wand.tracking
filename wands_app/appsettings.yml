@@ -58,7 +58,9 @@ zones:
     - id: Z007
       key: 7
       spells: [INCENDIO, EXTINGUISHING]
-
+    - id: Z008
+      key: 8
+      spells: [COLOVARIA, SILENCIO]
 input:
   wand:
     lead_in_trim:
@@ -247,6 +249,14 @@ show_system_controller:
       spells:
         - LUMOS_MAXIMA
         - NOX
+
+    - name: niffler_lamp
+      udp_tx:
+        host: 172.30.3.193
+        port: 6006
+      spells:
+        - COLOVARIA
+        - SILENCIO
 
 wand_device_controller:
   # Spell-cast LED cue: fade purple for a quality-tiered duration, then sink
