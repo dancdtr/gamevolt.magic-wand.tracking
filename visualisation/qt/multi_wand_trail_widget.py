@@ -40,6 +40,16 @@ class MultiWandTrailWidget(QWidget):
         self._settings = settings
         self._background = QColor(background)
         self._trails: dict[str, _WandTrail] = {}
+        # Persistent id -> colour, independent of trail lifecycle: a trail removed on
+        # zone-exit (or rebuilt by a late sample) must keep the same palette colour so it
+        # always matches the legend swatch.
+        self._colours: dict[str, tuple[QColor, QColor]] = {}
+
+    def _colour_pair(self, wand_id: str) -> tuple[QColor, QColor]:
+        return self._colours.get(
+            wand_id,
+            (QColor(self._settings.line_colour), QColor(self._settings.head_colour)),
+        )
 
     def _new_trail(self, colour: QColor, head_colour: QColor) -> _WandTrail:
         return _WandTrail(
@@ -49,15 +59,18 @@ class MultiWandTrailWidget(QWidget):
         )
 
     def set_colour(self, wand_id: str, colour: str) -> None:
-        """Pre-register a wand's trail colour so it's stable from its first sample."""
+        """Register a wand's trail colour. Always overwrites, and recolours a live trail so
+        the canvas and legend never diverge."""
         c = QColor(colour)
-        self._trails.setdefault(wand_id, self._new_trail(c, c.lighter(150)))
+        self._colours[wand_id] = (c, c.lighter(150))
+        trail = self._trails.get(wand_id)
+        if trail is not None:
+            trail.colour, trail.head_colour = c, c.lighter(150)
 
     def add_delta(self, wand_id: str, x_delta: float, y_delta: float) -> None:
         trail = self._trails.get(wand_id)
         if trail is None:
-            # Unpalettable wand (more wands than colours / not pre-registered): fall back.
-            trail = self._new_trail(QColor(self._settings.line_colour), QColor(self._settings.head_colour))
+            trail = self._new_trail(*self._colour_pair(wand_id))
             self._trails[wand_id] = trail
 
         trail.x += x_delta

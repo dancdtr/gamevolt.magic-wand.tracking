@@ -68,6 +68,10 @@ class QtMultiWandVisualiser(WandVisualiserProtocol):
         self._reset_xp_requested: Event[Callable[[], None]] = Event()
         self._record_session_changed: Event[Callable[[bool, str], None]] = Event()
         self._key_callbacks: dict[str, Callable[[], None]] = {}
+        # Wands currently in a zone (= legend rows). Trails are gated to this set so the
+        # canvas never shows a wand the legend doesn't, even though the IMU stream keeps
+        # emitting rotations for wands that aren't in play.
+        self._active: set[str] = set()
 
         # Stable id -> colour assignment, palette wrapped over the tracked wands.
         palette = settings.palette or [settings.trail.line_colour]
@@ -164,7 +168,10 @@ class QtMultiWandVisualiser(WandVisualiserProtocol):
         self._key_callbacks.pop(key, None)
 
     def add_rotation(self, wand_position: WandRotation) -> None:
-        self._canvas.add_delta(wand_position.id.upper(), wand_position.x_delta, wand_position.y_delta)
+        wand_id = wand_position.id.upper()
+        if wand_id not in self._active:
+            return  # not in a zone — don't draw a trail the legend won't list
+        self._canvas.add_delta(wand_id, wand_position.x_delta, wand_position.y_delta)
 
     def reset_trail(self, wand_id: str) -> None:
         # Per-stroke clear: the wand settled, so wipe its accrued stroke but keep its slot.
@@ -179,12 +186,14 @@ class QtMultiWandVisualiser(WandVisualiserProtocol):
     # ── zone hooks (wired from the zone manager by the builder) ──
     def wand_entered_zone(self, wand_id: str, zone_id: str, spell_labels: list[str]) -> None:
         wand_id = wand_id.upper()
+        self._active.add(wand_id)
         self._canvas.set_colour(wand_id, self._colour_for(wand_id))
         self._legend.upsert(wand_id, self._colour_for(wand_id), zone_id, spell_labels)
         self._repaint_under_legend()
 
     def wand_exited_zone(self, wand_id: str) -> None:
         wand_id = wand_id.upper()
+        self._active.discard(wand_id)
         self._canvas.remove(wand_id)
         self._legend.remove(wand_id)
         self._repaint_under_legend()

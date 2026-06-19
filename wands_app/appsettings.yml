@@ -236,15 +236,27 @@ wand_visualiser:
 
 multi_wand_visualiser:
   is_enabled: True
-  palette:
-    - "#ff3b30" # red
-    - "#ffd60a" # yellow
-    - "#34c759" # green
-    - "#ff2d95" # magenta
-    - "#00e5ff" # cyan
-    - "#ff9500" # orange
-    - "#0a84ff" # blue
-    - "#bf5af2" # purple
+  palette:   # 20 distinct hues (golden-angle spacing) so consecutively-assigned wands differ most
+    - "#ff3838" # red
+    - "#38ff72" # green
+    - "#ac38ff" # violet
+    - "#ffe638" # yellow
+    - "#38ddff" # cyan
+    - "#ff38a3" # pink
+    - "#69ff38" # lime
+    - "#4038ff" # blue
+    - "#ff7a38" # orange
+    - "#38ffb4" # mint
+    - "#ee38ff" # magenta
+    - "#d5ff38" # chartreuse
+    - "#389bff" # azure
+    - "#ff3861" # rose
+    - "#38ff49" # emerald
+    - "#8338ff" # indigo
+    - "#ffbd38" # amber
+    - "#38fff7" # turquoise
+    - "#ff38cc" # fuchsia
+    - "#92ff38" # spring green
   window:
     title: "RTLS Wand Visualiser"
     width: 1280
@@ -260,13 +272,13 @@ multi_wand_visualiser:
     max_points: 256
     draw_points: False
     smooth: False
-    line_colour: "#ff3b30"
+    line_colour: "#ff3838"
     fade: False
     tail_alpha: 0.0
     glow: False
     glow_width: 8
     gradient: False
-    head_colour: "#ff3b30"
+    head_colour: "#ff3838"
     coords_mode: "centred"
     y_up: True
     clip_to_bounds: True
