@@ -231,12 +231,15 @@ wand_visualiser:
 # block's line_colour/head_colour are only a fallback for wands beyond the palette length.
 multi_wand_visualiser:
   is_enabled: True
-  palette:
-    - "#ff6f61"  # coral
-    - "#4dd0e1"  # cyan
-    - "#ffd166"  # amber
-    - "#a78bfa"  # violet
-    - "#7ee787"  # green
+  palette:                # distinct hues; only one yellow, kept last
+    - "#ff3b30"  # red
+    - "#00e5ff"  # cyan
+    - "#34c759"  # green
+    - "#ff2d95"  # magenta
+    - "#ff9500"  # orange
+    - "#0a84ff"  # blue
+    - "#bf5af2"  # purple
+    - "#ffd60a"  # yellow
   window:
     title: "RTLS Wand Visualiser"
     width: 1280
@@ -244,21 +247,21 @@ multi_wand_visualiser:
     background_colour: "#1a1a1a"
     panel_colour: "#161616"
     text_colour: "#dddddd"
-  trail:
+  trail:                   # comet effect off: plain polylines, cheap on the pi with many wands
     scale: 0.2
     render_scale: 2.0
     line_width: 3
     point_radius: 2
     max_points: 256
-    draw_points: True
-    smooth: True
-    line_colour: "#ff6f61"
-    fade: True
+    draw_points: False
+    smooth: False
+    line_colour: "#ff3b30"
+    fade: False
     tail_alpha: 0.0
-    glow: True
+    glow: False
     glow_width: 8
-    gradient: True
-    head_colour: "#ffd166"
+    gradient: False
+    head_colour: "#ff3b30"
     coords_mode: "centred"
     y_up: True
     clip_to_bounds: True
