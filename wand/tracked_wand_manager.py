@@ -128,7 +128,11 @@ class TrackedWandManager:
         wand.on_rotation_raw_updated(raw)
 
     def _on_wand_entered_zone(self, wand_id: str, zone_id: str) -> None:
-        wand = self._get_wand(wand_id)
+        wand = self._tracked_wands.get(wand_id)
+        if wand is None:
+            self._logger.warning(f"Ignoring zone enter for untracked wand ({wand_id}) into zone ({zone_id}).")
+            return
+
         zone = self._zone_manager.get_zone(zone_id)
 
         wand.set_spell_targets(zone.spell_types)
@@ -137,7 +141,10 @@ class TrackedWandManager:
         self._wand_device_controller.activate_wand(wand.id)
 
     def _on_wand_exited_zone(self, wand_id: str, zone_id: str) -> None:
-        wand = self._get_wand(wand_id)
+        wand = self._tracked_wands.get(wand_id)
+        if wand is None:
+            self._logger.warning(f"Ignoring zone exit for untracked wand ({wand_id}) from zone ({zone_id}).")
+            return
 
         wand.stop()
         wand.clear_spell_target()
@@ -153,10 +160,3 @@ class TrackedWandManager:
 
     def _on_wand_forward_reset(self, wand_id: str) -> None:
         self.wand_forward_reset.invoke(wand_id)
-
-    def _get_wand(self, id: str) -> TrackedWand:
-        wand = self._tracked_wands.get(id)
-        if wand is None:
-            raise KeyError(f"No wand with ID: ({id})!")
-
-        return wand
