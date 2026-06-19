@@ -16,6 +16,10 @@ class UdpTx:
 
         self._sequence_id = 0
 
+    @property
+    def address(self) -> tuple[str, int]:
+        return self._settings.address
+
     def send(self, payload: dict[str, Any]) -> None:
         data = json.dumps(payload, separators=(",", ":")).encode("utf-8")
         self.send_bytes(data)

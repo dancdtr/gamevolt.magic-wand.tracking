@@ -45,8 +45,10 @@ class ShowSystemController:
         payload = message.to_dict()
 
         for destination in targets:
+            host, port = destination.tx.address
             self._logger.info(
-                f"Notifying '{destination.name}' to play '{spell_type.name}' for quality '{quality.name}', house: '{house.name}'..."
+                f"Notifying '{destination.name}' ({host}:{port}) to play '{spell_type.name}' "
+                f"for quality '{quality.name}', house: '{house.name}'..."
             )
             destination.tx.send(payload)
 
