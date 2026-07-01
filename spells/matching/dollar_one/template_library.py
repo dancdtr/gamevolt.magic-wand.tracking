@@ -13,6 +13,11 @@ from spells.matching.dollar_one.dollar_one_recognizer import DollarOneRecognizer
 from spells.matching.dollar_one.svg_template_loader import load_svg_points
 
 
+# Template files are named `spell_template_<spell_name>.svg`; the spell label is the
+# remainder after this prefix.
+_FILENAME_PREFIX = "spell_template_"
+
+
 def templates_dir() -> Path:
     # spells/matching/dollar_one/template_library.py -> parents[2] == spells/
     return Path(__file__).resolve().parents[2] / "templates"
@@ -29,16 +34,17 @@ def load_default_library(
     directory = templates_dir()
     templates: list[PathTemplate] = []
 
-    for svg in sorted(directory.glob("*.svg")):
-        label = svg.stem.upper()
+    for svg in sorted(directory.glob(f"{_FILENAME_PREFIX}*.svg")):
+        label = svg.stem[len(_FILENAME_PREFIX):].upper()
         if allowed_labels is not None and label not in allowed_labels:
             logger.info(f"$1 template skipped (no zone): {label} ({svg.name})")
             continue
         try:
-            points = load_svg_points(svg)
-        except Exception as exc:  # malformed SVG should not kill startup
-            logger.warning(f"$1: failed to load template {svg.name}: {exc}")
-            continue
+            points = load_svg_points(svg, logger=logger)
+        except Exception as exc:
+            # Fail loud: a broken template degrades the cast experience. Fix the SVG
+            # or exclude the spell knowingly via zone mapping (allowed_labels).
+            raise ValueError(f"$1: invalid template {svg.name}: {exc}") from exc
         templates.append(PathTemplate(label=label, points=prepare(points, n)))
         logger.info(f"$1 template loaded: {label} ({svg.name})")
 

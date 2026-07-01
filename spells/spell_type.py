@@ -7,6 +7,7 @@ class SpellType(StrEnum):
     LOCOMOTOR = auto()
     ARRESTO_MOMENTUM = auto()
     WINGARDIUM_LEVIOSA = auto()
+    ABERTO = auto()
     METEOLOJINX = auto()
     COLOVARIA = auto()
     SLUGULUS_ERECTO = auto()

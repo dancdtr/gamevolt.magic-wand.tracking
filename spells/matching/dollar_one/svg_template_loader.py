@@ -1,49 +1,78 @@
 """Load a layered spell SVG as an ordered point list for use as a $1 template.
 
-Expected layer convention (Illustrator: Object IDs = Layer Names):
-  - `gesture`  : the template <path>. Its `d` defines the geometry.
-  - `origin`   : a marker (circle) at the canonical gesture START. Optional.
-  - `arrows`   : UI-only direction art. Ignored here.
+Required layer convention (Illustrator: Object IDs = Layer Names):
+  - `gesture_path`   : the true centreline geometry. MUST be a single open <path>;
+                       its `d` defines the sampled curve fed to $1. This is what the
+                       recognizer matches against — never the visual stroke.
+  - `gesture_visual` : the prettied stroke shown to the user (may use a width
+                       profile / be a filled outline). UX-only, ignored here.
+  - `origin`         : marker at the canonical gesture START. Required.
+  - `end_arrow`      : marker at the canonical gesture END. Required. Also drawn in
+                       the spell result visualiser.
+  - `mid_arrows`     : decorative direction hints. UX-only, ignored here.
+  - `bg`             : editor-only backdrop. Ignored here.
 
-The path's `d` order *would* define cast direction (M = start), but Illustrator
-exports paths in either direction. When an `origin` marker is present we orient
-the sampled points so they START at the endpoint nearest the marker — so a
-reversed export self-corrects and no per-file fixing is needed.
+A width-profiled or filled `gesture_visual` exports as an *outline* (down one edge,
+back the other) — a there-and-back that $1 cannot match. `gesture_path` exists to
+carry the clean centreline instead; keep it an open, unstroked-outline path.
+
+A layered SVG that is missing `origin`, missing `end_arrow`, or whose `gesture_path`
+is not exactly one <path> is *invalid* and raises `ValueError` — a broken
+template silently degrades the cast experience, so we fail loud and force the
+author to fix it (or exclude the spell knowingly upstream).
+
+Illustrator exports paths in either direction, so `d` order is not trustworthy.
+We orient the sampled points using both markers: points START nearest `origin`
+and END nearest `end_arrow`. Marker/geometry disagreements are warned, not fatal.
 
 SVG y grows downward; wand forward-vector y grows upward, so we flip y on import
-(both the path samples and the origin marker, keeping them in one space).
+(path samples and both markers, keeping them in one space).
 """
 
 from __future__ import annotations
 
 import math
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from svgpathtools import parse_path
 
+from gamevolt.logging import Logger
+
 Point = tuple[float, float]
 
-# Layer-id keywords (substring, case-insensitive). `gesture` also matches `gestures`.
-_GESTURE_KEY = "gesture"
+# Layer-id keywords (substring, case-insensitive). `gesture_path` deliberately does
+# not match the UI-only `gesture_visual`; `mid_arrows` does not match `end_arrow`.
+_GESTURE_KEY = "gesture_path"
 _ORIGIN_KEY = "origin"
+_END_KEY = "end_arrow"
+
+# Moveto commands split a `d` into subpaths; $1 expects one continuous stroke.
+_MOVETO = re.compile(r"[Mm]")
 
 
-def load_svg_points(svg_path: Path, samples: int = 256) -> list[Point]:
-    """Sample the gesture path evenly by arc length, oriented by the origin marker."""
+def load_svg_points(svg_path: Path, samples: int = 256, logger: Logger | None = None) -> list[Point]:
+    """Sample the gesture path evenly by arc length, oriented by origin + end_arrow.
+
+    Raises `ValueError` if the template is invalid (no origin, no end_arrow, or a
+    gesture that is not a single <path>). Malformed-but-usable geometry is warned.
+    """
     root = ET.parse(str(svg_path)).getroot()
 
-    d = _gesture_d(root)
-    if d is None:
-        raise ValueError(f"no gesture <path> found in {svg_path}")
+    d = _gesture_d(root)  # raises if gesture layer is missing or not a single path
+    origin = _marker_point(root, _ORIGIN_KEY)
+    if origin is None:
+        raise ValueError("missing required `origin` marker")
+    end = _marker_point(root, _END_KEY)
+    if end is None:
+        raise ValueError("missing required `end_arrow` marker")
 
-    points = _sample(parse_path(d), samples)
+    path = parse_path(d)
+    _warn_if_malformed(path, d, logger)
 
-    origin = _origin_point(root)
-    if origin is not None and len(points) >= 2:
-        if math.dist(points[-1], origin) < math.dist(points[0], origin):
-            points.reverse()
-
+    points = _sample(path, samples)
+    _orient(points, origin, end, logger)
     return points
 
 
@@ -61,6 +90,35 @@ def _sample(path, samples: int) -> list[Point]:
     return points
 
 
+def _orient(points: list[Point], origin: Point, end: Point, logger: Logger | None) -> None:
+    """Reverse `points` in place so they start nearest `origin`, end nearest `end_arrow`."""
+    if len(points) < 2:
+        return
+
+    start_pt, end_pt = points[0], points[-1]
+    forward = math.dist(start_pt, origin) + math.dist(end_pt, end)
+    reverse = math.dist(end_pt, origin) + math.dist(start_pt, end)
+    if reverse < forward:
+        points.reverse()
+
+    # After best-fit orientation the origin should still sit nearer the start and
+    # end_arrow nearer the finish; if not, the markers likely disagree with the path.
+    s, e = points[0], points[-1]
+    if math.dist(s, origin) > math.dist(e, origin) or math.dist(e, end) > math.dist(s, end):
+        if logger is not None:
+            logger.warning("$1: origin/end_arrow markers are inconsistent with the gesture endpoints")
+
+
+def _warn_if_malformed(path, d: str, logger: Logger | None) -> None:
+    """Warn about geometry that $1 may mismatch on, without failing the load."""
+    if logger is None:
+        return
+    if path.length() <= 0:
+        logger.warning("$1: gesture path has zero length")
+    if len(_MOVETO.findall(d)) > 1:
+        logger.warning("$1: gesture has multiple subpaths; $1 expects a single continuous stroke")
+
+
 def _local(tag: str) -> str:
     """Strip XML namespace: '{http://...}path' -> 'path'."""
     return tag.rsplit("}", 1)[-1]
@@ -70,6 +128,14 @@ def _groups(root: ET.Element):
     for el in root.iter():
         if _local(el.tag) == "g":
             yield el
+
+
+def _layer(root: ET.Element, key: str) -> ET.Element | None:
+    """First <g> whose id contains `key` (case-insensitive)."""
+    for g in _groups(root):
+        if key in (g.get("id") or "").lower():
+            return g
+    return None
 
 
 def _element_d(el: ET.Element) -> str | None:
@@ -97,26 +163,40 @@ def _first_geometry_d(el: ET.Element) -> str | None:
     return None
 
 
-def _gesture_d(root: ET.Element) -> str | None:
-    """`d` of the gesture-layer geometry; fall back to the first geometry anywhere."""
-    for g in _groups(root):
-        if _GESTURE_KEY in (g.get("id") or "").lower():
-            d = _first_geometry_d(g)
-            if d:
-                return d
-    return _first_geometry_d(root)  # back-compat: un-layered single-shape templates
+def _gesture_d(root: ET.Element) -> str:
+    """`d` of the `gesture_path` layer's single <path>. Raises if absent or not one path."""
+    layer = _layer(root, _GESTURE_KEY)
+    if layer is None:
+        raise ValueError("missing required `gesture_path` layer")
+
+    paths = [el for el in layer.iter() if _local(el.tag) == "path"]
+    non_path = [el for el in layer.iter() if _local(el.tag) in ("polyline", "polygon", "line")]
+    if len(paths) != 1 or non_path:
+        raise ValueError(f"`gesture_path` must be a single <path> (found {len(paths)} paths, {len(non_path)} other shapes)")
+
+    d = paths[0].get("d")
+    if not d:
+        raise ValueError("`gesture_path` <path> has no `d` geometry")
+    return d
 
 
-def _origin_point(root: ET.Element) -> Point | None:
-    """Origin marker as a y-flipped point, or None if no origin layer/marker."""
-    for g in _groups(root):
-        if _ORIGIN_KEY not in (g.get("id") or "").lower():
-            continue
-        for el in g.iter():
-            tag = _local(el.tag)
-            if tag in ("circle", "ellipse"):
-                return (float(el.get("cx", 0.0)), -float(el.get("cy", 0.0)))
-            if tag == "path":
-                z = parse_path(el.get("d", "")).point(0.0)
-                return (z.real, -z.imag)
+def _marker_point(root: ET.Element, key: str) -> Point | None:
+    """Representative y-flipped point for a marker layer, or None if the layer is absent.
+
+    Circle/ellipse -> centre; any other geometry -> bounding-box centre (stable for
+    an arbitrary arrow glyph, unlike a single path vertex).
+    """
+    layer = _layer(root, key)
+    if layer is None:
+        return None
+
+    for el in layer.iter():
+        tag = _local(el.tag)
+        if tag in ("circle", "ellipse"):
+            return (float(el.get("cx", 0.0)), -float(el.get("cy", 0.0)))
+
+    d = _first_geometry_d(layer)
+    if d:
+        xmin, xmax, ymin, ymax = parse_path(d).bbox()
+        return ((xmin + xmax) / 2.0, -(ymin + ymax) / 2.0)
     return None

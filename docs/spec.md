@@ -222,15 +222,24 @@ was **removed** and replaced by a **$1 unistroke recogniser** plus a decoupled s
    shape-mismatches while leaving accurate traces high, so the `min_match_accuracy` gate finally
    bites. Direction is preserved (so $1, not $P/$Q). Candidates are restricted to the
    **zone-active spell set** (`set_spell_targets`); scoring all 38 would cross-match.
-4. **Templates** are authored as **layered SVGs** (`spells/templates/<spell>.svg`, filename =
-   `SpellType` name lowercased). Layers by `id`: `gesture` (the template path — sampled by arc
-   length, y-flipped), `origin` (a circle marking the canonical cast **start**), `arrows`
-   (UI-only direction art). The loader (`svg_template_loader`) orients sampled points to start at
-   the endpoint nearest the `origin` marker, so a path exported in reverse self-corrects — no
-   per-file fixing. The same SVG is the **single source of truth for the UI target image** too:
-   `spell_svg_renderer` renders gesture+arrows+origin (ink forced black, white background) to a
-   QPixmap at any resolution. The old per-spell PNGs + `SpellImageProvider` are **retired**. Add
-   a spell = drop in one layered SVG.
+4. **Templates** are authored as **layered SVGs** (`spells/templates/spell_template_<spell>.svg`,
+   name after the `spell_template_` prefix = `SpellType` name lowercased). Layers by `id`:
+   `gesture_path` (the true **centreline** open path — sampled by arc length, y-flipped, fed to
+   $1), `gesture_visual` (the prettied UI stroke, may use a width profile / be a filled outline —
+   never sampled), `origin` (a marker at the canonical cast **start**), `end_arrow` (a marker at
+   the cast **end**), `mid_arrows` (UI-only direction art), `bg` (editor-only backdrop). Splitting
+   `gesture_path` from `gesture_visual` matters because a width-profiled/filled visual exports as
+   an *outline* (down one edge, back the other) — a there-and-back $1 can't match; the centreline
+   carries the clean geometry. The loader (`svg_template_loader`) **validates** each template and
+   **raises** if `origin`/`end_arrow` are missing or `gesture_path` isn't a single `<path>` (a
+   broken template degrades casting — fail loud; exclude a spell knowingly via zone mapping). It
+   orients sampled points to start nearest `origin` and end nearest `end_arrow`, so a reversed
+   export self-corrects, and warns on malformed geometry (zero length, multiple subpaths, markers
+   inconsistent with endpoints). The same SVG is the **single source of truth for the UI target
+   image** too: `spell_svg_renderer` renders `gesture_visual` + `mid_arrows` + `origin` +
+   `end_arrow` (hiding `gesture_path` + `bg`; ink forced black, white background) to a QPixmap at
+   any resolution. The old per-spell PNGs + `SpellImageProvider` are **retired**. Add a spell =
+   drop in one layered SVG.
 
 ### 6.2 Scoring (`spells/scoring/` + `spells/settings/`)
 
@@ -319,7 +328,7 @@ Don't add new cross-app coupling that isn't on this list without flagging it.
 | `wands_app/` | Entry point, app composition, settings, `TrackingApp`, `RecognitionApp`, `WandsSystem`, `WandsSystemBuilder`. |
 | `wand/` | Wand-side primitives: `WandServer`, `TrackedWandManager`, `WandClient`, sensor stream (`streaming/`), interpreters, device controller. |
 | `motion/` | Motion phase tracking (`MotionProcessor`, `MotionPhaseTracker`) + stroke windowing (`stroke/StrokeWindower`) + lead-in trimming (`stroke/lead_in_trimmer`). |
-| `spells/` | $1 recogniser (`matching/dollar_one/`, incl. `svg_template_loader`), layered SVG templates (`templates/` — `gesture`/`origin`/`arrows` layers), scorer (`scoring/`), per-spell settings (`settings/`), `SpellCast`, cue + presentation controllers. |
+| `spells/` | $1 recogniser (`matching/dollar_one/`, incl. `svg_template_loader`), layered SVG templates (`templates/` — `gesture_path`/`gesture_visual`/`origin`/`end_arrow`/`mid_arrows`/`bg` layers), scorer (`scoring/`), per-spell settings (`settings/`), `SpellCast`, cue + presentation controllers. |
 | `zones/` | Zone manager, zone application, mock controls, visualisation. |
 | `services/` | Profile, presence reporter, spell-cast reporter, session store, session coordinator. (These are the proto-hub implementations.) |
 | `recording/` | `SessionRecorder` + `CastImageRenderer` protocol + settings. Writes per-session dirs (recognised casts, raw rotation stream, snapshot images) driven by the visualiser's record toggle. |

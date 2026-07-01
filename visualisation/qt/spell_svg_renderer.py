@@ -4,14 +4,17 @@ Replaces the per-spell PNGs: one layered SVG is the single source of truth for
 both recognizer geometry (see svg_template_loader) and this UI art. Crisp at any
 resolution, no PNG maintenance.
 
-All three layers are drawn: `gesture`, `arrows`, and the `origin` marker (so the
-cast start is visible). Template ink is forced to black and drawn on a white
-background so it always reads clearly regardless of the source SVG colours.
+The user-facing target image draws the prettied `gesture_visual` stroke plus the
+`mid_arrows`, `origin` and `end_arrow` markers. The `gesture_path` centreline (a
+duplicate of the visual, meant only for the recognizer) and the `bg` editor
+backdrop are hidden. Template ink is forced to black on a white background so it
+always reads clearly regardless of the source SVG colours.
 """
 
 from __future__ import annotations
 
 import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from PySide6.QtCore import QByteArray, QRectF, Qt
@@ -20,24 +23,49 @@ from PySide6.QtSvg import QSvgRenderer
 
 from spells.spell_type import SpellType
 
+# Template files are named `spell_template_<spell_name>.svg` (see template_library).
+_FILENAME_PREFIX = "spell_template_"
+
+# Layer ids never drawn in the UI: the recognizer-only centreline and the
+# editor-only dark backdrop.
+_UI_HIDDEN_LAYERS = frozenset({"gesture_path", "bg"})
+
+_SVG_NS = "http://www.w3.org/2000/svg"
+
 # Any explicit hex colour -> black. `fill:none` (no hex) is left untouched, so
 # the gesture stroke stays an outline rather than a filled blob.
 _HEX_COLOUR = re.compile(r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b")
 
 
-def _svg_black(svg_path: Path) -> bytes:
-    """SVG bytes with every explicit colour recoloured black."""
-    text = svg_path.read_text(encoding="utf-8")
+def _local(tag: str) -> str:
+    """Strip XML namespace: '{http://...}g' -> 'g'."""
+    return tag.rsplit("}", 1)[-1]
+
+
+def _svg_black(svg_path: Path, hidden_layers: frozenset[str]) -> bytes:
+    """SVG bytes with `hidden_layers` groups removed and every colour recoloured black."""
+    ET.register_namespace("", _SVG_NS)  # serialise <g>, not <ns0:g>
+    root = ET.parse(str(svg_path)).getroot()
+
+    for group in [el for el in root if _local(el.tag) == "g" and (el.get("id") or "").lower() in hidden_layers]:
+        root.remove(group)
+
+    text = ET.tostring(root, encoding="unicode")
     return _HEX_COLOUR.sub("#000", text).encode("utf-8")
 
 
-def render_spell_pixmap(svg_path: Path, size: int, bg_colour: str | None = None) -> QPixmap:
+def render_spell_pixmap(
+    svg_path: Path,
+    size: int,
+    bg_colour: str | None = None,
+    hidden_layers: frozenset[str] = _UI_HIDDEN_LAYERS,
+) -> QPixmap:
     """Render a spell SVG (black ink) into a `size`x`size` QPixmap.
 
-    `bg_colour` fills the background; None leaves it transparent. The SVG is
-    aspect-fit and centred (templates use a square 300x300 viewBox).
+    `bg_colour` fills the background; None leaves it transparent. `hidden_layers`
+    are dropped before rendering. The SVG is aspect-fit and centred.
     """
-    renderer = QSvgRenderer(QByteArray(_svg_black(svg_path)))
+    renderer = QSvgRenderer(QByteArray(_svg_black(svg_path, hidden_layers)))
 
     pixmap = QPixmap(size, size)
     pixmap.fill(QColor(bg_colour) if bg_colour else Qt.GlobalColor.transparent)
@@ -59,12 +87,12 @@ def render_spell_pixmap(svg_path: Path, size: int, bg_colour: str | None = None)
 
 
 def render_spell_library(templates_dir: Path, size: int, bg_colour: str | None = None) -> dict[SpellType, QPixmap]:
-    """Render every SpellType that has a `<name>.svg` template into a QPixmap."""
+    """Render every SpellType with a `spell_template_<name>.svg` template into a QPixmap."""
     out: dict[SpellType, QPixmap] = {}
     for spell in SpellType:
         if spell is SpellType.NONE:
             continue
-        svg = templates_dir / f"{spell.name.lower()}.svg"
+        svg = templates_dir / f"{_FILENAME_PREFIX}{spell.name.lower()}.svg"
         if svg.exists():
             out[spell] = render_spell_pixmap(svg, size, bg_colour)
     return out
