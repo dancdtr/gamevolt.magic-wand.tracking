@@ -9,8 +9,8 @@ from wand.streaming.eliko.pekio_client import Colour
 DEFAULT_PORT = "/dev/tty.usbmodem2101"
 DEFAULT_BAUD = 115200
 
-# Edit to add/remove known wand tags.
 WAND_TAGS: list[str] = [
+    "0x1DAD",
     "0x1DAE",
     "0x1DC6",
     "0x1DA5",
@@ -30,7 +30,6 @@ WAND_TAGS: list[str] = [
     "0x1DAB",
     "0x1D65",
     "0x1DAC",
-    "0x1DAD",
     "0x1DB2",
 ]
 

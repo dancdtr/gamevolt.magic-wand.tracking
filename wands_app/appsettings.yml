@@ -51,13 +51,13 @@ zones:
       spells: [] #spellbook
     - id: Z005
       key: 5
-      spells: [PEPPER_BREATH]
+      spells: [PEPPER_BREATH_HEX]
     - id: Z006
       key: 6
-      spells: [LUMOS_MAXIMA, NOX]
+      spells: [LUMOS, NOX]
     - id: Z007
       key: 7
-      spells: [INCENDIO, EXTINGUISHING]
+      spells: [INCENDIO, EXTINGUISHING_SPELL]
     - id: Z008
       key: 8
       spells: [COLOVARIA, SILENCIO]
@@ -178,7 +178,7 @@ spell_scoring:
       MASTERED: 90
   # overrides: []
   overrides:
-    - spell: LUMOS_MAXIMA
+    - spell: LUMOS
       tuning:
         thresholds:
           RUDIMENTARY: 75
@@ -296,16 +296,16 @@ show_system_controller:
         - ALOHOMORA
         - COLLOPORTUS
         - CANTIS
-        - PEPPER_BREATH
+        - PEPPER_BREATH_HEX
         - INCENDIO
-        - EXTINGUISHING
+        - EXTINGUISHING_SPELL
 
     - name: common_room_lights
       udp_tx:
         host: 172.30.3.201
         port: 6006
       spells:
-        - LUMOS_MAXIMA
+        - LUMOS
         - NOX
 
     - name: niffler_lamp

@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 from gamevolt.events.event import Event
 from spells.matching.dollar_one.template_library import templates_dir
 from spells.scoring.cast_attempt import CastAttempt
+from spells.spell_info import load_spell_info
 from spells.spell_type import SpellType
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from visualisation.qt.live_trail_widget import LiveTrailWidget
@@ -117,7 +118,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
 
         self._targets = SpellTargetsWidget(pixmaps, settings.window.panel_colour, settings.window.text_colour)
         self._live = LiveTrailWidget(settings.trail, settings.window.background_colour)
-        self._snapshot = SnapshotWidget(settings)
+        self._snapshot = SnapshotWidget(settings, load_spell_info(logger))
 
         self._zone_combo = QComboBox()
         self._zone_combo.activated.connect(self._on_zone_combo_activated)

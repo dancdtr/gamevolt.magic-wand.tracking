@@ -1,0 +1,1673 @@
+# Static spell lore — reference copy shown in the visualiser, decoupled from
+# scoring/appsettings. Keyed by SpellType value (lower-case enum name; the same
+# key the gesture templates use: spell_template_<key>.svg).
+#
+# All fields optional: missing spells / missing fields degrade gracefully in the
+# UI (they are UX-only, never affect a cast). See spells/spell_info.py.
+#
+# display_name defaults to the title-cased key when omitted; set it only to
+# override (e.g. multi-word or unusual capitalisation).
+#
+# Auto-extracted from SpellsPrimer_05.01.22.pdf, both sections (with/without known
+# incantations), keyed to the gesture-template filenames (scratchpad/extract_v2.py).
+
+aberto:
+  nickname: The Opening Charm
+  description: Opens objects
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: ah-BARE-toh
+  notable_uses: Queenie Goldstein tries to open Percival Graves's office after Alohomora fails
+  source: Fantastic Beasts and Where to Find Them (screenplay)
+accio:
+  nickname: The Summoning Charm
+  description: Summons desired objects (either in or out of eyesight) to the spellcaster
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: AH-key-oh
+  notable_uses: Harry summons his Firebolt from the castle during the First Task of the Triwizard Tournament
+  source: Harry Potter and the Goblet of Fire (book)
+age_line_spell:
+  description: Creates a thin, golden line that determines access to a certain object or place by age
+  classification: Spell
+  difficulty: Advanced
+  notable_uses: Dumbledore places an Age Line around the Goblet of Fire to prevent students under seventeen from attempting to enter the Triwizard Tournament
+  source: Fantastic Beasts and Where to Find Them / Harry Potter and the Goblet of Fire (book)
+aguamenti:
+  nickname: The Water-Conjuring Charm
+  description: Conjures clean, drinkable water from the end of the wand
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: AH-gwah-MEN-tee
+  notable_uses: Hermione extinguishes Mundungus Fletcher's eyebrows after Harry accidentally ignites them with red sparks
+  source: Harry Potter and the Deathly Hallows (book)
+alarte_ascendare:
+  nickname: The Vaulting Charm
+  description: Rapidly throws the target high into the air
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: ah-LAAR-tay ah-SEN-dar-ay
+  notable_uses: During the Duelling Club, Gilderoy Lockhart throws a snake high into the air
+  source: Harry Potter and the Chamber of Secrets (film)
+alohomora:
+  nickname: The Unlocking Charm
+  description: Unlocks objects
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: ah-LOH-ho-MOR-ah
+  notable_uses: Hermione unlocks the door to the forbidden 3rd floor corridor to hide from Argus Filch
+  source: Harry Potter and the Philosopher's Stone (book)
+anapneo:
+  nickname: The Dislodging Charm
+  description: A healing charm that clears the target's airway
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: ah-NAP-nee-oh
+  notable_uses: Professor Slughorn assists a choking Marcus Belby
+  source: Harry Potter and the Half-Blood Prince (book)
+anteoculatia:
+  nickname: The Antler Hex
+  description: Sprouts antlers from the top of the target's head
+  classification: Hex
+  difficulty: Intermediate
+  pronunciation: an-tee-oh-kyoo-LAY-shee-ah
+  notable_uses: Pansy Parkinson was hit with this hex due to her involvement in the Inquisitorial Squad
+  source: Harry Potter and the Order of the Phoenix (book)
+anti_alohomora_charm:
+  description: Magically protects a lock from being opened by Alohomora
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: N/A (Used in Games)
+  source: "Harry Potter: Hogwarts Mystery (video game)"
+anti_apparation_jinx:
+  description: An enchantment that prevents Apparation/Disapparation within a designated area
+  classification: Jinx
+  difficulty: Advanced
+  notable_uses: Dumbledore contains several escaped Death Eaters in the Death Chamber following the battle at the Ministry of Magic
+  source: Harry Potter and the Order of the Phoenix (book)
+anti_cheating_charm:
+  description: Prevents cheating on bewitched objects
+  classification: Charm
+  difficulty: Advanced
+  notable_uses: Hogwarts First Years were given special, bewitched quills during their final exams
+  source: Harry Potter and the Philosophers Stone (book)
+aparecium:
+  nickname: The Revealing Charm
+  description: Reveals invisible ink and messages hidden by magical means
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: AH-par-EH-see-um
+  notable_uses: Hermione unsuccessfully tries to reveal the contents of Tom Riddle's diary
+  source: Harry Potter and the Chamber of Secrets (book)
+appare_vestigium:
+  nickname: The Tracking Spell
+  description: Illuminates recent tracks of magical activity in the area
+  classification: Spell
+  difficulty: Advanced
+  pronunciation: ah-PAR-ay ves-TEE-jee-um
+  notable_uses: Newt Scamander uses this to investigate what happened to Tina in Place Cachée
+  source: "Fantastic Beasts: The Crimes of Grindelwald (screenplay)"
+arania_exumai:
+  nickname: The Spider-Banishing Charm
+  description: A non-explosive spell used for blasting spiders away
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: ah-RAHN-ee-ah EX-oo-may
+  notable_uses: Used by Harry to blast Acromantulas out of the way
+  source: Harry Potter and the Chamber of Secrets (film)
+arresto_momentum:
+  nickname: The Braking Charm
+  description: Stops or slows-down the target
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: ah-REST-oh moh-MEN-tum
+  notable_uses: Used by Dumbeldore to save a falling Quidditch player
+  source: Harry Potter and the Prisoner of Azkaban (film)
+arrow_shooting_spell:
+  description: Shoots arrows from the tip of the wand
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: Fans of the Appleby Arrows would celebrate with this spell, until one pierced a referee through the nose
+  source: Quiditch Through The Ages (book)
+ascendio:
+  nickname: The Ascension Charm
+  description: Lifts the target high into the air
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: ah-SEN-dee-oh
+  notable_uses: Used by Harry in the Triwizard Tournament after being attacked by grindylows
+  source: Harry Potter and the Goblet of Fire (film)
+avada_kedavra:
+  nickname: The Killing Curse
+  description: Causes the instantaneous, painless death of the target - one of the three Unforgivable Curses
+  classification: Curse
+  difficulty: Advanced
+  pronunciation: ah-VAH-DA ke-DAH-vra
+  notable_uses: Wormtail kills Cedric Diggory
+  source: Harry Potter and the Goblet of Fire (book)
+avenseguim:
+  nickname: The Tracking Charm
+  description: Enchants objects to point and return to their last owner
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: ah-ven-SEH-gwim
+  notable_uses: Newt charms a feather to lead to Yusuf Kama
+  source: "Fantastic Beasts: The Crimes of Grindelwald (screenplay)"
+avifors:
+  nickname: The Objects-To-Birds Spell
+  description: Transfigures small objects into birds
+  classification: Spell
+  difficulty: Beginner
+  pronunciation: AH-vi-fors
+  notable_uses: N/A (Created by JKR for Games)
+  source: Harry Potter and the Philosopher's Stone (video game)
+avis:
+  nickname: The Bird-Conjuring Charm
+  description: Conjures a small flock of birds from the end of the caster's wand
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: AH-viss
+  notable_uses: Mr. Ollivander conjures birds to test Viktor Krum's wand ahead of the Triwizard Tournament
+  source: Harry Potter and the Goblet of Fire (book)
+babbling_curse:
+  description: A curse that makes the victim babble ceaselessly
+  classification: Curse
+  difficulty: Intermediate
+  notable_uses: Gilderoy Lockhart boasts he cured a Transylvanian villager of this curse
+  source: Harry Potter and the Chamber of Secrets (book)
+banishing_charm:
+  description: Sends objects away from the caster (acts as a counter-charm to Accio)
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Professor Flitwick teaches this charm to his 4th year students
+  source: Harry Potter and the Goblet of Fire (book)
+bat_bogey_hex:
+  description: Causes bogies to take flight (in the form of bats) and attack the target
+  classification: Hex
+  difficulty: Intermediate
+  notable_uses: Ginny uses this hex on Draco to escape Umbridge's office
+  source: Harry Potter and the Order of the Phoenix (book)
+bedazzling_hex:
+  description: Causes confusion to the observer, making the object of the hex appear invisible
+  classification: Hex
+  difficulty: Advanced
+  notable_uses: Per Xenophilius Lovegood, can be placed on an ordinary travelling cloak to conceal the wearer
+  source: Harry Potter and the Deathly Hallows (book)
+bee_sting_jinx:
+  description: Causes the target's skin to become swollen, pink and shiny, like a bee-sting
+  classification: Jinx
+  difficulty: Intermediate
+  notable_uses: Hermione uses this spell to disguise Harry's appearance from Death Eaters
+  source: Harry Potter and the Deathly Hallows (book)
+beetle_to_button_spell:
+  description: Transfigures a beetle into a button
+  classification: Spell
+  difficulty: Beginner
+  notable_uses: Minerva McGonagall assigns her second year students to mastering this spell
+  source: Harry Potter and the Chamber of Secrets (book)
+blackboard_writing_spell:
+  description: Makes words appear instantaneously on a blackboard
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: Dolores Umbridge uses this spell to begin her Defence Against the Dark Arts lesson
+  source: Harry Potter and the Order of the Phoenix (book)
+blocking_barrier_charm:
+  description: Blocks an entrance way
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Dobby uses this to seal-shut the gateway into platform 9 3/4 so Harry and Ron can't get through
+  source: Harry Potter and the Chamber of Secrets (book)
+blue_fire_spell:
+  description: Conjures blue flames that can be carried around in a container
+  classification: Spell
+  difficulty: Beginner
+  notable_uses: Hermione conjures these flames and carries them around in a jam jar
+  source: Harry Potter and the Philosopher's Stone (book)
+blue_sparks_spell:
+  description: Conjures a jet of blue sparks from the tip of the caster's wand
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: Described by Ginny Weasley in the 2014 Quidditch World Cup
+  source: Pottermore
+bombarda:
+  nickname: The Bombardment Spell
+  description: Creates small explosions or blasts
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: bom-BAR-dah
+  notable_uses: Used by Hermione to liberate Sirius Black
+  source: Harry Potter and the Prisoner of Azkaban (film)
+bowling_ball_to_balloon_spell:
+  description: Transfigures a bowling ball into a balloon
+  classification: Spell
+  difficulty: Beginner
+  notable_uses: N/A (Used in Games)
+  source: "Harry Potter: Hogwarts Mystery (video game)"
+brachiabindo:
+  nickname: The Limb-Binding Jinx
+  description: Used to bind an opponent
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: brah-kee-ah-BIN-do
+  notable_uses: Harry uses this jinx on Draco in their duel in Harry's kitchen
+  source: Harry Potter and the Cursed Child (stage play)
+braking_charm:
+  description: Allows the target to stop quickly
+  classification: Charm
+  difficulty: Advanced
+  notable_uses: Harry's Firebolt comes with an unbreakable braking charm
+  source: Harry Potter and the Prisoner of Azkaban (book)
+bubble_head_charm:
+  description: Conjures a bubble around the head of the caster which supplies fresh air (allows for breathing underwater)
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Fleur Delacour and Cedric Diggory perform the charm on themselves in the second task of the Triwizard Tournament
+  source: Harry Potter and the Goblet of Fire (book)
+calvorio:
+  nickname: The Balding Hex
+  description: Causes the target to lose their hair
+  classification: Hex
+  difficulty: Advanced
+  pronunciation: kahl-VOR-ee-o
+  notable_uses: Mentioned in a book Harry saw at Flourish & Blotts
+  source: Harry Potter and the Philosopher's Stone (book)
+cantis:
+  nickname: The Singing Charm
+  description: Bewitches the target to sing
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: KAN-tis
+  notable_uses: At Christmas, the suits of armour had all been bewitched to sing carols whenever anyone passed them
+  source: Harry Potter and the Philosopher's Stone (book)
+capacious_extremis:
+  nickname: The Undetectable Extension Charm
+  description: Increases the interior dimensions of objects while leaving the outer ones unchanged (also renders the contents lighter)
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: ca-PAY-shus ex-TREHM-us
+  notable_uses: Newt Scamander extends his briefcase to encompass many rooms for his magical creatures
+  source: Fantastic Beasts and Where to Find Them (screenplay)
+carpe_retractum:
+  nickname: The Seize-And-Pull Charm
+  description: Creates a magical, retractable rope of light that can be used to pull objects closer
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: KAR-pay reh-TRACK-tum
+  notable_uses: N/A (Used in Games)
+  source: Harry Potter and the Prisoner of Azkaban (video game)
+cascading_jinx:
+  description: A spell used to attack multiple targets who are positioned close together
+  classification: Jinx
+  difficulty: Intermediate
+  notable_uses: N/A (Used in Games)
+  source: Harry Potter and the Deathly Hallows (video game)
+caterwauling_charm:
+  description: If triggered, sets off an alarm that sounds like a scream
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Harry, Ron and Hermione set off the Caterwauling Charm cast over Hogsmeade when they Apparate into the village after curfew
+  source: Harry Potter and the Deathly Hallows (book)
+cauldrons_to_bass_guitars_spell:
+  description: Transfigures a cauldron into a bass guitar
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: N/A (Used in Games)
+  source: "Harry Potter: Hogwarts Mystery (video game)"
+cauldrons_to_cabbages_spell:
+  description: Transfigures a cauldron into a cabbage
+  classification: Spell
+  difficulty: Beginner
+  notable_uses: N/A (Used in Games)
+  source: "Harry Potter: Hogwarts Mystery (video game)"
+cave_inimicum:
+  nickname: The Shield Charm
+  description: Creates a magical, protective boundary unbenownst to those outside the barrier
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: KAH-vay ih-NIM-ih-kuhm
+  notable_uses: Hermione casts protective enchantments around their camp to shield herself, Harry and Ron from Death Eaters
+  source: Harry Potter and the Deathly Hallows (book)
+cheering_charm:
+  description: Leaves the target with a feeling of great contentment
+  classification: Charm
+  difficulty: Beginner
+  notable_uses: In their third-year exams, Harry overdoes his Cheering Charm leaving Ron in fits of hysterical laughter
+  source: Harry Potter and the Prisoner of Azkaban (book)
+cistem_aperio:
+  nickname: The Box-Blasting Charm
+  description: Blasts open a trunk or a box
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: SIS-tem ah-PAIR-ee-oh
+  notable_uses: Tom Riddle blasts open Hagrid's trunk containing Aragog in their 5th year
+  source: Harry Potter and the Chamber of Secrets (film)
+colloportus:
+  nickname: The Locking Charm
+  description: Locks and seals objects
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: koh-low-POR-tus
+  notable_uses: Harry, Hermione, Neville and Luna seal the doors behind them as they're being chased through the Department of Mysteries
+  source: Harry Potter and the Order of the Phoenix (book)
+colloshoo:
+  nickname: The Stickfast Jinx
+  description: Sticks the target's shoes to the ground
+  classification: Jinx
+  difficulty: Beginner
+  pronunciation: kawl-OH—shoo
+  notable_uses: N/A (Written for Pottermore)
+  source: Pottermore
+colovaria:
+  nickname: The Colour-Changing Charm
+  description: Changes the colour of the target
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: ko-loh-VA-ree-ah
+  notable_uses: In the Charms O.W.L. exam, fifth-years are required to turn a rat orange
+  source: Harry Potter and the Order of the Phoenix (book)
+concealment_charm:
+  description: "Obscures objects from view and hides their magical properties (Note: can be uncovered via Secrecy Sensors)"
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Argus Filch uses Secrecy Sensors to detect if concealed Dark objects are being smuggled into the castle
+  source: Harry Potter and the Half-Blood Prince (book)
+confringo:
+  nickname: The Blasting Curse
+  description: Causes an explosion at the target
+  classification: Curse
+  difficulty: Intermediate
+  pronunciation: con-FRING-oh
+  notable_uses: Harry causes the sidecar of Sirius Black's flying motorbike to explode, blasting a pursuing Death Eater off his broom
+  source: Harry Potter and the Deathly Hallows (book)
+confundo:
+  nickname: The Confundus Charm
+  description: Causes the target to be confused or bewitches a sentient being
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: con-FUN-doe
+  notable_uses: Hermione confounds Cormac McLaggen to miss a goal during Quidditch Trials
+  source: Harry Potter and the Half-Blood Prince (book)
+conjunctivitis_curse:
+  description: Hinders the vision of the target
+  classification: Curse
+  difficulty: Advanced
+  notable_uses: Madame Maxime uses this curse against two giants to rescue Hagrid
+  source: Harry Potter and the Order of the Phoenix (book)
+cornflake_skin_jinx:
+  description: Causes the target's skin to look like it is covered in cornflakes
+  classification: Jinx
+  difficulty: Intermediate
+  notable_uses: As a prank, someone jinxed Cassius Warrington with this spell
+  source: Harry Potter and the Order of the Phoenix (book)
+crucio:
+  nickname: The Cruciatus Curse
+  description: Inflicts intense, excruciating pain on the target - one of the three Unforgivable Curses
+  classification: Curse
+  difficulty: Advanced
+  pronunciation: KROO-see-oh
+  notable_uses: Voldemort attacks Harry with the Cruciatus Curse twice during their battle in the Little Hangleton graveyard
+  source: Harry Potter and the Goblet of Fire (book)
+defodio:
+  nickname: The Gouging Spell
+  description: Enables the caster to carve through earth and stone with ease
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: deh-FOH-dee-oh
+  notable_uses: Hermione helps the Gringotts dragon escape by carving out the ceiling to enlarge the passageway
+  source: Harry Potter and the Deathly Hallows (book)
+deletrius:
+  nickname: The Eradication Spell
+  description: Disintegrates or removes the target
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: de-LEE-tree-us
+  notable_uses: Amos Diggory removes the shadow of the Dark Mark conjured from Harry's wand by the spell Priori Incantato
+  source: Harry Potter and the Goblet of Fire (book)
+densaugeo:
+  nickname: The Teeth-Enlarging Hex
+  description: Elongates the target's teeth at an alarming rate
+  classification: Hex
+  difficulty: Intermediate
+  pronunciation: den-SAUW-gee-oh
+  notable_uses: Hermione is hit with this hex and her two front teeth grow down past her collar by the time she leaves to go to the Hospital Wing
+  source: Harry Potter and the Goblet of Fire (book)
+deprimo:
+  nickname: The Detonation Spell
+  description: Blasts a hole through the target
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: deh-PREEM-oh
+  notable_uses: Hermione blasts a hole in the floor of the Lovegoods' sitting room to escape
+  source: Harry Potter and the Deathly Hallows (book)
+depulso:
+  nickname: The Banishing Charm
+  description: Forces the target away from the caster (opposite of the Summoning Charm)
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: de-PUHL-so
+  notable_uses: While learning the charm, Neville accidentally sends Professor Flitwick flying across the room
+  source: Harry Potter and the Goblet of Fire (book)
+descendo:
+  nickname: The Descending Charm
+  description: Causes the target to move downwards
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: deh-SEN-doh
+  notable_uses: Ron lowers the ladder to the Burrow's attic
+  source: Harry Potter and the Deathly Hallows (book)
+diffindo:
+  nickname: The Severing Charm
+  description: Cuts or tears through objects
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: dih-FINN-doe
+  notable_uses: Harry creates a tear in Cedric's bag to talk to him
+  source: Harry Potter and the Goblet of Fire (book)
+diminuendo:
+  nickname: The Shrinking Charm
+  description: Forces the target to shrink
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: dih-min-you-EN-doh
+  notable_uses: Performed in a Dumbledore's Army meeting
+  source: Harry Potter and the Order of the Phoenix (film)
+disillusionment_charm:
+  description: Conceals a person or place, allowing them to blend in with their surroundings (particularly useful in cases where alternatives, such as an Invisibility Cloak, are unreliable, given factors like the weather)
+  classification: Charm
+  difficulty: Advanced
+  notable_uses: When Alastor Moody casts this on Harry, he takes on the exact colour and texture of the kitchen unit behind him
+  source: Harry Potter and the Order of the Phoenix (book)
+dissendium:
+  nickname: The One-Eyed Witch Spell
+  description: Opens the hump of the One-Eyed Witch statue in Hogwarts to gain access to Hogsmeade
+  classification: Spell
+  difficulty: Beginner
+  pronunciation: dih-SEN-dee-uhm
+  notable_uses: Harry uses it to open the statue of the hump-backed witch
+  source: Harry Potter and the Prisoner of Azkaban (book)
+drought_charm:
+  description: Dries up puddles and ponds, but not powerful enough to drain large bodies of water (e.g. a lake)
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Ron comes across this spell in a book while helping Harry with the second task of the Triwizard Tournament
+  source: Harry Potter and the Goblet of Fire (book)
+duro:
+  nickname: The Object-To-Stone Spell
+  description: Transfigures objects into stone
+  classification: Spell
+  difficulty: Advanced
+  pronunciation: DOO-row
+  notable_uses: Hermione turns a tapestry into stone after being chased behind it by Death Eaters
+  source: Harry Potter and the Deathly Hallows (book)
+ear_shrivelling_curse:
+  description: Causes the target's ears to shrivel up
+  classification: Curse
+  difficulty: Intermediate
+  notable_uses: Bill Weasley's Brazilian pen-friend sent him a cursed hat that made his ears shrivel-up when Bill said he couldn't visit them
+  source: Harry Potter and the Goblet of Fire (book)
+ebublio:
+  nickname: The Bubble Jinx
+  description: Entraps a target within a large bubble
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: ee-BUB-lee-oh
+  notable_uses: N/A (Used in Games)
+  source: "Harry Potter: Wizards Unite (video game)"
+emancipare:
+  nickname: The Limb-Release Counter-Jinx
+  description: Releases the target from binding (counter-jinx to Brachiabindo)
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: eh-man-see-PAR-eh
+  notable_uses: Draco releases the binds cast on him by Harry in their kitchen duel
+  source: Harry Potter and the Cursed Child (stage play)
+engorgio:
+  nickname: The Engorgement Charm
+  description: Causes the target to swell immensely
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: en-GOR-jee-oh
+  notable_uses: Alastor Moody enlarges spiders on which to demonstrate the three Unforgivable Curses
+  source: Harry Potter and the Goblet of Fire (book)
+entomorphis:
+  nickname: The Insect Hex
+  description: Induces insect-like qualities on the target
+  classification: Hex
+  difficulty: Intermediate
+  pronunciation: en-toe-MOR-fiss
+  notable_uses: Harry contemplated using this spell against Dudley
+  source: Harry Potter and the Goblet of Fire (book)
+entrail_expelling_curse:
+  description: Causes the target's entrails to be expelled from their body
+  classification: Curse
+  difficulty: Advanced
+  notable_uses: Harry sees a description of this on a portrait of the creator, Urquhart Rackharrow
+  source: Harry Potter and the Order of the Phoenix (book)
+episkey:
+  nickname: The First-Aid Spell
+  description: Heals relatively minor injuries - the target feels a very hot, then very cold sensation
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: ee-PIS-key
+  notable_uses: Tonks mends Harry's broken nose
+  source: Harry Potter and the Half-Blood Prince (book)
+eructo:
+  nickname: The Tentpole Charm
+  description: Causes a tent to construct itself
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: eh-RECK-toe
+  notable_uses: Hermione makes their tent construct itself while she, Harry and Ron are on the run
+  source: Harry Potter and the Deathly Hallows (book)
+evanesco:
+  nickname: The Vanishing Spell
+  description: Makes the contents of the target vanish (easier than Conjuring Spells)
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: ee-va-NES-koh
+  notable_uses: Snape vanishes the contents of Harry's cauldron during an unsuccessful Potions lesson
+  source: Harry Potter and the Order of the Phoenix (book)
+everte_statum:
+  nickname: The Fly-Back Jinx
+  description: Causes the opponent to fly back several feet
+  classification: Jinx
+  difficulty: Beginner
+  pronunciation: ee-VER-tay STAH-tum
+  notable_uses: Draco used this jinx against Harry in the Duelling Club
+  source: Harry Potter and the Chamber of Secrets (film)
+expecto_patronum:
+  nickname: The Patronus Charm
+  description: "Conjures, through the power of a very happy memory, a positive force that acts as a protective magical guardian (NOTE: A corporeal Patronus is the most difficult to produce and takes the form of an animal that has the deepest affinity to the caster)"
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: eck-SPEK-toe pah-TROH-nuhm
+  notable_uses: Harry casts his stag Patronus to rescue himself, Hermione & Sirius from Dementors by the Black Lake
+  source: Harry Potter and the Prisoner of Azkaban (book)
+expelliarmus:
+  nickname: The Disarming Charm
+  description: Removes an object from the target's grasp
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: eck-SPELL-ee-AR-muss
+  notable_uses: Harry's signature move, he teaches Dumbledore's Army how to disarm at their first meeting
+  source: Harry Potter and the Order of the Phoenix (book)
+expulso:
+  nickname: The Expulsion Spell
+  description: Blows up the target
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: eck-SPUHL-soh
+  notable_uses: A Death Eater blows up a table and the force of the explosion throws Harry into a wall
+  source: Harry Potter and the Deathly Hallows (book)
+extinguishing_spell:
+  description: Puts out fires
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: Mentioned by Charlie Weasley in preparation for the Triwizard Tournament Dragon task
+  source: Harry Potter and the Goblet of Fire (book)
+featherlight_charm:
+  description: Makes heavy objects much lighter
+  classification: Charm
+  difficulty: Beginner
+  notable_uses: Harry considered using this spell to run-away from Privet Drive
+  source: Harry Potter and the Prisoner of Azkaban (book)
+felifors:
+  nickname: The Cats-To-Cauldrons Spell
+  description: Transfigures a cat into a cauldron
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: feh-LEE-fores
+  notable_uses: N/A (Used in Games)
+  source: "Harry Potter: Hogwarts Mystery (video game)"
+ferula:
+  nickname: The Bandage Spell
+  description: Conjures bandages which wraps a broken bone and straps it to a splint
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: feh-ROOL-ah
+  notable_uses: Professor Lupin bandages Ron's broken leg in the Shrieking Shack
+  source: Harry Potter and the Prisoner of Azkaban (book)
+fianto_duri:
+  nickname: The Hardening Charm
+  description: Increases the endurance of other shield or protective charms
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: fee-AN-toh DOO-ree
+  notable_uses: Used to protect castle defences at the Battle of Hogwarts
+  source: Harry Potter and the Deathly Hallows (film)
+fidelius_charm:
+  description: Conceals a secret inside a single, living person known as the Secret Keeper. The information is unknowable unless the Secret Keeper divulges it
+  classification: Charm
+  difficulty: Advanced
+  notable_uses: Peter Pettigrew was Secret Keeper for James and Lily Potter, but betrayed them by divulging their whereabouts to Voldemort
+  source: Harry Potter and the Prisoner of Azkaban (book)
+finestra:
+  nickname: The Shattering Spell
+  description: Shatters glass into dust
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: fih-NES-truh
+  notable_uses: Newt Scamander shatters a glass window at a jewellery store to get to his niffler
+  source: Fantastic Beasts and Where to Find Them (screenplay)
+finite:
+  nickname: The General Counter-Spell
+  description: Terminates most spell effects (also "Finite Incantatem")
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: fih-NEE-tay
+  notable_uses: Snape lifts the Dancing Feet Spell Draco casts on Harry during the Duelling Club
+  source: Harry Potter and the Chamber of Secrets (book)
+flagrante:
+  nickname: The Burning Curse
+  description: Causes objects to burn any person who touches them
+  classification: Curse
+  difficulty: Advanced
+  pronunciation: flah-GRAHN-tay
+  notable_uses: Everything in the Lestrange's Gringotts vault is cursed to burn the holder
+  source: Harry Potter and the Deathly Hallows (book)
+flagrate:
+  nickname: The Drawing Spell
+  description: Causes a fiery red trail to be produced by the caster's wand which can be used to temporarily mark objects or draw shapes in mid-air
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: flah-GRAH-tay
+  notable_uses: Hermione draws a fiery 'X' to mark the doors in the Department of Mysteries that they have already tried
+  source: Harry Potter and the Order of the Phoenix (book)
+flame_freezing_charm:
+  description: Reduces the effects of flames to a gentle, tickling sensation
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: In A History of Magic, Bathilda Bagshot notes that medieval witches such as Wendelin the Weird used this charm to protect themselves from witch-burning Muggles
+  source: Harry Potter and the Prisoner of Azkaban (book)
+flintifors:
+  nickname: The Animals-To-Matchboxes Spell
+  description: Transfigures a small animal into a matchbox
+  classification: Spell
+  difficulty: Beginner
+  pronunciation: FLIN-tih-fors
+  notable_uses: N/A (Created by JKR for Games)
+  source: Harry Potter and the Philosophers Stone (video game)
+flipendo:
+  nickname: The Knockback Jinx
+  description: Sends the target twirling through the air
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: fli-PEN-doh
+  notable_uses: Harry is sent twirling through the air by Draco during their duel in the Potters' kitchen
+  source: Harry Potter and the Cursed Child (book)
+flobberworm_to_fritter_spell:
+  description: Transfigures a flobberworm into a fritter
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: N/A (Used in Games)
+  source: "Harry Potter: Hogwarts Mystery (video game)"
+flying_charm:
+  description: Used on objects to allow them to fly
+  classification: Charm
+  difficulty: Advanced
+  notable_uses: Draco Malfoy ridicules Ron's broom, questioning why anyone would want to use this charm on it
+  source: Harry Potter and the Order of the Phoenix (book)
+force_spell:
+  description: Produces a powerful force of magic intended to weaken, but not kill, the target
+  classification: Spell
+  difficulty: Advanced
+  notable_uses: Albus Dumbledore uses this against Voldemort in their duel in the Atrium of the British Ministry of Magic
+  source: Harry Potter and the Order of the Phoenix (book)
+fulgari:
+  nickname: The Cuff Jinx
+  description: Binds opponent's hands in luminous cords
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: full-GHAR-ee
+  notable_uses: Delphi binds Scorpius and Albus Severus' hands as they discover her dark secret
+  source: Harry Potter and the Cursed Child (book)
+fumos:
+  nickname: The Smoke Spell
+  description: Conjures a cloud of smoke
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: FEW-mohws
+  notable_uses: N/A (Created by JKR for Games)
+  source: Harry Potter and the Chamber of Secrets (video game)
+furnunculus:
+  nickname: The Pimple Jinx
+  description: Produces great, ugly boils on the surface of the target
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: fer-NUN-kyoo-luss
+  notable_uses: Harry accidentally hits Goyle in the face with this spell during a duel with Draco, causing his face to erupt in boils
+  source: Harry Potter and the Goblet of Fire (book)
+geminio:
+  nickname: The Duplication Charm
+  description: Creates an exact replica of the target
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: jeh-MIH-nee-oh
+  notable_uses: Hermione duplicates Slytherin's Locket to take the real one from Dolores Umbridge
+  source: Harry Potter and the Deathly Hallows (book)
+gemino:
+  nickname: The Duplication Curse
+  description: Causes objects to multiply when touched
+  classification: Curse
+  difficulty: Advanced
+  pronunciation: jeh-MIH-noh
+  notable_uses: The treasure in the Lestrange's vault is cursed to multiply when touched, meaning to crush any intruders to death by the weight of the expanding gold
+  source: Harry Potter and the Deathly Hallows (book)
+glacius:
+  nickname: The Ice Jinx
+  description: Fires an icing blast from a wand, freezing the target in ice
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: GLAY-see-us
+  notable_uses: N/A (Created by JKR for Games)
+  source: Harry Potter and the Prisoner of Azkaban (video game)
+glisseo:
+  nickname: The Sliding Spell
+  description: Flattens stairs into a chute
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: glih-SAY-oh
+  notable_uses: Hermione turns a staircase into a chute to quickly escape from Death Eaters
+  source: Harry Potter and the Deathly Hallows (book)
+golden_bubble_producing_charm:
+  description: Conjures golden bubbles from the end of the caster's wand
+  classification: Charm
+  difficulty: Advanced
+  notable_uses: Professor Flitwick blossoms golden bubbles out of his wand to decorate a Christmas Tree
+  source: Harry Potter and the Philosopher's Stone (book)
+gripping_charm:
+  description: Makes an object easier to grip
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: This charm is placed on Quaffles to make them easier to hold one-handed during Quidditch
+  source: Quidditch Through The Ages (book)
+hair_thickening_growing_charm:
+  description: Causes the target's hair to grow longer and thicker very quickly
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Alicia Spinnet was reportedly jinxed with this spell whilst working in the library, causing her eyebrows to grow thick & fast
+  source: Harry Potter and the Order of the Phoenix (book)
+harmonia_nectere_passus:
+  nickname: Repair Spell
+  description: Used to repair a Vanishing Cabinet
+  classification: Spell
+  difficulty: Advanced
+  pronunciation: har-MOH-nee-ah neck-TEH-ray PASS-us
+  notable_uses: Draco Malfoy used this spell to repair the Vanishing Cabinets between the Room of Requirement & Borgin and Burkes
+  source: Harry Potter and the Half-Blood Prince (film)
+herbivicus:
+  nickname: The Gardening Charm
+  description: Rapidly increases the growth rate of plants and causes flowers to bloom
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: her-BIV-ih-kuss
+  notable_uses: N/A (Created for Games)
+  source: Harry Potter and the Goblet of Fire (video game)
+homonculus_charm:
+  description: Tracks the movements of people on a map
+  classification: Charm
+  difficulty: Advanced
+  notable_uses: Enables the possessor of the Marauder's Map to track every person in the Hogwarts castle
+  source: Pottermore ("The Marauders Map")
+horn_tongue_hex:
+  description: Presumably gives the target a horn for a tongue or a horn on the end of their tongue
+  classification: Hex
+  difficulty: Intermediate
+  notable_uses: Mentioned as part of Basic Hexes for the Busy and Vexed
+  source: Harry Potter and the Goblet of Fire (book)
+hot_air_charm:
+  description: Emits hot air from the tip of the caster's wand
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Hermoine uses this charm to dry-off her robes
+  source: Harry Potter and the Order of the Phoenix (book)
+hotron_keitch_braking_charm:
+  description: Allows broomriders to stop more precisely and not overshoot goals or fly offside in Quidditch
+  classification: Charm
+  difficulty: Advanced
+  notable_uses: Mentioned in Quidditch Through the Ages
+  source: Quidditch Through the Ages (book)
+hour_reversal_charm:
+  description: An unstable charm that allows the caster to go back in time (traditionally, going back more than 5 hours could prove fatal)
+  classification: Charm
+  difficulty: Advanced
+  notable_uses: Known for being contained within Time-Turners
+  source: Pottermore ("Time Turners")
+hover_charm:
+  description: Makes objects hover
+  classification: Charm
+  difficulty: Beginner
+  notable_uses: Used by Dobby to make Aunt Petunia's pudding float, then drop in the Dursleys' kitchen
+  source: Harry Potter and the Chamber of Secrets (book)
+hurling_hex:
+  description: Hurls the target from the hexed object
+  classification: Hex
+  difficulty: Advanced
+  notable_uses: Professor Flitwick believes Harry's Firebolt might be carrying this hex
+  source: Harry Potter and the Prisoner of Azkaban (book)
+immobulus:
+  nickname: The Freezing Charm
+  description: Immobilises the target
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: ih-MOH-byoo-luhs
+  notable_uses: Hermione immobilises two of the pixies released by Professor Lockhart and stuffs them back into their cage
+  source: Harry Potter and the Chamber of Secrets (book)
+impedimenta:
+  nickname: The Impediment Jinx
+  description: Freezes an attacker for a few moments or stops a magical beast in its tracks
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: im-ped-ih-MEN-tah
+  notable_uses: Harry freezes an enormous Blast-Ended Skrewt during the third task of the Triwizard Tournament
+  source: Harry Potter and the Goblet of Fire (book)
+imperio:
+  nickname: The Imperius Curse
+  description: "Places the target completely under the caster's control - one of the three Unforgivable Curses (Note: A person with exceptional strength of will is capable of resisting it)"
+  classification: Curse
+  difficulty: Advanced
+  pronunciation: im-PEER-ee-oh
+  notable_uses: Corban Yaxely places Pius Thicknesse under this curse to act as Voldemort's puppet Minister for Magic
+  source: Harry Potter and the Deathly Hallows (book)
+imperturbable_charm:
+  description: Creates an invisible barrier around the target, so other objects can't touch it
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Mrs. Weasley charms her kitchen door to stop Fred and George using their Extendable Ears to listen to the Order of the Phoenix's confidential conversations
+  source: Harry Potter and the Order of the Phoenix (book)
+impervius:
+  nickname: The Impervius Charm
+  description: Makes a surface impervious to moisture
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: im-PURR-vee-uhs
+  notable_uses: Hermione makes Harry's glasses repel water before a rainy Quidditch match
+  source: Harry Potter and the Prisoner of Azkaban (book)
+inanimatus_conjurus:
+  nickname: The General Conjuring Spell
+  description: Used to conjure inanimate objects out of thin air
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: in-an-ih-MAY-tus CON-jur-us
+  notable_uses: Professor McGonagall instructs her 5th Year Students on this spell
+  source: Harry Potter and the Order of the Phoenix (book)
+incarcerous:
+  nickname: The Binding Jinx
+  description: Wraps the target tightly in ropes
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: in-KAR-sur-us
+  notable_uses: Umbridge ties up the centaur Magorian in the Forbidden Forest
+  source: Harry Potter and the Order of the Phoenix (book)
+incendio:
+  nickname: The Fire-Making Spell
+  description: Conjures flames
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: in-SEND-dee-oh
+  notable_uses: Mr. Weasley conjures flames in the Dursleys' fireplace
+  source: Harry Potter and the Goblet of Fire (book)
+inflamarae:
+  nickname: The Ignition Spell
+  description: Used to ignite the target (by a small fireball)
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: in-flah-MAR-ay
+  notable_uses: Hermione catches the hem of Snape's cloak on fire during a Quidditch Match
+  source: Harry Potter and the Philosopher's Stone (film)
+inflatus:
+  nickname: The Inflating Charm
+  description: Used to increase the size of an object by inflating it - even to the point of explosion
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: in-FLAY-tus
+  notable_uses: N/A (Used in Games)
+  source: Harry Potter and the Prisoner of Azkaban (video game)
+instant_scalping_hex:
+  description: Scalps the target
+  classification: Hex
+  difficulty: Intermediate
+  notable_uses: Mentioned as part of Basic Hexes for the Busy and Vexed
+  source: Harry Potter and the Goblet of Fire (book)
+jelly_jinx:
+  description: Turns the surface of the target into a sticky, jelly-like substance
+  classification: Jinx
+  difficulty: Intermediate
+  notable_uses: Newt Scamander uses this jinx to capture his Niffler whilst rampaging through a jewellery store
+  source: Fantastic Beasts and Where to Find Them (book)
+knee_reversal_hex:
+  description: Reverses the direction of the target's knees
+  classification: Hex
+  difficulty: Intermediate
+  notable_uses: Performed by Gertie Keddle on an early Quidditch player
+  source: Quidditch Through The Ages (book)
+knitting_charm:
+  description: Charms knitting needles to perform autonomously
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Hermoine uses this charm to knit hats quickly for house-elves whilst at Hogwarts
+  source: Harry Potter and the Order of the Phoenix (book)
+langlock:
+  nickname: The Tongue-Sticking Hex
+  description: Glues the target's tongue to the roof of their mouth
+  classification: Hex
+  difficulty: Intermediate
+  pronunciation: LAYNG-lahk
+  notable_uses: Harry uses it to silence Peeves
+  source: Harry Potter and the Half-Blood Prince (book)
+lapifors:
+  nickname: The Creature-To-Rabbit Spell
+  description: Transfigures a smaller creature into a rabbit (e.g. gnomes and other bothersome small creatures)
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: LAP-ih-forz
+  notable_uses: N/A (Created by JKR for Games)
+  source: Harry Potter and the Prisoner of Azkaban (video game)
+leek_jinx:
+  description: Produces Leeks to spring from the ears of the target
+  classification: Jinx
+  difficulty: Intermediate
+  notable_uses: An incident between a Gryffindor and Slytherin ended-up with both in the Hospital Wing, sprouting leeks out of their ears
+  source: Harry Potter and the Prisoner of Azkaban (book)
+legilimens:
+  nickname: The Mind-Penetration Spell
+  description: Allows the caster to penetrate the mind of the target and access their thoughts (can be countered with Occlumency or the Shield Charm)
+  classification: Spell
+  difficulty: Advanced
+  pronunciation: leh-JIL-ih-mens
+  notable_uses: Snape breaks into Harry's mind while teaching him Occlumency
+  source: Harry Potter and the Order of the Phoenix (book)
+levicorpus:
+  nickname: The Dangling Jinx
+  description: Hoists the target into the air by their ankle and leaves them dangling upside-down (counter-jinx is Liberacorpus)
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: leh-vee-COR-pus
+  notable_uses: While practising non-verbal spells, Harry accidentally hoists Ron out of bed and into the air
+  source: Harry Potter and the Half Blood Prince (book)
+levioso:
+  nickname: The Floating Charm
+  description: Levitates objects a few feet vertically in the air
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: leh-vee-OH-so
+  notable_uses: N/A (Used in Games)
+  source: Hogwarts Legacy (video game)
+liberacorpus:
+  nickname: The Dangling Counter-Jinx
+  description: The counter-jinx to Levicorpus
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: LIB-er-ah-cor-pus
+  notable_uses: After Harry accidentally hoists Ron out of bed and into the air, he puts him back down
+  source: Harry Potter and the Half Blood Prince (book)
+locomotor:
+  nickname: The Locomotion Charm
+  description: Lifts the target a few inches off of the ground and allows the caster to move the object in any given direction
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: LOH-koh-MOH-tor
+  notable_uses: Tonks uses the spell to lift Harry's trunk. Her wand is kept pointed at the object like a conductor's baton as she makes it hover out of Harry's room and down the stairs
+  source: Harry Potter and the Order of the Phoenix (book)
+locomotor_mortis:
+  nickname: The Leg-Locker Curse
+  description: Binds the legs of the target
+  classification: Curse
+  difficulty: Beginner
+  pronunciation: LOH-koh-MOH-tor MOR-tees
+  notable_uses: Draco 'practises' this curse on Neville outside the library, causing him to bunny hop all the way up to Gryffindor Tower
+  source: Harry Potter and the Philosopher's Stone (book)
+locomotor_wibbly:
+  nickname: The Jelly Legs Jinx
+  description: Causes the target's legs to wobble, making it difficult for them to walk around
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: LOH-koh-MOH-tor WIB-lee
+  notable_uses: While practising for the Triwizard Tournament, Hermione shatters Harry's Shield Charm with this jinx, causing him to wobble around the room for ten minutes before she could find the counter-jinx
+  source: Harry Potter and the Goblet of Fire (book)
+lumos:
+  nickname: The Wand-Lighting Charm
+  description: Illuminates the tip of the caster's wand
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: LOO-mos
+  notable_uses: Harry lights his wand when he thinks he's being watched in Magnolia Crescent and accidentally hails the Knight Bus
+  source: Harry Potter and the Prisoner of Azkaban (book)
+melefors:
+  nickname: The Pumpkin-Head Jinx
+  description: Turns the target's head into a pumpkin
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: MEH-leh-forz
+  notable_uses: Harry overhears another student talking about this jinx
+  source: Harry Potter and the Order of the Phoenix (book)
+meteolojinx:
+  nickname: The Weather-Modifying Charm
+  description: Creates contained weather patterns indoors or out – like a storm cloud or snow (reversed by Metolojinx Recanto)
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: mee-tee-OH-loh-jeencks
+  notable_uses: Mr. Weasley mentions that "a lot of offices have been raining lately" within the Ministry of Magic
+  source: Harry Potter and the Deathly Hallows (book)
+meteolojinx_recanto:
+  nickname: The Weather-Modifying Reversal Charm
+  description: The counter-charm to Meteolojinx
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: mee-tee-oh-LOH-jeenks reh-KAN-toh
+  notable_uses: Mr. Weasley recommends this spell to stop the rain in Yaxley's Ministry office
+  source: Harry Potter and the Deathly Hallows (book)
+mimblewimble:
+  nickname: The Tongue-Tying Curse
+  description: Binds the target's tongue to keep them from talking
+  classification: Curse
+  difficulty: Advanced
+  pronunciation: MIM-bull-wim-bull
+  notable_uses: Harry, Ron and Hermione are hit with the curse set by Mad-Eye Moody to protect twelve Grimmauld Place, feeling cold wooshing air
+  source: Harry Potter and the Deathly Hallows (book)
+mobiliarbus:
+  nickname: The Tree-Levitating Charm
+  description: Levitates and moves a tree
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: moh-bill-ee-AR-buhs
+  notable_uses: Hermione moves the Christmas tree in the Three Broomsticks to hide herself, Harry and Ron from the professors
+  source: Harry Potter and the Deathly Hallows (book)
+mobilicorpus:
+  nickname: The Body-Levitating Hex
+  description: Levitates and moves a person. Caster can control the target like a puppet, as though invisible strings are supporting them
+  classification: Hex
+  difficulty: Advanced
+  pronunciation: moh-bil-ee-COR-pus
+  notable_uses: Lupin casts this spell to levitate an unconscious Snape out of the Shrieking Shack
+  source: Harry Potter and the Prisoner of Azkaban (book)
+molliare:
+  nickname: The Cushioning Charm
+  description: Softens the target's surface (used primarily for broomsticks)
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: moh-lee-AR-ay
+  notable_uses: Hermione softens the floor to break their fall when they are thrown from a cart in Gringotts
+  source: Harry Potter and the Deathly Hallows (book)
+morsmordre:
+  nickname: The Dark Mark Spell
+  description: Conjures the Dark Mark
+  classification: Spell
+  difficulty: Advanced
+  pronunciation: morz-MOR-druh
+  notable_uses: Barty Crouch Jr. conjures the Dark Mark with Harry's wand at the Quidditch World Cup
+  source: Harry Potter and the Goblet of Fire (book)
+mouse_to_snuffbox_spell:
+  description: Transfigures a mouse into a snuffbox
+  classification: Spell
+  difficulty: Beginner
+  notable_uses: Part of Harry's first year Transfiguration Exams
+  source: Harry Potter and the Philosopher's Stone (book)
+mucus_ad_nauseum:
+  nickname: The Bogies Curse
+  description: Causes an extremely runny nose
+  classification: Curse
+  difficulty: Beginner
+  pronunciation: MYOO-kus ahd NAW-see-um
+  notable_uses: Ron threatens to learn this curse and use it on Hermione and Neville after Professor Quirrell tells them about it
+  source: Harry Potter and the Philosopher's Stone (book)
+muffliato:
+  nickname: The Ear-Buzzing Jinx
+  description: Fills the ears of anyone nearby with an unidentifiable buzzing
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: moof-lee-AH-toe
+  notable_uses: Harry uses this spell to hold lengthy conversations in class without being overheard
+  source: Harry Potter and the Half-Blood Prince (book)
+nebulus:
+  nickname: The Fogging Spell
+  description: Casts a thick, swirling fog in the surrounding area
+  classification: Spell
+  difficulty: Advanced
+  pronunciation: NEH-byu-lus
+  notable_uses: Albus Dumbledore casts this spell to give him and Newt privacy as they discuss Credence
+  source: "Fantastic Beasts: The Crimes of Grindelwald (sceenplay)"
+nox:
+  nickname: The Wand Light Counter-Charm
+  description: Causes the light at the end of the caster's wand to be extinguished (counter-charm to Lumos)
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: NOCKS
+  notable_uses: Harry and Hermione extinguish their wands before encountering Sirius in the Shrieking Shack
+  source: Harry Potter and the Prisoner of Azkaban (book)
+obliteration_charm:
+  description: Removes tracks
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Hermione performs this charm to remove any trace of their snowy footsteps after visiting Hagrid in the snow
+  source: Harry Potter and the Order of the Phoenix (book)
+obliviate:
+  nickname: The Memory Charm
+  description: Modifies the target's memory
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: oh-BLI-vee-ate
+  notable_uses: Professor Lockhart tries to permanently wipe Harry and Ron's memories in the Chamber of Secrets, but the wand backfires, leaving him with total memory loss
+  source: Harry Potter and the Chamber of Secrets (book)
+obscuro:
+  nickname: The Blindfolding Spell
+  description: Conjures a black blindfold that cannot be removed
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: ob-SKYUR-oh
+  notable_uses: Hermione blindfolds Phineas Nigellus's portrait while questioning him so as not to give away their location
+  source: Harry Potter and the Deathly Hallows (book)
+oppugno:
+  nickname: The Targeting Charm
+  description: Directs an object or conjured creature under the control of the caster to attack the target
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: up-UGG-noh
+  notable_uses: Having conjured a flock of little yellow birds, Hermione sends them to peck and claw at Ron
+  source: Harry Potter and the Half-Blood Prince (book)
+orchideous:
+  nickname: The Bouquet Spell
+  description: Conjures a bouquet of flowers from the tip of the caster's wand
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: or-KID-ee-us
+  notable_uses: Mr. Ollivander uses the spell to test the functionality of Fleur Delacour's wand during the Wand Weighing ceremony ahead of the Triwizard Tournament
+  source: Harry Potter and the Goblet of Fire (book)
+oscausi:
+  nickname: The Sealing Hex
+  description: Seals the target's mouth shut as though they never had one
+  classification: Hex
+  difficulty: Intermediate
+  pronunciation: os-COW-zee
+  notable_uses: Leta Lestrange hexes a Gryffindor girl who was talking negatively about her
+  source: "Fantastic Beasts: The Crimes of Grindelwald (screenplay)"
+packing_charm:
+  description: Packs objects into a trunk
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Tonks packs Harry's books, clothes, telescope and scales into his trunk (rather haphazardly) using this spell, noting that her mum is able to get stuff to fit itself in neatly
+  source: Harry Potter and the Order of the Phoenix (book)
+partis_temporus:
+  nickname: The Dividing Charm
+  description: Creates a temporary parting of the target
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: PAR-tis TEM-pour-us
+  notable_uses: Dumbledore parts a wall of fire when attacked by Inferi in Voldemort's Cave
+  source: Harry Potter and the Half-Blood Prince (film)
+pepper_breath_hex:
+  description: Causes the target to have firey, hot breath
+  classification: Hex
+  difficulty: Intermediate
+  notable_uses: Mentioned as part of Basic Hexes for the Busy and Vexed
+  source: Harry Potter and the Goblet of Fire (book)
+permanent_sticking_charm:
+  description: Permanently attaches one object to another
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Sirius's teenage bedroom is decorated with Muggle posters and Gryffindor banners that his parents were presumably unable to remove
+  source: Harry Potter and the Deathly Hallows (book)
+pestis_incendium:
+  nickname: The Fiendfyre Curse
+  description: Conjures uncontrollable, cursed flames of abnormal size that cannot be extinguished
+  classification: Curse
+  difficulty: Advanced
+  pronunciation: feend-fahyure
+  notable_uses: Conjured by Vincent Crabbe during the Battle of Hogwarts, it mutates to form a gigantic pack of fiery beasts
+  source: Harry Potter and the Deathly Hallows (book)
+petrificus_totalus:
+  nickname: The Body-Bind Curse
+  description: Stiffens the target's limbs so they cannot move (except for their eyes)
+  classification: Curse
+  difficulty: Intermediate
+  pronunciation: pe-TRI-fi-kus to-TAH-lus
+  notable_uses: Hermione casts a full Body-Bind Curse on Neville when he confronts her, Harry and Ron as they sneak out of the Gryffindor Common Room at night
+  source: Harry Potter and the Philosophers stone (book)
+piertotum_locomotor:
+  nickname: The Animation Charm
+  description: Brings statues and suits of armour to life
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: pee-eer-TOH-tuhm loh-kuh-MOH-tor
+  notable_uses: Professor McGonagall brings to life the statues and suits of armour throughout the school to defend it in the Battle of Hogwarts
+  source: Harry Potter and the Deathly Hallows (film)
+placement_charm:
+  description: Places an object on the target
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Can be used to get a bridle over a Kelpie's head, rendering it docile and unthreatening
+  source: Fantastic Beasts and Where to Find Them (book)
+point_me:
+  nickname: The Four-Point Spell
+  description: Allows the caster's wand to act as a compass, pointing due north at all times
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: Poynt mee
+  notable_uses: Harry checks his direction in the maze during the third task of the Triwizard Tournament
+  source: Harry Potter and the Goblet of Fire (book)
+porcupine_to_pincushion_spell:
+  description: Transfigures a porcupine into a pincushion
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: N/A (Used in Games)
+  source: "Harry Potter: Hogwarts Mystery (video games)"
+portus:
+  nickname: The Portkey Spell
+  description: Turns an everyday object into a Portkey that can be used to transport groups of wizards from one spot to another at a prearranged time
+  classification: Spell
+  difficulty: Advanced
+  pronunciation: POOR-tus
+  notable_uses: Dumbledore turns a black kettle into a Portkey to transport Harry and the Weasley children from his office to Grimmauld Place after Mr. Weasley is rushed to St.Mungo's Hospital
+  source: Harry Potter and the Order of the Phoenix (book)
+prior_incantato:
+  nickname: The Prior-Use Spell
+  description: Reveals the most recent spell performed by a wand
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: pri-OR in-can-TAH-toh
+  notable_uses: Amos Diggory uses this spell to find out that Harry's wand was used to conjure the Dark Mark
+  source: Harry Potter and the Goblet of Fire (book)
+protean_charm:
+  description: Causes an object to change to mimic another
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Hermione charms coins for Dumbledore's Army, to reflect Harry's coin when he adjusts numbers to indicate the next meeting date
+  source: Harry Potter and the Order of the Phoenix (book)
+protego:
+  nickname: The Shield Charm
+  description: Conjures a protective shield around the caster (can have targeted effects as Protego Totalum, Protego Horribillis or Protego Diabolica)
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: proh-TAY-goh
+  notable_uses: Gellart Grindelwald conjures a protective area of black flames which also attack his opponents
+  source: "Fantastic Beasts: The Crimes of Grindelwald (screenplay)"
+pus_squirting_hex:
+  description: Causes the target's nose to squirt yellowish goo
+  classification: Hex
+  difficulty: Intermediate
+  notable_uses: Harry sees Morfin Gaunt use this hex against Bob Ogden, a Ministry Official
+  source: Harry Potter and the Half-Blood Prince (book)
+quietus:
+  nickname: The Quieting Charm
+  description: Quietens the target's voice (counter-charm to Sonorus)
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: KWIY-uh-tus
+  notable_uses: Ludo Bagman lowers his voice after commentating the Quidditch World Cup final
+  source: Harry Potter and the Goblet of Fire (book)
+reducio:
+  nickname: The Reducing Charm
+  description: Decreases the apparent physical size of the target, both internally and externally
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: reh-DOO-see-oh
+  notable_uses: Moody shrinks a spider to its proper size after enlarging it to demonstrate the three Unforgivable Curses
+  source: Harry Potter and the Goblet of Fire (book)
+reducto:
+  nickname: The Reductor Curse
+  description: Blasts solid objects to pieces
+  classification: Curse
+  difficulty: Intermediate
+  pronunciation: reh-DUCK-toe
+  notable_uses: Hermione, Ron, Ginny, Neville and Luna fire this curse at the shelves holding the prophecies in the Department of Mysteries
+  source: Harry Potter and the Order of the Phoenix (book)
+refilling_charm:
+  description: Causes a container to refill itself
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Harry uses this charm to refill the wine bottles at Aragog's wake to get Professor Slughorn drunk
+  source: Harry Potter and the Half-Blood Prince (book)
+relashio:
+  nickname: The Revulsion Jinx
+  description: Forces the target to release its grip
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: reh-LAH-shee-oh
+  notable_uses: Harry uses this spell to release Mrs. Cattermole from chains
+  source: Harry Potter and the Deathly Hallows (book)
+reluctant_reverser_cure_charm:
+  description: Used for brooms as a cure for reluctant reversers
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Harry reads about this in the summer of his 3rd year
+  source: Harry Potter and the Prisoner of Azkaban (book)
+rennervate:
+  nickname: The Reviving Charm
+  description: Awakens the target after they are stunned (counter-charm to the Stunning Spell)
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: REH-ner-vate
+  notable_uses: Dumbledore revives Krum after he is stunned by Barty Crouch Jr.
+  source: Harry Potter and the Goblet of Fire (book)
+reparifarge:
+  nickname: The Transformation-Reversal Spell
+  description: Repairs the effects of a Transformation spell that was poorly performed
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: reh-PAR-i-farj
+  notable_uses: N/A (Written for Pottermore)
+  source: Pottermore
+reparo:
+  nickname: The Mending Charm
+  description: Repairs broken objects (for targeted effect, can add a special prefix - e.g. Oculus or Papyrus for glasses and paper, respectively)
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: reh-PEAR-ow
+  notable_uses: Hermione fixes Harry's glasses on the Hogwarts Express
+  source: Harry Potter and the Philosophers Stone (film)
+repello:
+  nickname: The Repelling Charm
+  description: Repels something away from the caster (as a magical defence) (can have targeted effects as Repello Inimicum or Repello Muggletum)
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: reh-PELL-oh
+  notable_uses: Hermione uses Repello Muggletum as a protective enchantment around their forest campsite
+  source: Harry Potter and the Deathly Hallows (book)
+revelio:
+  nickname: The Revealing Charm
+  description: Reveals concealed objects (e.g. Specialis Revelio, Homenum Revelio)
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: reh-VEL-ee-oh
+  notable_uses: Harry feels a low, swooping sensation as Death Eaters use this charm to check if he is hiding in the Lovegood's house
+  source: Harry Potter and the Deathly Hallows (book)
+rictusempra:
+  nickname: The Tickling Charm
+  description: Overcomes the target with a severe tickling sensation
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: rik-tuh-SEM-pra
+  notable_uses: Malfoy sinks to his knees in laughter after Harry hits him with this Charm
+  source: Harry Potter and the Chamber of Secrets (book)
+riddikulus:
+  nickname: The Boggart-Banishing Charm
+  description: Forces a Boggart to assume a less-threatening, comical form. At the sound of laughter, the Boggart will burst into a thousand tiny wisps of smoke and disappear
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: rih-DIH-KUL-lus
+  notable_uses: Professor Lupin teaches the class how to repel Boggarts in his first Defence Against the Dark Arts lesson
+  source: Harry Potter and the Prisoner of Azkaban (book)
+rowboat_charm:
+  description: Moves rowing boats
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Used to draw the boats across the Hogwarts lake
+  source: Harry Potter and the Philosophers Stone (book)
+salvio_hexia:
+  nickname: The Hex-Repelling Charm
+  description: Protective enchantment against hexes
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: SAL-vee-oh HECK-see-ah
+  notable_uses: Hermione casts protective enchantments around camp to shield against Death Eaters
+  source: Harry Potter and the Deathly Hallows (film)
+scourgify:
+  nickname: The Scouring Charm
+  description: Cleans the target
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: SKUR-ji-fy
+  notable_uses: Ginny cleans Neville and Luna of Stinksap
+  source: Harry Potter and the Order of the Phoenix (book)
+sectumsempra:
+  nickname: The Laceration Curse
+  description: Lacerates the target, causing large, bloody gashes, as if they've been slashed with a sword
+  classification: Curse
+  difficulty: Intermediate
+  pronunciation: sek-tum-SEM-pra
+  notable_uses: Harry uses this spell in a duel with Draco, unaware of it's effects
+  source: Harry Potter and the Half Blood Prince (film)
+serpensortia:
+  nickname: The Serpent Spell
+  description: Conjures a large snake
+  classification: Spell
+  difficulty: Beginner
+  pronunciation: ser-pen-SOR-tee-ah
+  notable_uses: Draco conjures a snake during his duel with Harry at Duelling Club
+  source: Harry Potter and the Chamber of Secrets (book)
+silencio:
+  nickname: The Silencing Charm
+  description: Renders the target temporarily mute
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: si-LEN-see-oh
+  notable_uses: Harry, Hermione and Ron practise this charm on frogs and ravens in a Charms lesson
+  source: Harry Potter and the Order of the Phoenix (book)
+sleeping_charm:
+  description: Causes the target to fall into a deep, bewitched sleep
+  classification: Charm
+  difficulty: Advanced
+  notable_uses: Assuring they will be safe, Albus Dumbledore places the hostages of the second Triwizard Tournament Task into a deep sleep as they are placed in the Black Lake
+  source: Harry Potter and the Order of the Phoenix (book)
+slugulus_erecto:
+  nickname: The Slug-Vomiting Charm
+  description: Causes the target to regurgitate slugs
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: SLUHG-ooh-lus eer-EK-to
+  notable_uses: Ron attempts to use this spell on Draco, but it shoots out of the wrong end of his broken wand and hits himself in the stomach, leaving him belching slugs
+  source: Harry Potter and the Chamber of Secrets (book)
+snowball_charm:
+  description: Bewitches snowballs to hit a target
+  classification: Charm
+  difficulty: Beginner
+  notable_uses: Fred and George bewitch snowballs to hit Professor Quirrell
+  source: Harry Potter and the Philosophers Stone (book)
+sonorus:
+  nickname: The Amplifying Charm
+  description: Magnifies target's voice (acts as a counter-charm to Quietus)
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: sohn-OAR-us
+  notable_uses: Lugo Bagman magnifies his voice to commentate the Quidditch World Cup Final
+  source: Harry Potter and the Goblet of Fire (book)
+specialis_revelio:
+  nickname: A Specialised Revealing Charm
+  description: Reveals concealed objects not simply revealed by Revelio
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: spe-shee-AL-is reh-VEL-ee-oh
+  notable_uses: Hermione unsuccessfully tries to reveal any secrets within the Half-Blood Prince's book of Advanced Potion Making
+  source: Harry Potter and the Half-Blood Prince (book)
+spongify:
+  nickname: The Softening Charm
+  description: Makes the target soft
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: SPUN-ji-fy
+  notable_uses: N/A (Created by JKR for Games)
+  source: Harry Potter and the Philosopher's Stone (video game)
+stealth_sensoring_spell:
+  description: Detects intruders in a location
+  classification: Spell
+  difficulty: Advanced
+  notable_uses: Professor Umbridge uses this spell to protect her office from intruders after a second Niffler is set loose inside
+  source: Harry Potter and the Order of the Phoenix (book)
+stinging_hex:
+  description: Stings the target, leaving an angry welt, like a scorch mark
+  classification: Hex
+  difficulty: Intermediate
+  notable_uses: Harry accidentally uses this hex on Snape during an Occlumency lesson
+  source: Harry Potter and the Order of the Phoenix (book)
+stretching_jinx:
+  description: Stretches the target
+  classification: Jinx
+  difficulty: Intermediate
+  notable_uses: Mrs. Weasley remarks that Harry and Ron have grown so much taller they look like they've had this jinx put on them
+  source: Harry Potter and the Half Blood Prince (book)
+stupefy:
+  nickname: Harrystunsan"Imperiused"Krum
+  description: Renders the target unconscious
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: STOO-puh-fy
+  notable_uses: to save Cedric Diggory
+  source: Harry Potter and the Goblet of Fire (book)
+supersensory_charm:
+  description: Improves the caster's senses
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Ron suggests this charm while driving, instead of a rear view mirror
+  source: Harry Potter and the Deathly Hallows (book)
+surgito:
+  nickname: The Disenchantment Charm
+  description: Lifts an enchantment from the target
+  classification: Charm
+  difficulty: Intermediate
+  pronunciation: SUR-ji-toe
+  notable_uses: Newt Scamander lifts the enchantment that Queenie had over Jacob to take him to London against his will
+  source: "Fantastic Beasts: The Crimes of Grindelwald (screenplay)"
+switching_spell:
+  description: A transfiguration spell that switches two objects
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: Neville accidentally transplanted his own ears onto a cactus when learning this spell
+  source: Harry Potter and the Goblet of Fire (book)
+tarantallegra:
+  nickname: The Dancing Jinx
+  description: Causes the target's legs to begin dancing uncontrollably
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: tah-RAN-tah-LEY-grah
+  notable_uses: Antonin Dolohov sends Neville's legs into a frenzied tap-dance, causing him to fall to the floor during the battle at the Department of Mysteries
+  source: Harry Potter and the Order of the Phoenix (book)
+teacup_to_gerbil_spell:
+  description: Transfigures a teacup into a gerbil
+  classification: Spell
+  difficulty: Beginner
+  notable_uses: N/A (Used in Games)
+  source: "Harry Potter: Hogwarts Mystery (video games)"
+tergeo:
+  nickname: The Wiping Spell
+  description: Cleans the target
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: ter-JEE-oh
+  notable_uses: Hermione siphons dried blood off Harry's face after Draco breaks his nose
+  source: Harry Potter and the Half-Blood Prince (book)
+titillando:
+  nickname: The Tickling Hex
+  description: Tickles the target
+  classification: Hex
+  difficulty: Beginner
+  pronunciation: ti-tee-LAN-do
+  notable_uses: N/A (Written for Pottermore)
+  source: Pottermore
+toenail_growing_hex:
+  description: Causes the target's toenails to grow at an alarming rate
+  classification: Hex
+  difficulty: Intermediate
+  notable_uses: Harry encounters this spell in the Half-Blood Prince's copy of Advanced Potion-Making
+  source: Harry Potter and the Half-Blood Prince (book)
+tortoise_to_trumpet_spell:
+  description: Transfigures a tortoise into a trumpet
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: N/A (Used in Games)
+  source: "Harry Potter: Hogwarts Mystery (video game)"
+transmogrifian_torture:
+  description: A curse that kills the victim by Transfiguration
+  classification: Curse
+  difficulty: Advanced
+  notable_uses: Gilderoy Lockhart hypothesises that this was the curse used on the petrified Mrs. Norris
+  source: Harry Potter and the Chamber of Secrets (book)
+trip_jinx:
+  description: Trips the target, as if something has caught them around the ankles
+  classification: Jinx
+  difficulty: Beginner
+  notable_uses: Draco trips Harry as he tries to run from a Dumbledore's Army meeting
+  source: Harry Potter and the Order of the Phoenix (book)
+twitchy_ears_hex:
+  description: Causes target's ears to twitch
+  classification: Hex
+  difficulty: Intermediate
+  notable_uses: Harry is left with a bad case of Twitchy Ears after practising hex-deflection in a Defence Against the Dark Arts lesson
+  source: Harry Potter and the Goblet of Fire (book)
+umbrella_spell:
+  description: Conjures an invisible force that acts like an umbrella using the caster's wand
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: Newt Scamander uses his wand to create a magical umbrella to shield him from the Thunderbird's storm
+  source: Fantastic Beasts and Where To Find Them (book)
+unbreakable_charm:
+  description: Prevents an object from breaking
+  classification: Charm
+  difficulty: Intermediate
+  notable_uses: Hermione puts this charm on the glass jar holding Rita Skeeter in beetle form so she can't transform back into a human
+  source: Harry Potter and the Goblet of Fire (book)
+unbreakable_vow:
+  description: A binding agreement, resulting in death if broken. each term is agreed, a thin tongue of brilliant flame issues from the wand and winds around their hands like a red-hot wire
+  classification: Spell
+  difficulty: Advanced
+  notable_uses: Snape makes an Unbreakable Vow with Narcissa Malfoy, with Bellatrix Lestrange acting as Bonder, to protect Draco from harm and fulfil his duty to Voldemort if necessary
+  source: Harry Potter and the Half Blood Prince (book)
+ventus:
+  nickname: The Windy Spell
+  description: Shoots spiralling wind from the tip of the wand
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: VEN-toos
+  notable_uses: Newt Scamander uses this spell to get away from an Auror tracking him
+  source: "Fantastic Beast: The Crimes of Grindelwald (screenplay)"
+vera_verto:
+  nickname: The Animal-To-Goblet Spell
+  description: Transfigures a small animal into a water goblet
+  classification: Spell
+  difficulty: Beginner
+  pronunciation: vehr-ah VEHR-toh
+  notable_uses: Professor McGonagall instructs her 2nd years in this spell
+  source: Harry Potter and The Chamber of Secrets (film)
+verdimillious:
+  nickname: The Green Sparks Spell
+  description: Conjures a jet of green sparks from the tip of the caster's wand
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: ver-dih-MILL-ee-us
+  notable_uses: N/A (Created by JKR for Games)
+  source: Harry Potter and the Philosopher's Stone (video game)
+vermillious:
+  nickname: The Red Sparks Spell
+  description: Conjures a jet of red sparks from the tip of the caster's wand
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: ver-MILL-ee-us
+  notable_uses: N/A (Created by JKR for Games)
+  source: Harry Potter and the Philosopher's Stone (video game)
+vipera_evanesca:
+  nickname: The Snake-Vanishing Spell
+  description: Causes a snake to disappear in a puff of black smoke
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: vee-PER-ah eh-van-AH-ska
+  notable_uses: Severus Snape uses this spell to get rid of Draco's conjured snake in the Duelling Club
+  source: Harry Potter and the Chamber of Secrets (film)
+vulnera_sanentur:
+  nickname: The Stitching Spell
+  description: A healing spell that causes deep gashes to re-knit together (acts as a counter-curse to Sectumsempra)
+  classification: Spell
+  difficulty: Intermediate
+  pronunciation: VUHL-ner-rah sah-NEN-tour
+  notable_uses: Snape heals Malfoy after Harry injures him with Sectumsempra
+  source: Harry Potter and the Half-Blood Prince (film)
+waddiwasi:
+  nickname: The Projectile Jinx
+  description: Pelts a small object at a target
+  classification: Jinx
+  difficulty: Intermediate
+  pronunciation: Wah-deeh-WAH-see
+  notable_uses: Professor Lupin sends a wad of chewing gum shooting out of a keyhole into Peeves's left nostril
+  source: Harry Potter and the Prisoner of Azkaban (book)
+white_sparks_spell:
+  description: Conjures a jet of white sparks from the tip of the caster's wand
+  classification: Spell
+  difficulty: Intermediate
+  notable_uses: Described by Ginny Weasley in the 2014 Quidditch World Cup
+  source: Pottermore
+wingardium_leviosa:
+  nickname: The Levitation Charm
+  description: Levitates objects a few feet in the air and allows the caster to move the object in any direction
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: ween-GAR-dee-uhm leh-vee-OH-sah
+  notable_uses: Ron levitates a troll's club and drops it on its owners head, knocking the troll out
+  source: Harry Potter and the Philosopher's Stone (book)
