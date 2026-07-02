@@ -43,6 +43,7 @@ def _build_difficulties(
     fall back to a threshold-only rating); a missing template is simply omitted."""
     out: dict[SpellType, float] = {}
     directory = templates_dir()
+    logger.info("generating spell difficulty ratings from templates...")
     for spell in SpellType:
         if spell is SpellType.NONE:
             continue

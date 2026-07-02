@@ -30,37 +30,6 @@ logging:
   file_path: ./Logs/potter.wand-server.{timestamp}.log
   minimum_level: DEBUG
 
-zones:
-  udp_receiver:
-    host: "0.0.0.0"
-    port: 5006
-    max_size: 65556
-    recv_timeout_s: 2
-  zones:
-    - id: Z001
-      key: 1
-      spells: [CANTIS]
-    - id: Z002
-      key: 2
-      spells: [RICTUSEMPRA]
-    - id: Z003
-      key: 3
-      spells: [ALOHOMORA, COLLOPORTUS]
-    - id: Z004
-      key: 4
-      spells: [] #spellbook
-    - id: Z005
-      key: 5
-      spells: [PEPPER_BREATH_HEX]
-    - id: Z006
-      key: 6
-      spells: [LUMOS, NOX]
-    - id: Z007
-      key: 7
-      spells: [INCENDIO, EXTINGUISHING_SPELL]
-    - id: Z008
-      key: 8
-      spells: [COLOVARIA, SILENCIO]
 input:
   wand:
     lead_in_trim:
@@ -334,3 +303,695 @@ session_recorder:
   save_images: True
   image_width: 600
   image_height: 800
+
+zones:
+  udp_receiver:
+    host: "0.0.0.0"
+    port: 5006
+    max_size: 65556
+    recv_timeout_s: 2
+  zones:
+    - id: Z001
+      key: 1
+      spells: [ABERTO]
+    - id: Z002
+      key: 2
+      spells: [ACCIO]
+    - id: Z003
+      key: 3
+      spells: [AGE_LINE_SPELL]
+    - id: Z004
+      key: 4
+      spells: [AGUAMENTI]
+    - id: Z005
+      key: 5
+      spells: [ALARTE_ASCENDARE]
+    - id: Z006
+      key: 6
+      spells: [ALOHOMORA]
+    - id: Z007
+      key: 7
+      spells: [ANAPNEO]
+    - id: Z008
+      key: 8
+      spells: [ANTEOCULATIA]
+    - id: Z009
+      key: 9
+      spells: [ANTI_ALOHOMORA_CHARM]
+    - id: Z010
+      key: 10
+      spells: [ANTI_APPARATION_JINX]
+    - id: Z011
+      key: 11
+      spells: [ANTI_CHEATING_CHARM]
+    - id: Z012
+      key: 12
+      spells: [APARECIUM]
+    - id: Z013
+      key: 13
+      spells: [APPARE_VESTIGIUM]
+    - id: Z014
+      key: 14
+      spells: [ARANIA_EXUMAI]
+    - id: Z015
+      key: 15
+      spells: [ARRESTO_MOMENTUM]
+    - id: Z016
+      key: 16
+      spells: [ARROW_SHOOTING_SPELL]
+    - id: Z017
+      key: 17
+      spells: [ASCENDIO]
+    - id: Z018
+      key: 18
+      spells: [AVADA_KEDAVRA]
+    - id: Z019
+      key: 19
+      spells: [AVENSEGUIM]
+    - id: Z020
+      key: 20
+      spells: [AVIFORS]
+    - id: Z021
+      key: 21
+      spells: [AVIS]
+    - id: Z022
+      key: 22
+      spells: [BABBLING_CURSE]
+    - id: Z023
+      key: 23
+      spells: [BANISHING_CHARM]
+    - id: Z024
+      key: 24
+      spells: [BAT_BOGEY_HEX]
+    - id: Z025
+      key: 25
+      spells: [BEDAZZLING_HEX]
+    - id: Z026
+      key: 26
+      spells: [BEE_STING_JINX]
+    - id: Z027
+      key: 27
+      spells: [BEETLE_TO_BUTTON_SPELL]
+    - id: Z028
+      key: 28
+      spells: [BLACKBOARD_WRITING_SPELL]
+    - id: Z029
+      key: 29
+      spells: [BLOCKING_BARRIER_CHARM]
+    - id: Z030
+      key: 30
+      spells: [BLUE_FIRE_SPELL]
+    - id: Z031
+      key: 31
+      spells: [BLUE_SPARKS_SPELL]
+    - id: Z032
+      key: 32
+      spells: [BOMBARDA]
+    - id: Z033
+      key: 33
+      spells: [BOWLING_BALL_TO_BALLOON_SPELL]
+    - id: Z034
+      key: 34
+      spells: [BRACHIABINDO]
+    - id: Z035
+      key: 35
+      spells: [BRAKING_CHARM]
+    - id: Z036
+      key: 36
+      spells: [BUBBLE_HEAD_CHARM]
+    - id: Z037
+      key: 37
+      spells: [CALVORIO]
+    - id: Z038
+      key: 38
+      spells: [CANTIS]
+    - id: Z039
+      key: 39
+      spells: [CAPACIOUS_EXTREMIS]
+    - id: Z040
+      key: 40
+      spells: [CARPE_RETRACTUM]
+    - id: Z041
+      key: 41
+      spells: [CASCADING_JINX]
+    - id: Z042
+      key: 42
+      spells: [CATERWAULING_CHARM]
+    - id: Z043
+      key: 43
+      spells: [CAULDRONS_TO_BASS_GUITARS_SPELL]
+    - id: Z044
+      key: 44
+      spells: [CAULDRONS_TO_CABBAGES_SPELL]
+    - id: Z045
+      key: 45
+      spells: [CAVE_INIMICUM]
+    - id: Z046
+      key: 46
+      spells: [CHEERING_CHARM]
+    - id: Z047
+      key: 47
+      spells: [CISTEM_APERIO]
+    - id: Z048
+      key: 48
+      spells: [COLLOPORTUS]
+    - id: Z049
+      key: 49
+      spells: [COLLOSHOO]
+    - id: Z050
+      key: 50
+      spells: [COLOVARIA]
+    - id: Z051
+      key: 51
+      spells: [CONCEALMENT_CHARM]
+    - id: Z052
+      key: 52
+      spells: [CONFRINGO]
+    - id: Z053
+      key: 53
+      spells: [CONFUNDO]
+    - id: Z054
+      key: 54
+      spells: [CONJUNCTIVITIS_CURSE]
+    - id: Z055
+      key: 55
+      spells: [CORNFLAKE_SKIN_JINX]
+    - id: Z056
+      key: 56
+      spells: [CRUCIO]
+    - id: Z057
+      key: 57
+      spells: [DEFODIO]
+    - id: Z058
+      key: 58
+      spells: [DELETRIUS]
+    - id: Z059
+      key: 59
+      spells: [DENSAUGEO]
+    - id: Z060
+      key: 60
+      spells: [DEPRIMO]
+    - id: Z061
+      key: 61
+      spells: [DEPULSO]
+    - id: Z062
+      key: 62
+      spells: [DESCENDO]
+    - id: Z063
+      key: 63
+      spells: [DIFFINDO]
+    - id: Z064
+      key: 64
+      spells: [DIMINUENDO]
+    - id: Z065
+      key: 65
+      spells: [DISILLUSIONMENT_CHARM]
+    - id: Z066
+      key: 66
+      spells: [DISSENDIUM]
+    - id: Z067
+      key: 67
+      spells: [DROUGHT_CHARM]
+    - id: Z068
+      key: 68
+      spells: [DURO]
+    - id: Z069
+      key: 69
+      spells: [EAR_SHRIVELLING_CURSE]
+    - id: Z070
+      key: 70
+      spells: [EBUBLIO]
+    - id: Z071
+      key: 71
+      spells: [EMANCIPARE]
+    - id: Z072
+      key: 72
+      spells: [ENGORGIO]
+    - id: Z073
+      key: 73
+      spells: [ENTOMORPHIS]
+    - id: Z074
+      key: 74
+      spells: [ENTRAIL_EXPELLING_CURSE]
+    - id: Z075
+      key: 75
+      spells: [EPISKEY]
+    - id: Z076
+      key: 76
+      spells: [ERUCTO]
+    - id: Z077
+      key: 77
+      spells: [EVANESCO]
+    - id: Z078
+      key: 78
+      spells: [EVERTE_STATUM]
+    - id: Z079
+      key: 79
+      spells: [EXPECTO_PATRONUM]
+    - id: Z080
+      key: 80
+      spells: [EXPELLIARMUS]
+    - id: Z081
+      key: 81
+      spells: [EXPULSO]
+    - id: Z082
+      key: 82
+      spells: [EXTINGUISHING_SPELL]
+    - id: Z083
+      key: 83
+      spells: [FEATHERLIGHT_CHARM]
+    - id: Z084
+      key: 84
+      spells: [FELIFORS]
+    - id: Z085
+      key: 85
+      spells: [FERULA]
+    - id: Z086
+      key: 86
+      spells: [FIANTO_DURI]
+    - id: Z087
+      key: 87
+      spells: [FIDELIUS_CHARM]
+    - id: Z088
+      key: 88
+      spells: [FINESTRA]
+    - id: Z089
+      key: 89
+      spells: [FINITE]
+    - id: Z090
+      key: 90
+      spells: [FLAGRANTE]
+    - id: Z091
+      key: 91
+      spells: [FLAGRATE]
+    - id: Z092
+      key: 92
+      spells: [FLAME_FREEZING_CHARM]
+    - id: Z093
+      key: 93
+      spells: [FLINTIFORS]
+    - id: Z094
+      key: 94
+      spells: [FLIPENDO]
+    - id: Z095
+      key: 95
+      spells: [FLOBBERWORM_TO_FRITTER_SPELL]
+    - id: Z096
+      key: 96
+      spells: [FLYING_CHARM]
+    - id: Z097
+      key: 97
+      spells: [FORCE_SPELL]
+    - id: Z098
+      key: 98
+      spells: [FULGARI]
+    - id: Z099
+      key: 99
+      spells: [FUMOS]
+    - id: Z100
+      key: 100
+      spells: [FURNUNCULUS]
+    - id: Z101
+      key: 101
+      spells: [GEMINIO]
+    - id: Z102
+      key: 102
+      spells: [GEMINO]
+    - id: Z103
+      key: 103
+      spells: [GLACIUS]
+    - id: Z104
+      key: 104
+      spells: [GLISSEO]
+    - id: Z105
+      key: 105
+      spells: [GOLDEN_BUBBLE_PRODUCING_CHARM]
+    - id: Z106
+      key: 106
+      spells: [GRIPPING_CHARM]
+    - id: Z107
+      key: 107
+      spells: [HAIR_THICKENING_GROWING_CHARM]
+    - id: Z108
+      key: 108
+      spells: [HARMONIA_NECTERE_PASSUS]
+    - id: Z109
+      key: 109
+      spells: [HERBIVICUS]
+    - id: Z110
+      key: 110
+      spells: [HOMONCULUS_CHARM]
+    - id: Z111
+      key: 111
+      spells: [HORN_TONGUE_HEX]
+    - id: Z112
+      key: 112
+      spells: [HOT_AIR_CHARM]
+    - id: Z113
+      key: 113
+      spells: [HOTRON_KEITCH_BRAKING_CHARM]
+    - id: Z114
+      key: 114
+      spells: [HOUR_REVERSAL_CHARM]
+    - id: Z115
+      key: 115
+      spells: [HOVER_CHARM]
+    - id: Z116
+      key: 116
+      spells: [HURLING_HEX]
+    - id: Z117
+      key: 117
+      spells: [IMMOBULUS]
+    - id: Z118
+      key: 118
+      spells: [IMPEDIMENTA]
+    - id: Z119
+      key: 119
+      spells: [IMPERIO]
+    - id: Z120
+      key: 120
+      spells: [IMPERTURBABLE_CHARM]
+    - id: Z121
+      key: 121
+      spells: [IMPERVIUS]
+    - id: Z122
+      key: 122
+      spells: [INANIMATUS_CONJURUS]
+    - id: Z123
+      key: 123
+      spells: [INCARCEROUS]
+    - id: Z124
+      key: 124
+      spells: [INCENDIO]
+    - id: Z125
+      key: 125
+      spells: [INFLAMARAE]
+    - id: Z126
+      key: 126
+      spells: [INFLATUS]
+    - id: Z127
+      key: 127
+      spells: [INSTANT_SCALPING_HEX]
+    - id: Z128
+      key: 128
+      spells: [JELLY_JINX]
+    - id: Z129
+      key: 129
+      spells: [KNEE_REVERSAL_HEX]
+    - id: Z130
+      key: 130
+      spells: [KNITTING_CHARM]
+    - id: Z131
+      key: 131
+      spells: [LANGLOCK]
+    - id: Z132
+      key: 132
+      spells: [LAPIFORS]
+    - id: Z133
+      key: 133
+      spells: [LEEK_JINX]
+    - id: Z134
+      key: 134
+      spells: [LEGILIMENS]
+    - id: Z135
+      key: 135
+      spells: [LEVICORPUS]
+    - id: Z136
+      key: 136
+      spells: [LEVIOSO]
+    - id: Z137
+      key: 137
+      spells: [LIBERACORPUS]
+    - id: Z138
+      key: 138
+      spells: [LOCOMOTOR]
+    - id: Z139
+      key: 139
+      spells: [LOCOMOTOR_MORTIS]
+    - id: Z140
+      key: 140
+      spells: [LOCOMOTOR_WIBBLY]
+    - id: Z141
+      key: 141
+      spells: [LUMOS]
+    - id: Z142
+      key: 142
+      spells: [MELEFORS]
+    - id: Z143
+      key: 143
+      spells: [METEOLOJINX]
+    - id: Z144
+      key: 144
+      spells: [METEOLOJINX_RECANTO]
+    - id: Z145
+      key: 145
+      spells: [MIMBLEWIMBLE]
+    - id: Z146
+      key: 146
+      spells: [MOBILIARBUS]
+    - id: Z147
+      key: 147
+      spells: [MOBILICORPUS]
+    - id: Z148
+      key: 148
+      spells: [MOLLIARE]
+    - id: Z149
+      key: 149
+      spells: [MORSMORDRE]
+    - id: Z150
+      key: 150
+      spells: [MOUSE_TO_SNUFFBOX_SPELL]
+    - id: Z151
+      key: 151
+      spells: [MUCUS_AD_NAUSEUM]
+    - id: Z152
+      key: 152
+      spells: [MUFFLIATO]
+    - id: Z153
+      key: 153
+      spells: [NEBULUS]
+    - id: Z154
+      key: 154
+      spells: [NOX]
+    - id: Z155
+      key: 155
+      spells: [OBLITERATION_CHARM]
+    - id: Z156
+      key: 156
+      spells: [OBLIVIATE]
+    - id: Z157
+      key: 157
+      spells: [OBSCURO]
+    - id: Z158
+      key: 158
+      spells: [OPPUGNO]
+    - id: Z159
+      key: 159
+      spells: [ORCHIDEOUS]
+    - id: Z160
+      key: 160
+      spells: [OSCAUSI]
+    - id: Z161
+      key: 161
+      spells: [PACKING_CHARM]
+    - id: Z162
+      key: 162
+      spells: [PARTIS_TEMPORUS]
+    - id: Z163
+      key: 163
+      spells: [PEPPER_BREATH_HEX]
+    - id: Z164
+      key: 164
+      spells: [PERMANENT_STICKING_CHARM]
+    - id: Z165
+      key: 165
+      spells: [PESTIS_INCENDIUM]
+    - id: Z166
+      key: 166
+      spells: [PETRIFICUS_TOTALUS]
+    - id: Z167
+      key: 167
+      spells: [PIERTOTUM_LOCOMOTOR]
+    - id: Z168
+      key: 168
+      spells: [PLACEMENT_CHARM]
+    - id: Z169
+      key: 169
+      spells: [POINT_ME]
+    - id: Z170
+      key: 170
+      spells: [PORCUPINE_TO_PINCUSHION_SPELL]
+    - id: Z171
+      key: 171
+      spells: [PORTUS]
+    - id: Z172
+      key: 172
+      spells: [PRIOR_INCANTATO]
+    - id: Z173
+      key: 173
+      spells: [PROTEAN_CHARM]
+    - id: Z174
+      key: 174
+      spells: [PROTEGO]
+    - id: Z175
+      key: 175
+      spells: [PUS_SQUIRTING_HEX]
+    - id: Z176
+      key: 176
+      spells: [QUIETUS]
+    - id: Z177
+      key: 177
+      spells: [REDUCIO]
+    - id: Z178
+      key: 178
+      spells: [REDUCTO]
+    - id: Z179
+      key: 179
+      spells: [REFILLING_CHARM]
+    - id: Z180
+      key: 180
+      spells: [RELASHIO]
+    - id: Z181
+      key: 181
+      spells: [RELUCTANT_REVERSER_CURE_CHARM]
+    - id: Z182
+      key: 182
+      spells: [RENNERVATE]
+    - id: Z183
+      key: 183
+      spells: [REPARIFARGE]
+    - id: Z184
+      key: 184
+      spells: [REPARO]
+    - id: Z185
+      key: 185
+      spells: [REPELLO]
+    - id: Z186
+      key: 186
+      spells: [REVELIO]
+    - id: Z187
+      key: 187
+      spells: [RICTUSEMPRA]
+    - id: Z188
+      key: 188
+      spells: [RIDDIKULUS]
+    - id: Z189
+      key: 189
+      spells: [ROWBOAT_CHARM]
+    - id: Z190
+      key: 190
+      spells: [SALVIO_HEXIA]
+    - id: Z191
+      key: 191
+      spells: [SCOURGIFY]
+    - id: Z192
+      key: 192
+      spells: [SECTUMSEMPRA]
+    - id: Z193
+      key: 193
+      spells: [SERPENSORTIA]
+    - id: Z194
+      key: 194
+      spells: [SILENCIO]
+    - id: Z195
+      key: 195
+      spells: [SLEEPING_CHARM]
+    - id: Z196
+      key: 196
+      spells: [SLUGULUS_ERECTO]
+    - id: Z197
+      key: 197
+      spells: [SNOWBALL_CHARM]
+    - id: Z198
+      key: 198
+      spells: [SONORUS]
+    - id: Z199
+      key: 199
+      spells: [SPECIALIS_REVELIO]
+    - id: Z200
+      key: 200
+      spells: [SPONGIFY]
+    - id: Z201
+      key: 201
+      spells: [STEALTH_SENSORING_SPELL]
+    - id: Z202
+      key: 202
+      spells: [STINGING_HEX]
+    - id: Z203
+      key: 203
+      spells: [STRETCHING_JINX]
+    - id: Z204
+      key: 204
+      spells: [STUPEFY]
+    - id: Z205
+      key: 205
+      spells: [SUPERSENSORY_CHARM]
+    - id: Z206
+      key: 206
+      spells: [SURGITO]
+    - id: Z207
+      key: 207
+      spells: [SWITCHING_SPELL]
+    - id: Z208
+      key: 208
+      spells: [TARANTALLEGRA]
+    - id: Z209
+      key: 209
+      spells: [TEACUP_TO_GERBIL_SPELL]
+    - id: Z210
+      key: 210
+      spells: [TERGEO]
+    - id: Z211
+      key: 211
+      spells: [TITILLANDO]
+    - id: Z212
+      key: 212
+      spells: [TOENAIL_GROWING_HEX]
+    - id: Z213
+      key: 213
+      spells: [TORTOISE_TO_TRUMPET_SPELL]
+    - id: Z214
+      key: 214
+      spells: [TRANSMOGRIFIAN_TORTURE]
+    - id: Z215
+      key: 215
+      spells: [TRIP_JINX]
+    - id: Z216
+      key: 216
+      spells: [TWITCHY_EARS_HEX]
+    - id: Z217
+      key: 217
+      spells: [UMBRELLA_SPELL]
+    - id: Z218
+      key: 218
+      spells: [UNBREAKABLE_CHARM]
+    - id: Z219
+      key: 219
+      spells: [UNBREAKABLE_VOW]
+    - id: Z220
+      key: 220
+      spells: [VENTUS]
+    - id: Z221
+      key: 221
+      spells: [VERA_VERTO]
+    - id: Z222
+      key: 222
+      spells: [VERDIMILLIOUS]
+    - id: Z223
+      key: 223
+      spells: [VERMILLIOUS]
+    - id: Z224
+      key: 224
+      spells: [VIPERA_EVANESCA]
+    - id: Z225
+      key: 225
+      spells: [VULNERA_SANENTUR]
+    - id: Z226
+      key: 226
+      spells: [WADDIWASI]
+    - id: Z227
+      key: 227
+      spells: [WHITE_SPARKS_SPELL]
+    - id: Z228
+      key: 228
+      spells: [WINGARDIUM_LEVIOSA]
