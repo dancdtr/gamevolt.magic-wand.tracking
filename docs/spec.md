@@ -262,6 +262,17 @@ was **removed** and replaced by a **$1 unistroke recogniser** plus a decoupled s
    degrades gracefully like lore — inclusion never gates a cast (the recognizer still matches every
    template); missing file → empty set, unknown key → debug log. Absent key ⇒ not included.
 
+7. **Gesture difficulty** (`spells/spell_difficulty.py`). *Computed* 1–10 rating of how hard a spell
+   is to cast — distinct from the lore `difficulty` string (Primer flavour text). Blends two inputs
+   the player feels: (a) **shape** of the `gesture_path` centreline — total turning, length/bbox
+   density, sharp-corner count, from arc-length samples — and (b) **pass thresholds** from
+   `spell_scoring` — `min_match_accuracy` (match tightness to register) + the `MASTERED` quality
+   threshold. Normalisation is **absolute** (fixed catalogue-calibrated bounds, not percentile) so a
+   rating never drifts when a *different* template is edited. Weights live in `DifficultyWeights`
+   (shape 0.65 / threshold 0.35). Product-only and fail-soft like lore: an unsampleable template
+   (`gesture_path` still a polyline, svgpathtools blow-up) degrades to a threshold-only rating rather
+   than raising. Not persisted — computed on demand. Catalogue spread ≈ 2.2–7.3 at default tuning.
+
 ### 6.2 Scoring (`spells/scoring/` + `spells/settings/`)
 
 Decoupled from recognition. `gates → base + bonuses → total → SpellCastQuality`. All config is
@@ -349,7 +360,7 @@ Don't add new cross-app coupling that isn't on this list without flagging it.
 | `wands_app/` | Entry point, app composition, settings, `TrackingApp`, `RecognitionApp`, `WandsSystem`, `WandsSystemBuilder`. |
 | `wand/` | Wand-side primitives: `WandServer`, `TrackedWandManager`, `WandClient`, sensor stream (`streaming/`), interpreters, device controller. |
 | `motion/` | Motion phase tracking (`MotionProcessor`, `MotionPhaseTracker`) + stroke windowing (`stroke/StrokeWindower`) + lead-in trimming (`stroke/lead_in_trimmer`). |
-| `spells/` | $1 recogniser (`matching/dollar_one/`, incl. `svg_template_loader`), layered SVG templates (`templates/` — `gesture_path`/`gesture_visual`/`origin`/`end_arrow`/`mid_arrows`/`bg` layers), scorer (`scoring/`), per-spell settings (`settings/`), static lore (`spell_info.py` + `data/spell_info.yml`), park selection (`spell_selection.py` + `data/spell_selection.yml`), `SpellCast`, cue + presentation controllers. |
+| `spells/` | $1 recogniser (`matching/dollar_one/`, incl. `svg_template_loader`), layered SVG templates (`templates/` — `gesture_path`/`gesture_visual`/`origin`/`end_arrow`/`mid_arrows`/`bg` layers), scorer (`scoring/`), per-spell settings (`settings/`), static lore (`spell_info.py` + `data/spell_info.yml`), park selection (`spell_selection.py` + `data/spell_selection.yml`), computed gesture difficulty (`spell_difficulty.py`), `SpellCast`, cue + presentation controllers. |
 | `zones/` | Zone manager, zone application, mock controls, visualisation. |
 | `services/` | Profile, presence reporter, spell-cast reporter, session store, session coordinator. (These are the proto-hub implementations.) |
 | `recording/` | `SessionRecorder` + `CastImageRenderer` protocol + settings. Writes per-session dirs (recognised casts, raw rotation stream, snapshot images) driven by the visualiser's record toggle. |
