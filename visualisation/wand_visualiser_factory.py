@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from logging import Logger
 
+from spells.settings.spell_scoring_settings import SpellScoringSettings
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from visualisation.headless_visualiser import HeadlessVisualiser
 from visualisation.visualiser_protocol import WandVisualiserProtocol
@@ -12,8 +13,10 @@ class WandVisualiserFactory:
         self,
         logger: Logger,
         wand_visualiser_settings: WandVisualiserSettings,
+        spell_scoring: SpellScoringSettings,
     ) -> None:
         self._wand_visualiser_settings = wand_visualiser_settings
+        self._spell_scoring = spell_scoring
         self._logger = logger
 
     def create(self) -> WandVisualiserProtocol:
@@ -26,4 +29,5 @@ class WandVisualiserFactory:
         return QtWandVisualiser(
             logger=self._logger,
             settings=self._wand_visualiser_settings,
+            spell_scoring=self._spell_scoring,
         )

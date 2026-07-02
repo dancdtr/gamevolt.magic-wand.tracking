@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QPushButton,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -20,14 +21,44 @@ from PySide6.QtWidgets import (
 from gamevolt.events.event import Event
 from spells.matching.dollar_one.template_library import templates_dir
 from spells.scoring.cast_attempt import CastAttempt
+from spells.settings.spell_scoring_settings import SpellScoringSettings
+from spells.spell_cast_quality import SpellCastQuality
+from spells.spell_difficulty import difficulty_for_template
 from spells.spell_info import load_spell_info
 from spells.spell_type import SpellType
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from visualisation.qt.live_trail_widget import LiveTrailWidget
 from visualisation.qt.quality_colours import NOISE_COLOUR, colour_for_score
 from visualisation.qt.snapshot_widget import SnapshotWidget
+from visualisation.qt.spell_info_card import SpellInfoCard
 from visualisation.qt.spell_svg_renderer import render_spell_library
 from visualisation.qt.spell_targets_widget import SpellTargetsWidget
+
+
+def _build_difficulties(
+    logger: Logger, scoring: SpellScoringSettings
+) -> dict[SpellType, float]:
+    """Precompute the 1–10 cast-difficulty rating per spell from its template +
+    resolved scoring thresholds. Product-only and fail-soft (unsampleable templates
+    fall back to a threshold-only rating); a missing template is simply omitted."""
+    out: dict[SpellType, float] = {}
+    directory = templates_dir()
+    for spell in SpellType:
+        if spell is SpellType.NONE:
+            continue
+        svg = directory / f"spell_template_{spell.name.lower()}.svg"
+        if not svg.exists():
+            continue
+        settings = scoring.spell_settings(spell.name)
+        thresholds = settings.quality_thresholds
+        mastered = thresholds.get(SpellCastQuality.MASTERED) or (max(thresholds.values()) if thresholds else 90)
+        out[spell] = difficulty_for_template(
+            svg,
+            min_match_accuracy=settings.gates.min_match_accuracy,
+            mastered_threshold=float(mastered),
+            logger=logger,
+        )
+    return out
 
 # Render size for SVG target art; SpellTargetsWidget scales down per tile.
 # Generous so retina / large windows still scale *down* (stays crisp) not up.
@@ -99,6 +130,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self,
         logger: Logger,
         settings: WandVisualiserSettings,
+        spell_scoring: SpellScoringSettings,
     ) -> None:
         self._logger = logger
         self._settings = settings
@@ -113,12 +145,25 @@ class QtWandVisualiser(WandVisualiserProtocol):
 
         self._app = QApplication.instance() or QApplication([])
 
-        # Spell target images are rendered from the layered SVG templates.
+        # Spell target tiles: black ink on white, tiled for the multi-spell zone view.
         pixmaps = render_spell_library(templates_dir(), _SPELL_IMAGE_SIZE, bg_colour="#ffffff")
+        # Card art: black ink on transparent — the card draws its own parchment inset behind it.
+        card_pixmaps = render_spell_library(templates_dir(), _SPELL_IMAGE_SIZE)
+
+        spell_info = load_spell_info(logger)
+        difficulties = _build_difficulties(logger, spell_scoring)
 
         self._targets = SpellTargetsWidget(pixmaps, settings.window.panel_colour, settings.window.text_colour)
+        self._info_card = SpellInfoCard(
+            spell_info, difficulties, card_pixmaps, settings.window.panel_colour, settings.window.text_colour
+        )
+        # Left pane swaps between the info card (single-spell zone) and target tiles (multi-spell).
+        self._left = QStackedWidget()
+        self._left.addWidget(self._targets)
+        self._left.addWidget(self._info_card)
+
         self._live = LiveTrailWidget(settings.trail, settings.window.background_colour)
-        self._snapshot = SnapshotWidget(settings, load_spell_info(logger))
+        self._snapshot = SnapshotWidget(settings)
 
         self._zone_combo = QComboBox()
         self._zone_combo.activated.connect(self._on_zone_combo_activated)
@@ -129,7 +174,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
         pane_layout = QHBoxLayout(panes)
         pane_layout.setContentsMargins(0, 0, 0, 0)
         pane_layout.setSpacing(2)
-        pane_layout.addWidget(self._targets, stretch=1)
+        pane_layout.addWidget(self._left, stretch=1)
         pane_layout.addWidget(self._live, stretch=1)
         pane_layout.addWidget(self._snapshot, stretch=1)
 
@@ -313,7 +358,17 @@ class QtWandVisualiser(WandVisualiserProtocol):
     # ── zone-visualiser surface (fed by ZonePresentationController) ─
     def show_zone(self, zone: Zone | None) -> None:
         zone_id = zone.id if zone is not None else None
-        self._targets.set_spells(zone.spell_types if zone is not None else [])
+        spells = [s for s in (zone.spell_types if zone is not None else []) if s is not SpellType.NONE]
+
+        # A single-spell zone shows the full Primer card; anything else falls back to
+        # the tiled targets view.
+        if len(spells) == 1:
+            self._info_card.set_spell(spells[0])
+            self._left.setCurrentWidget(self._info_card)
+        else:
+            self._targets.set_spells(spells)
+            self._left.setCurrentWidget(self._targets)
+
         self._snapshot.clear()  # previous cast result is stale once the zone changes
         index = self._zone_index.get(zone_id)
         if index is not None and index != self._zone_combo.currentIndex():

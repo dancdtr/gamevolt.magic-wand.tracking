@@ -172,8 +172,8 @@ spell_scoring:
     tempo_ideal_max_s: 2.5
     tempo_decay_s: 1.5
     thresholds:
-      RUDIMENTARY: 60
-      SKILLED: 70
+      RUDIMENTARY: 50
+      SKILLED: 65
       EXPERIENCED: 80
       MASTERED: 90
   # overrides: []
@@ -207,7 +207,7 @@ wand_visualiser:
   window:
     title: "Wand Visualiser"
     width: 1600
-    height: 640
+    height: 900
     background_colour: "#1a1a1a"
     panel_colour: "#161616"
     text_colour: "#dddddd"
@@ -236,7 +236,7 @@ wand_visualiser:
 
 multi_wand_visualiser:
   is_enabled: True
-  palette:   # 20 distinct hues (golden-angle spacing) so consecutively-assigned wands differ most
+  palette: # 20 distinct hues (golden-angle spacing) so consecutively-assigned wands differ most
     - "#ff3838" # red
     - "#38ff72" # green
     - "#ac38ff" # violet

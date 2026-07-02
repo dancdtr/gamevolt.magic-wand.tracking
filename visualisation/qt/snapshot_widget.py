@@ -7,8 +7,6 @@ from PySide6.QtWidgets import QWidget
 from spells.scoring.cast_attempt import CastAttempt
 from spells.scoring.cast_score import CastScore
 from spells.spell_cast_quality import SpellCastQuality
-from spells.spell_info import SpellInfo
-from spells.spell_type import SpellType
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from visualisation.qt.coord_mapper import map_normalized_point
 from visualisation.qt.quality_colours import REJECT_COLOUR, colour_for_score
@@ -19,15 +17,16 @@ _DIM_STAR_COLOUR = "#3a3a3a"
 
 
 class SnapshotWidget(QWidget):
-    """Frozen view of the last qualifying cast attempt: shape overlay + scoring breakdown."""
+    """Frozen view of the last qualifying cast attempt: shape overlay + scoring breakdown.
 
-    def __init__(self, settings: WandVisualiserSettings, spell_info: dict[SpellType, SpellInfo] | None = None) -> None:
+    Spell lore lives in the left-pane `SpellInfoCard`, not here — this pane is scoring only."""
+
+    def __init__(self, settings: WandVisualiserSettings) -> None:
         super().__init__()
         self._settings = settings
         self._snapshot = settings.snapshot
         self._background = QColor(settings.window.panel_colour)
         self._text_colour = QColor(settings.window.text_colour)
-        self._spell_info = spell_info or {}
         self._attempt: CastAttempt | None = None
 
     def set_attempt(self, attempt: CastAttempt) -> None:
@@ -127,29 +126,6 @@ class SnapshotWidget(QWidget):
         painter.setFont(tier_font)
         painter.drawText(QPointF(x, y + 22), tier)
 
-        # lore: nickname + a compact classification · difficulty · pronunciation line.
-        # UX-only; absent when this spell has no lore entry.
-        info = self._lookup_info(score.label)
-        lore_bottom = y + 22
-        if info is not None:
-            if info.nickname:
-                nick_font = QFont("Menlo")
-                nick_font.setPointSize(11)
-                nick_font.setItalic(True)
-                painter.setFont(nick_font)
-                painter.setPen(QColor(_MUTED_COLOUR))
-                lore_bottom += 18
-                painter.drawText(QPointF(x, lore_bottom), info.nickname.upper())
-
-            facts = " · ".join(f for f in (info.classification, info.difficulty, info.pronunciation) if f)
-            if facts:
-                fact_font = QFont("Menlo")
-                fact_font.setPointSize(11)
-                painter.setFont(fact_font)
-                painter.setPen(QColor(_MUTED_COLOUR))
-                lore_bottom += 16
-                painter.drawText(QPointF(x, lore_bottom), facts)
-
         # big quality-coloured total, right-aligned, with a small "points" caption
         total_font = QFont("Menlo")
         total_font.setPointSize(40)
@@ -166,8 +142,8 @@ class SnapshotWidget(QWidget):
         pts_w = painter.fontMetrics().horizontalAdvance("points")
         painter.drawText(QPointF(w - pts_w - 18, y + 34), "points")
 
-        # star rating (quality out of _MAX_STARS), below the header + any lore lines
-        y = lore_bottom + 30
+        # star rating (quality out of _MAX_STARS), below the header
+        y = y + 22 + 30
         self._draw_stars(painter, score, x, y, quality_colour)
 
         # one-line stroke metrics
@@ -217,12 +193,6 @@ class SnapshotWidget(QWidget):
             y += 20
             painter.drawText(QPointF(x + 12, y), f"{c.label}  {c.score * 100:.0f}%")
         painter.restore()
-
-    def _lookup_info(self, label: str) -> SpellInfo | None:
-        try:
-            return self._spell_info.get(SpellType[label])
-        except KeyError:
-            return None
 
     def _draw_stars(self, painter: QPainter, score: CastScore, x: float, y: float, colour: str) -> None:
         filled = self._star_count(score)

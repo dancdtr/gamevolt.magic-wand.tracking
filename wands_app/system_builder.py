@@ -81,6 +81,7 @@ class WandsSystemBuilder:
             wand_visualiser = WandVisualiserFactory(
                 logger=logger,
                 wand_visualiser_settings=settings.wand_visualiser,
+                spell_scoring=settings.spell_scoring,
             ).create()
 
         if is_mock:
