@@ -12,8 +12,11 @@ from visualisation.qt.coord_mapper import map_normalized_point
 from visualisation.qt.quality_colours import REJECT_COLOUR, colour_for_score
 
 _MAX_STARS = len(SpellCastQuality)  # quality tiers map 1:1 onto filled stars
-_MUTED_COLOUR = "#6b7280"
+_MUTED_COLOUR = "#8a8f98"       # matches SpellInfoCard muted grey
 _DIM_STAR_COLOUR = "#3a3a3a"
+_ACCENT = "#c9a227"             # gold rule — ties the pane to the left-hand card
+_SERIF = "Georgia"             # serif display face, as on the card title
+_MARGIN = 24.0
 
 
 class SnapshotWidget(QWidget):
@@ -50,7 +53,7 @@ class SnapshotWidget(QWidget):
             return
 
         shape_h = int(h * 0.45)
-        self._draw_shape(painter, self._attempt, QRectF(0, 0, w, shape_h))
+        self._draw_shape(painter, self._attempt, QRectF(_MARGIN, _MARGIN, w - 2 * _MARGIN, shape_h - _MARGIN))
         self._draw_breakdown(painter, self._attempt, QRectF(0, shape_h, w, h - shape_h))
 
     # ── shape overlay ───────────────────────────────────────────
@@ -100,9 +103,10 @@ class SnapshotWidget(QWidget):
         painter.save()
         painter.translate(rect.topLeft())
         score = attempt.score
-        x = 18.0
-        y = 30.0
+        x = _MARGIN
+        y = 34.0
         w = rect.width()
+        right = w - _MARGIN
 
         # header: spell label + tier on the left, big quality-coloured total on the right
         quality_colour = colour_for_score(score)
@@ -113,43 +117,52 @@ class SnapshotWidget(QWidget):
         else:
             tier = "FAILED"
 
-        header_font = QFont("Menlo")
-        header_font.setPointSize(19)
+        # serif label, matching the left-hand card title
+        header_font = QFont(_SERIF)
+        header_font.setPointSize(23)
         header_font.setBold(True)
         painter.setFont(header_font)
         painter.setPen(QColor(quality_colour))
         painter.drawText(QPointF(x, y), score.label.upper())
 
         tier_font = QFont("Menlo")
-        tier_font.setPointSize(12)
+        tier_font.setPointSize(11)
         tier_font.setBold(True)
         painter.setFont(tier_font)
-        painter.drawText(QPointF(x, y + 22), tier)
+        painter.setPen(QColor(quality_colour))
+        painter.drawText(QPointF(x, y + 24), tier)
 
-        # big quality-coloured total, right-aligned, with a small "points" caption
-        total_font = QFont("Menlo")
+        # big quality-coloured total, right-aligned, with a small "POINTS" caption
+        total_font = QFont(_SERIF)
         total_font.setPointSize(40)
         total_font.setBold(True)
         painter.setFont(total_font)
         painter.setPen(QColor(quality_colour))
         total_text = f"{score.total:.0f}"
         total_w = painter.fontMetrics().horizontalAdvance(total_text)
-        painter.drawText(QPointF(w - total_w - 18, y + 18), total_text)
+        painter.drawText(QPointF(right - total_w, y + 16), total_text)
         caption = QFont("Menlo")
-        caption.setPointSize(10)
+        caption.setPointSize(9)
         painter.setFont(caption)
         painter.setPen(QColor(_MUTED_COLOUR))
-        pts_w = painter.fontMetrics().horizontalAdvance("points")
-        painter.drawText(QPointF(w - pts_w - 18, y + 34), "points")
+        pts_w = painter.fontMetrics().horizontalAdvance("POINTS")
+        painter.drawText(QPointF(right - pts_w, y + 32), "POINTS")
 
-        # star rating (quality out of _MAX_STARS), below the header
-        y = y + 22 + 30
+        # gold divider rule under the header — ties this pane to the card
+        rule_y = y + 44
+        rule = QPen(QColor(_ACCENT))
+        rule.setWidth(1)
+        painter.setPen(rule)
+        painter.drawLine(QPointF(x, rule_y), QPointF(right, rule_y))
+
+        # star rating (quality out of _MAX_STARS)
+        y = rule_y + 34
         self._draw_stars(painter, score, x, y, quality_colour)
 
         # one-line stroke metrics
         y += 30
         metrics_font = QFont("Menlo")
-        metrics_font.setPointSize(12)
+        metrics_font.setPointSize(11)
         painter.setFont(metrics_font)
         painter.setPen(self._text_colour)
         painter.drawText(QPointF(x, y), f"match {score.match_accuracy * 100:.1f}%    "
@@ -165,7 +178,7 @@ class SnapshotWidget(QWidget):
 
         # ── SCORING section ──────────────────────────────────
         y += 34
-        self._draw_section_title(painter, "SCORING", x, y, w)
+        self._draw_section_title(painter, "SCORING", x, y, right)
 
         y += 28
         components = [
@@ -177,21 +190,24 @@ class SnapshotWidget(QWidget):
         ]
         bar_max = max(score.total, 120.0)
         bar_x = x + 130
-        bar_w = w - bar_x - 64
+        bar_w = right - bar_x - 40
         for name, value in components:
             self._draw_bar(painter, name, value, x, bar_x, y, bar_w, bar_max, quality_colour)
             y += 26
 
-        # candidates (one per line)
+        # candidates (one per line): label left, percentage right-aligned
         y += 14
-        self._draw_section_title(painter, "CANDIDATES", x, y, w)
+        self._draw_section_title(painter, "CANDIDATES", x, y, right)
         cand_font = QFont("Menlo")
         cand_font.setPointSize(12)
         painter.setFont(cand_font)
-        painter.setPen(QColor("#9ca3af"))
         for c in attempt.candidates[:3]:
             y += 20
-            painter.drawText(QPointF(x + 12, y), f"{c.label}  {c.score * 100:.0f}%")
+            painter.setPen(self._text_colour)
+            painter.drawText(QPointF(x + 12, y), c.label)
+            pct = f"{c.score * 100:.0f}%"
+            painter.setPen(QColor(_MUTED_COLOUR))
+            painter.drawText(QPointF(right - painter.fontMetrics().horizontalAdvance(pct), y), pct)
         painter.restore()
 
     def _draw_stars(self, painter: QPainter, score: CastScore, x: float, y: float, colour: str) -> None:
@@ -215,9 +231,9 @@ class SnapshotWidget(QWidget):
             return 0
         return list(SpellCastQuality).index(score.quality) + 1
 
-    def _draw_section_title(self, painter: QPainter, text: str, x: float, y: float, w: float) -> None:
+    def _draw_section_title(self, painter: QPainter, text: str, x: float, y: float, right: float) -> None:
         title_font = QFont("Menlo")
-        title_font.setPointSize(12)
+        title_font.setPointSize(11)
         title_font.setBold(True)
         painter.setFont(title_font)
         painter.setPen(QColor(_MUTED_COLOUR))
@@ -226,7 +242,7 @@ class SnapshotWidget(QWidget):
         rule_pen = QPen(QColor(_DIM_STAR_COLOUR))
         rule_pen.setWidth(1)
         painter.setPen(rule_pen)
-        painter.drawLine(QPointF(x + text_w + 10, y - 4), QPointF(w - 18, y - 4))
+        painter.drawLine(QPointF(x + text_w + 10, y - 4), QPointF(right, y - 4))
 
     def _draw_bar(
         self,

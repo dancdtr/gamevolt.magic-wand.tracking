@@ -1,9 +1,11 @@
 """Load a layered spell SVG as an ordered point list for use as a $1 template.
 
 Required layer convention (Illustrator: Object IDs = Layer Names):
-  - `gesture_path`   : the true centreline geometry. MUST be a single open <path>;
-                       its `d` defines the sampled curve fed to $1. This is what the
-                       recognizer matches against — never the visual stroke.
+  - `gesture_path`   : the true centreline geometry. MUST be a single open shape
+                       (<path>, or a straight-segment <polyline>/<line> as Illustrator
+                       exports one); its geometry defines the sampled curve fed to $1.
+                       This is what the recognizer matches against — never the visual
+                       stroke.
   - `gesture_visual` : the prettied stroke shown to the user (may use a width
                        profile / be a filled outline). UX-only, ignored here.
   - `origin`         : marker at the canonical gesture START. Required.
@@ -17,7 +19,7 @@ back the other) — a there-and-back that $1 cannot match. `gesture_path` exists
 carry the clean centreline instead; keep it an open, unstroked-outline path.
 
 A layered SVG that is missing `origin`, missing `end_arrow`, or whose `gesture_path`
-is not exactly one <path> is *invalid* and raises `ValueError` — a broken
+is not exactly one shape is *invalid* and raises `ValueError` — a broken
 template silently degrades the cast experience, so we fail loud and force the
 author to fix it (or exclude the spell knowingly upstream).
 
@@ -77,15 +79,37 @@ def load_svg_points(svg_path: Path, samples: int = 256, logger: Logger | None = 
 
 
 def _sample(path, samples: int) -> list[Point]:
-    """Sample `samples` points evenly by arc length, y-flipped to wand space."""
-    total_length = path.length()
+    """Sample `samples` points evenly by arc length, y-flipped to wand space.
+
+    Builds an arc-length table from dense uniform-`t` subsamples and interpolates,
+    instead of calling svgpathtools' `ilength` per point. `ilength` inverts arc
+    length with Newton iteration and raises on some valid curves — endpoint
+    overshoot ("s is not in interval [0, curve.length()]") or non-convergence on
+    tight/near-degenerate segments ("Maximum iterations reached"). The table is
+    numerically robust and covers any template geometry.
+    """
+    if path.length() <= 0:
+        z = path.point(0.0)
+        return [(z.real, -z.imag)] * samples
+
+    # Dense subsamples in parameter t, with cumulative chord length as arc length.
+    sub = max(samples * 8, 2048)
+    ts = [i / sub for i in range(sub + 1)]
+    pts = [path.point(t) for t in ts]
+    cum = [0.0]
+    for a, b in zip(pts, pts[1:]):
+        cum.append(cum[-1] + abs(b - a))
+    total = cum[-1]
+
     points: list[Point] = []
+    j = 0
     for i in range(samples):
-        if total_length > 0:
-            distance = total_length * i / (samples - 1)
-            z = path.point(path.ilength(distance))
-        else:
-            z = path.point(0.0)
+        target = total * i / (samples - 1)
+        while j < sub - 1 and cum[j + 1] < target:
+            j += 1
+        seg = cum[j + 1] - cum[j]
+        frac = 0.0 if seg <= 0 else (target - cum[j]) / seg
+        z = pts[j] + (pts[j + 1] - pts[j]) * frac  # linear interp between dense samples
         points.append((z.real, -z.imag))  # y-flip: SVG y-down -> wand y-up
     return points
 
@@ -163,20 +187,27 @@ def _first_geometry_d(el: ET.Element) -> str | None:
     return None
 
 
+_GESTURE_SHAPES = ("path", "polyline", "polygon", "line")
+
+
 def _gesture_d(root: ET.Element) -> str:
-    """`d` of the `gesture_path` layer's single <path>. Raises if absent or not one path."""
+    """`d` of the `gesture_path` layer's single geometry element.
+
+    Accepts a lone <path>/<polyline>/<polygon>/<line> — Illustrator exports a
+    straight-segment centreline as <polyline>, which is a valid single stroke.
+    Raises if the layer is absent or holds anything other than exactly one shape.
+    """
     layer = _layer(root, _GESTURE_KEY)
     if layer is None:
         raise ValueError("missing required `gesture_path` layer")
 
-    paths = [el for el in layer.iter() if _local(el.tag) == "path"]
-    non_path = [el for el in layer.iter() if _local(el.tag) in ("polyline", "polygon", "line")]
-    if len(paths) != 1 or non_path:
-        raise ValueError(f"`gesture_path` must be a single <path> (found {len(paths)} paths, {len(non_path)} other shapes)")
+    shapes = [el for el in layer.iter() if _local(el.tag) in _GESTURE_SHAPES]
+    if len(shapes) != 1:
+        raise ValueError(f"`gesture_path` must be a single shape (found {len(shapes)})")
 
-    d = paths[0].get("d")
+    d = _element_d(shapes[0])
     if not d:
-        raise ValueError("`gesture_path` <path> has no `d` geometry")
+        raise ValueError(f"`gesture_path` <{_local(shapes[0].tag)}> has no usable geometry")
     return d
 
 
