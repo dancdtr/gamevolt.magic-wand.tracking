@@ -1,6 +1,7 @@
 from gamevolt.logging import Logger
 from motion.stroke.stroke_windower import StrokeWindower
 from spells.matching.dollar_one.template_library import load_default_library
+from spells.scoring.scoring_modifier import ScoringModifier
 from spells.scoring.spell_scorer import SpellScorer
 from spells.scoring.streak_tracker import InMemoryStreakTracker
 from spells.scoring.xp_provider import InMemoryXpProvider
@@ -39,6 +40,10 @@ class TrackedWandFactory:
     def reset_xp(self) -> None:
         """Wipe accrued XP for all wands — shared scorer state."""
         self._scorer.reset_xp()
+
+    def set_scoring_modifier(self, modifier: ScoringModifier, enabled: bool) -> None:
+        """Toggle a scoring modifier (XP / cadence / tempo / pity) — shared scorer state."""
+        self._scorer.set_modifier(modifier, enabled)
 
     def create(self, id: str) -> TrackedWand:
         return TrackedWand(

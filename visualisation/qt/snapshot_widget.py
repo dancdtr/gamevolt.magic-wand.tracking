@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QWidget
 
 from spells.scoring.cast_attempt import CastAttempt
 from spells.scoring.cast_score import CastScore
+from spells.scoring.scoring_modifier import ScoringModifier
 from spells.spell_cast_quality import SpellCastQuality
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from visualisation.qt.coord_mapper import map_normalized_point
@@ -181,18 +182,21 @@ class SnapshotWidget(QWidget):
         self._draw_section_title(painter, "SCORING", x, y, right)
 
         y += 28
+        # Each row: (label, value, modifier). A disabled modifier still shows its value
+        # but is greyed out and excluded from the total. `base` has no modifier.
         components = [
-            ("base", score.base),
-            ("xp bonus", score.xp_bonus),
-            ("cadence", score.cadence_bonus),
-            ("tempo", score.tempo_bonus),
-            ("failure bonus", score.streak_bonus),
+            ("base", score.base, None),
+            ("xp bonus", score.xp_bonus, ScoringModifier.XP),
+            ("cadence", score.cadence_bonus, ScoringModifier.CADENCE),
+            ("tempo", score.tempo_bonus, ScoringModifier.TEMPO),
+            ("pity bonus", score.streak_bonus, ScoringModifier.PITY),
         ]
         bar_max = max(score.total, 120.0)
         bar_x = x + 130
         bar_w = right - bar_x - 40
-        for name, value in components:
-            self._draw_bar(painter, name, value, x, bar_x, y, bar_w, bar_max, quality_colour)
+        for name, value, modifier in components:
+            disabled = modifier is not None and modifier in score.disabled_modifiers
+            self._draw_bar(painter, name, value, x, bar_x, y, bar_w, bar_max, quality_colour, disabled)
             y += 26
 
         # candidates (one per line): label left, percentage right-aligned
@@ -255,12 +259,17 @@ class SnapshotWidget(QWidget):
         bar_w: float,
         bar_max: float,
         colour: str,
+        disabled: bool = False,
     ) -> None:
+        # A disabled modifier is drawn muted (label, fill + value) and tagged, but keeps its value.
+        text_colour = QColor(_MUTED_COLOUR) if disabled else self._text_colour
+        fill_colour = QColor(_MUTED_COLOUR) if disabled else QColor(colour)
+
         label_font = QFont("Menlo")
         label_font.setPointSize(12)
         painter.setFont(label_font)
-        painter.setPen(self._text_colour)
-        painter.drawText(QPointF(label_x, y + 5), name)
+        painter.setPen(text_colour)
+        painter.drawText(QPointF(label_x, y + 5), name + (" (off)" if disabled else ""))
 
         track = QRectF(bar_x, y - 8, bar_w, 14)
         painter.setPen(Qt.PenStyle.NoPen)
@@ -270,10 +279,10 @@ class SnapshotWidget(QWidget):
         frac = 0.0 if bar_max <= 0 else max(0.0, min(1.0, value / bar_max))
         if frac > 0:
             fill = QRectF(bar_x, y - 8, bar_w * frac, 14)
-            painter.setBrush(QColor(colour))
+            painter.setBrush(fill_colour)
             painter.drawRoundedRect(fill, 4, 4)
 
-        painter.setPen(self._text_colour)
+        painter.setPen(text_colour)
         painter.drawText(QPointF(bar_x + bar_w + 8, y + 5), f"{value:.1f}")
 
     def _draw_placeholder(self, painter: QPainter, w: int, h: int) -> None:

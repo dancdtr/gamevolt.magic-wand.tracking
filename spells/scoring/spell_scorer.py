@@ -10,6 +10,7 @@ import math
 
 from motion.stroke.stroke_windower import Stroke
 from spells.scoring.cast_score import CastScore
+from spells.scoring.scoring_modifier import ScoringModifier
 from spells.scoring.streak_tracker import StreakTracker
 from spells.scoring.xp_provider import XpProvider
 from spells.settings.spell_scoring_settings import SpellScoringSettings
@@ -27,6 +28,13 @@ class SpellScorer:
         self._settings = settings
         self._xp = xp_provider
         self._streak = streak_tracker
+        # Dev toggles (visualiser settings): each modifier's contribution can be switched
+        # off without touching the base score or gates. All on by default.
+        self._modifiers = {modifier: True for modifier in ScoringModifier}
+
+    def set_modifier(self, modifier: ScoringModifier, enabled: bool) -> None:
+        """Enable/disable a single scoring modifier — dev tool."""
+        self._modifiers[modifier] = enabled
 
     def score(
         self,
@@ -55,14 +63,19 @@ class SpellScorer:
 
         # ── Components ────────────────────────────────────────
         # Computed even when gates fail so the visualiser shows real scores on a rejected cast.
+        # Each modifier's real value is always computed (for display); a disabled modifier
+        # keeps its value but is left out of the applied subtotal below.
         difficulty = spell.difficulty_weight
         base = match_accuracy * 100.0 * difficulty
 
         xp_bonus = min(self._xp.unique_spell_count(player_id) * bonuses.xp_per_unique_spell, bonuses.xp_max)
         cadence_bonus = self._cadence_bonus(stroke) * bonuses.cadence_max
         tempo_bonus = self._tempo_bonus(stroke.duration_s, spell.tempo)
+        disabled = frozenset(modifier for modifier, on in self._modifiers.items() if not on)
 
-        subtotal = base + xp_bonus + cadence_bonus + tempo_bonus
+        subtotal = base + self._applied(ScoringModifier.XP, xp_bonus) \
+            + self._applied(ScoringModifier.CADENCE, cadence_bonus) \
+            + self._applied(ScoringModifier.TEMPO, tempo_bonus)
 
         if failures:
             return CastScore(
@@ -78,23 +91,27 @@ class SpellScorer:
                 quality=None,
                 passed_gates=False,
                 gate_failures=tuple(failures),
+                disabled_modifiers=disabled,
             )
 
         natural_quality = self._resolve_quality(subtotal, spell.quality_thresholds)
 
-        # Pity bonus only when the cast (gate-passing) fell short of this spell's lowest tier.
+        # Pity: streak bonus only ever matters when the (gate-passing) cast fell short of this
+        # spell's lowest tier. Its value is still computed there for display, but it only counts
+        # toward the total and can rescue to the lowest tier when the PITY modifier is enabled.
         streak_bonus = 0.0
         pity_pass = False
         total = subtotal
         quality = natural_quality
 
         if natural_quality is None:
-            lowest_tier, lowest_threshold = spell.lowest_tier
             streak_bonus = self._streak.failed_streak(player_id) * bonuses.streak_per_fail
-            total = subtotal + streak_bonus
-            if total >= lowest_threshold:
-                quality = lowest_tier  # clamp: pity never awards above the lowest tier
-                pity_pass = True
+            if self._modifiers[ScoringModifier.PITY]:
+                lowest_tier, lowest_threshold = spell.lowest_tier
+                total = subtotal + streak_bonus
+                if total >= lowest_threshold:
+                    quality = lowest_tier  # clamp: pity never awards above the lowest tier
+                    pity_pass = True
 
         return CastScore(
             label=label,
@@ -109,7 +126,12 @@ class SpellScorer:
             quality=quality,
             passed_gates=True,
             pity_pass=pity_pass,
+            disabled_modifiers=disabled,
         )
+
+    def _applied(self, modifier: ScoringModifier, value: float) -> float:
+        """A modifier's contribution to the total: its value when enabled, else 0."""
+        return value if self._modifiers[modifier] else 0.0
 
     def apply_outcome(self, player_id: str, cast: CastScore) -> None:
         """Update per-player state from a scored cast: reset streak + accrue XP on success,

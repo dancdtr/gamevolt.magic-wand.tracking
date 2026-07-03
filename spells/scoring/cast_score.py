@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from spells.scoring.scoring_modifier import ScoringModifier
 from spells.spell_cast_quality import SpellCastQuality
 
 
@@ -10,7 +11,9 @@ class CastScore:
     label: str
     match_accuracy: float  # raw $1 score, 0..1
 
-    # Additive components (points).
+    # Additive components (points). These hold the *real* computed value of each modifier,
+    # even for disabled ones (see `disabled_modifiers`) — a disabled modifier keeps its
+    # value for display but is excluded from `total`.
     base: float
     xp_bonus: float
     cadence_bonus: float
@@ -27,6 +30,9 @@ class CastScore:
 
     # True when the cast only reached a tier thanks to the pity (streak) bonus.
     pity_pass: bool = False
+
+    # Modifiers switched off in the UI: their value above is shown but not added to `total`.
+    disabled_modifiers: frozenset[ScoringModifier] = field(default_factory=frozenset)
 
     @property
     def recognized(self) -> bool:

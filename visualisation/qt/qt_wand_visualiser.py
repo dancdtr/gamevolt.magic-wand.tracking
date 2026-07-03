@@ -21,14 +21,17 @@ from PySide6.QtWidgets import (
 from gamevolt.events.event import Event
 from spells.matching.dollar_one.template_library import templates_dir
 from spells.scoring.cast_attempt import CastAttempt
+from spells.scoring.scoring_modifier import ScoringModifier
 from spells.settings.spell_scoring_settings import SpellScoringSettings
 from spells.spell_cast_quality import SpellCastQuality
 from spells.spell_difficulty import difficulty_for_template
 from spells.spell_info import load_spell_info
 from spells.spell_type import SpellType
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
+from visualisation.qt.auto_advance_settings import AutoAdvanceSettings
 from visualisation.qt.live_trail_widget import LiveTrailWidget
 from visualisation.qt.quality_colours import NOISE_COLOUR, colour_for_score
+from visualisation.qt.settings_panel import SettingsPanel
 from visualisation.qt.snapshot_widget import SnapshotWidget
 from visualisation.qt.spell_info_card import SpellInfoCard
 from visualisation.qt.spell_svg_renderer import render_spell_library
@@ -104,14 +107,24 @@ class _NameField(QLineEdit):
 
 
 class _MainWindow(QMainWindow):
-    def __init__(self, on_close: Callable[[], None], on_key: Callable[[str], None]) -> None:
+    def __init__(
+        self,
+        on_close: Callable[[], None],
+        on_key: Callable[[str], None],
+        on_resize: Callable[[], None],
+    ) -> None:
         super().__init__()
         self._on_close = on_close
         self._on_key = on_key
+        self._on_resize = on_resize
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 (Qt override)
         self._on_close()
         super().closeEvent(event)
+
+    def resizeEvent(self, event) -> None:  # noqa: N802 (Qt override)
+        super().resizeEvent(event)
+        self._on_resize()
 
     def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802 (Qt override)
         self._on_key(_key_token(event))
@@ -139,6 +152,11 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._quit: Event[Callable[[], None]] = Event()
         self._reset_xp_requested: Event[Callable[[], None]] = Event()
         self._record_session_changed: Event[Callable[[bool, str], None]] = Event()
+        # Fires on a recognized cast (rudimentary+); QtZoneControls uses it to auto-advance.
+        self._cast_recognized: Event[Callable[[], None]] = Event()
+        # Fires when a scoring-modifier toggle flips; system_builder routes it to the scorer.
+        self._scoring_modifier_changed: Event[Callable[[ScoringModifier, bool], None]] = Event()
+        self._auto_advance = AutoAdvanceSettings()
         self.key_pressed: Event[Callable[[str], None]] = Event()
         self.zone_selected: Event[Callable[[str | None], None]] = Event()
         self._key_callbacks: dict[str, Callable[[], None]] = {}
@@ -184,10 +202,9 @@ class QtWandVisualiser(WandVisualiserProtocol):
         layout.setContentsMargins(6, 6, 6, 0)
         layout.setSpacing(4)
         layout.addWidget(toolbar)
-        layout.addWidget(self._zone_combo)
         layout.addWidget(panes, stretch=1)
 
-        self._window = _MainWindow(self._on_window_closed, self._on_key)
+        self._window = _MainWindow(self._on_window_closed, self._on_key, self._reposition_settings)
         self._window.setWindowTitle(settings.window.title)
         self._window.resize(settings.window.width, settings.window.height)
         self._window.setCentralWidget(central)
@@ -195,6 +212,18 @@ class QtWandVisualiser(WandVisualiserProtocol):
         palette = self._window.palette()
         palette.setColor(QPalette.ColorRole.Window, QColor(settings.window.background_colour))
         self._window.setPalette(palette)
+
+        # Slide-in settings overlay: parented to `central`, positioned manually over the panes.
+        self._settings_panel = SettingsPanel(
+            central,
+            self._auto_advance,
+            settings.window.panel_colour,
+            settings.window.text_colour,
+            on_trail_toggled=self._on_trail_toggled,
+            on_reset_xp=self._reset_xp_requested.invoke,
+            on_scoring_modifier=self._scoring_modifier_changed.invoke,
+            close_trigger=self._settings_button,
+        )
 
         self._is_running = False
 
@@ -217,13 +246,15 @@ class QtWandVisualiser(WandVisualiserProtocol):
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(6)
 
-        self._trail_toggle = QPushButton("Trail: On")
-        self._trail_toggle.setCheckable(True)
-        self._trail_toggle.setChecked(True)
-        self._trail_toggle.toggled.connect(self._on_trail_toggled)
-
-        self._reset_xp_button = QPushButton("Reset XP")
-        self._reset_xp_button.clicked.connect(self._reset_xp_requested.invoke)
+        self._settings_button = QPushButton("⚙")
+        self._settings_button.setToolTip("Settings")
+        # Big gear glyph; height is pinned to the record button below so it doesn't grow.
+        self._settings_button.setStyleSheet(
+            "QPushButton { padding:0px 12px; border:none; border-radius:6px;"
+            " background:#2b2b2b; color:#dddddd; font-size:20px; }"
+            "QPushButton:hover { background:#3a3a3a; }"
+        )
+        self._settings_button.clicked.connect(self._on_settings_clicked)
 
         self._name_field = _NameField()
         self._name_field.textChanged.connect(self._on_name_changed)
@@ -236,22 +267,46 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._record_toggle.setFixedWidth(self._record_toggle.fontMetrics().horizontalAdvance("⏹  Stop — REC") + 48)
         self._record_toggle.toggled.connect(self._on_record_toggled)
 
+        # Pin the gear button to the record button's height so its large glyph doesn't grow it.
+        self._record_toggle.ensurePolished()
+        self._settings_button.setFixedHeight(self._record_toggle.sizeHint().height())
+
         # Pulses the record button between two reds while a session is recording.
         self._record_blink_on = False
         self._record_blink = QTimer()
         self._record_blink.setInterval(600)
         self._record_blink.timeout.connect(self._pulse_record_button)
 
-        row.addWidget(self._trail_toggle)
-        row.addWidget(self._reset_xp_button)
+        # Zone/spell picker sits top-left, bounded so it doesn't stretch across the window.
+        self._zone_combo.setMaximumWidth(280)
+        row.addWidget(self._zone_combo)
         row.addStretch(1)
         row.addWidget(QLabel("Name:"))
         row.addWidget(self._name_field, stretch=1)
         row.addWidget(self._record_toggle)
+        row.addWidget(self._settings_button)
         return bar
 
+    def _on_settings_clicked(self) -> None:
+        self._reposition_settings()  # ensure geometry is current before sliding in
+        self._settings_panel.toggle()
+
+    def _reposition_settings(self) -> None:
+        self._settings_panel.reposition()
+
+    @property
+    def auto_advance_settings(self) -> AutoAdvanceSettings:
+        return self._auto_advance
+
+    @property
+    def cast_recognized(self) -> Event[Callable[[], None]]:
+        return self._cast_recognized
+
+    @property
+    def scoring_modifier_changed(self) -> Event[Callable[[ScoringModifier, bool], None]]:
+        return self._scoring_modifier_changed
+
     def _on_trail_toggled(self, checked: bool) -> None:
-        self._trail_toggle.setText("Trail: On" if checked else "Trail: Off")
         self._live.set_enabled(checked)
 
     def _on_name_changed(self, text: str) -> None:
@@ -290,6 +345,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._is_running = True
         self.register_key_callback("Escape", self._on_window_closed)
         self._window.show()
+        self._reposition_settings()  # park the panel off-screen right once sized
 
     def stop(self) -> None:
         if not self._is_running:
@@ -342,6 +398,10 @@ class QtWandVisualiser(WandVisualiserProtocol):
                 f"Snapshot ignoring low attempt '{attempt.score.label}' (match {attempt.score.match_accuracy * 100:.0f}% < threshold)."
             )
 
+        # Rudimentary+ cast: signal auto-advance (QtZoneControls decides whether to act).
+        if attempt.score.recognized:
+            self._cast_recognized.invoke()
+
     # ── zone selection dropdown ─────────────────────────────────
     def set_zone_options(self, options: list[tuple[str | None, str]]) -> None:
         """Populate the zone dropdown. Each option is (zone_id | None, label)."""
@@ -370,7 +430,11 @@ class QtWandVisualiser(WandVisualiserProtocol):
             self._targets.set_spells(spells)
             self._left.setCurrentWidget(self._targets)
 
-        self._snapshot.clear()  # previous cast result is stale once the zone changes
+        # Normally the previous cast result is stale once the zone changes. But when
+        # auto-advancing, the zone change *is* the result of that cast — keep it on
+        # screen so you can see how the last spell scored.
+        if not self._auto_advance.auto_advance:
+            self._snapshot.clear()
         index = self._zone_index.get(zone_id)
         if index is not None and index != self._zone_combo.currentIndex():
             self._zone_combo.setCurrentIndex(index)  # programmatic: does not fire `activated`

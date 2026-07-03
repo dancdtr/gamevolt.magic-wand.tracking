@@ -216,8 +216,11 @@ class WandsSystemBuilder:
             server=server,
         )
 
-        # Visualiser dev controls: reset-XP button wipes the shared scorer's XP state.
+        # Visualiser dev controls: reset-XP button wipes the shared scorer's XP state;
+        # the scoring-modifier toggles enable/disable each bonus (XP / cadence / tempo / pity).
         wand_visualiser.reset_xp_requested.subscribe(tracked_wand_factory.reset_xp)
+        if hasattr(wand_visualiser, "scoring_modifier_changed"):
+            wand_visualiser.scoring_modifier_changed.subscribe(tracked_wand_factory.set_scoring_modifier)  # type: ignore[attr-defined]
 
         # Single-anchor dev viewer: arming a recording starts a clean run, so reset XP
         # when the session toggles on (no-op on record-off).

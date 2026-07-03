@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import cast
 
 from gamevolt.logging import Logger
+from spells.spell_selection import load_included_spells
 from visualisation.qt.qt_zone_controls import QtZoneControls
 from visualisation.visualiser_protocol import WandVisualiserProtocol
 from zones.configuration.zones_settings import ZonesSettings
@@ -48,10 +49,13 @@ class ZoneApplicationBuilder:
         controls = QtZoneControls(
             logger=self._logger,
             zone_manager=zone_manager,
-            zone_ids=[zone.id for zone in zones_settings.zones],
+            zones=list(zones_settings.zones),
             key_map=self._build_zone_key_map(zones_settings),
             key_pressed=visualiser.key_pressed,  # type: ignore[attr-defined]
             zone_selected=visualiser.zone_selected,  # type: ignore[attr-defined]
+            settings=visualiser.auto_advance_settings,  # type: ignore[attr-defined]
+            included_spells=load_included_spells(self._logger),
+            cast_recognized=visualiser.cast_recognized,  # type: ignore[attr-defined]
         )
 
         return ZoneApplication(
