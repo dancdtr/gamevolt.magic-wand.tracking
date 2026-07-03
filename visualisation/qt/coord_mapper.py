@@ -14,26 +14,33 @@ def map_trail_point(
     clip: bool,
     margin: int,
 ) -> tuple[float, float]:
-    """Map a trail coordinate into widget pixels. Ported from the old tkinter mapping."""
+    """Map a trail coordinate into widget pixels.
+
+    Maps into a centred *square* region (side = the smaller widget dimension) so equal
+    x/y motion renders undistorted regardless of the pane's aspect ratio — a circular
+    flourish stays circular on a wide or tall pane.
+    """
     m = max(0, margin)
-    w_eff = max(1, w - 2 * m)
-    h_eff = max(1, h - 2 * m)
+    side = max(1, min(w, h) - 2 * m)
+    # Centre the square region within the (possibly non-square) widget.
+    ox = (w - side) / 2.0
+    oy = (h - side) / 2.0
 
     if coords_mode is CoordinateMode.CENTRED:
         if clip:
             nx = max(-1.0, min(1.0, nx))
             ny = max(-1.0, min(1.0, ny))
-        x = ((nx + 1.0) * 0.5) * (w_eff - 1) + m
+        x = ox + ((nx + 1.0) * 0.5) * (side - 1)
         v = (1.0 - (ny + 1.0) * 0.5) if y_up else ((ny + 1.0) * 0.5)
-        return x, v * (h_eff - 1) + m
+        return x, oy + v * (side - 1)
 
     if coords_mode is CoordinateMode.UNIT:
         if clip:
             nx = max(0.0, min(1.0, nx))
             ny = max(0.0, min(1.0, ny))
-        x = nx * (w_eff - 1) + m
+        x = ox + nx * (side - 1)
         v = (1.0 - ny) if y_up else ny
-        return x, v * (h_eff - 1) + m
+        return x, oy + v * (side - 1)
 
     raise ValueError(f"Unknown coords_mode: '{coords_mode}'")
 

@@ -49,13 +49,23 @@ class SnapshotWidget(QWidget):
         w = max(self.width(), 1)
         h = max(self.height(), 1)
 
+        self._draw_title(painter, w)
+        title_h = 40
+
         if self._attempt is None:
-            self._draw_placeholder(painter, w, h)
             return
 
-        shape_h = int(h * 0.45)
-        self._draw_shape(painter, self._attempt, QRectF(_MARGIN, _MARGIN, w - 2 * _MARGIN, shape_h - _MARGIN))
-        self._draw_breakdown(painter, self._attempt, QRectF(0, shape_h, w, h - shape_h))
+        shape_h = int(h * 0.40)
+        self._draw_shape(painter, self._attempt, QRectF(_MARGIN, title_h, w - 2 * _MARGIN, shape_h - _MARGIN))
+        self._draw_breakdown(painter, self._attempt, QRectF(0, title_h + shape_h, w, h - title_h - shape_h))
+
+    def _draw_title(self, painter: QPainter, w: int) -> None:
+        font = QFont(_SERIF)
+        font.setPointSize(13)
+        font.setBold(True)
+        painter.setFont(font)
+        painter.setPen(QColor(_MUTED_COLOUR))
+        painter.drawText(QPointF(_MARGIN, 28), "LAST SPELL CAST")
 
     # ── shape overlay ───────────────────────────────────────────
     def _draw_shape(self, painter: QPainter, attempt: CastAttempt, rect: QRectF) -> None:
@@ -124,14 +134,8 @@ class SnapshotWidget(QWidget):
         header_font.setBold(True)
         painter.setFont(header_font)
         painter.setPen(QColor(quality_colour))
-        painter.drawText(QPointF(x, y), score.label.upper())
-
-        tier_font = QFont("Menlo")
-        tier_font.setPointSize(11)
-        tier_font.setBold(True)
-        painter.setFont(tier_font)
-        painter.setPen(QColor(quality_colour))
-        painter.drawText(QPointF(x, y + 24), tier)
+        # Share the total's baseline so the name and the big number bottom-align.
+        painter.drawText(QPointF(x, y + 16), score.label.upper())
 
         # big quality-coloured total, right-aligned, with a small "POINTS" caption
         total_font = QFont(_SERIF)
@@ -156,19 +160,17 @@ class SnapshotWidget(QWidget):
         painter.setPen(rule)
         painter.drawLine(QPointF(x, rule_y), QPointF(right, rule_y))
 
-        # star rating (quality out of _MAX_STARS)
+        # star rating (quality out of _MAX_STARS), with the quality tier below it
         y = rule_y + 34
         self._draw_stars(painter, score, x, y, quality_colour)
 
-        # one-line stroke metrics
-        y += 30
-        metrics_font = QFont("Menlo")
-        metrics_font.setPointSize(11)
-        painter.setFont(metrics_font)
-        painter.setPen(self._text_colour)
-        painter.drawText(QPointF(x, y), f"match {score.match_accuracy * 100:.1f}%    "
-                                        f"dur {attempt.duration_s:.2f}s    "
-                                        f"path {attempt.path_length:.2f}    samples {attempt.point_count}")
+        y += 26
+        tier_font = QFont("Menlo")
+        tier_font.setPointSize(11)
+        tier_font.setBold(True)
+        painter.setFont(tier_font)
+        painter.setPen(QColor(quality_colour))
+        painter.drawText(QPointF(x, y), tier)
 
         # gate failures (only when rejected)
         if score.gate_failures:
@@ -185,7 +187,7 @@ class SnapshotWidget(QWidget):
         # Each row: (label, value, modifier). A disabled modifier still shows its value
         # but is greyed out and excluded from the total. `base` has no modifier.
         components = [
-            ("base", score.base, None),
+            ("accuracy", score.base, None),
             ("xp bonus", score.xp_bonus, ScoringModifier.XP),
             ("cadence", score.cadence_bonus, ScoringModifier.CADENCE),
             ("tempo", score.tempo_bonus, ScoringModifier.TEMPO),
@@ -199,8 +201,20 @@ class SnapshotWidget(QWidget):
             self._draw_bar(painter, name, value, x, bar_x, y, bar_w, bar_max, quality_colour, disabled)
             y += 26
 
-        # candidates (one per line): label left, percentage right-aligned
+        # ── STATS section: stroke metrics ────────────────────
         y += 14
+        self._draw_section_title(painter, "STATS", x, y, right)
+        y += 24
+        stats_font = QFont("Menlo")
+        stats_font.setPointSize(11)
+        painter.setFont(stats_font)
+        painter.setPen(self._text_colour)
+        painter.drawText(QPointF(x, y), f"dur {attempt.duration_s:.2f}s    "
+                                        f"path {attempt.path_length:.2f}    "
+                                        f"samples {attempt.point_count}")
+
+        # candidates (one per line): label left, percentage right-aligned
+        y += 28
         self._draw_section_title(painter, "CANDIDATES", x, y, right)
         cand_font = QFont("Menlo")
         cand_font.setPointSize(12)
@@ -284,10 +298,3 @@ class SnapshotWidget(QWidget):
 
         painter.setPen(text_colour)
         painter.drawText(QPointF(bar_x + bar_w + 8, y + 5), f"{value:.1f}")
-
-    def _draw_placeholder(self, painter: QPainter, w: int, h: int) -> None:
-        painter.setPen(QColor("#555"))
-        font = QFont("Menlo")
-        font.setPointSize(16)
-        painter.setFont(font)
-        painter.drawText(QRectF(0, 0, w, h), Qt.AlignmentFlag.AlignCenter, "awaiting first spell cast…")

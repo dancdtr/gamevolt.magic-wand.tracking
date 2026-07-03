@@ -152,10 +152,13 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._quit: Event[Callable[[], None]] = Event()
         self._reset_xp_requested: Event[Callable[[], None]] = Event()
         self._record_session_changed: Event[Callable[[bool, str], None]] = Event()
-        # Fires on a recognized cast (rudimentary+); QtZoneControls uses it to auto-advance.
-        self._cast_recognized: Event[Callable[[], None]] = Event()
+        # Fires on a recognized cast (rudimentary+), carrying the awarded quality tier;
+        # QtZoneControls uses it (and the tier) to decide whether to auto-advance.
+        self._cast_recognized: Event[Callable[[SpellCastQuality], None]] = Event()
         # Fires when a scoring-modifier toggle flips; system_builder routes it to the scorer.
         self._scoring_modifier_changed: Event[Callable[[ScoringModifier, bool], None]] = Event()
+        # Fires when the in-park-only toggle flips; QtZoneControls refilters the dropdown.
+        self._in_park_only_changed: Event[Callable[[bool], None]] = Event()
         self._auto_advance = AutoAdvanceSettings()
         self.key_pressed: Event[Callable[[str], None]] = Event()
         self.zone_selected: Event[Callable[[str | None], None]] = Event()
@@ -220,8 +223,8 @@ class QtWandVisualiser(WandVisualiserProtocol):
             settings.window.panel_colour,
             settings.window.text_colour,
             on_trail_toggled=self._on_trail_toggled,
-            on_reset_xp=self._reset_xp_requested.invoke,
             on_scoring_modifier=self._scoring_modifier_changed.invoke,
+            on_in_park_toggled=self._in_park_only_changed.invoke,
             close_trigger=self._settings_button,
         )
 
@@ -256,6 +259,19 @@ class QtWandVisualiser(WandVisualiserProtocol):
         )
         self._settings_button.clicked.connect(self._on_settings_clicked)
 
+        # Reset-XP shortcut, mirroring the settings-panel button. Hidden while the XP
+        # scoring modifier is disabled (no XP state to reset then).
+        self._reset_xp_button = QPushButton("Reset XP")
+        self._reset_xp_button.setToolTip("Reset accumulated XP")
+        self._reset_xp_button.setStyleSheet(
+            "QPushButton { padding:0px 12px; border:none; border-radius:6px;"
+            " background:#2b2b2b; color:#dddddd; font-size:13px; }"
+            "QPushButton:hover { background:#3a3a3a; }"
+        )
+        self._reset_xp_button.clicked.connect(self._reset_xp_requested.invoke)
+        # Track XP-modifier flips so we can show/hide the button live.
+        self._scoring_modifier_changed.subscribe(self._on_scoring_modifier_for_toolbar)
+
         self._name_field = _NameField()
         self._name_field.textChanged.connect(self._on_name_changed)
 
@@ -267,9 +283,10 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._record_toggle.setFixedWidth(self._record_toggle.fontMetrics().horizontalAdvance("⏹  Stop — REC") + 48)
         self._record_toggle.toggled.connect(self._on_record_toggled)
 
-        # Pin the gear button to the record button's height so its large glyph doesn't grow it.
+        # Pin the gear + reset buttons to the record button's height so they align.
         self._record_toggle.ensurePolished()
         self._settings_button.setFixedHeight(self._record_toggle.sizeHint().height())
+        self._reset_xp_button.setFixedHeight(self._record_toggle.sizeHint().height())
 
         # Pulses the record button between two reds while a session is recording.
         self._record_blink_on = False
@@ -283,9 +300,15 @@ class QtWandVisualiser(WandVisualiserProtocol):
         row.addStretch(1)
         row.addWidget(QLabel("Name:"))
         row.addWidget(self._name_field, stretch=1)
+        row.addWidget(self._reset_xp_button)
         row.addWidget(self._record_toggle)
         row.addWidget(self._settings_button)
         return bar
+
+    def _on_scoring_modifier_for_toolbar(self, modifier: ScoringModifier, enabled: bool) -> None:
+        # The toolbar Reset-XP shortcut only makes sense while XP scoring is on.
+        if modifier is ScoringModifier.XP:
+            self._reset_xp_button.setVisible(enabled)
 
     def _on_settings_clicked(self) -> None:
         self._reposition_settings()  # ensure geometry is current before sliding in
@@ -299,12 +322,16 @@ class QtWandVisualiser(WandVisualiserProtocol):
         return self._auto_advance
 
     @property
-    def cast_recognized(self) -> Event[Callable[[], None]]:
+    def cast_recognized(self) -> Event[Callable[[SpellCastQuality], None]]:
         return self._cast_recognized
 
     @property
     def scoring_modifier_changed(self) -> Event[Callable[[ScoringModifier, bool], None]]:
         return self._scoring_modifier_changed
+
+    @property
+    def in_park_only_changed(self) -> Event[Callable[[bool], None]]:
+        return self._in_park_only_changed
 
     def _on_trail_toggled(self, checked: bool) -> None:
         self._live.set_enabled(checked)
@@ -398,19 +425,30 @@ class QtWandVisualiser(WandVisualiserProtocol):
                 f"Snapshot ignoring low attempt '{attempt.score.label}' (match {attempt.score.match_accuracy * 100:.0f}% < threshold)."
             )
 
-        # Rudimentary+ cast: signal auto-advance (QtZoneControls decides whether to act).
+        # Rudimentary+ cast: signal auto-advance with the awarded tier (QtZoneControls
+        # decides whether to act based on the minimum-quality setting).
         if attempt.score.recognized:
-            self._cast_recognized.invoke()
+            assert attempt.score.quality is not None  # guaranteed when recognized
+            self._cast_recognized.invoke(attempt.score.quality)
 
     # ── zone selection dropdown ─────────────────────────────────
-    def set_zone_options(self, options: list[tuple[str | None, str]]) -> None:
-        """Populate the zone dropdown. Each option is (zone_id | None, label)."""
+    def set_zone_options(
+        self, options: list[tuple[str | None, str]], current: str | None = None
+    ) -> None:
+        """Populate the zone dropdown. Each option is (zone_id | None, label).
+
+        `current` re-selects that zone after repopulating (used when the option set is
+        refiltered live) so the combo keeps showing the active zone.
+        """
         self._zone_combo.blockSignals(True)
         self._zone_combo.clear()
         self._zone_index.clear()
         for i, (zone_id, label) in enumerate(options):
             self._zone_combo.addItem(label, zone_id)
             self._zone_index[zone_id] = i
+        index = self._zone_index.get(current)
+        if index is not None:
+            self._zone_combo.setCurrentIndex(index)
         self._zone_combo.blockSignals(False)
 
     def _on_zone_combo_activated(self, index: int) -> None:

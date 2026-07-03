@@ -27,6 +27,7 @@ _FOOTER_BODY = "#c2c7cf"   # notable-uses / source body text
 _PARCHMENT = "#f4efe1"    # light inset behind the (black-ink) gesture art
 _MAX_RATING = 10
 _MARGIN = 26.0
+_BLOCK_GAP = 14.0  # uniform vertical gap between the stacked text blocks
 
 
 def _rating_colour(rating: float) -> QColor:
@@ -77,26 +78,34 @@ class SpellInfoCard(QWidget):
         y = _MARGIN + 8
 
         y = self._draw_title(painter, info, x, y, content_w)
-        y = self._draw_facts(painter, info, x, y + 10, content_w)
-        y = self._draw_nickname(painter, info, x, y + 6, content_w)
-        y = self._draw_description(painter, info, x, y + 12, content_w)
-        y = self._draw_art(painter, x, y + 10, content_w)
-        y = self._draw_difficulty(painter, info, x, y + 16, content_w)
+        y = self._draw_facts(painter, info, x, y + _BLOCK_GAP, content_w)
+        y = self._draw_nickname(painter, info, x, y + _BLOCK_GAP, content_w)
+        y = self._draw_description(painter, info, x, y + _BLOCK_GAP, content_w)
+        y = self._draw_art(painter, x, y + _BLOCK_GAP, content_w)
+        y = self._draw_difficulty(painter, info, x, y + _BLOCK_GAP + 2, content_w)
         self._draw_footer(painter, info, x, content_w)
 
     def _draw_title(self, painter: QPainter, info: SpellInfo, x: float, y: float, w: float) -> float:
+        text = info.display_name.upper()
         font = QFont("Georgia")  # serif nod to the printed card; Menlo elsewhere
-        font.setPointSize(26)
         font.setBold(True)
+        # Auto-shrink so long incantations (e.g. ARRESTO MOMENTUM) fit the card width.
+        size = 26
+        font.setPointSize(size)
         painter.setFont(font)
+        while size > 15 and painter.fontMetrics().horizontalAdvance(text) > w:
+            size -= 1
+            font.setPointSize(size)
+            painter.setFont(font)
+
+        title_h = painter.fontMetrics().height()
         painter.setPen(self._text_colour)
-        rect = QRectF(x, y, w, 40)
-        painter.drawText(rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop, info.display_name.upper())
-        bottom = y + 40
+        painter.drawText(QRectF(x, y, w, title_h), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop, text)
         # gold deco rule under the title
+        rule_y = y + title_h + 4
         painter.setPen(QColor(_ACCENT))
-        painter.drawLine(int(x), int(bottom + 4), int(x + w), int(bottom + 4))
-        return bottom + 8
+        painter.drawLine(int(x), int(rule_y), int(x + w), int(rule_y))
+        return rule_y
 
     def _draw_facts(self, painter: QPainter, info: SpellInfo, x: float, y: float, w: float) -> float:
         # Pronunciation first, then classification. Lore difficulty moves to the
@@ -107,9 +116,10 @@ class SpellInfoCard(QWidget):
         font = QFont("Menlo")
         font.setPointSize(11)
         painter.setFont(font)
+        h = painter.fontMetrics().height()
         painter.setPen(QColor(_MUTED))
-        painter.drawText(QRectF(x, y, w, 20), Qt.AlignmentFlag.AlignLeft, facts)
-        return y + 20
+        painter.drawText(QRectF(x, y, w, h), Qt.AlignmentFlag.AlignLeft, facts)
+        return y + h
 
     def _draw_nickname(self, painter: QPainter, info: SpellInfo, x: float, y: float, w: float) -> float:
         if not info.nickname:
@@ -118,9 +128,10 @@ class SpellInfoCard(QWidget):
         font.setPointSize(13)
         font.setItalic(True)
         painter.setFont(font)
+        h = painter.fontMetrics().height()
         painter.setPen(QColor(_ACCENT))
-        painter.drawText(QRectF(x, y, w, 22), Qt.AlignmentFlag.AlignLeft, f"“{info.nickname}”")
-        return y + 22
+        painter.drawText(QRectF(x, y, w, h), Qt.AlignmentFlag.AlignLeft, f"“{info.nickname}”")
+        return y + h
 
     def _draw_description(self, painter: QPainter, info: SpellInfo, x: float, y: float, w: float) -> float:
         if not info.description:

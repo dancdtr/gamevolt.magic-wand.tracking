@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt, QEasingCurve, QEvent, QObject, QPoint, QPropertyA
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
+    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -15,6 +16,7 @@ from PySide6.QtWidgets import (
 )
 
 from spells.scoring.scoring_modifier import ScoringModifier
+from spells.spell_cast_quality import SpellCastQuality
 from visualisation.qt.auto_advance_settings import AutoAdvanceSettings
 
 _PANEL_WIDTH = 280
@@ -25,7 +27,15 @@ _MODIFIER_LABELS = {
     ScoringModifier.XP: "XP bonus",
     ScoringModifier.CADENCE: "Cadence bonus",
     ScoringModifier.TEMPO: "Tempo bonus",
-    ScoringModifier.PITY: "Pity (streak) pass",
+    ScoringModifier.PITY: "Pity bonus",
+}
+
+# Minimum-advance-quality dropdown, weakest → strongest. A ★ per tier hints at the level.
+_QUALITY_LABELS = {
+    SpellCastQuality.RUDIMENTARY: "★ Rudimentary",
+    SpellCastQuality.SKILLED: "★★ Skilled",
+    SpellCastQuality.EXPERIENCED: "★★★ Experienced",
+    SpellCastQuality.MASTERED: "★★★★ Mastered",
 }
 
 
@@ -46,8 +56,8 @@ class SettingsPanel(QFrame):
         text_colour: str,
         *,
         on_trail_toggled: Callable[[bool], None],
-        on_reset_xp: Callable[[], None],
         on_scoring_modifier: Callable[[ScoringModifier, bool], None],
+        on_in_park_toggled: Callable[[bool], None],
         trail_enabled: bool = True,
         close_trigger: QWidget | None = None,
     ) -> None:
@@ -55,6 +65,7 @@ class SettingsPanel(QFrame):
         self._settings = settings
         self._on_trail_toggled = on_trail_toggled
         self._on_scoring_modifier = on_scoring_modifier
+        self._on_in_park_toggled = on_in_park_toggled
         # Widget that toggles the panel (the gear button): a press on it is handled by its own
         # toggle, so the click-outside filter must ignore it to avoid closing then reopening.
         self._close_trigger = close_trigger
@@ -66,6 +77,9 @@ class SettingsPanel(QFrame):
         self.setStyleSheet(
             f"SettingsPanel {{ background:{panel_colour}; border-left:1px solid #3a3a3a; }}"
             f" QCheckBox, QLabel {{ color:{text_colour}; }}"
+            f" QComboBox {{ color:{text_colour}; background:#2a2a2a; border:1px solid #3a3a3a;"
+            " padding:3px 6px; }"
+            f" QComboBox:disabled {{ color:#666; }}"
         )
 
         layout = QVBoxLayout(self)
@@ -90,29 +104,39 @@ class SettingsPanel(QFrame):
         header.addWidget(close)
         layout.addLayout(header)
 
-        layout.addWidget(self._section("Auto-advance", text_colour))
-
-        self._auto = QCheckBox("Auto-advance after cast")
-        self._auto.setChecked(settings.auto_advance)
-        self._auto.toggled.connect(self._on_auto)
-        layout.addWidget(self._auto)
-
-        self._random = QCheckBox("Randomise next spell")
-        self._random.setChecked(settings.randomise)
-        self._random.toggled.connect(self._on_random)
-        layout.addWidget(self._random)
-
-        self._park = QCheckBox("In-park spells only")
-        self._park.setChecked(settings.in_park_only)
-        self._park.toggled.connect(self._on_park)
-        layout.addWidget(self._park)
-
         layout.addWidget(self._section("Display", text_colour))
 
         self._trail = QCheckBox("Show trail")
         self._trail.setChecked(trail_enabled)
         self._trail.toggled.connect(self._on_trail)
         layout.addWidget(self._trail)
+
+        layout.addWidget(self._section("Spell selection", text_colour))
+
+        self._park = QCheckBox("In-park spells only")
+        self._park.setChecked(settings.in_park_only)
+        self._park.toggled.connect(self._on_park)
+        layout.addWidget(self._park)
+
+        self._random = QCheckBox("Randomise next spell")
+        self._random.setChecked(settings.randomise)
+        self._random.toggled.connect(self._on_random)
+        layout.addWidget(self._random)
+
+        self._auto = QCheckBox("Auto-advance after cast")
+        self._auto.setChecked(settings.auto_advance)
+        self._auto.toggled.connect(self._on_auto)
+        layout.addWidget(self._auto)
+
+        self._min_quality_label = QLabel("Advance with")
+        layout.addWidget(self._min_quality_label)
+
+        self._min_quality = QComboBox()
+        for quality, label in _QUALITY_LABELS.items():
+            self._min_quality.addItem(label, quality)
+        self._min_quality.setCurrentIndex(self._min_quality.findData(settings.min_advance_quality))
+        self._min_quality.currentIndexChanged.connect(self._on_min_quality)
+        layout.addWidget(self._min_quality)
 
         layout.addWidget(self._section("Scoring modifiers", text_colour))
 
@@ -122,10 +146,6 @@ class SettingsPanel(QFrame):
             box.setChecked(True)
             box.toggled.connect(lambda checked, m=modifier: self._on_scoring_modifier(m, checked))
             layout.addWidget(box)
-
-        reset_xp = QPushButton("Reset XP")
-        reset_xp.clicked.connect(on_reset_xp)
-        layout.addWidget(reset_xp)
 
         layout.addStretch(1)
 
@@ -153,13 +173,20 @@ class SettingsPanel(QFrame):
 
     def _on_park(self, checked: bool) -> None:
         self._settings.in_park_only = checked
+        self._on_in_park_toggled(checked)
+
+    def _on_min_quality(self, index: int) -> None:
+        self._settings.min_advance_quality = self._min_quality.itemData(index)
 
     def _on_trail(self, checked: bool) -> None:
         self._on_trail_toggled(checked)
 
     def _sync_enabled(self) -> None:
-        # Randomise only means anything while auto-advancing; grey it out otherwise.
-        self._random.setEnabled(self._auto.isChecked())
+        # Randomise + min-quality only mean anything while auto-advancing; grey out otherwise.
+        auto = self._auto.isChecked()
+        self._random.setEnabled(auto)
+        self._min_quality.setEnabled(auto)
+        self._min_quality_label.setEnabled(auto)
 
     # ── slide in / out ──────────────────────────────────────────
     def toggle(self) -> None:

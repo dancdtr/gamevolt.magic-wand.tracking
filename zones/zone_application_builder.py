@@ -44,8 +44,6 @@ class ZoneApplicationBuilder:
             visualiser=cast(ZoneVisualiserProtocol, visualiser),
         )
 
-        visualiser.set_zone_options(self._build_zone_options(zones_settings))  # type: ignore[attr-defined]
-
         controls = QtZoneControls(
             logger=self._logger,
             zone_manager=zone_manager,
@@ -56,6 +54,8 @@ class ZoneApplicationBuilder:
             settings=visualiser.auto_advance_settings,  # type: ignore[attr-defined]
             included_spells=load_included_spells(self._logger),
             cast_recognized=visualiser.cast_recognized,  # type: ignore[attr-defined]
+            set_zone_options=visualiser.set_zone_options,  # type: ignore[attr-defined]
+            in_park_only_changed=visualiser.in_park_only_changed,  # type: ignore[attr-defined]
         )
 
         return ZoneApplication(
@@ -63,9 +63,9 @@ class ZoneApplicationBuilder:
             zone_manager=zone_manager,
             presentation_controller=presentation,
             controls=controls,
-            # Start in zone 1 (the zone bound to shortcut key 1) rather than '(none)'.
-            # Deferred to start-up so the presentation controller is subscribed first.
-            on_started=lambda: controls.select_zone_by_key(1),
+            # Start in the first eligible zone (first in-park spell when the filter is on)
+            # rather than '(none)'. Deferred to start-up so subscribers are wired first.
+            on_started=controls.select_default_zone,
         )
 
     def build_production(self, zone_manager: ZoneManagerProtocol) -> ZoneApplication:
@@ -78,15 +78,6 @@ class ZoneApplicationBuilder:
             presentation_controller=None,
             controls=None,
         )
-
-    @staticmethod
-    def _build_zone_options(zones_settings: ZonesSettings) -> list[tuple[str | None, str]]:
-        """Dropdown options: '(none)' plus each zone as 'Z001 - SPELL1, SPELL2'."""
-        options: list[tuple[str | None, str]] = [(None, "(none)")]
-        for zone in zones_settings.zones:
-            spells = ", ".join(spell.name for spell in zone.spells)
-            options.append((zone.id, f"{zone.id} - {spells}" if spells else zone.id))
-        return options
 
     @staticmethod
     def _build_zone_key_map(zones_settings: ZonesSettings) -> dict[int, str]:

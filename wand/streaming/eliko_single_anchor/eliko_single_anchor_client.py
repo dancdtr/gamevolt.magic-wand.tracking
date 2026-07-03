@@ -94,7 +94,7 @@ class ElikoSingleAnchorClient:
 
     def _alloc_seq(self) -> str:
         s = f"{self._next_seq:03d}"
-        self._next_seq += 1
+        self._next_seq = (self._next_seq + 1) % 256
         return s
 
     @staticmethod

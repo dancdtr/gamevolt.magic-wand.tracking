@@ -171,7 +171,7 @@ class PekioClient:
         self._tag = tag
 
     def _next_seq(self) -> str:
-        self._seq = (self._seq + 1) % 1000
+        self._seq = (self._seq + 1) % 256
         return f"{self._seq:03d}"
 
     def cmd1(self, param: int) -> None:
