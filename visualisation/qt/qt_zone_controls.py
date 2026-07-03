@@ -60,6 +60,9 @@ class QtZoneControls:
             zone.id: any(spell in included_spells for spell in zone.spells) for zone in zones
         }
         self._current: str | None = None
+        # Shuffle bag for randomised auto-advance: draw without replacement until
+        # empty, then reshuffle, so every spell appears once per pass.
+        self._shuffle_bag: list[str] = []
 
         self._numeric_buffer = ""
         self._numeric_last_press = 0.0
@@ -72,7 +75,12 @@ class QtZoneControls:
         self._push_zone_options()
 
     def select_default_zone(self) -> None:
-        """Select the start-up zone: the first eligible zone under the current filter."""
+        """Select the start-up zone: a shuffle-bag draw when randomising, else the first eligible."""
+        if self._settings.auto_advance and self._settings.randomise:
+            pool = [zone_id for zone_id in self._cycle_values() if zone_id is not None]
+            if pool:
+                self._apply(self._draw_from_shuffle_bag(pool))
+                return
         self._apply(self._first_eligible_zone())
 
     def _first_eligible_zone(self) -> str | None:
@@ -129,15 +137,14 @@ class QtZoneControls:
         self._apply(values[(idx + step) % len(values)])
 
     def _advance(self) -> None:
-        """Move to the next spell/zone: random pick, or sequential from the current."""
+        """Move to the next spell/zone: shuffle-bag draw, or sequential from the current."""
         pool = [zone_id for zone_id in self._cycle_values() if zone_id is not None]
         if not pool:
             self._logger.debug("Auto-advance: no eligible zones (in-park filter empty?)")
             return
 
         if self._settings.randomise:
-            others = [zone_id for zone_id in pool if zone_id != self._current]
-            zone_id = random.choice(others or pool)
+            zone_id = self._draw_from_shuffle_bag(pool)
         else:
             try:
                 idx = pool.index(self._current)
@@ -146,6 +153,17 @@ class QtZoneControls:
                 zone_id = pool[0]
 
         self._apply(zone_id)
+
+    def _draw_from_shuffle_bag(self, pool: list[str]) -> str:
+        """Draw the next zone without replacement; refill and reshuffle when the bag empties."""
+        # Drop entries no longer eligible (the in-park filter can change between casts).
+        self._shuffle_bag = [zone_id for zone_id in self._shuffle_bag if zone_id in pool]
+        if not self._shuffle_bag:
+            self._shuffle_bag = random.sample(pool, len(pool))
+            # Avoid a back-to-back repeat across the bag boundary.
+            if len(self._shuffle_bag) > 1 and self._shuffle_bag[0] == self._current:
+                self._shuffle_bag.append(self._shuffle_bag.pop(0))
+        return self._shuffle_bag.pop(0)
 
     def _cycle_values(self) -> list[str | None]:
         """Cycle universe: `(none)` plus zones, filtered to in-park when the toggle is on."""
