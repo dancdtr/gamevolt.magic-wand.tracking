@@ -29,6 +29,8 @@ _LEGEND_MARGIN = 12
 def _key_token(event: QKeyEvent) -> str:
     if event.key() == Qt.Key.Key_Escape:
         return "Escape"
+    if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+        return "Return"
     return event.text()
 
 

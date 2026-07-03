@@ -63,6 +63,12 @@ class RMFSettings:
     keep_absolute: bool = True
     tiny_angle: float = 1e-9
 
+    # Samples further apart than this (dropped packets, reboots) restart delta
+    # tracking instead of integrating the orientation jump into one giant delta.
+    # Normal inter-packet spacing is ~83ms @120Hz/10-sample packets; one lost
+    # packet is ~175ms.
+    max_sample_gap_ms: float = 150.0
+
     FIELD_HANDLERS: ClassVar[dict[str, Any]] = {
         "tiny_angle": lambda x: float(x) if float(x) > 0.0 else 1e-9,
         "world_up": _parse_world_up,

@@ -87,7 +87,7 @@ class ElikoWandImuStreamBase(ABC):
 
         seq, tag_hex, t0_ms = self._parse_header(fields)
 
-        forward_q15 = [self._sample_to_forward_q15(fields[offset + i]) for i in range(nsamp)]
+        forward_q15 = [self._sample_to_forward_q15(tag_hex, fields[offset + i]) for i in range(nsamp)]
         data_str = ";".join(f"{fx},{fy},{fz}" for (fx, fy, fz) in forward_q15)
 
         return AssembledPacket(
@@ -101,8 +101,12 @@ class ElikoWandImuStreamBase(ABC):
             header_age_s=0.0,
         )
 
-    def _sample_to_forward_q15(self, field: str) -> tuple[int, int, int]:
-        qx, qy, qz, qw = self._decode_sample_quat(field)
+    def _refine_sample_quat(self, tag_hex: str, quat: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
+        """Optional per-tag post-decode correction. Default: passthrough."""
+        return quat
+
+    def _sample_to_forward_q15(self, tag_hex: str, field: str) -> tuple[int, int, int]:
+        qx, qy, qz, qw = self._refine_sample_quat(tag_hex, self._decode_sample_quat(field))
         return quat_to_forward_q15(
             qx, qy, qz, qw,
             self._settings.body_forward_x,

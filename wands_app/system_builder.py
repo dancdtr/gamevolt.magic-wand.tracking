@@ -28,7 +28,9 @@ from wand.streaming.eliko.eliko_wand_command_sink import ElikoWandCommandSink
 from wand.streaming.eliko.wand_reboot_detector import WandRebootDetector
 from wand.streaming.eliko_single_anchor.eliko_single_anchor_client import ElikoSingleAnchorClient
 from wand.null_wand_command_sink import NullWandCommandSink
+from wand.streaming.raw_line_ring_buffer import RawLineRingBuffer
 from wand.streaming.wand_imu_stream import WandImuStream
+from wand.streaming.wand_line_source import WandLineSource
 from wand.streaming.wand_imu_stream_builder import WandImuStreamBuilder
 from wand.tracked_wand_factory import TrackedWandFactory
 from wand.tracked_wand_manager import TrackedWandManager
@@ -119,6 +121,7 @@ class WandsSystemBuilder:
         imu_stream: WandImuStream
         command_sink: WandCommandSink
         wand_reboot_detector: WandRebootDetector | None = None
+        line_source: WandLineSource
 
         if system_type is SystemType.ELIKO_RTLS:
             eliko_settings = settings.imu_stream.eliko
@@ -133,6 +136,7 @@ class WandsSystemBuilder:
                 ),
             )
             eliko_client = ElikoClient(logger=logger, settings=eliko_settings.connection, client=tcp_client)
+            line_source = eliko_client
             imu_stream = imu_stream_builder.build_eliko(eliko_client)
             # RTLS owns wand IMU + command state; the app stays read-only on the wand.
             command_sink = NullWandCommandSink(logger=logger)
@@ -150,6 +154,7 @@ class WandsSystemBuilder:
                 subscribe_flag=single_settings.subscribe_flag,
                 manage_imu=single_settings.manage_imu,
             )
+            line_source = single_anchor_client
             imu_stream = imu_stream_builder.build_eliko_single_anchor(single_anchor_client)
             command_sink = ElikoWandCommandSink(
                 logger=logger,
@@ -159,6 +164,12 @@ class WandsSystemBuilder:
             if single_settings.manage_imu:
                 wand_reboot_detector = WandRebootDetector(logger=logger, line_source=single_anchor_client)
                 wand_reboot_detector.wand_rebooted.subscribe(single_anchor_client.enable_imu)
+
+        # Always-on capture of the last raw sensor lines; Enter in the visualiser
+        # window dumps them to ./diagnostics for after-the-fact glitch analysis.
+        raw_line_ring_buffer = RawLineRingBuffer(logger=logger, line_source=line_source)
+        raw_line_ring_buffer.attach()
+        wand_visualiser.register_key_callback("Return", lambda: raw_line_ring_buffer.dump())
 
         wizard_name_provider = WizardNameProvider(WizardSettings(names=WIZARD_NAMES))
         profile_service = LocalProfileService(logger=logger, name_provider=wizard_name_provider)

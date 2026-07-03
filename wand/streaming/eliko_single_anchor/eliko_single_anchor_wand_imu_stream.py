@@ -6,6 +6,7 @@ import struct
 from gamevolt.logging import Logger
 from wand.streaming.eliko.configuration.eliko_parsing_settings import ElikoParsingSettings
 from wand.streaming.eliko.eliko_wand_imu_stream_base import ElikoParseError, ElikoWandImuStreamBase
+from wand.streaming.eliko_single_anchor.sflp_quat_stabiliser import SflpQuatStabiliser
 from wand.streaming.wand_line_source import WandLineSource
 
 
@@ -37,6 +38,15 @@ class ElikoSingleAnchorWandImuStream(ElikoWandImuStreamBase):
             settings=settings,
             line_prefix=self._LINE_PREFIX,
         )
+        # Per-tag w-noise correction — the SFLP encoding drops w, and its
+        # recovery is ill-conditioned near w≈0 (see SflpQuatStabiliser).
+        self._stabilisers: dict[str, SflpQuatStabiliser] = {}
+
+    def _refine_sample_quat(self, tag_hex: str, quat: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
+        stabiliser = self._stabilisers.get(tag_hex)
+        if stabiliser is None:
+            stabiliser = self._stabilisers[tag_hex] = SflpQuatStabiliser()
+        return stabiliser.refine(*quat)
 
     def _parse_header(self, fields: list[str]) -> tuple[int, str, int]:
         try:

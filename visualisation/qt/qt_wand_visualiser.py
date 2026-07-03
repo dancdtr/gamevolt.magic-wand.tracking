@@ -92,15 +92,18 @@ def _key_token(event: QKeyEvent) -> str:
         return "Down"
     if event.key() == Qt.Key.Key_Escape:
         return "Escape"
+    if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+        return "Return"
     return event.text()
 
 
 class _NameField(QLineEdit):
-    """Name entry that lets the zone-cycle keys (Up/Down) and Escape bubble to the
-    window instead of being consumed by the line edit."""
+    """Name entry that lets the zone-cycle keys (Up/Down), Escape and Return bubble
+    to the window instead of being consumed by the line edit (Return is the
+    raw-line-dump shortcut)."""
 
     def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802 (Qt override)
-        if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Escape):
+        if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Escape, Qt.Key.Key_Return, Qt.Key.Key_Enter):
             event.ignore()
             return
         super().keyPressEvent(event)

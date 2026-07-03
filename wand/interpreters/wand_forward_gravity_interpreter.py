@@ -31,6 +31,7 @@ class ForwardGravityInterpreter:
         self._u: Vec3 = normalize(self._settings.world_up)
         self._f_prev: Vec3 | None = None
         self._side_prev: Vec3 | None = None
+        self._ts_prev_ms: int | None = None
 
         self._x_abs = 0.0
         self._y_abs = 0.0
@@ -40,6 +41,7 @@ class ForwardGravityInterpreter:
     def reset(self) -> None:
         self._f_prev = None
         self._side_prev = None
+        self._ts_prev_ms = None
         self._x_abs = 0.0
         self._y_abs = 0.0
 
@@ -47,6 +49,16 @@ class ForwardGravityInterpreter:
         f_now = normalize((fx, fy, fz))
 
         nx, ny = self._abs_norm_from_forward(f_now)
+
+        # A stream discontinuity (dropped packets, wand reboot rewinding the
+        # tick clock) means the orientation change since the previous sample is
+        # not a wand motion — restart delta tracking rather than drawing it.
+        if self._ts_prev_ms is not None:
+            elapsed = ts_ms - self._ts_prev_ms
+            if elapsed < 0 or elapsed > self._settings.max_sample_gap_ms:
+                self._f_prev = None
+                self._side_prev = None
+        self._ts_prev_ms = ts_ms
 
         if self._f_prev is None:
             self._f_prev = f_now
