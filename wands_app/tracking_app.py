@@ -70,6 +70,10 @@ class TrackingApp:
 
         self._zone_application.quit.unsubscribe(self._on_quit)
 
+    def select_default_zone(self) -> None:
+        """Apply the start-up zone selection; call once the full system is up."""
+        self._zone_application.select_default_zone()
+
     def update(self) -> None:
         self._imu_stream.update()
         self._zone_application.update()

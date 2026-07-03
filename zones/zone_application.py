@@ -27,12 +27,14 @@ class ZoneApplication:
         zone_manager: ZoneManagerProtocol,
         presentation_controller: ZonePresentationController | None = None,
         controls: object | None = None,
+        on_started: Callable[[], None] | None = None,
     ) -> None:
         self.quit: Event[Callable[[], None]] = Event()
 
         self._presentation_controller = presentation_controller
         self._zone_manager = zone_manager
         self._controls = controls
+        self._on_started = on_started
         self._logger = logger
 
     @property
@@ -51,6 +53,16 @@ class ZoneApplication:
         if self._presentation_controller is not None:
             await self._presentation_controller.start_async()
             self._presentation_controller.quit.subscribe(self._on_quit)
+
+    def select_default_zone(self) -> None:
+        """Apply the start-up zone selection (if any).
+
+        Must be called once the whole system is up: the zone-enter it triggers
+        has to reach late subscribers (tracked-wand manager, session coordinator)
+        that only subscribe when their own apps start.
+        """
+        if self._on_started is not None:
+            self._on_started()
 
     async def stop_async(self) -> None:
         if self._presentation_controller is not None:

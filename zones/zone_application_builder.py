@@ -63,6 +63,9 @@ class ZoneApplicationBuilder:
             zone_manager=zone_manager,
             presentation_controller=presentation,
             controls=controls,
+            # Start in zone 1 (the zone bound to shortcut key 1) rather than '(none)'.
+            # Deferred to start-up so the presentation controller is subscribed first.
+            on_started=lambda: controls.select_zone_by_key(1),
         )
 
     def build_production(self, zone_manager: ZoneManagerProtocol) -> ZoneApplication:

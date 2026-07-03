@@ -35,6 +35,9 @@ async def main() -> int:
     try:
         await system.tracking.start_async()
         await system.recognition.start_async()
+        # Both apps are now subscribed to zone events; apply the start-up zone
+        # so the wand is activated/tracked from the off.
+        system.tracking.select_default_zone()
     except Exception:
         logger.exception("Startup failure in wands_main")
         return 1

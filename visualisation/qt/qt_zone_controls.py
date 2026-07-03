@@ -62,6 +62,14 @@ class QtZoneControls:
         self._zone_selected.subscribe(self._on_zone_selected)
         cast_recognized.subscribe(self._on_cast_recognized)
 
+    def select_zone_by_key(self, key: int) -> None:
+        """Select the zone bound to a shortcut key (e.g. start-up default)."""
+        zone_id = self._key_map.get(key)
+        if zone_id is None:
+            self._logger.debug(f"No zone bound to key {key}; nothing selected.")
+            return
+        self._apply(zone_id)
+
     def _on_zone_selected(self, zone_id: str | None) -> None:
         self._apply(zone_id)
 
