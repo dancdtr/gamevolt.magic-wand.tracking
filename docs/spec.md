@@ -200,10 +200,27 @@ was **removed** and replaced by a **$1 unistroke recogniser** plus a decoupled s
    timestamps jumping past `max_sample_gap_ms` (dropped packets) or backwards (wand reboot
    rewinding the tick clock) — restarts delta tracking instead of integrating the orientation
    jump into one giant delta, so outages no longer draw straight-line artefacts.
-2. **Windowing** (`motion/stroke/StrokeWindower`). A stroke opens on `MOVING` and finalises
-   only on a *sustained* still phase (`HOLDING` / `STOPPED`). A transient `PAUSED` (corner /
-   mid-spell hesitation) is left to ride, so a multi-segment glyph arrives as one stroke. The
-   phase tiers (`min_paused_duration` < `min_holding_duration`) already encode this.
+2. **Windowing** (`motion/stroke/StrokeWindower`, config `input.wand.stroke_window`). A stroke
+   opens on `MOVING` and closes on a *sustained* still phase (`HOLDING` / `STOPPED`). A transient
+   `PAUSED` (corner / mid-spell hesitation) is left to ride, so a multi-segment glyph arrives as
+   one stroke — but it also emits a **provisional snapshot** (`stroke_paused`) of the still-open
+   stroke for the cast assembler (2a). The phase tiers (`min_paused_duration` <
+   `min_holding_duration`) encode transient-vs-deliberate. An open stroke is capped to its
+   trailing `max_open_duration_s` so a wand that wanders without settling can't grow it unbounded.
+2a. **Cast assembly** (`wand/CastAssembler`, config `input.wand.cast_assembly`). The phase
+   tracker can't tell a *long corner pause* from *end of spell* at the moment stillness begins, so
+   segment boundaries are provisional and **recognition arbitrates**. A segment closing at
+   `HOLDING` is buffered and evaluated — alone and as **suffix joins** with recent segments
+   (`max_join_segments`, `max_segment_age_s`): a gate-passing match **commits immediately**; a
+   weak one is held, so when motion resumes the next segment joins it and an over-long corner
+   pause no longer splits a glyph. A `PAUSED` provisional can commit **early** past the stricter
+   `soft_commit_accuracy` bar (no settle confirms intent there), covering players who never
+   sufficiently stop after casting; the open stroke is then aborted so its points aren't re-emitted.
+   `STOPPED` (a true settle — which also resets the path origin, hence it flushes the buffer first)
+   resolves anything unrecognised as a **single deferred miscast**, unless a commit landed within
+   `post_commit_suppression_s` (trailing wand-lowering motion is dropped silently — no fail streak,
+   no reject flash). Scoring gates are never loosened: only segmentation is forgiving. Setting
+   `enabled: False` restores the legacy behaviour (every closed stroke is a final, immediate attempt).
 2b. **Lead-in trim** (`motion/stroke/lead_in_trimmer`, config `input.wand.lead_in_trim`). People
    move in a straight line from their rest/centre orientation to where the glyph starts; that
    approach run pollutes matching + the template overlay. The trimmer finds the first *sharp
@@ -361,7 +378,7 @@ Don't add new cross-app coupling that isn't on this list without flagging it.
 | Path | Purpose |
 |------|---------|
 | `wands_app/` | Entry point, app composition, settings, `TrackingApp`, `RecognitionApp`, `WandsSystem`, `WandsSystemBuilder`. |
-| `wand/` | Wand-side primitives: `WandServer`, `TrackedWandManager`, `WandClient`, sensor stream (`streaming/`), interpreters, device controller. |
+| `wand/` | Wand-side primitives: `WandServer`, `TrackedWandManager`, `WandClient`, `CastAssembler` (segment buffer + recognition-gated commit), sensor stream (`streaming/`), interpreters, device controller. |
 | `motion/` | Motion phase tracking (`MotionProcessor`, `MotionPhaseTracker`) + stroke windowing (`stroke/StrokeWindower`) + lead-in trimming (`stroke/lead_in_trimmer`). |
 | `spells/` | $1 recogniser (`matching/dollar_one/`, incl. `svg_template_loader`), layered SVG templates (`templates/` — `gesture_path`/`gesture_visual`/`origin`/`end_arrow`/`mid_arrows`/`bg` layers), scorer (`scoring/`), per-spell settings (`settings/`), static lore (`spell_info.py` + `data/spell_info.yml`), park selection (`spell_selection.py` + `data/spell_selection.yml`), computed gesture difficulty (`spell_difficulty.py`), `SpellCast`, cue + presentation controllers. |
 | `zones/` | Zone manager, zone application, mock controls, visualisation. |
