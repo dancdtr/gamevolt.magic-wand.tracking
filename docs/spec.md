@@ -235,12 +235,17 @@ was **removed** and replaced by a **$1 unistroke recogniser** plus a decoupled s
    (it shows raw motion).
 3. **Recognition** (`spells/matching/dollar_one/DollarOneRecognizer`). Resample (N=64) →
    normalise (centroid + **uniform** scale, **no rotation** — wand gestures are orientation-
-   meaningful). Score = **product of two terms**: a positional term (mean point-distance) and a
+   meaningful). Score = **product of four terms**: a positional term (mean point-distance), a
    **direction term** (mean heading agreement, sampled over an N/8 stride so per-sample jitter
-   is suppressed but loop-vs-line survives). Positional distance alone is too forgiving — a
-   straight swipe scores ~0.6 against a looped glyph; the direction factor collapses such
-   shape-mismatches while leaving accurate traces high, so the `min_match_accuracy` gate finally
-   bites. Direction is preserved (so $1, not $P/$Q). Candidates are restricted to the
+   is suppressed but loop-vs-line survives), a **coverage term** (mean nearest-candidate
+   distance per template point — template legs the trace never visits drag it down), and a
+   **shortfall term** (candidate normalised arc-length vs template's, capped at 1 — only
+   under-drawing is punished, jitter overshoot is free). Positional distance alone is too
+   forgiving — a straight swipe scores ~0.6 against a looped glyph; the direction factor
+   collapses such shape-mismatches. Coverage x shortfall collapse **partial traces** — drawing
+   just one leg of a multi-leg glyph (e.g. only the Z diagonal) scored ~0.28 on two terms but
+   ~0.08 on four, while wobbly-but-complete traces stay high. Direction is preserved (so $1,
+   not $P/$Q). Candidates are restricted to the
    **zone-active spell set** (`set_spell_targets`); scoring all 38 would cross-match.
 4. **Templates** are authored as **layered SVGs** (`spells/templates/spell_template_<spell>.svg`,
    name after the `spell_template_` prefix = `SpellType` name lowercased). Layers by `id`:

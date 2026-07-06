@@ -114,16 +114,52 @@ def _position_score(a: list[Point], b: list[Point]) -> float:
     return max(0.0, 1.0 - _path_distance(a, b) / _HALF_DIAGONAL)
 
 
+def _coverage_score(candidate: list[Point], template: list[Point]) -> float:
+    """0..1: how much of the template the candidate actually visits.
+
+    Mean nearest-candidate distance per template point. One-directional on purpose:
+    template regions the trace never goes near drag this down, while honest wobble
+    around the glyph barely moves it. Punishes drawing only one leg of a multi-leg
+    glyph (e.g. just the diagonal of a Z), which index-wise distance underweights.
+    """
+    mean = sum(min(math.dist(t, c) for c in candidate) for t in template) / len(template)
+    return max(0.0, 1.0 - mean / _HALF_DIAGONAL)
+
+
+def _shortfall_score(candidate: list[Point], template: list[Point]) -> float:
+    """0..1: normalised arc-length of the candidate relative to the template, capped at 1.
+
+    Both inputs are unit-box normalised, so this compares shape complexity, not size.
+    A single leg of a multi-leg glyph is far shorter than the whole glyph and scores
+    low; only under-drawing is punished — jitter-inflated overshoot stays at 1 so a
+    wobbly-but-complete trace is not penalised.
+    """
+    lt = _path_length(template)
+    if lt <= 0:
+        return 1.0
+    return min(1.0, _path_length(candidate) / lt)
+
+
 def match_score(candidate_prepared: list[Point], template_prepared: list[Point]) -> float:
     """0..1 similarity. Both inputs must already be `prepare`d to the same point count.
 
-    Product of a positional term (point-by-point distance) and a direction term
-    (heading agreement). Positional distance alone is too forgiving — a straight
-    swipe scores ~0.6 against a looped glyph. Multiplying by heading agreement
-    collapses such shape-mismatches while leaving accurate traces high.
+    Product of four terms:
+      - position: point-by-point distance. Alone it is too forgiving — a straight
+        swipe scores ~0.6 against a looped glyph.
+      - direction: heading agreement. Collapses loop-vs-line mismatches.
+      - coverage: template points must be near *some* candidate point, so skipping
+        whole legs of a glyph costs heavily.
+      - shortfall: candidate normalised arc-length must reach the template's, so a
+        single stroke of a multi-stroke glyph (the Z-diagonal cheat) cannot pass.
+
+    Accurate-but-wobbly full traces stay high (all four terms are jitter-tolerant);
+    partial traces collapse via coverage x shortfall.
     """
-    return _position_score(candidate_prepared, template_prepared) * _direction_score(
-        candidate_prepared, template_prepared
+    return (
+        _position_score(candidate_prepared, template_prepared)
+        * _direction_score(candidate_prepared, template_prepared)
+        * _coverage_score(candidate_prepared, template_prepared)
+        * _shortfall_score(candidate_prepared, template_prepared)
     )
 
 
