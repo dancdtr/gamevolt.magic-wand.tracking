@@ -52,7 +52,7 @@ class TrackedWandFactory:
             id=id,
             motion_processor=self._motion_processor_factory.create(),
             forward_interpreter=ForwardGravityInterpreter(self._wand_settings.rmf),
-            stroke_windower=StrokeWindower(),
+            stroke_windower=StrokeWindower(self._wand_settings.stroke_window),
             recognizer=self._recognizer,
             scorer=self._scorer,
         )

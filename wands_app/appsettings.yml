@@ -47,6 +47,15 @@ input:
     confusion_guard:
       enabled: False
       margin: 0.05
+    stroke_window:
+      min_points: 8
+      max_open_duration_s: 8.0
+    cast_assembly:
+      enabled: True
+      soft_commit_accuracy: 0.60
+      max_join_segments: 3
+      max_segment_age_s: 5.0
+      post_commit_suppression_s: 1.5
     rmf:
       invert_x: True
       invert_y: False

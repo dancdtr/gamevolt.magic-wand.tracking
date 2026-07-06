@@ -15,6 +15,7 @@ from spells.scoring.cast_attempt import CastAttempt
 from spells.scoring.spell_scorer import SpellScorer
 from spells.spell_cast import SpellCast
 from spells.spell_type import SpellType
+from wand.cast_assembler import CastAssembler, CastEvaluation
 from wand.configuration.wand_settings import WandSettings
 from wand.interpreters.wand_forward_gravity_interpreter import ForwardGravityInterpreter
 from wand.wand_base import WandBase
@@ -50,6 +51,12 @@ class TrackedWand(WandBase):
         self._settings = settings
         self._id = id
 
+        # Owns the segment buffer + commit decisions; evaluation loops back through this
+        # wand's recogniser/scorer. Committed and rejected attempts surface identically.
+        self._cast_assembler = CastAssembler(logger, settings.cast_assembly, self._evaluate_stroke)
+        self._cast_assembler.committed.subscribe(self._emit_attempt)
+        self._cast_assembler.rejected.subscribe(self._emit_attempt)
+
         # Zone-active spell set, as template labels (= SpellType names). Empty = score nothing.
         self._active_labels: set[str] = set()
         self._last_rotation: WandRotation | None = None
@@ -69,6 +76,7 @@ class TrackedWand(WandBase):
 
         self._motion_processor.motion_changed.subscribe(self._on_motion_changed)
         self._stroke_windower.stroke_completed.subscribe(self._on_stroke_completed)
+        self._stroke_windower.stroke_paused.subscribe(self._on_stroke_paused)
 
         self._motion_processor.start()
 
@@ -81,6 +89,7 @@ class TrackedWand(WandBase):
 
         self._motion_processor.motion_changed.unsubscribe(self._on_motion_changed)
         self._stroke_windower.stroke_completed.unsubscribe(self._on_stroke_completed)
+        self._stroke_windower.stroke_paused.unsubscribe(self._on_stroke_paused)
 
         self.reset()
 
@@ -102,6 +111,7 @@ class TrackedWand(WandBase):
     def reset_data(self) -> None:
         self._motion_processor.reset()
         self._stroke_windower.reset()
+        self._cast_assembler.reset()
         self.forward_reset.invoke()
 
     def reset_forward(self) -> None:
@@ -126,9 +136,12 @@ class TrackedWand(WandBase):
     def _on_motion_changed(self, motion_phase: MotionPhaseType) -> None:
         self._stroke_windower.on_phase(motion_phase)
 
-        # A sustained still (STOPPED) means the user has truly settled — reset the forward
-        # interpreter so the next spell integrates from the current orientation.
+        # A sustained still (STOPPED) means the user has truly settled — resolve any
+        # buffered segments (must happen before the origin reset below invalidates their
+        # coordinate frame), then reset the forward interpreter so the next spell
+        # integrates from the current orientation.
         if motion_phase is MotionPhaseType.STOPPED:
+            self._cast_assembler.on_stopped()
             self.reset_forward()
             self.forward_reset.invoke()
 
@@ -204,17 +217,17 @@ class TrackedWand(WandBase):
             return r if r.score > chosen.score + guard.margin else None
         return None
 
-    def _on_stroke_completed(self, stroke: Stroke) -> None:
+    def _evaluate_stroke(self, stroke: Stroke) -> CastEvaluation | None:
+        """Recognise (best trim variant) + score a candidate stroke, without applying any
+        outcome — the cast assembler decides whether this evaluation commits, waits for
+        more segments, or resolves as a miscast."""
         recognition = self._recognise_best_variant(stroke)
         if recognition is None:
-            return
+            return None
 
         stroke, results = recognition
-
-        top = results[:3]
-        candidates = ", ".join(f"{r.label} {r.score * 100:.1f}%" for r in top)
-
         best = results[0]
+
         usurper = self._confusion_guard_usurper(stroke, best)
         gate_failures = (f"confused~{usurper.label}",) if usurper is not None else ()
         if usurper is not None:
@@ -225,8 +238,32 @@ class TrackedWand(WandBase):
             )
 
         cast = self._scorer.score(self._id, best.label, best.score, stroke, gate_failures=gate_failures)
+        return CastEvaluation(stroke=stroke, results=results, cast=cast)
+
+    def _on_stroke_completed(self, stroke: Stroke) -> None:
+        if not self._settings.cast_assembly.enabled:
+            # Legacy behaviour: every closed stroke is a final attempt, emitted immediately.
+            evaluation = self._evaluate_stroke(stroke)
+            if evaluation is not None:
+                self._emit_attempt(evaluation)
+            return
+
+        self._cast_assembler.on_segment(stroke)
+
+    def _on_stroke_paused(self, provisional: Stroke) -> None:
+        if not self._settings.cast_assembly.enabled:
+            return
+        if self._cast_assembler.on_provisional(provisional):
+            # Committed off the open stroke; drop its points so they aren't emitted again
+            # when the still phase deepens to HOLDING.
+            self._stroke_windower.abort_open_stroke()
+
+    def _emit_attempt(self, evaluation: CastEvaluation) -> None:
+        stroke, results, cast = evaluation.stroke, evaluation.results, evaluation.cast
+
         self._scorer.apply_outcome(self._id, cast)
 
+        candidates = ", ".join(f"{r.label} {r.score * 100:.1f}%" for r in results[:3])
         self._logger.info(
             f"Wand ({self._id}) $1 [{candidates}] dur={stroke.duration_s:.2f}s "
             f"path={stroke.path_length:.2f} pts={stroke.point_count} -> {cast.summary()}"
@@ -240,7 +277,7 @@ class TrackedWand(WandBase):
                 candidates=tuple(results),
                 stroke_points=tuple(stroke.points),
                 normalized_points=tuple(self._recognizer.prepare_points(stroke.points)),
-                template_points=tuple(self._recognizer.template_points(best.label)),
+                template_points=tuple(self._recognizer.template_points(cast.label)),
                 duration_s=stroke.duration_s,
                 path_length=stroke.path_length,
                 point_count=stroke.point_count,
@@ -250,5 +287,5 @@ class TrackedWand(WandBase):
         if not cast.recognized:
             return
 
-        spell_type = SpellType[best.label]
+        spell_type = SpellType[cast.label]
         self.spell_cast.invoke(SpellCast(wand_id=self._id, spell_type=spell_type, score=cast))
