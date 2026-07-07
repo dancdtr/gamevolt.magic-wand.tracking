@@ -31,6 +31,10 @@ class WandVisualiserProtocol:
 
     def wand_exited_zone(self, wand_id: str) -> None: ...
 
+    # Battery telemetry hook. Wired from the battery monitor by the builder on the
+    # single-anchor path; no-op by default so other visualisers ignore it.
+    def set_wand_battery(self, wand_id: str, millivolts: int, percent: float) -> None: ...
+
     @property
     def quit(self) -> Event[Callable[[], None]]: ...
 

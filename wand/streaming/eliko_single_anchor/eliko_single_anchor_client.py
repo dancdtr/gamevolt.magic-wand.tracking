@@ -27,7 +27,10 @@ class ElikoSingleAnchorClient:
     """
 
     _ENABLE_IMU_CMD = "$PEKIO,DC,{seq},CMD0,0x{tag_id},0x00000903\r\n"
+    _DISABLE_IMU_CMD = "$PEKIO,DC,{seq},CMD0,0x{tag_id},0x00000000\r\n"
+    _GET_TYPE_CMD = "$PEKIO,DC,{seq},GETD,0x{tag_id},type\r\n"
     _SUBSCRIBE_CMD = "$PEKIO,DC,{seq},SPQF,{flag}\r\n"
+    _POLL_BATTERY_CMD = "$PEKIO,DC,{seq},GDHR,0x{tag_id},timeout_ms={timeout_ms}\r\n"
     _INIT_CMD_GAP_S = 0.25
 
     def __init__(
@@ -90,7 +93,44 @@ class ElikoSingleAnchorClient:
             return
 
         self._logger.info(f"Re-enabling IMU on wand ({normalised}) after reboot.")
+        self.send_enable_imu(normalised)
+
+    def send_enable_imu(self, tag: str) -> None:
+        """Unconditional CMD0 IMU-enable — bypasses the `manage_imu` gate.
+        For manual/diagnostic use (e.g. testing whether a stalled PR stream
+        resumes on re-enable); automatic traffic goes via `enable_imu`.
+        """
+        normalised = self._normalise_tag(tag)
+        self._logger.info(f"Sending CMD0 IMU-enable to wand ({normalised}).")
         self.send_command(self._ENABLE_IMU_CMD.format(seq=self._alloc_seq(), tag_id=normalised))
+
+    def restart_imu(self, tag: str) -> None:
+        """Diagnostic IMU restart per Eliko guidance for the silent PR stall:
+        query the tag's data type (GETD; PR should report 3), then cycle the
+        stream off (CMD0 0x00000000) and back on (CMD0 0x00000903). Commands
+        are spaced like the init sequence to respect the anchor's per-command
+        OTA-store latency.
+        """
+        normalised = self._normalise_tag(tag)
+        self._logger.info(f"Restarting IMU on wand ({normalised}): GETD type, CMD0 off, CMD0 on.")
+        asyncio.create_task(self._restart_imu_async(normalised))
+
+    async def _restart_imu_async(self, tag_id: str) -> None:
+        self.send_command(self._GET_TYPE_CMD.format(seq=self._alloc_seq(), tag_id=tag_id))
+        await asyncio.sleep(self._INIT_CMD_GAP_S)
+        self.send_command(self._DISABLE_IMU_CMD.format(seq=self._alloc_seq(), tag_id=tag_id))
+        await asyncio.sleep(self._INIT_CMD_GAP_S)
+        self.send_command(self._ENABLE_IMU_CMD.format(seq=self._alloc_seq(), tag_id=tag_id))
+
+    def poll_battery(self, tag: str, timeout_ms: int = 2000) -> None:
+        """Request the wand's battery voltage. The tag answers via the anchor
+        with `$PEKIO,AC,123,0x<tag>,GDHR,voltages,0x<millivolts>,OTA` once the
+        OTA delivery lands (or not at all if it times out).
+        """
+        normalised = self._normalise_tag(tag)
+        self.send_command(
+            self._POLL_BATTERY_CMD.format(seq=self._alloc_seq(), tag_id=normalised, timeout_ms=timeout_ms)
+        )
 
     def _alloc_seq(self) -> str:
         s = f"{self._next_seq:03d}"

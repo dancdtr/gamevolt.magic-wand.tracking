@@ -150,6 +150,9 @@ Temporary Items
 # Session recordings
 wands_app/recordings/
 
+# Battery telemetry CSVs (plotting data, not source)
+diagnostics/battery/
+
 # Manual debugging
 debug.py
 x_*

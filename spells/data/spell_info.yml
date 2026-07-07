@@ -1671,3 +1671,52 @@ wingardium_leviosa:
   pronunciation: ween-GAR-dee-uhm leh-vee-OH-sah
   notable_uses: Ron levitates a troll's club and drops it on its owners head, knocking the troll out
   source: Harry Potter and the Philosopher's Stone (book)
+
+conduc_terrificus:
+  nickname: The Supercharging Spell
+  description: "Channels CONDUCTR brilliance into nearby people, products, and technology."
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: "kon-DUK ter-RIFF-ih-kus"
+  notable_uses: "Famously used to turn impossible briefs into terrific experiences, usually just before opening night."
+  source: "CDTR Original by Dan M"
+taco_tempestus:
+  nickname: The Taco Tempest
+  description: "Summons a cheerful rain of tacos from above."
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: "TAH-koh tem-PESS-tus"
+  notable_uses: "Often cast in moments of team celebration, especially when the sacred HeyTaco economy is thriving."
+  source: "CDTR Original by Dan M"
+barragium:
+  nickname: The Barrage Charm
+  description: "Unleashes a barrage of glowing yellow meteorites."
+  classification: Offensive Charm
+  difficulty: Advanced
+  pronunciation: "bah-RAJ-ee-um"
+  notable_uses: "Best known from the legendary Barrage trials, widely regarded internally as the greatest game ever made."
+  source: "CDTR Original by Dan M"
+arcuboltus:
+  nickname: The Crossbow Bolt Charm
+  description: "Fires a fast magical bolt with crossbow-like precision."
+  classification: Offensive Charm
+  difficulty: Intermediate
+  pronunciation: "AR-kyoo-BOL-tus"
+  notable_uses: "Recently mastered during an Aztec shooter deployment, where real crossbows proved surprisingly magical."
+  source: "CDTR Original by Dan M"
+puck_hurling_charm:
+  nickname: The Puck-Hurling Charm
+  description: "Hurls a puck with enchanted speed and accuracy."
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: "PUK HUR-ling charm"
+  notable_uses: "First used in the early days of supercharged shuffleboard, before anyone fully understood its power."
+  source: "CDTR Original by Dan M"
+inspirio:
+  nickname: The Spark of Inspiration
+  description: "Supercharges creative thinking with a flash of magical insight."
+  classification: Charm
+  difficulty: Advanced
+  pronunciation: "in-SPEER-ee-oh"
+  notable_uses: "Typically appears as a glowing bulb with lightning at its base when a team suddenly has a brilliant idea."
+  source: "CDTR Original by Dan M"

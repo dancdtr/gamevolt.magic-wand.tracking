@@ -154,6 +154,9 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._wand_id = settings.wand_id.upper()
         self._quit: Event[Callable[[], None]] = Event()
         self._reset_xp_requested: Event[Callable[[], None]] = Event()
+        # Fires when the diagnostic re-enable-IMU button is clicked; the builder
+        # routes it to the single-anchor client's CMD0 send.
+        self._enable_imu_requested: Event[Callable[[], None]] = Event()
         self._record_session_changed: Event[Callable[[bool, str], None]] = Event()
         # Fires on a recognized cast (rudimentary+), carrying the awarded quality tier;
         # QtZoneControls uses it (and the tier) to decide whether to auto-advance.
@@ -167,6 +170,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self.zone_selected: Event[Callable[[str | None], None]] = Event()
         self._key_callbacks: dict[str, Callable[[], None]] = {}
         self._zone_index: dict[str | None, int] = {}
+        self._pending_battery: tuple[int, float] | None = None
 
         self._app = QApplication.instance() or QApplication([])
 
@@ -215,6 +219,16 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._window.resize(settings.window.width, settings.window.height)
         self._window.setCentralWidget(central)
 
+        # Battery readout, fed by the single-anchor battery monitor via
+        # `set_wand_battery`. Lives bottom-right in the status bar so passive
+        # telemetry stays out of the control toolbar. Placeholder until the
+        # first GDHR response lands.
+        self._battery_label = QLabel("—")
+        self._battery_label.setToolTip("Wand battery (GDHR poll)")
+        self._battery_label.setStyleSheet("color:#dddddd; font-size:13px; padding:0px 6px;")
+        self._window.statusBar().addPermanentWidget(self._battery_label)
+        self._window.statusBar().setSizeGripEnabled(False)
+
         palette = self._window.palette()
         palette.setColor(QPalette.ColorRole.Window, QColor(settings.window.background_colour))
         self._window.setPalette(palette)
@@ -240,6 +254,10 @@ class QtWandVisualiser(WandVisualiserProtocol):
     @property
     def reset_xp_requested(self) -> Event[Callable[[], None]]:
         return self._reset_xp_requested
+
+    @property
+    def enable_imu_requested(self) -> Event[Callable[[], None]]:
+        return self._enable_imu_requested
 
     @property
     def record_session_changed(self) -> Event[Callable[[bool, str], None]]:
@@ -275,6 +293,17 @@ class QtWandVisualiser(WandVisualiserProtocol):
         # Track XP-modifier flips so we can show/hide the button live.
         self._scoring_modifier_changed.subscribe(self._on_scoring_modifier_for_toolbar)
 
+        # Diagnostic: manually re-send the CMD0 IMU-enable — for testing whether
+        # a silently stalled PR stream resumes without a power cycle.
+        self._enable_imu_button = QPushButton("IMU ⟳")
+        self._enable_imu_button.setToolTip("Restart IMU stream on tracked wands (GETD type + CMD0 off/on)")
+        self._enable_imu_button.setStyleSheet(
+            "QPushButton { padding:0px 12px; border:none; border-radius:6px;"
+            " background:#2b2b2b; color:#dddddd; font-size:13px; }"
+            "QPushButton:hover { background:#3a3a3a; }"
+        )
+        self._enable_imu_button.clicked.connect(self._enable_imu_requested.invoke)
+
         self._name_field = _NameField()
         self._name_field.textChanged.connect(self._on_name_changed)
 
@@ -286,10 +315,11 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._record_toggle.setFixedWidth(self._record_toggle.fontMetrics().horizontalAdvance("⏹  Stop — REC") + 48)
         self._record_toggle.toggled.connect(self._on_record_toggled)
 
-        # Pin the gear + reset buttons to the record button's height so they align.
+        # Pin the gear + reset + IMU buttons to the record button's height so they align.
         self._record_toggle.ensurePolished()
         self._settings_button.setFixedHeight(self._record_toggle.sizeHint().height())
         self._reset_xp_button.setFixedHeight(self._record_toggle.sizeHint().height())
+        self._enable_imu_button.setFixedHeight(self._record_toggle.sizeHint().height())
 
         # Pulses the record button between two reds while a session is recording.
         self._record_blink_on = False
@@ -303,6 +333,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
         row.addStretch(1)
         row.addWidget(QLabel("Name:"))
         row.addWidget(self._name_field, stretch=1)
+        row.addWidget(self._enable_imu_button)
         row.addWidget(self._reset_xp_button)
         row.addWidget(self._record_toggle)
         row.addWidget(self._settings_button)
@@ -388,6 +419,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
     def update(self) -> None:
         if not self._is_running:
             return
+        self._apply_pending_battery()
         self._app.processEvents()
 
     def clear(self) -> None:
@@ -403,6 +435,23 @@ class QtWandVisualiser(WandVisualiserProtocol):
         if wand_position.id.upper() != self._wand_id:
             return
         self._live.add_delta(wand_position.x_delta, wand_position.y_delta)
+
+    def set_wand_battery(self, wand_id: str, millivolts: int, percent: float) -> None:
+        # Called from the serial receive thread — stash only; `update()` applies
+        # it on the Qt thread.
+        if wand_id.upper() != self._wand_id:
+            return
+        self._pending_battery = (millivolts, percent)
+
+    def _apply_pending_battery(self) -> None:
+        pending = self._pending_battery
+        if pending is None:
+            return
+        self._pending_battery = None
+        millivolts, percent = pending
+        colour = "#66cc66" if percent > 50 else "#e0b040" if percent > 20 else "#e05050"
+        self._battery_label.setText(f"{millivolts / 1000:.2f}V ({percent:.0f}%)")
+        self._battery_label.setStyleSheet(f"color:{colour}; font-size:13px;")
 
     def reset_trail(self, wand_id: str) -> None:
         if wand_id.upper() != self._wand_id:

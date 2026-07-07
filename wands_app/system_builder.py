@@ -25,6 +25,8 @@ from gamevolt.tcp.tcp_client import TcpClient
 from wand.motion_processor_factory import MotionProcessorFactory
 from wand.streaming.eliko.eliko_client import ElikoClient
 from wand.streaming.eliko.eliko_wand_command_sink import ElikoWandCommandSink
+from wand.streaming.eliko.wand_battery_log import WandBatteryLog
+from wand.streaming.eliko.wand_battery_monitor import WandBatteryMonitor
 from wand.streaming.eliko.wand_reboot_detector import WandRebootDetector
 from wand.streaming.eliko_single_anchor.eliko_single_anchor_client import ElikoSingleAnchorClient
 from wand.null_wand_command_sink import NullWandCommandSink
@@ -121,6 +123,7 @@ class WandsSystemBuilder:
         imu_stream: WandImuStream
         command_sink: WandCommandSink
         wand_reboot_detector: WandRebootDetector | None = None
+        wand_battery_monitor: WandBatteryMonitor | None = None
         line_source: WandLineSource
 
         if system_type is SystemType.ELIKO_RTLS:
@@ -164,12 +167,35 @@ class WandsSystemBuilder:
             if single_settings.manage_imu:
                 wand_reboot_detector = WandRebootDetector(logger=logger, line_source=single_anchor_client)
                 wand_reboot_detector.wand_rebooted.subscribe(single_anchor_client.enable_imu)
+            if single_settings.battery_monitor.enabled:
+                wand_battery_monitor = WandBatteryMonitor(
+                    logger=logger,
+                    client=single_anchor_client,
+                    tracked_wand_ids=settings.tracked_wand_ids,
+                    settings=single_settings.battery_monitor,
+                )
+                wand_battery_monitor.battery_updated.subscribe(wand_visualiser.set_wand_battery)
+                wand_battery_log = WandBatteryLog(
+                    logger=logger,
+                    output_dir=single_settings.battery_monitor.log_directory,
+                )
+                wand_battery_monitor.battery_updated.subscribe(wand_battery_log.record)
 
         # Always-on capture of the last raw sensor lines; Enter in the visualiser
         # window dumps them to ./diagnostics for after-the-fact glitch analysis.
         raw_line_ring_buffer = RawLineRingBuffer(logger=logger, line_source=line_source)
         raw_line_ring_buffer.attach()
         wand_visualiser.register_key_callback("Return", lambda: raw_line_ring_buffer.dump())
+
+        # Diagnostic: the visualiser's IMU button runs the Eliko-suggested stall
+        # recovery on every tracked wand (bypasses manage_imu) — GETD type query,
+        # then a CMD0 off/on cycle to restart the IMU data stream.
+        if system_type is SystemType.ELIKO_SINGLE_ANCHOR and hasattr(wand_visualiser, "enable_imu_requested"):
+            def _restart_imu() -> None:
+                for tag in settings.tracked_wand_ids:
+                    single_anchor_client.restart_imu(tag)
+
+            wand_visualiser.enable_imu_requested.subscribe(_restart_imu)  # type: ignore[attr-defined]
 
         wizard_name_provider = WizardNameProvider(WizardSettings(names=WIZARD_NAMES))
         profile_service = LocalProfileService(logger=logger, name_provider=wizard_name_provider)
@@ -191,6 +217,7 @@ class WandsSystemBuilder:
             zone_udp_receiver=zone_udp_receiver,
             zone_message_handler=zone_message_handler,
             wand_reboot_detector=wand_reboot_detector,
+            wand_battery_monitor=wand_battery_monitor,
         )
 
         server = WandServer(
@@ -199,6 +226,11 @@ class WandsSystemBuilder:
             imu_stream=imu_stream,
             tracked_wand_ids=settings.tracked_wand_ids,
         )
+
+        # Fresh battery reading on every wand (re)connect — reboots and battery
+        # swaps show up immediately instead of waiting out the poll interval.
+        if wand_battery_monitor is not None:
+            server.wand_connected.subscribe(lambda client: wand_battery_monitor.poll_wand(client.id))
 
         motion_processor_factory = MotionProcessorFactory(logger, settings.motion.processor)
 

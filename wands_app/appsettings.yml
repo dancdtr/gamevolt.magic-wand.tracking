@@ -111,6 +111,14 @@ imu_stream:
       body_forward_z: 0.0
     command_sink:
       idle_colour: "WARM_WHITE"
+    # Periodic wand battery polling via the anchor's OTA channel (GDHR command).
+    # Voltage comes back in mV; percent is a rough linear map for the AAAA cell.
+    battery_monitor:
+      enabled: False
+      poll_interval_s: 60.0
+      timeout_ms: 2000
+      full_millivolts: 1550
+      empty_millivolts: 1100
     # SPQF subscription flag. "P" = PR (IMU) packets, "R" = RR (ranging) packets.
     # Set to "R" as a sanity check: if RR lines appear in trace, the wand is alive
     # and the anchor is talking to it.

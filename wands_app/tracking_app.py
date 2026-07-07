@@ -7,6 +7,7 @@ from gamevolt.events.event import Event
 from gamevolt.messaging.events.message_handler import MessageHandler
 from gamevolt.messaging.udp.udp_rx import UdpRx
 from services.wand_session_coordinator import WandSessionCoordinator
+from wand.streaming.eliko.wand_battery_monitor import WandBatteryMonitor
 from wand.streaming.eliko.wand_reboot_detector import WandRebootDetector
 from wand.streaming.wand_imu_stream import WandImuStream
 from zones.zone_application import ZoneApplication
@@ -24,6 +25,7 @@ class TrackingApp:
         zone_udp_receiver: UdpRx | None,
         zone_message_handler: MessageHandler | None,
         wand_reboot_detector: WandRebootDetector | None = None,
+        wand_battery_monitor: WandBatteryMonitor | None = None,
     ) -> None:
         self.quit: Event[Callable[[], None]] = Event()
 
@@ -34,6 +36,7 @@ class TrackingApp:
         self._zone_udp_receiver = zone_udp_receiver
         self._zone_message_handler = zone_message_handler
         self._wand_reboot_detector = wand_reboot_detector
+        self._wand_battery_monitor = wand_battery_monitor
 
         self._zone_application.quit.subscribe(self._on_quit)
 
@@ -51,10 +54,16 @@ class TrackingApp:
         if self._wand_reboot_detector is not None:
             self._wand_reboot_detector.start()
 
+        if self._wand_battery_monitor is not None:
+            self._wand_battery_monitor.start()
+
         await self._imu_stream.start_async()
 
     async def stop_async(self) -> None:
         await self._imu_stream.stop_async()
+
+        if self._wand_battery_monitor is not None:
+            self._wand_battery_monitor.stop()
 
         if self._wand_reboot_detector is not None:
             self._wand_reboot_detector.stop()
