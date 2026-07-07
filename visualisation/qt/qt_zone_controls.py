@@ -7,6 +7,7 @@ from collections.abc import Callable
 from gamevolt.events.event import Event
 from gamevolt.logging import Logger
 from spells.spell_cast_quality import SpellCastQuality
+from spells.spell_tag import SpellTag
 from spells.spell_type import SpellType
 from visualisation.qt.auto_advance_settings import AutoAdvanceSettings
 from zones.configuration.zone_settings import ZoneSettings
@@ -27,8 +28,9 @@ class QtZoneControls:
         `AutoAdvanceSettings.auto_advance` is on and the cast met
         `AutoAdvanceSettings.min_advance_quality`.
 
-    `in_park_only` restricts the Up/Down cycle, the auto-advance pool, and the dropdown
-    options to in-park spells; explicit numeric-key selection still reaches any zone.
+    `AutoAdvanceSettings.enabled_tags` restricts the Up/Down cycle, the auto-advance
+    pool, and the dropdown options to zones whose spells carry an enabled tag;
+    explicit numeric-key selection still reaches any zone.
     """
 
     def __init__(
@@ -40,10 +42,10 @@ class QtZoneControls:
         key_pressed: Event[Callable[[str], None]],
         zone_selected: Event[Callable[[str | None], None]],
         settings: AutoAdvanceSettings,
-        included_spells: frozenset[SpellType],
+        spell_tags: dict[SpellType, frozenset[SpellTag]],
         cast_recognized: Event[Callable[[SpellCastQuality], None]],
         set_zone_options: Callable[[list[tuple[str | None, str]], str | None], None],
-        in_park_only_changed: Event[Callable[[bool], None]],
+        enabled_tags_changed: Event[Callable[[frozenset[SpellTag]], None]],
     ) -> None:
         self._logger = logger
         self._zone_manager = zone_manager
@@ -55,9 +57,13 @@ class QtZoneControls:
         self._set_zone_options = set_zone_options
 
         self._zone_ids = [zone.id for zone in zones]
-        # A zone counts as in-park if any of its spells ships in the theme-park selection.
-        self._in_park = {
-            zone.id: any(spell in included_spells for spell in zone.spells) for zone in zones
+        # A zone's tags are the union of its spells' tags; it is eligible when that
+        # union intersects the enabled set.
+        self._zone_tags: dict[str, frozenset[SpellTag]] = {
+            zone.id: frozenset().union(*(spell_tags.get(spell, frozenset()) for spell in zone.spells))
+            if zone.spells
+            else frozenset()
+            for zone in zones
         }
         self._current: str | None = None
         # Shuffle bag for randomised auto-advance: draw without replacement until
@@ -70,7 +76,7 @@ class QtZoneControls:
         self._key_pressed.subscribe(self._on_key)
         self._zone_selected.subscribe(self._on_zone_selected)
         cast_recognized.subscribe(self._on_cast_recognized)
-        in_park_only_changed.subscribe(self._on_in_park_only_changed)
+        enabled_tags_changed.subscribe(self._on_enabled_tags_changed)
 
         self._push_zone_options()
 
@@ -84,23 +90,26 @@ class QtZoneControls:
         self._apply(self._first_eligible_zone())
 
     def _first_eligible_zone(self) -> str | None:
-        """First zone the cycle would land on (in-park when the filter is on), or None."""
+        """First zone the cycle would land on (tag-filtered), or None."""
         eligible = [zone_id for zone_id in self._cycle_values() if zone_id is not None]
         return eligible[0] if eligible else None
 
-    def _on_in_park_only_changed(self, in_park_only: bool) -> None:
+    def _is_eligible(self, zone_id: str) -> bool:
+        return bool(self._zone_tags[zone_id] & self._settings.enabled_tags)
+
+    def _on_enabled_tags_changed(self, _: frozenset[SpellTag]) -> None:
         # Refilter the dropdown; if the current zone just fell out of the pool, move to
         # the first eligible one so we never sit on a hidden zone.
-        if in_park_only and self._current is not None and not self._in_park[self._current]:
+        if self._current is not None and not self._is_eligible(self._current):
             self._apply(self._first_eligible_zone())  # _apply repushes options
         else:
             self._push_zone_options()
 
     def _push_zone_options(self) -> None:
-        """Publish the dropdown option list, filtered to in-park zones when enabled."""
+        """Publish the dropdown option list, filtered to zones with an enabled tag."""
         options: list[tuple[str | None, str]] = [(None, "(none)")]
         for zone in self._zones:
-            if self._settings.in_park_only and not self._in_park[zone.id]:
+            if not self._is_eligible(zone.id):
                 continue
             spells = ", ".join(spell.name for spell in zone.spells)
             options.append((zone.id, f"{zone.id} - {spells}" if spells else zone.id))
@@ -140,7 +149,7 @@ class QtZoneControls:
         """Move to the next spell/zone: shuffle-bag draw, or sequential from the current."""
         pool = [zone_id for zone_id in self._cycle_values() if zone_id is not None]
         if not pool:
-            self._logger.debug("Auto-advance: no eligible zones (in-park filter empty?)")
+            self._logger.debug("Auto-advance: no eligible zones (tag filter empty?)")
             return
 
         if self._settings.randomise:
@@ -156,7 +165,7 @@ class QtZoneControls:
 
     def _draw_from_shuffle_bag(self, pool: list[str]) -> str:
         """Draw the next zone without replacement; refill and reshuffle when the bag empties."""
-        # Drop entries no longer eligible (the in-park filter can change between casts).
+        # Drop entries no longer eligible (the tag filter can change between casts).
         self._shuffle_bag = [zone_id for zone_id in self._shuffle_bag if zone_id in pool]
         if not self._shuffle_bag:
             self._shuffle_bag = random.sample(pool, len(pool))
@@ -166,10 +175,8 @@ class QtZoneControls:
         return self._shuffle_bag.pop(0)
 
     def _cycle_values(self) -> list[str | None]:
-        """Cycle universe: `(none)` plus zones, filtered to in-park when the toggle is on."""
-        if self._settings.in_park_only:
-            return [None, *[zone_id for zone_id in self._zone_ids if self._in_park[zone_id]]]
-        return [None, *self._zone_ids]
+        """Cycle universe: `(none)` plus the zones whose tags intersect the enabled set."""
+        return [None, *[zone_id for zone_id in self._zone_ids if self._is_eligible(zone_id)]]
 
     def _on_digit(self, digit: str) -> None:
         now = time.monotonic()

@@ -19,7 +19,8 @@ back the other) — a there-and-back that $1 cannot match. `gesture_path` exists
 carry the clean centreline instead; keep it an open, unstroked-outline path.
 
 A layered SVG that is missing `origin`, missing `end_arrow`, or whose `gesture_path`
-is not exactly one shape is *invalid* and raises `ValueError` — a broken
+is not exactly one *open* shape (a closepath means an outlined-stroke export snuck
+in) is *invalid* and raises `ValueError` — a broken
 template silently degrades the cast experience, so we fail loud and force the
 author to fix it (or exclude the spell knowingly upstream).
 
@@ -52,6 +53,11 @@ _END_KEY = "end_arrow"
 
 # Moveto commands split a `d` into subpaths; $1 expects one continuous stroke.
 _MOVETO = re.compile(r"[Mm]")
+
+# A closepath in `gesture_path` is the signature of an outlined/filled stroke export
+# (down one edge, back the other) — the there-and-back $1 cannot match. A genuine
+# loop glyph still ends with coincident endpoints, not `z`.
+_CLOSEPATH = re.compile(r"[Zz]")
 
 
 def load_svg_points(svg_path: Path, samples: int = 256, logger: Logger | None = None) -> list[Point]:
@@ -193,9 +199,11 @@ _GESTURE_SHAPES = ("path", "polyline", "polygon", "line")
 def _gesture_d(root: ET.Element) -> str:
     """`d` of the `gesture_path` layer's single geometry element.
 
-    Accepts a lone <path>/<polyline>/<polygon>/<line> — Illustrator exports a
+    Accepts a lone open <path>/<polyline>/<line> — Illustrator exports a
     straight-segment centreline as <polyline>, which is a valid single stroke.
-    Raises if the layer is absent or holds anything other than exactly one shape.
+    Raises if the layer is absent, holds anything other than exactly one shape,
+    or the shape is closed (<polygon>, or a `z` closepath — the outlined-stroke
+    export $1 cannot match).
     """
     layer = _layer(root, _GESTURE_KEY)
     if layer is None:
@@ -208,6 +216,12 @@ def _gesture_d(root: ET.Element) -> str:
     d = _element_d(shapes[0])
     if not d:
         raise ValueError(f"`gesture_path` <{_local(shapes[0].tag)}> has no usable geometry")
+    if _CLOSEPATH.search(d):
+        raise ValueError(
+            "`gesture_path` is a closed shape — this is usually a filled/outlined stroke "
+            "export (a there-and-back $1 cannot match). Re-export with the unexpanded "
+            "centreline: a single open path, no fill, no outline-stroke"
+        )
     return d
 
 

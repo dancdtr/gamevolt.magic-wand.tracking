@@ -1,0 +1,50 @@
+# Hand-curated spell tags. NOT auto-extracted — safe from spell_info.yml PDF re-runs.
+# Keyed by SpellType value (lower-case member name), same key as lore/templates.
+#
+# `primer` is derived, never listed: every spell not tagged cdtr came from the
+# Primer PDF. `park` = ships in the theme-park experience; `cdtr` = CDTR original.
+#
+# Product-only: tags never gate a cast (the recognizer still knows every template).
+# They drive the settings-panel spell filter. Unknown key => debug log (typo),
+# ignored. See spells/spell_tags.py.
+
+park:
+  - alohomora
+  - aparecium
+  - arresto_momentum
+  - cantis
+  - colloportus
+  - colovaria
+  - densaugeo
+  - engorgio
+  - expecto_patronum
+  - flipendo
+  - herbivicus
+  - horn_tongue_hex
+  - immobulus
+  - incendio
+  - inflatus
+  - locomotor
+  - lumos
+  - meteolojinx
+  - nebulus
+  - pepper_breath_hex
+  - piertotum_locomotor
+  - reparo
+  - revelio
+  - rictusempra
+  - silencio
+  - slugulus_erecto
+  - switching_spell
+  - ventus
+  - vera_verto
+  - wingardium_leviosa
+
+cdtr:
+  - arcuboltus
+  - barragium
+  - conduc_terrificus
+  - helpus_handius
+  - inspirio
+  - puck_hurling_charm
+  - taco_tempestas

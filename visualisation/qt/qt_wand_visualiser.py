@@ -26,6 +26,7 @@ from spells.settings.spell_scoring_settings import SpellScoringSettings
 from spells.spell_cast_quality import SpellCastQuality
 from spells.spell_difficulty import difficulty_for_template
 from spells.spell_info import load_spell_info
+from spells.spell_tag import SpellTag
 from spells.spell_type import SpellType
 from visualisation.configuration.wand_visualiser_settings import WandVisualiserSettings
 from visualisation.qt.auto_advance_settings import AutoAdvanceSettings
@@ -163,14 +164,16 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._cast_recognized: Event[Callable[[SpellCastQuality], None]] = Event()
         # Fires when a scoring-modifier toggle flips; system_builder routes it to the scorer.
         self._scoring_modifier_changed: Event[Callable[[ScoringModifier, bool], None]] = Event()
-        # Fires when the in-park-only toggle flips; QtZoneControls refilters the dropdown.
-        self._in_park_only_changed: Event[Callable[[bool], None]] = Event()
+        # Fires when a spell-tag filter checkbox flips (carrying the full enabled set);
+        # QtZoneControls refilters the dropdown.
+        self._enabled_tags_changed: Event[Callable[[frozenset[SpellTag]], None]] = Event()
         self._auto_advance = AutoAdvanceSettings()
         self.key_pressed: Event[Callable[[str], None]] = Event()
         self.zone_selected: Event[Callable[[str | None], None]] = Event()
         self._key_callbacks: dict[str, Callable[[], None]] = {}
         self._zone_index: dict[str | None, int] = {}
         self._pending_battery: tuple[int, float] | None = None
+        self._pending_imu_stalled: bool | None = None
 
         self._app = QApplication.instance() or QApplication([])
 
@@ -226,6 +229,13 @@ class QtWandVisualiser(WandVisualiserProtocol):
         self._battery_label = QLabel("—")
         self._battery_label.setToolTip("Wand battery (GDHR poll)")
         self._battery_label.setStyleSheet("color:#dddddd; font-size:13px; padding:0px 6px;")
+        # Silent IMU stall flag from the stall detector (PR quiet, GDHR alive).
+        # Hidden unless stalled; battery text keeps updating alongside it.
+        self._imu_stall_label = QLabel("IMU STALLED")
+        self._imu_stall_label.setToolTip("PR stream silent but tag answering GDHR — power-cycle the wand")
+        self._imu_stall_label.setStyleSheet("color:#ff5050; font-size:13px; font-weight:bold; padding:0px 6px;")
+        self._imu_stall_label.hide()
+        self._window.statusBar().addPermanentWidget(self._imu_stall_label)
         self._window.statusBar().addPermanentWidget(self._battery_label)
         self._window.statusBar().setSizeGripEnabled(False)
 
@@ -241,7 +251,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
             settings.window.text_colour,
             on_trail_toggled=self._on_trail_toggled,
             on_scoring_modifier=self._scoring_modifier_changed.invoke,
-            on_in_park_toggled=self._in_park_only_changed.invoke,
+            on_enabled_tags_changed=self._enabled_tags_changed.invoke,
             close_trigger=self._settings_button,
         )
 
@@ -364,8 +374,8 @@ class QtWandVisualiser(WandVisualiserProtocol):
         return self._scoring_modifier_changed
 
     @property
-    def in_park_only_changed(self) -> Event[Callable[[bool], None]]:
-        return self._in_park_only_changed
+    def enabled_tags_changed(self) -> Event[Callable[[frozenset[SpellTag]], None]]:
+        return self._enabled_tags_changed
 
     def _on_trail_toggled(self, checked: bool) -> None:
         self._live.set_enabled(checked)
@@ -420,6 +430,7 @@ class QtWandVisualiser(WandVisualiserProtocol):
         if not self._is_running:
             return
         self._apply_pending_battery()
+        self._apply_pending_imu_stalled()
         self._app.processEvents()
 
     def clear(self) -> None:
@@ -452,6 +463,20 @@ class QtWandVisualiser(WandVisualiserProtocol):
         colour = "#66cc66" if percent > 50 else "#e0b040" if percent > 20 else "#e05050"
         self._battery_label.setText(f"{millivolts / 1000:.2f}V ({percent:.0f}%)")
         self._battery_label.setStyleSheet(f"color:{colour}; font-size:13px;")
+
+    def set_wand_imu_stalled(self, wand_id: str, stalled: bool) -> None:
+        # Called from the asyncio thread — stash only; `update()` applies it
+        # on the Qt thread.
+        if wand_id.upper() != self._wand_id:
+            return
+        self._pending_imu_stalled = stalled
+
+    def _apply_pending_imu_stalled(self) -> None:
+        pending = self._pending_imu_stalled
+        if pending is None:
+            return
+        self._pending_imu_stalled = None
+        self._imu_stall_label.setVisible(pending)
 
     def reset_trail(self, wand_id: str) -> None:
         if wand_id.upper() != self._wand_id:

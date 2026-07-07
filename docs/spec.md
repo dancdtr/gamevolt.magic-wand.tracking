@@ -150,6 +150,8 @@ All of the above is gated by `imu_stream.eliko_single_anchor.manage_imu` (defaul
 
 Battery brown-out is the dominant wand failure mode (see [§4.5](#45-haptic-disabled) and the 2026-07-06 reboot-loop incident), so the single-anchor path can poll wand battery voltage. `WandBatteryMonitor` (gated by `imu_stream.eliko_single_anchor.battery_monitor.enabled`, default `False`; independent of `manage_imu`) sends `ElikoSingleAnchorClient.poll_battery(tag)` — `$PEKIO,DC,<seq>,GDHR,0x<tag>,timeout_ms=<n>` — per tracked tag every `poll_interval_s` (default 60s), plus an immediate `poll_wand` on every `WandServer.wand_connected` so reboots/battery swaps produce a fresh reading at once. Each poll is an anchor OTA command (one `STORED` ack + one delivery notice per poll). The voltage comes back in millivolts in either of two shapes, both parsed: `$PEKIO,AC,123,0x<tag>,GDHR,voltages,0x<mv>,OTA` (poll response; `123` is a hardcoded OTA-response sequence — Eliko protocol limitation) or `$PEKIO,PP,<seq>,0x<tag>,GDHR,0x<mv>` (the tag's unsolicited GDHR/VERS/GLEC report set). The monitor fires `battery_updated(tag, millivolts, percent)`; percent is a rough linear map between `empty_millivolts`/`full_millivolts` (defaults 1100/1550 for the AAAA alkaline cell) — a dying-cell alarm, not a fuel gauge. The builder routes the event to the visualiser's `set_wand_battery` no-op-default hook; the Qt single-wand view shows a colour-coded readout in the window status bar (updates are stashed and applied on the Qt thread in `update()`, since the event fires on the serial receive thread). The builder also subscribes `WandBatteryLog.record`, which appends each reading to a daily CSV (`battery_YYYYMMDD.csv`, columns timestamp/tag/millivolts/percent) under `battery_monitor.log_directory` (default `./diagnostics/battery`, git-ignored) for plotting discharge over time. Monitor lifecycle is owned by `TrackingApp.start_async` / `stop_async`. RTLS path: not wired — the RTLS server exposes `GET_BATTERIES` (mV + percent, pushed ~15 min) for when that binding needs it.
 
+**Silent IMU stall watchdog.** The wand's second failure mode (confirmed 2026-07-06/07, distinct from the reboot loop) is a firmware IMU hang: PR stops mid-run with no boot banner while the tag keeps ranging, answering GDHR, and acking OTA — the Eliko-suggested `GETD type` + `CMD0` off/on cycle is delivered but never revives PR (and `GETD` still reports type 3 during the stall), so only a power-cycle recovers. `WandImuStallDetector` (gated by `imu_stream.eliko_single_anchor.imu_stall_detector.enabled`, default `True`, wired only when `battery_monitor` is also enabled) watches the line stream for PR headers (tag + uptime tick) and takes `battery_updated` readings as proof-of-life: a tag whose last PR is older than `stall_after_s` (default 10s) while a battery reading newer than that PR — and fresher than `liveness_max_age_s` (default 150s) — has landed is declared stalled. The warning log records the tag's **uptime at the last PR** (stalls recurring at a repeatable uptime would indicate a deterministic firmware bug rather than marginal hardware — evidence Eliko has asked for). `stall_changed(tag, stalled)` fires on onset and on PR resume; the builder routes it to the visualiser's `set_wand_imu_stalled` no-op-default hook (Qt view: a red "IMU STALLED" flag beside the battery readout, stash-and-apply threading as above). Lifecycle owned by `TrackingApp.start_async` / `stop_async`.
+
 ---
 
 ## 5. Control plane protocols
@@ -260,8 +262,10 @@ was **removed** and replaced by a **$1 unistroke recogniser** plus a decoupled s
    `gesture_path` from `gesture_visual` matters because a width-profiled/filled visual exports as
    an *outline* (down one edge, back the other) — a there-and-back $1 can't match; the centreline
    carries the clean geometry. The loader (`svg_template_loader`) **validates** each template and
-   **raises** if `origin`/`end_arrow` are missing or `gesture_path` isn't a single `<path>` (a
-   broken template degrades casting — fail loud; exclude a spell knowingly via zone mapping). It
+   **raises** if `origin`/`end_arrow` are missing, `gesture_path` isn't a single `<path>`, or the
+   path is **closed** (`z`/`<polygon>` — the signature of an outlined-stroke export sneaking into
+   `gesture_path`; a broken template degrades casting — fail loud; exclude a spell knowingly via
+   zone mapping). It
    orients sampled points to start nearest `origin` and end nearest `end_arrow`, so a reversed
    export self-corrects, and warns on malformed geometry (zero length, multiple subpaths, markers
    inconsistent with endpoints). The same SVG is the **single source of truth for the UI target
@@ -278,18 +282,24 @@ was **removed** and replaced by a **$1 unistroke recogniser** plus a decoupled s
    file/spell/field → blank fields + title-cased `display_name` fallback) because lore is UX-only
    and never gates a cast. The YAML is **auto-extracted** from the Spells Primer PDF — **both**
    sections (spells *with* known incantations → nickname + pronunciation; spells *without* →
-   descriptive title, no pronunciation). All **228** spells are keyed 1:1 to the gesture templates,
-   so `SpellType` ≡ template set ≡ lore keys (all lower-case, underscores only — the Primer's
-   hyphenated names are normalised). A lore key with no matching enum member would be a typo —
-   logged at debug, never fatal. Shown in the single-wand snapshot pane. Parsing lives in-repo;
-   `gamevolt.io` stays a generic YAML loader.
+   descriptive title, no pronunciation) — plus a **hand-authored CDTR-originals block** at the end
+   (six house spells, `source: CDTR Original`; a re-extract must preserve that block). All **234**
+   spells are keyed 1:1 to the gesture templates, so `SpellType` ≡ template set ≡ lore keys (all
+   lower-case, underscores only — the Primer's hyphenated names are normalised). A lore key with no
+   matching enum member would be a typo — logged at debug, never fatal. Shown in the single-wand
+   snapshot pane. Parsing lives in-repo; `gamevolt.io` stays a generic YAML loader.
 
-6. **Selection** (`spells/spell_selection.py` + `spells/data/spell_selection.yml`). Hand-curated set
-   of spells that ship in the theme-park experience. Kept **apart** from the PDF-extracted lore so a
-   re-run of the extractor cannot clobber it. `load_included_spells()` returns a
-   `frozenset[SpellType]`; keyed by `SpellType` value like lore/templates. Product-only and
-   degrades gracefully like lore — inclusion never gates a cast (the recognizer still matches every
-   template); missing file → empty set, unknown key → debug log. Absent key ⇒ not included.
+6. **Tags** (`spells/spell_tag.py`, `spells/spell_tags.py` + `spells/data/spell_tags.yml`).
+   Hand-curated provenance/curation tags, one or more per spell: `PRIMER` (from the Primer PDF —
+   **derived**, never listed: everything not tagged `cdtr`), `PARK` (ships in the theme-park
+   experience; currently a Primer subset) and `CDTR` (a CDTR original). Replaces the old boolean
+   "in-park selection" (`spell_selection.*`): the settings-panel filter is now one checkbox per tag
+   and the zone pool is the union of the checked tags (`AutoAdvanceSettings.enabled_tags`, default
+   `{PARK, CDTR}`). Kept **apart** from the PDF-extracted lore so a re-run of the extractor cannot
+   clobber it. `load_spell_tags()` returns a `dict[SpellType, frozenset[SpellTag]]`; keyed by
+   `SpellType` value like lore/templates. Product-only and degrades gracefully like lore — tags
+   never gate a cast (the recognizer still matches every template); missing file → all-`PRIMER`,
+   unknown key → debug log.
 
 7. **Gesture difficulty** (`spells/spell_difficulty.py`). *Computed* 1–10 rating of how hard a spell
    is to cast — distinct from the lore `difficulty` string (Primer flavour text). Blends two inputs
@@ -389,7 +399,7 @@ Don't add new cross-app coupling that isn't on this list without flagging it.
 | `wands_app/` | Entry point, app composition, settings, `TrackingApp`, `RecognitionApp`, `WandsSystem`, `WandsSystemBuilder`. |
 | `wand/` | Wand-side primitives: `WandServer`, `TrackedWandManager`, `WandClient`, `CastAssembler` (segment buffer + recognition-gated commit), sensor stream (`streaming/`), interpreters, device controller. |
 | `motion/` | Motion phase tracking (`MotionProcessor`, `MotionPhaseTracker`) + stroke windowing (`stroke/StrokeWindower`) + lead-in trimming (`stroke/lead_in_trimmer`). |
-| `spells/` | $1 recogniser (`matching/dollar_one/`, incl. `svg_template_loader`), layered SVG templates (`templates/` — `gesture_path`/`gesture_visual`/`origin`/`end_arrow`/`mid_arrows`/`bg` layers), scorer (`scoring/`), per-spell settings (`settings/`), static lore (`spell_info.py` + `data/spell_info.yml`), park selection (`spell_selection.py` + `data/spell_selection.yml`), computed gesture difficulty (`spell_difficulty.py`), `SpellCast`, cue + presentation controllers. |
+| `spells/` | $1 recogniser (`matching/dollar_one/`, incl. `svg_template_loader`), layered SVG templates (`templates/` — `gesture_path`/`gesture_visual`/`origin`/`end_arrow`/`mid_arrows`/`bg` layers), scorer (`scoring/`), per-spell settings (`settings/`), static lore (`spell_info.py` + `data/spell_info.yml`), provenance/curation tags (`spell_tag.py`, `spell_tags.py` + `data/spell_tags.yml`), computed gesture difficulty (`spell_difficulty.py`), `SpellCast`, cue + presentation controllers. |
 | `zones/` | Zone manager, zone application, mock controls, visualisation. |
 | `services/` | Profile, presence reporter, spell-cast reporter, session store, session coordinator. (These are the proto-hub implementations.) |
 | `recording/` | `SessionRecorder` + `CastImageRenderer` protocol + settings. Writes per-session dirs (recognised casts, raw rotation stream, snapshot images) driven by the visualiser's record toggle. |

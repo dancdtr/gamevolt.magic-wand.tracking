@@ -2,9 +2,10 @@ from enum import StrEnum, auto
 
 
 class SpellType(StrEnum):
-    """The full Spells Primer catalogue. Each member has a gesture template
-    (spell_template_<value>.svg) and lore (spells/data/spell_info.yml), both
-    keyed by the lower-case member name.
+    """The full spell catalogue: the Spells Primer plus the CDTR originals at the
+    end. Each member has a gesture template (spell_template_<value>.svg) and lore
+    (spells/data/spell_info.yml), both keyed by the lower-case member name.
+    Provenance (primer / park / CDTR) lives in spells/data/spell_tags.yml.
     """
 
     NONE = auto()
@@ -237,3 +238,12 @@ class SpellType(StrEnum):
     WADDIWASI = auto()
     WHITE_SPARKS_SPELL = auto()
     WINGARDIUM_LEVIOSA = auto()
+
+    # CDTR originals — not in the Spells Primer.
+    ARCUBOLTUS = auto()
+    BARRAGIUM = auto()
+    CONDUC_TERRIFICUS = auto()
+    HELPUS_HANDIUS = auto()
+    INSPIRIO = auto()
+    PUCK_HURLING_CHARM = auto()
+    TACO_TEMPESTAS = auto()

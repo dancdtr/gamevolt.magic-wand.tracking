@@ -27,6 +27,7 @@ from wand.streaming.eliko.eliko_client import ElikoClient
 from wand.streaming.eliko.eliko_wand_command_sink import ElikoWandCommandSink
 from wand.streaming.eliko.wand_battery_log import WandBatteryLog
 from wand.streaming.eliko.wand_battery_monitor import WandBatteryMonitor
+from wand.streaming.eliko.wand_imu_stall_detector import WandImuStallDetector
 from wand.streaming.eliko.wand_reboot_detector import WandRebootDetector
 from wand.streaming.eliko_single_anchor.eliko_single_anchor_client import ElikoSingleAnchorClient
 from wand.null_wand_command_sink import NullWandCommandSink
@@ -124,6 +125,7 @@ class WandsSystemBuilder:
         command_sink: WandCommandSink
         wand_reboot_detector: WandRebootDetector | None = None
         wand_battery_monitor: WandBatteryMonitor | None = None
+        wand_imu_stall_detector: WandImuStallDetector | None = None
         line_source: WandLineSource
 
         if system_type is SystemType.ELIKO_RTLS:
@@ -180,6 +182,18 @@ class WandsSystemBuilder:
                     output_dir=single_settings.battery_monitor.log_directory,
                 )
                 wand_battery_monitor.battery_updated.subscribe(wand_battery_log.record)
+                # Silent-stall watchdog: PR gone quiet while GDHR still answers
+                # (the firmware IMU hang — see docs/spec.md §4.5). Battery
+                # readings are its proof-of-life, hence nested in this block.
+                if single_settings.imu_stall_detector.enabled:
+                    wand_imu_stall_detector = WandImuStallDetector(
+                        logger=logger,
+                        line_source=single_anchor_client,
+                        tracked_wand_ids=settings.tracked_wand_ids,
+                        settings=single_settings.imu_stall_detector,
+                    )
+                    wand_battery_monitor.battery_updated.subscribe(wand_imu_stall_detector.record_battery)
+                    wand_imu_stall_detector.stall_changed.subscribe(wand_visualiser.set_wand_imu_stalled)
 
         # Always-on capture of the last raw sensor lines; Enter in the visualiser
         # window dumps them to ./diagnostics for after-the-fact glitch analysis.
@@ -218,6 +232,7 @@ class WandsSystemBuilder:
             zone_message_handler=zone_message_handler,
             wand_reboot_detector=wand_reboot_detector,
             wand_battery_monitor=wand_battery_monitor,
+            wand_imu_stall_detector=wand_imu_stall_detector,
         )
 
         server = WandServer(

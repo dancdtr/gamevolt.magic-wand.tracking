@@ -10,6 +10,7 @@
 #
 # Auto-extracted from SpellsPrimer_05.01.22.pdf, both sections (with/without known
 # incantations), keyed to the gesture-template filenames (scratchpad/extract_v2.py).
+# The CDTR-originals block at the end is hand-authored — a re-extract must keep it.
 
 aberto:
   nickname: The Opening Charm
@@ -1672,6 +1673,8 @@ wingardium_leviosa:
   notable_uses: Ron levitates a troll's club and drops it on its owners head, knocking the troll out
   source: Harry Potter and the Philosopher's Stone (book)
 
+# ── CDTR originals — hand-authored, NOT from the Primer PDF. A lore re-extract
+# must preserve this block (the extractor only owns the section above).
 conduc_terrificus:
   nickname: The Supercharging Spell
   description: "Channels CONDUCTR brilliance into nearby people, products, and technology."
@@ -1680,12 +1683,12 @@ conduc_terrificus:
   pronunciation: "kon-DUK ter-RIFF-ih-kus"
   notable_uses: "Famously used to turn impossible briefs into terrific experiences, usually just before opening night."
   source: "CDTR Original by Dan M"
-taco_tempestus:
+taco_tempestas:
   nickname: The Taco Tempest
   description: "Summons a cheerful rain of tacos from above."
   classification: Charm
   difficulty: Beginner
-  pronunciation: "TAH-koh tem-PESS-tus"
+  pronunciation: "TAH-koh tem-PESS-tass"
   notable_uses: "Often cast in moments of team celebration, especially when the sacred HeyTaco economy is thriving."
   source: "CDTR Original by Dan M"
 barragium:
@@ -1720,3 +1723,12 @@ inspirio:
   pronunciation: "in-SPEER-ee-oh"
   notable_uses: "Typically appears as a glowing bulb with lightning at its base when a team suddenly has a brilliant idea."
   source: "CDTR Original by Dan M"
+helpus_handius:
+  spell: Helpus Handius
+  nickname: The Helpful Charm
+  description: "A friendly reminder for where you are and what you should be doing."
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: "HELP-us HAN-dee-us"
+  notable_uses: "Helps show the possible interactions a guest could have, or gently pushes them in the right direction."
+  source: "CDTR Original by Alan Thomasson"

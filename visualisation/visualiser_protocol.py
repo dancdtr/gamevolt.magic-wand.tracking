@@ -35,6 +35,10 @@ class WandVisualiserProtocol:
     # single-anchor path; no-op by default so other visualisers ignore it.
     def set_wand_battery(self, wand_id: str, millivolts: int, percent: float) -> None: ...
 
+    # Silent IMU stall flag (PR quiet, GDHR answering). Wired from the stall
+    # detector by the builder on the single-anchor path; no-op by default.
+    def set_wand_imu_stalled(self, wand_id: str, stalled: bool) -> None: ...
+
     @property
     def quit(self) -> Event[Callable[[], None]]: ...
 

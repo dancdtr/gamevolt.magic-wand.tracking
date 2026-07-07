@@ -17,10 +17,18 @@ from PySide6.QtWidgets import (
 
 from spells.scoring.scoring_modifier import ScoringModifier
 from spells.spell_cast_quality import SpellCastQuality
+from spells.spell_tag import SpellTag
 from visualisation.qt.auto_advance_settings import AutoAdvanceSettings
 
 _PANEL_WIDTH = 280
 _SLIDE_MS = 180
+
+# Spell-tag filter checkboxes, in display order.
+_TAG_LABELS = {
+    SpellTag.PARK: "In park",
+    SpellTag.PRIMER: "Spells Primer",
+    SpellTag.CDTR: "CDTR originals",
+}
 
 # Scoring-modifier checkboxes, in display order.
 _MODIFIER_LABELS = {
@@ -57,7 +65,7 @@ class SettingsPanel(QFrame):
         *,
         on_trail_toggled: Callable[[bool], None],
         on_scoring_modifier: Callable[[ScoringModifier, bool], None],
-        on_in_park_toggled: Callable[[bool], None],
+        on_enabled_tags_changed: Callable[[frozenset[SpellTag]], None],
         trail_enabled: bool = True,
         close_trigger: QWidget | None = None,
     ) -> None:
@@ -65,7 +73,7 @@ class SettingsPanel(QFrame):
         self._settings = settings
         self._on_trail_toggled = on_trail_toggled
         self._on_scoring_modifier = on_scoring_modifier
-        self._on_in_park_toggled = on_in_park_toggled
+        self._on_enabled_tags_changed = on_enabled_tags_changed
         # Widget that toggles the panel (the gear button): a press on it is handled by its own
         # toggle, so the click-outside filter must ignore it to avoid closing then reopening.
         self._close_trigger = close_trigger
@@ -113,10 +121,12 @@ class SettingsPanel(QFrame):
 
         layout.addWidget(self._section("Spell selection", text_colour))
 
-        self._park = QCheckBox("In-park spells only")
-        self._park.setChecked(settings.in_park_only)
-        self._park.toggled.connect(self._on_park)
-        layout.addWidget(self._park)
+        # One checkbox per tag; the pool is the union of the checked tags.
+        for tag, label in _TAG_LABELS.items():
+            box = QCheckBox(label)
+            box.setChecked(tag in settings.enabled_tags)
+            box.toggled.connect(lambda checked, t=tag: self._on_tag(t, checked))
+            layout.addWidget(box)
 
         self._random = QCheckBox("Randomise next spell")
         self._random.setChecked(settings.randomise)
@@ -171,9 +181,12 @@ class SettingsPanel(QFrame):
     def _on_random(self, checked: bool) -> None:
         self._settings.randomise = checked
 
-    def _on_park(self, checked: bool) -> None:
-        self._settings.in_park_only = checked
-        self._on_in_park_toggled(checked)
+    def _on_tag(self, tag: SpellTag, checked: bool) -> None:
+        if checked:
+            self._settings.enabled_tags.add(tag)
+        else:
+            self._settings.enabled_tags.discard(tag)
+        self._on_enabled_tags_changed(frozenset(self._settings.enabled_tags))
 
     def _on_min_quality(self, index: int) -> None:
         self._settings.min_advance_quality = self._min_quality.itemData(index)

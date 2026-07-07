@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import cast
 
 from gamevolt.logging import Logger
-from spells.spell_selection import load_included_spells
+from spells.spell_tags import load_spell_tags
 from visualisation.qt.qt_zone_controls import QtZoneControls
 from visualisation.visualiser_protocol import WandVisualiserProtocol
 from zones.configuration.zones_settings import ZonesSettings
@@ -52,10 +52,10 @@ class ZoneApplicationBuilder:
             key_pressed=visualiser.key_pressed,  # type: ignore[attr-defined]
             zone_selected=visualiser.zone_selected,  # type: ignore[attr-defined]
             settings=visualiser.auto_advance_settings,  # type: ignore[attr-defined]
-            included_spells=load_included_spells(self._logger),
+            spell_tags=load_spell_tags(self._logger),
             cast_recognized=visualiser.cast_recognized,  # type: ignore[attr-defined]
             set_zone_options=visualiser.set_zone_options,  # type: ignore[attr-defined]
-            in_park_only_changed=visualiser.in_park_only_changed,  # type: ignore[attr-defined]
+            enabled_tags_changed=visualiser.enabled_tags_changed,  # type: ignore[attr-defined]
         )
 
         return ZoneApplication(
@@ -63,7 +63,7 @@ class ZoneApplicationBuilder:
             zone_manager=zone_manager,
             presentation_controller=presentation,
             controls=controls,
-            # Start in the first eligible zone (first in-park spell when the filter is on)
+            # Start in the first eligible zone (first spell passing the tag filter)
             # rather than '(none)'. Deferred to start-up so subscribers are wired first.
             on_started=controls.select_default_zone,
         )

@@ -119,6 +119,14 @@ imu_stream:
       timeout_ms: 2000
       full_millivolts: 1550
       empty_millivolts: 1100
+    # Silent IMU stall watchdog: warns (with the tag's uptime at the last PR)
+    # when PR goes quiet while GDHR polls still answer — the firmware hang only
+    # a power-cycle clears. Needs battery_monitor enabled (proof-of-life).
+    imu_stall_detector:
+      enabled: True
+      stall_after_s: 10.0
+      check_interval_s: 2.0
+      liveness_max_age_s: 150.0
     # SPQF subscription flag. "P" = PR (IMU) packets, "R" = RR (ranging) packets.
     # Set to "R" as a sanity check: if RR lines appear in trace, the wand is alive
     # and the anchor is talking to it.
@@ -1012,3 +1020,25 @@ zones:
     - id: Z228
       key: 228
       spells: [WINGARDIUM_LEVIOSA]
+    # CDTR originals
+    - id: Z229
+      key: 229
+      spells: [ARCUBOLTUS]
+    - id: Z230
+      key: 230
+      spells: [BARRAGIUM]
+    - id: Z231
+      key: 231
+      spells: [CONDUC_TERRIFICUS]
+    - id: Z232
+      key: 232
+      spells: [HELPUS_HANDIUS]
+    - id: Z233
+      key: 233
+      spells: [INSPIRIO]
+    - id: Z234
+      key: 234
+      spells: [PUCK_HURLING_CHARM]
+    - id: Z235
+      key: 235
+      spells: [TACO_TEMPESTAS]
