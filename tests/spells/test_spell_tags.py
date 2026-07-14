@@ -50,6 +50,9 @@ def test_cdtr_originals_tagged() -> None:
         SpellType.INSPIRIO,
         SpellType.PUCK_HURLING_CHARM,
         SpellType.TACO_TEMPESTAS,
+        SpellType.MISCHIFIO,
+        SpellType.PAINTIO,
+        SpellType.SNOOZIO,
     ):
         assert tags[spell] == frozenset({SpellTag.CDTR})
 

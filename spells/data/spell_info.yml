@@ -1682,7 +1682,7 @@ conduc_terrificus:
   difficulty: Advanced
   pronunciation: "kon-DUK ter-RIFF-ih-kus"
   notable_uses: "Famously used to turn impossible briefs into terrific experiences, usually just before opening night."
-  source: "CDTR Original by Dan M"
+  source: "CDTR Original by Dan Madison"
 taco_tempestas:
   nickname: The Taco Tempest
   description: "Summons a cheerful rain of tacos from above."
@@ -1690,7 +1690,7 @@ taco_tempestas:
   difficulty: Beginner
   pronunciation: "TAH-koh tem-PESS-tass"
   notable_uses: "Often cast in moments of team celebration, especially when the sacred HeyTaco economy is thriving."
-  source: "CDTR Original by Dan M"
+  source: "CDTR Original by Dan Madison"
 barragium:
   nickname: The Barrage Charm
   description: "Unleashes a barrage of glowing yellow meteorites."
@@ -1698,7 +1698,7 @@ barragium:
   difficulty: Advanced
   pronunciation: "bah-RAJ-ee-um"
   notable_uses: "Best known from the legendary Barrage trials, widely regarded internally as the greatest game ever made."
-  source: "CDTR Original by Dan M"
+  source: "CDTR Original by Dan Madison"
 arcuboltus:
   nickname: The Crossbow Bolt Charm
   description: "Fires a fast magical bolt with crossbow-like precision."
@@ -1706,7 +1706,7 @@ arcuboltus:
   difficulty: Intermediate
   pronunciation: "AR-kyoo-BOL-tus"
   notable_uses: "Recently mastered during an Aztec shooter deployment, where real crossbows proved surprisingly magical."
-  source: "CDTR Original by Dan M"
+  source: "CDTR Original by Dan Madison"
 puck_hurling_charm:
   nickname: The Puck-Hurling Charm
   description: "Hurls a puck with enchanted speed and accuracy."
@@ -1714,7 +1714,7 @@ puck_hurling_charm:
   difficulty: Beginner
   pronunciation: "PUK HUR-ling charm"
   notable_uses: "First used in the early days of supercharged shuffleboard, before anyone fully understood its power."
-  source: "CDTR Original by Dan M"
+  source: "CDTR Original by Dan Madison"
 inspirio:
   nickname: The Spark of Inspiration
   description: "Supercharges creative thinking with a flash of magical insight."
@@ -1722,7 +1722,7 @@ inspirio:
   difficulty: Advanced
   pronunciation: "in-SPEER-ee-oh"
   notable_uses: "Typically appears as a glowing bulb with lightning at its base when a team suddenly has a brilliant idea."
-  source: "CDTR Original by Dan M"
+  source: "CDTR Original by Dan Madison"
 helpus_handius:
   spell: Helpus Handius
   nickname: The Helpful Charm
@@ -1732,3 +1732,30 @@ helpus_handius:
   pronunciation: "HELP-us HAN-dee-us"
   notable_uses: "Helps show the possible interactions a guest could have, or gently pushes them in the right direction."
   source: "CDTR Original by Alan Thomasson"
+mischifio:
+  spell: Mischifio
+  nickname: The Mischief Charm
+  description: "Causes harmless pranks and playful magical mischief."
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: "mis-CHI-fee-oh"
+  notable_uses: "Often used to surprise guests with cheeky, low-stakes magical tricks."
+  source: "CDTR Original by Lee Eastaff"
+paintio:
+  spell: Paintio
+  nickname: The Paint-It Spell
+  description: "Instantly coats any object, surface, or blank wall in a fresh burst of magical colour."
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: "PAYN-tee-oh"
+  notable_uses: "Allegedly used to paint the Sistine Chapel, though magical historians remain divided on the claim."
+  source: "CDTR Original by Adam Bate"
+snoozio:
+  spell: Snoozio
+  nickname: The Alarm Clock Spell
+  description: "Silences a morning alarm and magically postpones it by one hour."
+  classification: Charm
+  difficulty: Beginner
+  pronunciation: "SNOO-zee-oh"
+  notable_uses: "Beloved by tired witches and wizards who insist they will be much more productive after just one more hour."
+  source: "CDTR Original by Alex Reid"

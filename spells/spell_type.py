@@ -247,3 +247,6 @@ class SpellType(StrEnum):
     INSPIRIO = auto()
     PUCK_HURLING_CHARM = auto()
     TACO_TEMPESTAS = auto()
+    MISCHIFIO = auto()
+    PAINTIO = auto()
+    SNOOZIO = auto()

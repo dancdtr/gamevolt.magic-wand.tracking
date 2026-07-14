@@ -1,0 +1,30 @@
+# wands.service — systemd *user* unit for wands_app (GUI, Wayland/labwc).
+#
+# Installed to ~/.config/systemd/user/wands.service by scripts/pi/deploy.sh.
+# Runs inside the cdtr desktop session's user manager, so it starts on
+# autologin and can reach the labwc Wayland compositor. ExecStartPre blocks
+# until the compositor socket exists (boot race), then run.sh launches
+# wands_app from source via uv.
+#
+# Manage with: systemctl --user {start|stop|status|enable} wands
+# (or the `wands` alias from bash_aliases.wands.sh)
+
+[Unit]
+Description=Magic Wand Tracking (wands_app)
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Code/gamevolt.magic-wand.tracking
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+# uv run re-syncs the venv on launch; never pull the dev group onto the Pi
+Environment=UV_NO_DEV=1
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=DISPLAY=:0
+Environment="QT_QPA_PLATFORM=wayland;xcb"
+ExecStartPre=/bin/sh -c 'until [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; do sleep 1; done'
+ExecStart=%h/Code/gamevolt.magic-wand.tracking/scripts/run.sh
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

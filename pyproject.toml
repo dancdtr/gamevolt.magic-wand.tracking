@@ -9,7 +9,7 @@ dependencies = [
     "pillow",
     "pyserial",
     "pyserial-asyncio",
-    "pyside6",
+    "pyside6-essentials",
     "pyyaml",
     "scipy",
     "svgpathtools>=1.7.2",

@@ -1042,3 +1042,12 @@ zones:
     - id: Z235
       key: 235
       spells: [TACO_TEMPESTAS]
+    - id: Z236
+      key: 236
+      spells: [MISCHIFIO]
+    - id: Z237
+      key: 237
+      spells: [PAINTIO]
+    - id: Z238
+      key: 238
+      spells: [SNOOZIO]
